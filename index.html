@@ -27,17 +27,16 @@
     <script>
         // 2. PEGA AQUÍ TU CONFIGURACIÓN DE FIREBASE (Lo que copiaste del paso 2)
         // Debe verse algo así (pero con tus propios números y letras):
-        const firebaseConfig = {
-             apiKey: "AIzaSyDoMATZ1yjZ3Q0ZsaFSgprs7VegxMdTifs",
-             authDomain: "gestion-de-ventas-vapes.firebaseapp.com",
-             databaseURL: "https://gestion-de-ventas-vapes-default-rtdb.firebaseio.com",
-             projectId: "gestion-de-ventas-vapes",
-             storageBucket: "gestion-de-ventas-vapes.firebasestorage.app",
-             messagingSenderId: "547834087144",
-             appId: "1:547834087144:web:249116f7c21dba9815ab5d",
-             measurementId: "G-4YQM8PBLSM"
-        };
-
+       const firebaseConfig = {
+  apiKey: "AIzaSyDoMATZ1yjZ3Q0ZsaFSgprs7VegxMdTifs",
+  authDomain: "gestion-de-ventas-vapes.firebaseapp.com",
+  databaseURL: "https://gestion-de-ventas-vapes-default-rtdb.firebaseio.com",
+  projectId: "gestion-de-ventas-vapes",
+  storageBucket: "gestion-de-ventas-vapes.firebasestorage.app",
+  messagingSenderId: "547834087144",
+  appId: "1:547834087144:web:249116f7c21dba9815ab5d",
+  measurementId: "G-4YQM8PBLSM"
+};
         // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
