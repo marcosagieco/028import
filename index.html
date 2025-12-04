@@ -2,112 +2,143 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ Desafío de Reacción (Seguro)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🚀 Esquiva los Bloques (Seguro)</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #2563eb; --bg: #111827; --white: #ffffff; --text: #f3f4f6; --danger: #ef4444; --success: #10b981; --wait: #dc2626; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { max-width: 800px; width: 100%; padding-bottom: 50px; }
+        :root { --primary: #3b82f6; --bg: #0f172a; --text: #f1f5f9; --game-bg: #1e293b; --player: #22c55e; --enemy: #ef4444; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; justify-content: center; overflow-x: hidden; touch-action: manipulation; }
         
-        /* Header */
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #374151; padding-bottom: 20px; }
-        h1 { margin: 0; font-size: 1.5em; }
-        .user-info { font-size: 0.9em; color: #9ca3af; margin-right: 15px; }
+        /* Contenedor principal */
+        .container { max-width: 600px; width: 100%; padding: 20px; box-sizing: border-box; }
 
-        /* GAME AREA */
-        .game-card { background: #1f2937; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
-        
-        #reaction-box {
-            width: 100%; height: 250px;
-            background-color: #374151; /* Estado inactivo */
-            border-radius: 12px; margin: 20px 0;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 1.5em; font-weight: bold; color: white;
-            cursor: pointer; transition: all 0.1s; user-select: none;
+        /* Header */
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+        h1 { margin: 0; font-size: 1.2em; }
+        .user-info { font-size: 0.85em; color: #94a3b8; margin-right: 10px; }
+
+        /* AREA DE JUEGO (CANVAS) */
+        .game-wrapper { position: relative; width: 100%; text-align: center; }
+        canvas { 
+            background: var(--game-bg); 
+            border-radius: 8px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            display: block; 
+            margin: 0 auto;
+            max-width: 100%;
+            cursor: pointer;
         }
-        #reaction-box.waiting { background-color: var(--wait); content: "¡ESPERA!"; }
-        #reaction-box.go { background-color: var(--success); box-shadow: 0 0 30px var(--success); }
+
+        /* UI SOBRE EL JUEGO */
+        #startScreen, #gameOverScreen {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: 8px;
+            z-index: 10;
+        }
         
-        .result-display { font-size: 2em; margin: 20px 0; color: var(--primary); font-weight: bold; }
+        .score-display { font-size: 3em; font-weight: bold; color: var(--primary); margin: 10px 0; text-shadow: 0 2px 10px rgba(59, 130, 246, 0.5); }
+        .instructions { color: #cbd5e1; margin-bottom: 20px; font-size: 0.9em; padding: 0 20px; }
+
+        /* Botones */
+        button { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; font-size: 1em; cursor: pointer; transition: transform 0.1s; }
+        button:active { transform: scale(0.95); }
+        button.logout { background: #334155; padding: 5px 12px; font-size: 0.8em; margin-left: 10px; }
+
+        /* Controles Móviles (Visuales) */
+        .mobile-controls { display: flex; justify-content: space-between; margin-top: 10px; display: none; }
+        .control-btn { background: #334155; width: 48%; padding: 20px; border-radius: 8px; font-size: 1.5em; opacity: 0.7; }
+        @media (max-width: 768px) { .mobile-controls { display: flex; } }
 
         /* LEADERBOARD */
-        .leaderboard-card { margin-top: 30px; background: #1f2937; padding: 20px; border-radius: 15px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #374151; }
-        th { color: #9ca3af; font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; }
-        td { font-weight: 500; }
-        .rank-1 { color: #fbbf24; font-weight: bold; } /* Oro */
-        .rank-2 { color: #9ca3af; font-weight: bold; } /* Plata */
-        .rank-3 { color: #b45309; font-weight: bold; } /* Bronce */
+        .leaderboard-card { margin-top: 30px; background: #1e293b; padding: 20px; border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #334155; }
+        th { color: #64748b; text-transform: uppercase; font-size: 0.8em; }
+        .rank-1 { color: #fbbf24; } 
+        .rank-2 { color: #94a3b8; }
+        .rank-3 { color: #b45309; }
 
-        /* UI Helpers (Botones y Login igual que antes) */
-        button { background: var(--primary); color: var(--white); border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1em; transition: background 0.2s; }
-        button:hover { background-color: #1d4ed8; }
-        button:disabled { background-color: #4b5563; cursor: not-allowed; opacity: 0.7; }
-        button.logout { background: #374151; padding: 8px 15px; font-size: 0.9em; }
-        
-        /* --- PANTALLA DE LOGIN (MANTENIDA IGUAL) --- */
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000000e1; display: flex; justify-content: center; align-items: center; z-index: 5000; transition: opacity 0.5s; }
-        .login-box { background: white; color: #1f2937; padding: 40px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; }
-        .form-group { margin-bottom: 15px; }
-        input { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
-        .hidden { opacity: 0; pointer-events: none; }
+        /* PANTALLA DE LOGIN */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; justify-content: center; align-items: center; z-index: 5000; }
+        .login-box { background: white; color: #1e293b; padding: 30px; border-radius: 12px; width: 85%; max-width: 320px; text-align: center; }
+        .login-box input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
+<!-- 1. LOGIN (Seguridad Obligatoria) -->
 <div id="loginOverlay">
     <div class="login-box">
-        <i class="fas fa-gamepad" style="font-size: 3em; color: var(--primary); margin-bottom: 20px;"></i>
-        <h2>Acceso Jugador</h2>
-        <div class="form-group"><input type="email" id="emailInput" placeholder="Correo"></div>
-        <div class="form-group"><input type="password" id="passInput" placeholder="Contraseña"></div>
-        <button onclick="login()">Entrar a Jugar</button>
-        <p id="loginError" style="color: red; margin-top: 10px; font-size: 0.9em;"></p>
+        <h2 style="margin-top:0;">🔐 Acceso Jugador</h2>
+        <input type="email" id="emailInput" placeholder="Correo (ej: admin@vapes.com)">
+        <input type="password" id="passInput" placeholder="Contraseña">
+        <button onclick="login()" style="width:100%;">Entrar</button>
+        <p id="loginError" style="color: red; font-size: 0.8em; margin-bottom:0;"></p>
     </div>
 </div>
 
+<!-- 2. JUEGO -->
 <div class="container">
     <header>
-        <h1>⚡ Reacción Veloz <small style="font-size:0.6em; color:var(--success);">Online</small></h1>
         <div>
-            <span id="currentUserDisplay" class="user-info"></span>
-            <button onclick="logout()" class="logout">Salir</button>
+            <h1>🚀 Esquiva-Bloques</h1>
+            <span id="currentUserDisplay" class="user-info">Cargando...</span>
         </div>
+        <button onclick="logout()" class="logout">Salir</button>
     </header>
 
-    <div class="game-card">
-        <p>Haz clic en el cuadro cuando se ponga <b>VERDE</b>.</p>
+    <div class="game-wrapper">
+        <canvas id="gameCanvas" width="400" height="500"></canvas>
         
-        <div id="reaction-box" onmousedown="handleGameClick()">
-            Haz clic para empezar
+        <!-- Pantalla de Inicio -->
+        <div id="startScreen">
+            <i class="fas fa-rocket" style="font-size: 3em; color: var(--player); margin-bottom: 20px;"></i>
+            <h2>¿Listo?</h2>
+            <p class="instructions">Usa las flechas ⬅️ ➡️ o toca los lados de la pantalla para moverte.</p>
+            <button onclick="startGame()">Jugar Ahora</button>
         </div>
 
-        <div class="result-display" id="resultText">--- ms</div>
-        <button id="retryBtn" onclick="startGame()" style="display: none; margin: 0 auto;">Jugar de nuevo</button>
+        <!-- Pantalla Game Over -->
+        <div id="gameOverScreen" class="hidden">
+            <h2 style="color: var(--enemy);">¡Choque! 💥</h2>
+            <p>Puntaje Final</p>
+            <div class="score-display" id="finalScoreDisplay">0</div>
+            <button onclick="startGame()">Intentar de nuevo</button>
+        </div>
     </div>
 
+    <!-- Controles táctiles explícitos -->
+    <div class="mobile-controls">
+        <button class="control-btn" ontouchstart="moveLeft()" onmousedown="moveLeft()">⬅️</button>
+        <button class="control-btn" ontouchstart="moveRight()" onmousedown="moveRight()">➡️</button>
+    </div>
+
+    <!-- 3. RANKING (Nube en tiempo real) -->
     <div class="leaderboard-card">
-        <h2>🏆 Top 10 Global (Tiempo Real)</h2>
+        <h3 style="margin-top:0;">🏆 Mejores Puntajes (Global)</h3>
         <table>
-            <thead><tr><th>Rank</th><th>Jugador</th><th>Tiempo</th></tr></thead>
+            <thead><tr><th>#</th><th>Jugador</th><th>Puntos</th></tr></thead>
             <tbody id="leaderboardTable">
-                <tr><td colspan="3">Cargando scores de la nube...</td></tr>
+                <tr><td colspan="3">Cargando nube...</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
+<!-- LIBRERÍAS FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
 <script>
-    // ======================================================
-    // --- PEGA AQUÍ TU CONFIGURACIÓN DE FIREBASE (IGUAL QUE ANTES) ---
-    // ======================================================
-   const firebaseConfig = {
+    // ==========================================
+    // --- TU CONFIGURACIÓN DE FIREBASE AQUÍ ---
+    // ==========================================
+    const firebaseConfig = {
   apiKey: "AIzaSyDoMATZ1yjZ3Q0ZsaFSgprs7VegxMdTifs",
   authDomain: "gestion-de-ventas-vapes.firebaseapp.com",
   databaseURL: "https://gestion-de-ventas-vapes-default-rtdb.firebaseio.com",
@@ -117,16 +148,16 @@
   appId: "1:547834087144:web:249116f7c21dba9815ab5d",
   measurementId: "G-4YQM8PBLSM"
 };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
 
-    // --- LÓGICA DE AUTENTICACIÓN (MANTENIDA) ---
+    // --- Lógica de Login (Igual que antes) ---
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('loginOverlay').classList.add('hidden');
-            document.getElementById('currentUserDisplay').textContent = user.email.split('@')[0]; // Mostrar solo nombre antes del @
+            // Usamos la parte del correo antes del @ como nombre de usuario
+            document.getElementById('currentUserDisplay').textContent = "Jugador: " + user.email.split('@')[0];
         } else {
             document.getElementById('loginOverlay').classList.remove('hidden');
         }
@@ -139,123 +170,206 @@
     }
     function logout() { auth.signOut(); }
 
-
-    // ======================================================
-    // --- LÓGICA DEL JUEGO (NUEVO) ---
-    // ======================================================
+    // ==========================================
+    // --- MOTOR DEL JUEGO (CANVAS) ---
+    // ==========================================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
     
-    const box = document.getElementById('reaction-box');
-    const resultText = document.getElementById('resultText');
-    const retryBtn = document.getElementById('retryBtn');
+    // Ajustar canvas al ancho del contenedor
+    function resizeCanvas() {
+        const containerWidth = document.querySelector('.container').clientWidth - 40; // padding
+        canvas.width = Math.min(400, containerWidth);
+        canvas.height = 500;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-    let gameState = 'idle'; // idle, waiting, green, finished
-    let startTime = 0;
-    let timeoutId = null;
+    // Variables del Juego
+    let gameRunning = false;
+    let score = 0;
+    let player = { x: canvas.width / 2 - 20, y: canvas.height - 60, w: 40, h: 40, color: '#22c55e', speed: 25 };
+    let obstacles = [];
+    let frameCount = 0;
+    let obstacleSpeed = 3;
+
+    // Controles de Teclado
+    document.addEventListener('keydown', (e) => {
+        if (!gameRunning) return;
+        if (e.key === 'ArrowLeft') moveLeft();
+        if (e.key === 'ArrowRight') moveRight();
+    });
+
+    // Controles Táctiles (Toque en el canvas)
+    canvas.addEventListener('touchstart', handleTouch, {passive: false});
+    canvas.addEventListener('mousedown', handleTouch);
+
+    function handleTouch(e) {
+        if (!gameRunning) return;
+        e.preventDefault(); // Evitar scroll
+        
+        // Obtener posición del toque/click
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const x = clientX - rect.left;
+
+        if (x < canvas.width / 2) moveLeft();
+        else moveRight();
+    }
+
+    function moveLeft() {
+        player.x -= player.speed;
+        if (player.x < 0) player.x = 0;
+    }
+
+    function moveRight() {
+        player.x += player.speed;
+        if (player.x + player.w > canvas.width) player.x = canvas.width - player.w;
+    }
 
     function startGame() {
-        if (gameState === 'waiting') return;
-        
-        gameState = 'waiting';
-        resultText.textContent = "--- ms";
-        retryBtn.style.display = 'none';
-        box.textContent = "¡ESPERA!";
-        box.className = 'waiting';
-        
-        // Tiempo aleatorio entre 2 y 5 segundos
-        const randomTime = Math.floor(Math.random() * 3000) + 2000;
+        // Reset variables
+        player.x = canvas.width / 2 - 20;
+        obstacles = [];
+        score = 0;
+        frameCount = 0;
+        obstacleSpeed = 3;
+        gameRunning = true;
 
-        timeoutId = setTimeout(() => {
-            gameState = 'green';
-            box.className = 'go';
-            box.textContent = "¡AHORA!";
-            startTime = Date.now();
-        }, randomTime);
+        // UI
+        document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('gameOverScreen').classList.add('hidden');
+        
+        // Loop
+        requestAnimationFrame(gameLoop);
     }
 
-    function handleGameClick() {
-        if (gameState === 'idle') {
-            startGame();
-            return;
+    function gameLoop() {
+        if (!gameRunning) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 1. Dibujar Jugador (Cuadrado Verde)
+        ctx.fillStyle = player.color;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = player.color;
+        ctx.fillRect(player.x, player.y, player.w, player.h);
+        ctx.shadowBlur = 0;
+
+        // 2. Generar Obstáculos
+        frameCount++;
+        // Cada 60 frames (aprox 1 seg) o menos si va rápido
+        if (frameCount % Math.max(20, 60 - Math.floor(score/5)) === 0) {
+            const size = Math.random() * 30 + 30; // Ancho variable
+            const xPos = Math.random() * (canvas.width - size);
+            obstacles.push({ x: xPos, y: -50, w: size, h: 20, color: '#ef4444' });
         }
 
-        if (gameState === 'waiting') {
-            // Clic prematuro (hizo trampa o se adelantó)
-            clearTimeout(timeoutId);
-            gameState = 'finished';
-            box.className = '';
-            box.style.backgroundColor = '#dc2626'; // Rojo fallo
-            box.textContent = "¡Muy pronto!";
-            resultText.textContent = "Fallo (Click antes del verde)";
-            retryBtn.style.display = 'block';
-            return;
+        // 3. Mover y Dibujar Obstáculos
+        for (let i = 0; i < obstacles.length; i++) {
+            let obs = obstacles[i];
+            obs.y += obstacleSpeed;
+
+            // Dibujar
+            ctx.fillStyle = obs.color;
+            ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+
+            // Colisión
+            if (
+                player.x < obs.x + obs.w &&
+                player.x + player.w > obs.x &&
+                player.y < obs.y + obs.h &&
+                player.h + player.y > obs.y
+            ) {
+                gameOver();
+                return;
+            }
+
+            // Puntaje (si sale de pantalla)
+            if (obs.y > canvas.height) {
+                obstacles.splice(i, 1);
+                i--;
+                score++;
+                
+                // Aumentar dificultad
+                if (score % 5 === 0) obstacleSpeed += 0.2;
+            }
         }
 
-        if (gameState === 'green') {
-            // Clic correcto
-            const endTime = Date.now();
-            const reactionTime = endTime - startTime;
-            gameState = 'finished';
-            
-            box.className = '';
-            box.textContent = reactionTime + " ms";
-            resultText.textContent = reactionTime + " ms";
-            retryBtn.style.display = 'block';
+        // Dibujar Puntaje actual
+        ctx.fillStyle = "white";
+        ctx.font = "20px Arial";
+        ctx.fillText("Puntos: " + score, 10, 30);
 
-            // GUARDAR SCORE EN FIREBASE (Protegido por Auth)
-            saveScoreToCloud(reactionTime);
-        }
+        requestAnimationFrame(gameLoop);
     }
 
-    function saveScoreToCloud(timeMs) {
+    function gameOver() {
+        gameRunning = false;
+        document.getElementById('gameOverScreen').classList.remove('hidden');
+        document.getElementById('finalScoreDisplay').textContent = score;
+        
+        // Guardar en Firebase
+        saveScore(score);
+    }
+
+    // ==========================================
+    // --- CONEXIÓN CON LA NUBE (FIREBASE) ---
+    // ==========================================
+
+    function saveScore(points) {
         const user = auth.currentUser;
-        if (!user) return; // Doble seguridad
+        if (!user) return;
 
-        const userName = user.email.split('@')[0]; // Usamos la parte inicial del correo como "nick"
+        const userName = user.email.split('@')[0];
 
-        // Guardamos en una nueva carpeta llamada 'gameScores'
-        db.ref('gameScores').push({
+        // Guardamos en 'arcadeScores'
+        db.ref('arcadeScores').push({
             player: userName,
-            score: timeMs,
+            score: points,
             timestamp: firebase.database.ServerValue.TIMESTAMP
         });
     }
 
-
-    // ======================================================
-    // --- LEADERBOARD EN TIEMPO REAL (NUEVO) ---
-    // ======================================================
-
-    // Escuchamos la carpeta de scores, ordenamos por tiempo (menor es mejor)
-    db.ref('gameScores').orderByChild('score').limitToFirst(10).on('value', (snapshot) => {
+    // LEADERBOARD: Obtener los puntajes más altos
+    // Firebase ordena ascendente, así que pedimos los últimos (Last) que son los mayores
+    db.ref('arcadeScores').orderByChild('score').limitToLast(10).on('value', (snapshot) => {
         const tableBody = document.getElementById('leaderboardTable');
         tableBody.innerHTML = '';
         
-        let rank = 1;
-        snapshot.forEach((childSnapshot) => {
-            const data = childSnapshot.val();
-            
-            const row = tableBody.insertRow();
-            
-            // Aplicar estilos de ranking
-            let rankClass = '';
-            if(rank === 1) rankClass = 'rank-1';
-            else if(rank === 2) rankClass = 'rank-2';
-            else if(rank === 3) rankClass = 'rank-3';
-
-            row.innerHTML = `
-                <td class="${rankClass}">#${rank}</td>
-                <td>${data.player}</td>
-                <td>${data.score} ms</td>
-            `;
-            rank++;
+        let scores = [];
+        snapshot.forEach((child) => {
+            scores.push(child.val());
         });
 
-        if (rank === 1) {
-             tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">Aún no hay récords. ¡Sé el primero!</td></tr>';
+        // Invertimos el array porque Firebase los da de menor a mayor, y queremos Mayor a Menor
+        scores.reverse();
+
+        if (scores.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin records aún</td></tr>';
+            return;
         }
+
+        scores.forEach((data, index) => {
+            const row = tableBody.insertRow();
+            
+            // Colores para 1, 2, 3
+            let rankClass = '';
+            if (index === 0) rankClass = 'rank-1';
+            if (index === 1) rankClass = 'rank-2';
+            if (index === 2) rankClass = 'rank-3';
+
+            // Medalla
+            let icon = index === 0 ? '👑 ' : (index < 3 ? '🏅 ' : '');
+
+            row.innerHTML = `
+                <td class="${rankClass}"><b>${index + 1}</b></td>
+                <td>${icon}${data.player}</td>
+                <td><b>${data.score}</b></td>
+            `;
+        });
     });
 
 </script>
-
 </body>
 </html>
