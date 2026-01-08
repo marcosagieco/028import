@@ -45,11 +45,11 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [firebaseReady, setFirebaseReady] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
-  // Instancias de Firebase con control de errores
+  // Instancias de Firebase
   const firebaseRefs = useMemo(() => {
     if (typeof window === "undefined") return { auth: null, db: null };
-    
     try {
       const firebaseConfig = {
         apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -59,11 +59,9 @@ export default function Home() {
         messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
         appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
       };
-
       const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
       return { auth: getAuth(app), db: getFirestore(app) };
     } catch (error) {
-      console.error("Error inicializando Firebase:", error);
       return { auth: null, db: null };
     }
   }, []);
@@ -72,7 +70,7 @@ export default function Home() {
     if (firebaseRefs.auth) {
       signInAnonymously(firebaseRefs.auth)
         .then(() => setFirebaseReady(true))
-        .catch(err => console.error("Error Auth Anónima:", err));
+        .catch(() => setFirebaseReady(true)); // Continuar aunque falle auth para no bloquear al usuario
 
       const unsubscribe = onAuthStateChanged(firebaseRefs.auth, (u) => setUser(u));
       return () => unsubscribe();
@@ -108,8 +106,12 @@ export default function Home() {
   };
 
   const handleCheckout = async () => {
-    if (!firebaseReady) return alert("Conectando con el servidor seguro...");
-    if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) return alert("Completa los datos de envío.");
+    if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) {
+      alert("Por favor completa los datos de envío.");
+      return;
+    }
+
+    setIsSending(true);
 
     const unitPrice = getUnitPromoPrice();
     const finalTotal = calculateTotal();
@@ -121,24 +123,28 @@ export default function Home() {
     msg += `\n*TOTAL: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
     msg += deliveryMethod === 'envio' ? `*ENVIO:* ${address}, ${zone}\n` : `*RETIRO EN LOCAL*\n`;
 
+    const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+
     try {
-      await addDoc(collection(firebaseRefs.db, 'orders'), {
-        userId: user?.uid || "anon",
-        items: cart.map(i => ({ name: i.name, qty: i.qty, price: unitPrice })),
-        total: finalTotal,
-        delivery: deliveryMethod,
-        createdAt: serverTimestamp()
-      });
-      window.open(`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+      if (firebaseRefs.db) {
+        await addDoc(collection(firebaseRefs.db, 'orders'), {
+          userId: user?.uid || "anon",
+          items: cart.map(i => ({ name: i.name, qty: i.qty, price: unitPrice })),
+          total: finalTotal,
+          delivery: deliveryMethod,
+          createdAt: serverTimestamp()
+        });
+      }
     } catch (e) {
-      console.error("Error Firestore:", e);
-      window.open(`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+      console.error("Error al guardar pedido:", e);
+    } finally {
+      // Redirección inmediata
+      window.location.href = whatsappUrl;
     }
   };
 
   return (
     <div className="bg-[#f4f4f4] text-[#1a1a1a] min-h-screen font-sans pb-24">
-      {/* Navbar con Logo */}
       <nav className="bg-[#121212] py-3 px-4 sticky top-0 z-40 border-b border-[#d4af37]/30 text-white shadow-xl">
         <div className="container mx-auto flex justify-between items-center">
           <img src={CONFIG.logoImage} alt="028 Logo" className="h-10 md:h-12 w-auto object-contain" />
@@ -154,7 +160,6 @@ export default function Home() {
         )}
       </nav>
 
-      {/* Banner Principal */}
       <header className="relative h-[30vh] md:h-[45vh] flex items-center justify-center bg-black overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center opacity-50" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
         <div className="relative z-10 text-center px-4">
@@ -165,7 +170,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Catálogo de Productos */}
       <section id="catalogo" className="py-8 px-4 max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-3">
           <h2 className="text-xl md:text-2xl font-black border-l-4 border-[#d4af37] pl-4 uppercase tracking-tight">Selección Exclusiva</h2>
@@ -213,7 +217,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer Flotante */}
       {getTotalItems() > 0 && (
         <div className="fixed bottom-0 left-0 w-full bg-[#121212]/95 backdrop-blur-md p-4 border-t border-[#d4af37]/40 text-white flex justify-between items-center z-50 shadow-2xl">
           <div>
@@ -229,7 +232,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Modal del Carrito */}
       {isCartOpen && (
         <div className="fixed inset-0 z-[60] flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/80" onClick={() => setIsCartOpen(false)} />
@@ -287,9 +289,16 @@ export default function Home() {
                </div>
                <button 
                 onClick={handleCheckout} 
-                className="w-full bg-[#25D366] text-white font-black py-4 rounded-xl uppercase text-xs flex justify-center items-center gap-2"
+                disabled={isSending}
+                className={`w-full ${isSending ? 'bg-gray-400' : 'bg-[#25D366]'} text-white font-black py-4 rounded-xl uppercase text-xs flex justify-center items-center gap-2 transition-all`}
               >
-                <i className="fab fa-whatsapp text-xl"></i> Finalizar por WhatsApp
+                {isSending ? (
+                  <>Cargando...</>
+                ) : (
+                  <>
+                    <i className="fab fa-whatsapp text-xl"></i> Finalizar por WhatsApp
+                  </>
+                )}
               </button>
             </div>
           </div>
