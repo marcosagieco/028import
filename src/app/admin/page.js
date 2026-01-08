@@ -11,9 +11,7 @@ import {
   orderBy, 
   updateDoc, 
   doc,
-  setDoc,
-  getDocs,
-  where
+  setDoc
 } from "firebase/firestore";
 
 const CONFIG = {
@@ -43,11 +41,10 @@ const initialProducts = [
 ];
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState('pendientes'); // pendientes, historial, stock
+  const [activeTab, setActiveTab] = useState('pendientes'); 
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState(initialProducts);
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState("Conectando...");
   const [error, setError] = useState(null);
 
   const firebaseRefs = useMemo(() => {
@@ -76,20 +73,18 @@ export default function AdminPage() {
     const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (user) => {
       if (!user) return;
 
-      // ESCUCHAR PEDIDOS (Todos)
       const qOrders = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'));
       const unsubscribeOrders = onSnapshot(qOrders, (snapshot) => {
         setOrders(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
         setLoading(false);
       });
 
-      // ESCUCHAR PRODUCTOS (Stock)
       const unsubscribeProducts = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
           setProducts(prev => prev.map(p => {
             const match = dbProducts.find(dbP => dbP.id === p.id);
-            return match ? { ...p, inStock: match.inStock, dbId: match.dbId } : { ...p, inStock: true };
+            return match ? { ...p, inStock: match.inStock } : { ...p, inStock: true };
           }));
         }
       });
@@ -110,7 +105,7 @@ export default function AdminPage() {
           status: 'completed'
         });
       } catch (err) {
-        alert("Error al actualizar pedido.");
+        alert("Error: No se pudo completar el pedido. Revisa las reglas de Firestore.");
       }
     }
   };
@@ -118,7 +113,6 @@ export default function AdminPage() {
   const toggleStock = async (product) => {
     try {
       const newStockStatus = product.inStock === false ? true : false;
-      // Si el producto no tiene dbId, primero lo creamos/sincronizamos
       const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
       await setDoc(productRef, {
         id: product.id,
@@ -126,31 +120,36 @@ export default function AdminPage() {
         inStock: newStockStatus
       }, { merge: true });
     } catch (err) {
-      alert("Error al actualizar stock.");
+      console.error(err);
+      alert("Error de permisos: Asegúrate de haber publicado las nuevas reglas en Firebase (pestaña Rules).");
     }
   };
 
   const syncAllProducts = async () => {
-    if (confirm("¿Sincronizar todo el catálogo con la base de datos?")) {
+    if (confirm("¿Sincronizar catálogo con la base de datos?")) {
         setLoading(true);
-        for (const p of initialProducts) {
-            await setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), {
-                id: p.id,
-                name: p.name,
-                inStock: true
-            }, { merge: true });
+        try {
+            for (const p of initialProducts) {
+                await setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), {
+                    id: p.id,
+                    name: p.name,
+                    inStock: true
+                }, { merge: true });
+            }
+            alert("Catálogo sincronizado con éxito.");
+        } catch (err) {
+            alert("Error al sincronizar: " + err.message);
         }
         setLoading(false);
-        alert("Catálogo sincronizado.");
     }
   };
 
   const filteredOrders = orders.filter(o => activeTab === 'pendientes' ? o.status !== 'completed' : o.status === 'completed');
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
       <div className="w-12 h-12 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin mb-6"></div>
-      <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">Sincronizando Boutique 028</p>
+      <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Sincronizando Boutique 028...</p>
     </div>
   );
 
@@ -164,72 +163,74 @@ export default function AdminPage() {
         <a href="/" className="text-[10px] text-gray-500 font-bold uppercase hover:text-white transition-all">Ver Web</a>
       </nav>
 
-      {/* TABS DE NAVEGACIÓN */}
       <div className="bg-white border-b sticky top-[72px] z-40">
         <div className="max-w-4xl mx-auto flex">
-          <button onClick={() => setActiveTab('pendientes')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === 'pendientes' ? 'border-[#d4af37] text-black' : 'border-transparent text-gray-400'}`}>Pedidos</button>
-          <button onClick={() => setActiveTab('historial')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === 'historial' ? 'border-[#d4af37] text-black' : 'border-transparent text-gray-400'}`}>Ventas</button>
-          <button onClick={() => setActiveTab('stock')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === 'stock' ? 'border-[#d4af37] text-black' : 'border-transparent text-gray-400'}`}>Stock</button>
+          <button onClick={() => setActiveTab('pendientes')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'pendientes' ? 'border-[#d4af37] text-black' : 'border-transparent text-gray-400'}`}>Pedidos</button>
+          <button onClick={() => setActiveTab('historial')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'historial' ? 'border-[#d4af37] text-black' : 'border-transparent text-gray-400'}`}>Ventas</button>
+          <button onClick={() => setActiveTab('stock')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'stock' ? 'border-[#d4af37] text-black' : 'border-transparent text-gray-400'}`}>Stock</button>
         </div>
       </div>
 
       <main className="max-w-4xl mx-auto p-4 md:p-8">
         {activeTab === 'stock' ? (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="animate-in fade-in duration-500">
              <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-black uppercase tracking-tighter">Gestión de Stock</h2>
-                <button onClick={syncAllProducts} className="text-[9px] bg-gray-100 px-3 py-1 rounded font-bold uppercase text-gray-400 hover:bg-black hover:text-white transition-all">Sincronizar DB</button>
+                <button onClick={syncAllProducts} className="text-[9px] bg-black text-white px-4 py-2 rounded-lg font-black uppercase tracking-widest shadow-lg hover:bg-[#d4af37] transition-all">Sincronizar DB</button>
              </div>
              <div className="grid gap-4">
                 {products.map(p => (
-                   <div key={p.id} className="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border border-gray-100">
+                   <div key={p.id} className="bg-white p-5 rounded-[1.5rem] flex justify-between items-center shadow-sm border border-gray-100 hover:border-[#d4af37]/20 transition-all">
                       <div className="flex items-center gap-4">
-                         <img src={p.image} className="w-10 h-10 rounded-lg object-cover" alt="" />
+                         <div className="relative w-12 h-12">
+                            <img src={p.image} className={`w-full h-full rounded-xl object-cover ${p.inStock === false ? 'grayscale opacity-50' : ''}`} alt="" />
+                            {p.inStock === false && <div className="absolute inset-0 flex items-center justify-center"><i className="fas fa-times text-red-500 text-xs"></i></div>}
+                         </div>
                          <div>
-                            <p className="font-black text-xs uppercase text-gray-800">{p.name}</p>
-                            <p className={`text-[9px] font-bold uppercase ${p.inStock === false ? 'text-red-500' : 'text-green-500'}`}>
-                               {p.inStock === false ? 'Sin Stock' : 'En Stock'}
-                            </p>
+                            <p className="font-black text-[11px] uppercase text-gray-800">{p.name}</p>
+                            <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.inStock === false ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}`}>
+                               {p.inStock === false ? 'Agotado' : 'Disponible'}
+                            </span>
                          </div>
                       </div>
                       <button 
                         onClick={() => toggleStock(p)}
-                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-50 text-red-600'}`}
+                        className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-50 text-red-600'}`}
                       >
-                         {p.inStock === false ? 'Habilitar' : 'Agotar'}
+                         {p.inStock === false ? 'Habilitar' : 'Agotar Stock'}
                       </button>
                    </div>
                 ))}
              </div>
           </div>
         ) : (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="animate-in fade-in duration-500">
             <div className="flex justify-between items-end mb-8">
               <div>
-                <h2 className="text-3xl font-black text-gray-800 uppercase tracking-tighter leading-none">{activeTab === 'pendientes' ? 'Pedidos Activos' : 'Historial de Ventas'}</h2>
-                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">{activeTab === 'pendientes' ? 'Esperando confirmación' : 'Registro de ventas completadas'}</p>
+                <h2 className="text-3xl font-black text-gray-800 uppercase tracking-tighter leading-none">{activeTab === 'pendientes' ? 'Activos' : 'Historial'}</h2>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">{activeTab === 'pendientes' ? 'Nuevos pedidos recibidos' : 'Registro de ventas cerradas'}</p>
               </div>
-              <span className="bg-black text-[#d4af37] text-[10px] font-black px-4 py-2 rounded-full">{filteredOrders.length} {activeTab === 'pendientes' ? 'ACTIVOS' : 'TOTALES'}</span>
+              <span className="bg-black text-[#d4af37] text-[10px] font-black px-4 py-2 rounded-full shadow-xl">{filteredOrders.length} {activeTab === 'pendientes' ? 'PENDIENTES' : 'TOTALES'}</span>
             </div>
 
             {filteredOrders.length === 0 ? (
-              <div className="bg-white p-20 rounded-[2rem] border-2 border-dashed border-gray-100 text-center flex flex-col items-center">
+              <div className="bg-white p-24 rounded-[3rem] border-2 border-dashed border-gray-100 text-center flex flex-col items-center">
                 <i className="fas fa-receipt text-gray-100 text-5xl mb-6"></i>
-                <p className="text-gray-300 font-black uppercase text-xs tracking-widest">No hay nada para mostrar aquí</p>
+                <p className="text-gray-300 font-bold uppercase text-[10px] tracking-widest">No se encontraron registros</p>
               </div>
             ) : (
               <div className="grid gap-6">
                 {filteredOrders.map((order) => (
-                  <div key={order.id} className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 md:p-8 hover:shadow-2xl transition-all duration-500 group">
+                  <div key={order.id} className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 md:p-8 hover:shadow-2xl transition-all duration-500">
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex items-center gap-4">
                         <div className="bg-black text-[#d4af37] w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shadow-xl">
                           {order.items?.reduce((a, b) => a + b.qty, 0)}
                         </div>
                         <div>
-                          <span className="text-[9px] font-black text-[#d4af37] uppercase tracking-widest block mb-0.5">ORDEN: {order.id.slice(-6).toUpperCase()}</span>
-                          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-tighter">
-                            {order.createdAt ? order.createdAt.toDate().toLocaleString('es-AR') : 'Recibiendo...'}
+                          <span className="text-[9px] font-black text-[#d4af37] uppercase tracking-widest block mb-0.5">ID: {order.id.slice(-6).toUpperCase()}</span>
+                          <p className="text-gray-400 text-[10px] font-bold">
+                            {order.createdAt ? order.createdAt.toDate().toLocaleString('es-AR') : 'Procesando...'}
                           </p>
                         </div>
                       </div>
@@ -246,24 +247,24 @@ export default function AdminPage() {
                     <div className="space-y-3 mb-6 bg-gray-50/50 p-6 rounded-2xl border border-gray-100 shadow-inner">
                       {order.items?.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center text-xs">
-                          <span className="text-gray-700 font-bold uppercase tracking-tight">
+                          <span className="text-gray-700 font-bold uppercase">
                             <span className="text-black font-black mr-2">{item.qty}x</span> {item.name}
                           </span>
-                          <span className="text-gray-400 font-black tracking-tighter">${item.price?.toLocaleString('es-AR')}</span>
+                          <span className="text-gray-400 font-black">${item.price?.toLocaleString('es-AR')}</span>
                         </div>
                       ))}
                     </div>
 
                     {order.delivery === 'envio' && order.address && (
                       <div className="mb-6 p-5 bg-[#121212] text-white rounded-2xl text-[11px] font-bold border-l-8 border-[#d4af37] shadow-xl">
-                        <p className="text-[#d4af37] text-[8px] font-black uppercase mb-1 tracking-widest">Dirección de Envío</p>
+                        <p className="text-[#d4af37] text-[8px] font-black uppercase mb-1 tracking-widest">Envío a Domicilio</p>
                         <p className="uppercase">{order.address}</p>
-                        <p className="opacity-50 text-[9px] mt-1 uppercase font-black tracking-[0.1em]">{order.zone}</p>
+                        <p className="opacity-40 text-[9px] mt-1 uppercase font-black tracking-widest">{order.zone}</p>
                       </div>
                     )}
 
                     <div className="flex justify-between items-end border-t border-gray-50 pt-6">
-                      <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Total Recaudado</span>
+                      <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Total</span>
                       <div className="text-3xl font-black text-black tracking-tighter leading-none">
                         <span className="text-[#d4af37] text-sm mr-1.5 font-black">$</span>
                         {order.total?.toLocaleString('es-AR')}
