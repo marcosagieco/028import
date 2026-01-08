@@ -1,11 +1,27 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { initializeApp, getApps } from "firebase/app";
+// Importamos solo lo necesario de Firebase
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
 
-// Configuración de la Tienda
+// --- CONFIGURACIÓN DE FIREBASE (EXTERNA PARA EVITAR DUPLICADOS) ---
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+};
+
+// Inicialización segura de Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// --- CONFIGURACIÓN DE LA TIENDA ---
 const CONFIG = {
   whatsappNumber: "5491155669960",
   brandName: "028",
@@ -16,7 +32,6 @@ const CONFIG = {
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png"
 };
 
-// Base de datos de productos
 const productsDB = [
   { id: 1, name: "BAJA SPLASH", price: 27000, category: "Vapes", tag: "Nuevo", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", desc: "Sabor Premium Importado" },
   { id: 2, name: "BLUE RAZZ ICE", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", desc: "Sabor Premium Importado" },
@@ -38,7 +53,6 @@ const productsDB = [
 ];
 
 export default function Home() {
-  // --- ESTADOS (REACT) ---
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState('retiro');
@@ -47,30 +61,17 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // --- FIREBASE INIT ---
   useEffect(() => {
-    const firebaseConfig = {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-    };
-
-    if (!getApps().length) {
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      signInAnonymously(auth).catch(console.error);
-      onAuthStateChanged(auth, setUser);
-    }
+    // Autenticación anónima al cargar
+    signInAnonymously(auth).catch(() => {});
+    const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
+    return () => unsubscribe();
   }, []);
 
-  // --- LÓGICA DE NEGOCIO ---
-  const formatPrice = (n) => n.toLocaleString('es-AR');
-
+  const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
+  
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
-
+  
   const getUnitPromoPrice = () => {
     const count = getTotalItems();
     if (count >= 5) return 24500;
@@ -78,276 +79,230 @@ export default function Home() {
     return 27000;
   };
 
-  const calculateTotal = () => {
-    const price = getUnitPromoPrice();
-    return cart.reduce((acc, item) => acc + (item.qty * price), 0);
-  };
+  const calculateTotal = () => cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice()), 0);
 
   const addToCart = (product) => {
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
-      }
+      if (existing) return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
       return [...prev, { ...product, qty: 1 }];
     });
   };
 
   const changeQty = (id, delta) => {
-    setCart(prev => {
-      return prev.map(item => {
-        if (item.id === id) {
-          const newQty = item.qty + delta;
-          return newQty > 0 ? { ...item, qty: newQty } : null;
-        }
-        return item;
-      }).filter(Boolean);
-    });
+    setCart(prev => prev.map(item => {
+      if (item.id === id) {
+        const newQty = item.qty + delta;
+        return newQty > 0 ? { ...item, qty: newQty } : null;
+      }
+      return item;
+    }).filter(Boolean));
   };
 
   const handleCheckout = async () => {
-    if (!user) return alert("Iniciando sesión segura, intenta en un segundo.");
-    if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) {
-      return alert("⚠️ Completa los datos de envío.");
-    }
+    if (!user) return alert("Cargando sesión segura...");
+    if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) return alert("Por favor completa los datos de envío.");
 
     const unitPrice = getUnitPromoPrice();
-    const totalCount = getTotalItems();
     const finalTotal = calculateTotal();
-
+    
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
-    if (totalCount >= 5) msg += `*PROMO MAYORISTA ($24.500 c/u)*\n\n`;
-    else if (totalCount >= 2) msg += `*PROMO APLICADA ($26.000 c/u)*\n\n`;
-
     cart.forEach(item => {
-      msg += `- ${item.qty}x ${item.name} ($${formatPrice(unitPrice)} c/u) = $${formatPrice(unitPrice * item.qty)}\n`;
+      msg += `- ${item.qty}x ${item.name} ($${formatPrice(unitPrice)} c/u)\n`;
     });
-
     msg += `\n*TOTAL: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
-    msg += `----------------------------\n`;
-    msg += deliveryMethod === 'envio' 
-      ? `*ENVIO A DOMICILIO*\nDireccion: ${address}\nZona: ${zone}\n` 
-      : `*RETIRO POR LOCAL*\n`;
-    msg += `\n${CONFIG.shippingText}`;
+    msg += deliveryMethod === 'envio' ? `*ENVIO:* ${address}, ${zone}\n` : `*RETIRO EN LOCAL*\n`;
 
-    // Guardar en Firestore
     try {
-      const db = getFirestore();
       await addDoc(collection(db, 'orders'), {
         userId: user.uid,
         items: cart.map(i => ({ name: i.name, qty: i.qty, price: unitPrice })),
         total: finalTotal,
         delivery: deliveryMethod,
-        address,
-        zone,
         createdAt: serverTimestamp()
       });
       window.open(`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
     } catch (e) {
-      console.error(e);
-      alert("Error al procesar el pedido.");
+      console.error("Error al guardar pedido:", e);
+      // Intentamos abrir WhatsApp de todos modos si falla la base de datos
+      window.open(`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
     }
   };
 
   return (
-    <div className="bg-[#f4f4f4] text-[#1a1a1a] min-h-screen font-sans antialiased pb-24">
-      {/* Navbar */}
-      <nav className="bg-[#121212] py-3 px-4 sticky top-0 z-40 border-b border-[#d4af37]/30 shadow-lg text-white w-full">
+    <div className="bg-[#f4f4f4] text-[#1a1a1a] min-h-screen font-sans pb-24">
+      {/* Navbar con Logo */}
+      <nav className="bg-[#121212] py-3 px-4 sticky top-0 z-40 border-b border-[#d4af37]/30 text-white shadow-xl">
         <div className="container mx-auto flex justify-between items-center">
-          <a href="#" className="font-bold flex items-center">
-            <img src={CONFIG.logoImage} alt="Logo" className="h-14 w-auto object-contain" />
-          </a>
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-xl">
+          <img src={CONFIG.logoImage} alt="028 Logo" className="h-12 w-auto object-contain" />
+          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-xl p-2">
             <i className={`fas ${isMenuOpen ? 'fa-times' : 'fa-bars'}`}></i>
           </button>
         </div>
         {isMenuOpen && (
-          <div className="bg-[#121212] border-t border-[#d4af37]/30 absolute w-full left-0 top-full p-6 shadow-2xl z-50">
-            <div className="flex flex-col space-y-4 text-center uppercase font-bold tracking-widest text-sm">
-              <a href="#inicio" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37]">Inicio</a>
-              <a href="#catalogo" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37]">Catálogo</a>
-              <button onClick={() => { setIsCartOpen(true); setIsMenuOpen(false); }} className="hover:text-[#d4af37]">Ver Carrito</button>
-            </div>
+          <div className="absolute top-full left-0 w-full bg-[#121212] p-6 flex flex-col gap-4 text-center font-bold border-t border-[#d4af37]/20 shadow-2xl animate-in fade-in slide-in-from-top-2">
+            <a href="#catalogo" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors">CATÁLOGO</a>
+            <button onClick={() => {setIsCartOpen(true); setIsMenuOpen(false)}} className="hover:text-[#d4af37] transition-colors uppercase">MI CARRITO</button>
           </div>
         )}
       </nav>
 
-      {/* Hero Section */}
-      <header id="inicio" className="relative h-[50vh] flex items-center justify-center bg-[#121212] overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center z-0 opacity-60" 
-          style={{ backgroundImage: `url(${CONFIG.bannerImage})` }}
-        />
-        <div className="relative z-20 text-center text-white px-4">
-          <h1 className="text-4xl md:text-6xl font-bold text-[#d4af37] drop-shadow-lg mb-2">
+      {/* Banner Principal */}
+      <header className="relative h-[35vh] md:h-[50vh] flex items-center justify-center bg-black overflow-hidden">
+        <div className="absolute inset-0 bg-cover bg-center opacity-40 scale-105" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
+        <div className="relative z-10 text-center px-4">
+          <h1 className="text-5xl md:text-7xl font-bold text-[#d4af37] tracking-tighter uppercase drop-shadow-2xl">
             {CONFIG.brandName}{CONFIG.brandSuffix}
           </h1>
-          <p className="text-lg font-medium tracking-widest">ENVIOS Y RETIROS 24/7 !</p>
+          <p className="text-white text-xs md:text-sm tracking-[0.3em] font-light mt-2 uppercase opacity-80">Premium Boutique & Lifestyle</p>
         </div>
       </header>
 
-      {/* Catálogo */}
-      <section id="catalogo" className="py-10 px-3 container mx-auto max-w-5xl">
-        <div className="flex items-center justify-between mb-8 px-1">
-          <h2 className="text-2xl font-bold border-l-4 border-[#d4af37] pl-3 uppercase">Catálogo</h2>
-          <div className="text-[10px] md:text-xs bg-[#d4af37] text-black font-bold px-3 py-1 rounded shadow-sm leading-tight text-center">
-            2 o más: $26.000<br/>5 o más: $24.500
+      {/* Catálogo de Productos */}
+      <section id="catalogo" className="py-10 px-4 max-w-6xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-2">
+          <h2 className="text-2xl font-bold border-l-4 border-[#d4af37] pl-4 uppercase tracking-tight">Catálogo Exclusivo</h2>
+          <div className="bg-[#d4af37] text-black px-3 py-1 text-[10px] md:text-xs font-black rounded uppercase tracking-widest shadow-lg">
+            2+ unidades: $26.000 | 5+ unidades: $24.500
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {productsDB.map(product => {
-            const inCart = cart.find(i => i.id === product.id);
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {productsDB.map(p => {
+            const inCart = cart.find(i => i.id === p.id);
             return (
-              <article key={product.id} className="bg-white border border-gray-200 rounded-sm overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow">
-                <div className="relative pt-[110%] bg-gray-100 overflow-hidden">
-                  <img src={product.image} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
-                  {product.tag && (
-                    <span className="absolute top-2 right-2 bg-[#d4af37] text-black text-[9px] font-bold px-2 py-1 uppercase">
-                      {product.tag}
+              <div key={p.id} className="bg-white border border-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
+                <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
+                  <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  {p.tag && (
+                    <span className="absolute top-3 left-3 bg-[#d4af37] text-black text-[9px] font-black px-2 py-1 uppercase rounded-sm shadow-md">
+                      {p.tag}
                     </span>
                   )}
                 </div>
-                <div className="p-3 flex flex-col flex-grow">
-                  <h3 className="font-bold text-sm mb-1 uppercase">{product.name}</h3>
-                  <p className="text-[10px] text-gray-500 mb-3 truncate">{product.desc}</p>
+                <div className="p-4 flex-grow flex flex-col">
+                  <h3 className="font-bold text-xs md:text-sm uppercase mb-1 text-gray-800 line-clamp-1">{p.name}</h3>
+                  <p className="text-[10px] text-gray-400 mb-3 italic">Imported Quality</p>
                   <div className="mt-auto">
-                    <div className="text-[#d4af37] font-bold text-lg mb-2">
-                      {CONFIG.currencySymbol}{formatPrice(product.price)}
-                    </div>
+                    <p className="text-[#d4af37] font-black text-lg mb-3 tracking-tighter">{CONFIG.currencySymbol}{formatPrice(p.price)}</p>
                     {inCart ? (
-                      <div className="flex items-center justify-between bg-[#121212] text-[#d4af37] rounded-sm h-8">
-                        <button onClick={() => changeQty(product.id, -1)} className="w-8 h-full font-bold">-</button>
-                        <span className="text-white text-xs font-bold">{inCart.qty}</span>
-                        <button onClick={() => changeQty(product.id, 1)} className="w-8 h-full font-bold">+</button>
+                      <div className="flex items-center justify-between bg-black text-white h-10 rounded-md overflow-hidden shadow-inner font-bold">
+                        <button className="w-10 h-full hover:bg-gray-800 transition-colors" onClick={() => changeQty(p.id, -1)}>-</button>
+                        <span className="text-sm">{inCart.qty}</span>
+                        <button className="w-10 h-full hover:bg-gray-800 transition-colors" onClick={() => addToCart(p)}>+</button>
                       </div>
                     ) : (
                       <button 
-                        onClick={() => addToCart(product)}
-                        className="w-full bg-[#d4af37] text-black font-bold text-[10px] py-2 uppercase tracking-tighter hover:bg-[#b8962e] transition-colors rounded-sm"
+                        onClick={() => addToCart(p)} 
+                        className="w-full bg-[#d4af37] hover:bg-black hover:text-[#d4af37] py-3 text-[10px] font-bold uppercase rounded-md transition-all duration-300 shadow-md"
                       >
-                        Agregar
+                        Añadir al Carrito
                       </button>
                     )}
                   </div>
                 </div>
-              </article>
+              </div>
             );
           })}
         </div>
       </section>
 
-      {/* Sticky Footer */}
+      {/* Footer Flotante del Carrito */}
       {getTotalItems() > 0 && (
-        <div className="fixed bottom-0 left-0 w-full bg-[#121212] text-white p-4 z-40 border-t border-[#d4af37]/30 animate-slide-up">
-          <div className="container mx-auto max-w-4xl flex justify-between items-center">
-            <div className="flex flex-col">
-              <span className="text-[10px] text-[#d4af37] font-bold uppercase tracking-widest">Tu Pedido</span>
-              <div className="flex items-center gap-2">
-                <span className="bg-[#d4af37] text-black text-[10px] font-bold px-2 py-0.5 rounded-full">{getTotalItems()}</span>
-                <span className="text-xl font-bold">{CONFIG.currencySymbol}{formatPrice(calculateTotal())}</span>
-              </div>
+        <div className="fixed bottom-0 left-0 w-full bg-[#121212]/95 backdrop-blur-md p-5 border-t border-[#d4af37]/40 text-white flex justify-between items-center z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-full duration-500">
+          <div>
+            <p className="text-[9px] text-[#d4af37] font-black uppercase tracking-[0.2em] mb-1">Total Estimado</p>
+            <div className="flex items-baseline gap-2">
+              <p className="text-2xl font-black tracking-tighter">{CONFIG.currencySymbol}{formatPrice(calculateTotal())}</p>
+              <span className="text-[10px] text-gray-400">({getTotalItems()} ítems)</span>
             </div>
-            <button 
-              onClick={() => setIsCartOpen(true)}
-              className="bg-[#d4af37] text-black font-bold py-2 px-6 rounded-sm uppercase text-xs flex items-center gap-2"
-            >
-              Ver Carrito <i className="fas fa-chevron-up"></i>
-            </button>
           </div>
+          <button 
+            onClick={() => setIsCartOpen(true)} 
+            className="bg-[#d4af37] text-black px-8 py-3 rounded-md font-black text-xs uppercase shadow-[0_0_15px_rgba(212,175,55,0.3)] hover:scale-105 active:scale-95 transition-all"
+          >
+            Pagar Pedido
+          </button>
         </div>
       )}
 
-      {/* Modal Carrito */}
+      {/* Modal del Carrito Pro */}
       {isCartOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/80" onClick={() => setIsCartOpen(false)} />
-          <div className="relative bg-white rounded-t-2xl p-6 max-h-[90vh] overflow-y-auto animate-slide-up">
-            <div className="flex justify-between items-center mb-6 border-b pb-4">
-              <h2 className="text-2xl font-bold uppercase">Tu Carrito</h2>
-              <button onClick={() => setIsCartOpen(false)} className="text-gray-400 text-2xl">&times;</button>
+        <div className="fixed inset-0 z-[60] flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} />
+          <div className="relative bg-white p-6 rounded-t-[2.5rem] max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom-full duration-300">
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" onClick={() => setIsCartOpen(false)} />
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-black uppercase tracking-tight">Mi Selección</h2>
+              <button onClick={() => setIsCartOpen(false)} className="text-gray-300 hover:text-black transition-colors">
+                <i className="fas fa-times text-2xl"></i>
+              </button>
             </div>
 
-            {/* Alerta Promo */}
-            <div className={`mb-4 p-3 rounded text-center text-xs font-bold ${
-              getTotalItems() >= 5 ? 'bg-green-100 text-green-800' : 
-              getTotalItems() >= 2 ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'
-            }`}>
-              {getTotalItems() >= 5 ? '🌟 PROMO MAYORISTA ACTIVADA: $24.500 c/u' : 
-               getTotalItems() >= 2 ? '✨ PROMO ACTIVADA: $26.000 c/u' : '💡 Sumá 1 más para pagar $26.000 c/u'}
-            </div>
-
-            {/* Items */}
-            <div className="space-y-4 mb-6">
+            <div className="space-y-4 mb-8">
               {cart.map(item => (
-                <div key={item.id} className="flex justify-between items-center bg-gray-50 p-3 rounded border border-gray-100">
-                  <div>
-                    <h4 className="font-bold text-sm uppercase">{item.name}</h4>
-                    <p className="text-xs text-gray-500">{CONFIG.currencySymbol}{formatPrice(getUnitPromoPrice())} x {item.qty}</p>
+                <div key={item.id} className="flex justify-between items-center border-b border-gray-50 pb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs md:text-sm uppercase text-gray-800">{item.name}</p>
+                      <p className="text-[10px] text-gray-400 font-bold">{item.qty} unidad{item.qty > 1 ? 'es' : ''}</p>
+                    </div>
                   </div>
-                  <span className="font-bold text-[#d4af37]">{CONFIG.currencySymbol}{formatPrice(getUnitPromoPrice() * item.qty)}</span>
+                  <p className="font-black text-[#d4af37] text-sm tracking-tighter">{CONFIG.currencySymbol}{formatPrice(item.qty * getUnitPromoPrice())}</p>
                 </div>
               ))}
-              {cart.length === 0 && <p className="text-center py-10 text-gray-400">Carrito vacío</p>}
+              {cart.length === 0 && <p className="text-center py-12 text-gray-300 font-medium italic underline decoration-[#d4af37]/30">Tu carrito está esperando ser llenado...</p>}
             </div>
 
-            {/* Entrega */}
-            <div className="mb-6 bg-gray-50 p-4 rounded border border-gray-200">
-              <h3 className="font-bold text-sm mb-3 uppercase">Método de Entrega</h3>
-              <div className="flex gap-6 mb-4">
-                <label className="flex items-center gap-2 cursor-pointer text-sm font-bold">
-                  <input type="radio" checked={deliveryMethod === 'retiro'} onChange={() => setDeliveryMethod('retiro')} className="accent-[#d4af37]" /> Retiro
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer text-sm font-bold">
-                  <input type="radio" checked={deliveryMethod === 'envio'} onChange={() => setDeliveryMethod('envio')} className="accent-[#d4af37]" /> Envío
-                </label>
-              </div>
-              {deliveryMethod === 'envio' && (
-                <div className="space-y-2 animate-fade-in">
-                  <input 
-                    type="text" placeholder="Dirección y Altura" 
-                    value={address} onChange={(e) => setAddress(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded text-sm focus:border-[#d4af37] outline-none" 
-                  />
-                  <input 
-                    type="text" placeholder="Barrio / Localidad" 
-                    value={zone} onChange={(e) => setZone(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded text-sm focus:border-[#d4af37] outline-none" 
-                  />
+            {/* Opciones de Entrega */}
+            {cart.length > 0 && (
+              <div className="bg-gray-50 p-5 rounded-2xl mb-8 border border-gray-100 shadow-inner">
+                <p className="font-black text-[10px] mb-4 uppercase text-gray-500 tracking-widest">Información de Entrega</p>
+                <div className="flex gap-4 mb-5 text-xs font-bold">
+                  <button 
+                    onClick={() => setDeliveryMethod('retiro')}
+                    className={`flex-1 py-3 rounded-xl border transition-all ${deliveryMethod === 'retiro' ? 'bg-black text-white border-black shadow-lg scale-105' : 'bg-white text-gray-400 border-gray-200'}`}
+                  >
+                    Retiro Local
+                  </button>
+                  <button 
+                    onClick={() => setDeliveryMethod('envio')}
+                    className={`flex-1 py-3 rounded-xl border transition-all ${deliveryMethod === 'envio' ? 'bg-black text-white border-black shadow-lg scale-105' : 'bg-white text-gray-400 border-gray-200'}`}
+                  >
+                    Envío Moto
+                  </button>
                 </div>
-              )}
-            </div>
-
-            {/* Footer Modal */}
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center mb-6 text-xl font-bold">
-                <span>TOTAL:</span>
-                <span className="text-[#d4af37]">{CONFIG.currencySymbol}{formatPrice(calculateTotal())}</span>
+                {deliveryMethod === 'envio' && (
+                  <div className="flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-300">
+                    <input type="text" placeholder="Calle y número exacto" value={address} onChange={(e) => setAddress(e.target.value)} className="p-4 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 ring-[#d4af37]/20 shadow-sm" />
+                    <input type="text" placeholder="Barrio / Zona / Localidad" value={zone} onChange={(e) => setZone(e.target.value)} className="p-4 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 ring-[#d4af37]/20 shadow-sm" />
+                  </div>
+                )}
               </div>
-              <button 
-                onClick={handleCheckout}
+            )}
+
+            <div className="flex flex-col gap-4">
+               <div className="flex justify-between items-center px-2">
+                  <span className="font-bold text-gray-400 text-xs uppercase tracking-widest">Total Final</span>
+                  <span className="font-black text-3xl text-black tracking-tighter">{CONFIG.currencySymbol}{formatPrice(calculateTotal())}</span>
+               </div>
+               <button 
+                onClick={handleCheckout} 
                 disabled={cart.length === 0}
-                className="w-full bg-green-600 text-white font-bold py-4 rounded-lg uppercase flex justify-center items-center gap-3 hover:bg-green-700 disabled:opacity-50 transition-all shadow-lg"
+                className="w-full bg-[#25D366] text-white font-black py-5 rounded-2xl uppercase text-xs flex justify-center items-center gap-3 hover:opacity-90 active:scale-95 transition-all shadow-xl shadow-green-200 disabled:grayscale disabled:opacity-50"
               >
-                <i className="fab fa-whatsapp text-2xl"></i> Finalizar Compra
+                <i className="fab fa-whatsapp text-2xl"></i> Confirmar Pedido
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* FontAwesome Loader (Para no romper el diseño mientras migramos iconos) */}
+      {/* FontAwesome Loader */}
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-      
-      <style jsx global>{`
-        @keyframes slide-up {
-          from { transform: translateY(100%); }
-          to { transform: translateY(0); }
-        }
-        .animate-slide-up { animation: slide-up 0.3s ease-out forwards; }
-        .animate-fade-in { opacity: 0; animation: fadeIn 0.3s forwards; }
-        @keyframes fadeIn { to { opacity: 1; } }
-      `}</style>
     </div>
   );
 }
