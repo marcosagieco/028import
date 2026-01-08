@@ -44,10 +44,9 @@ export default function Home() {
   const [zone, setZone] = useState('');
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [firebaseReady, setFirebaseReady] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
-  // Instancias de Firebase
+  // Inicialización de Firebase
   const firebaseRefs = useMemo(() => {
     if (typeof window === "undefined") return { auth: null, db: null };
     try {
@@ -62,16 +61,17 @@ export default function Home() {
       const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
       return { auth: getAuth(app), db: getFirestore(app) };
     } catch (error) {
+      console.error("Firebase Init Error:", error);
       return { auth: null, db: null };
     }
   }, []);
 
   useEffect(() => {
-    if (firebaseRefs.auth) {
-      signInAnonymously(firebaseRefs.auth)
-        .then(() => setFirebaseReady(true))
-        .catch(() => setFirebaseReady(true)); // Continuar aunque falle auth para no bloquear al usuario
+    // REINICIO DE ESTADO AL CARGAR/VOLVER
+    setIsSending(false);
 
+    if (firebaseRefs.auth) {
+      signInAnonymously(firebaseRefs.auth).catch(console.error);
       const unsubscribe = onAuthStateChanged(firebaseRefs.auth, (u) => setUser(u));
       return () => unsubscribe();
     }
@@ -127,18 +127,24 @@ export default function Home() {
 
     try {
       if (firebaseRefs.db) {
+        // Guardar en colección 'orders' (asegurarse que coincida con Admin)
         await addDoc(collection(firebaseRefs.db, 'orders'), {
           userId: user?.uid || "anon",
           items: cart.map(i => ({ name: i.name, qty: i.qty, price: unitPrice })),
           total: finalTotal,
           delivery: deliveryMethod,
+          address: address || '',
+          zone: zone || '',
           createdAt: serverTimestamp()
         });
       }
+      // Pequeña pausa para asegurar el envío de datos antes de salir
+      setTimeout(() => {
+        window.location.href = whatsappUrl;
+      }, 500);
     } catch (e) {
       console.error("Error al guardar pedido:", e);
-    } finally {
-      // Redirección inmediata
+      // Si falla Firebase, igual mandamos a WhatsApp para no perder la venta
       window.location.href = whatsappUrl;
     }
   };
@@ -290,10 +296,10 @@ export default function Home() {
                <button 
                 onClick={handleCheckout} 
                 disabled={isSending}
-                className={`w-full ${isSending ? 'bg-gray-400' : 'bg-[#25D366]'} text-white font-black py-4 rounded-xl uppercase text-xs flex justify-center items-center gap-2 transition-all`}
+                className={`w-full ${isSending ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#25D366] hover:scale-[1.02]'} text-white font-black py-4 rounded-xl uppercase text-xs flex justify-center items-center gap-2 transition-all`}
               >
                 {isSending ? (
-                  <>Cargando...</>
+                  <>Procesando pedido...</>
                 ) : (
                   <>
                     <i className="fab fa-whatsapp text-xl"></i> Finalizar por WhatsApp
