@@ -28,14 +28,15 @@ export default function AdminPage() {
   const firebaseRefs = useMemo(() => {
     if (typeof window === "undefined") return { auth: null, db: null };
     try {
-      const firebaseConfig = {
-        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-      };
+        const firebaseConfig = {
+  apiKey: "AIzaSyAMLaIvO0xGh6aD_g-_jkeF2MS7gUOpNow",
+  authDomain: "paginadeventa028.firebaseapp.com",
+  projectId: "paginadeventa028",
+  storageBucket: "paginadeventa028.firebasestorage.app",
+  messagingSenderId: "277653743644",
+  appId: "1:277653743644:web:856f27f62da628a25717d9"
+};
+      
       const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
       return { auth: getAuth(app), db: getFirestore(app) };
     } catch (error) {
