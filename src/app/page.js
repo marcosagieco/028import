@@ -1,25 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-// Importamos solo lo necesario de Firebase
+import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
-
-// --- CONFIGURACIÓN DE FIREBASE (EXTERNA PARA EVITAR DUPLICADOS) ---
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-};
-
-// Inicialización segura de Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
 
 // --- CONFIGURACIÓN DE LA TIENDA ---
 const CONFIG = {
@@ -60,25 +44,49 @@ export default function Home() {
   const [zone, setZone] = useState('');
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [firebaseReady, setFirebaseReady] = useState(false);
 
-  useEffect(() => {
-    // Autenticación anónima al cargar
-    signInAnonymously(auth).catch(() => {});
-    const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
-    return () => unsubscribe();
+  // Instancias de Firebase con control de errores
+  const firebaseRefs = useMemo(() => {
+    if (typeof window === "undefined") return { auth: null, db: null };
+    
+    try {
+      const firebaseConfig = {
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+      };
+
+      const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+      return { auth: getAuth(app), db: getFirestore(app) };
+    } catch (error) {
+      console.error("Error inicializando Firebase:", error);
+      return { auth: null, db: null };
+    }
   }, []);
 
+  useEffect(() => {
+    if (firebaseRefs.auth) {
+      signInAnonymously(firebaseRefs.auth)
+        .then(() => setFirebaseReady(true))
+        .catch(err => console.error("Error Auth Anónima:", err));
+
+      const unsubscribe = onAuthStateChanged(firebaseRefs.auth, (u) => setUser(u));
+      return () => unsubscribe();
+    }
+  }, [firebaseRefs]);
+
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
-  
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
-  
   const getUnitPromoPrice = () => {
     const count = getTotalItems();
     if (count >= 5) return 24500;
     if (count >= 2) return 26000;
     return 27000;
   };
-
   const calculateTotal = () => cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice()), 0);
 
   const addToCart = (product) => {
@@ -100,8 +108,8 @@ export default function Home() {
   };
 
   const handleCheckout = async () => {
-    if (!user) return alert("Cargando sesión segura...");
-    if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) return alert("Por favor completa los datos de envío.");
+    if (!firebaseReady) return alert("Conectando con el servidor seguro...");
+    if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) return alert("Completa los datos de envío.");
 
     const unitPrice = getUnitPromoPrice();
     const finalTotal = calculateTotal();
@@ -114,8 +122,8 @@ export default function Home() {
     msg += deliveryMethod === 'envio' ? `*ENVIO:* ${address}, ${zone}\n` : `*RETIRO EN LOCAL*\n`;
 
     try {
-      await addDoc(collection(db, 'orders'), {
-        userId: user.uid,
+      await addDoc(collection(firebaseRefs.db, 'orders'), {
+        userId: user?.uid || "anon",
         items: cart.map(i => ({ name: i.name, qty: i.qty, price: unitPrice })),
         total: finalTotal,
         delivery: deliveryMethod,
@@ -123,8 +131,7 @@ export default function Home() {
       });
       window.open(`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
     } catch (e) {
-      console.error("Error al guardar pedido:", e);
-      // Intentamos abrir WhatsApp de todos modos si falla la base de datos
+      console.error("Error Firestore:", e);
       window.open(`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
     }
   };
@@ -134,13 +141,13 @@ export default function Home() {
       {/* Navbar con Logo */}
       <nav className="bg-[#121212] py-3 px-4 sticky top-0 z-40 border-b border-[#d4af37]/30 text-white shadow-xl">
         <div className="container mx-auto flex justify-between items-center">
-          <img src={CONFIG.logoImage} alt="028 Logo" className="h-12 w-auto object-contain" />
+          <img src={CONFIG.logoImage} alt="028 Logo" className="h-10 md:h-12 w-auto object-contain" />
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-xl p-2">
             <i className={`fas ${isMenuOpen ? 'fa-times' : 'fa-bars'}`}></i>
           </button>
         </div>
         {isMenuOpen && (
-          <div className="absolute top-full left-0 w-full bg-[#121212] p-6 flex flex-col gap-4 text-center font-bold border-t border-[#d4af37]/20 shadow-2xl animate-in fade-in slide-in-from-top-2">
+          <div className="absolute top-full left-0 w-full bg-[#121212] p-6 flex flex-col gap-4 text-center font-bold border-t border-[#d4af37]/20 shadow-2xl">
             <a href="#catalogo" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors">CATÁLOGO</a>
             <button onClick={() => {setIsCartOpen(true); setIsMenuOpen(false)}} className="hover:text-[#d4af37] transition-colors uppercase">MI CARRITO</button>
           </div>
@@ -148,55 +155,54 @@ export default function Home() {
       </nav>
 
       {/* Banner Principal */}
-      <header className="relative h-[35vh] md:h-[50vh] flex items-center justify-center bg-black overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center opacity-40 scale-105" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
+      <header className="relative h-[30vh] md:h-[45vh] flex items-center justify-center bg-black overflow-hidden">
+        <div className="absolute inset-0 bg-cover bg-center opacity-50" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
         <div className="relative z-10 text-center px-4">
-          <h1 className="text-5xl md:text-7xl font-bold text-[#d4af37] tracking-tighter uppercase drop-shadow-2xl">
+          <h1 className="text-4xl md:text-7xl font-bold text-[#d4af37] tracking-tighter uppercase drop-shadow-2xl">
             {CONFIG.brandName}{CONFIG.brandSuffix}
           </h1>
-          <p className="text-white text-xs md:text-sm tracking-[0.3em] font-light mt-2 uppercase opacity-80">Premium Boutique & Lifestyle</p>
+          <p className="text-white text-[10px] md:text-xs tracking-[0.4em] font-light mt-2 uppercase opacity-80">Premium Boutique & Lifestyle</p>
         </div>
       </header>
 
       {/* Catálogo de Productos */}
-      <section id="catalogo" className="py-10 px-4 max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-2">
-          <h2 className="text-2xl font-bold border-l-4 border-[#d4af37] pl-4 uppercase tracking-tight">Catálogo Exclusivo</h2>
-          <div className="bg-[#d4af37] text-black px-3 py-1 text-[10px] md:text-xs font-black rounded uppercase tracking-widest shadow-lg">
-            2+ unidades: $26.000 | 5+ unidades: $24.500
+      <section id="catalogo" className="py-8 px-4 max-w-6xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-3">
+          <h2 className="text-xl md:text-2xl font-black border-l-4 border-[#d4af37] pl-4 uppercase tracking-tight">Selección Exclusiva</h2>
+          <div className="bg-[#d4af37] text-black px-3 py-1 text-[10px] font-black rounded uppercase tracking-widest">
+            2+ un: $26.000 | 5+ un: $24.500
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {productsDB.map(p => {
             const inCart = cart.find(i => i.id === p.id);
             return (
-              <div key={p.id} className="bg-white border border-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
+              <div key={p.id} className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm flex flex-col hover:shadow-lg transition-all duration-300">
                 <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
-                  <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
                   {p.tag && (
-                    <span className="absolute top-3 left-3 bg-[#d4af37] text-black text-[9px] font-black px-2 py-1 uppercase rounded-sm shadow-md">
+                    <span className="absolute top-2 left-2 bg-black text-[#d4af37] text-[8px] font-black px-2 py-1 uppercase rounded-sm">
                       {p.tag}
                     </span>
                   )}
                 </div>
-                <div className="p-4 flex-grow flex flex-col">
-                  <h3 className="font-bold text-xs md:text-sm uppercase mb-1 text-gray-800 line-clamp-1">{p.name}</h3>
-                  <p className="text-[10px] text-gray-400 mb-3 italic">Imported Quality</p>
+                <div className="p-3 md:p-4 flex-grow flex flex-col">
+                  <h3 className="font-bold text-[11px] md:text-sm uppercase mb-1 text-gray-800 line-clamp-1">{p.name}</h3>
                   <div className="mt-auto">
-                    <p className="text-[#d4af37] font-black text-lg mb-3 tracking-tighter">{CONFIG.currencySymbol}{formatPrice(p.price)}</p>
+                    <p className="text-[#d4af37] font-black text-base md:text-lg mb-3 tracking-tighter">{CONFIG.currencySymbol}{formatPrice(p.price)}</p>
                     {inCart ? (
-                      <div className="flex items-center justify-between bg-black text-white h-10 rounded-md overflow-hidden shadow-inner font-bold">
-                        <button className="w-10 h-full hover:bg-gray-800 transition-colors" onClick={() => changeQty(p.id, -1)}>-</button>
-                        <span className="text-sm">{inCart.qty}</span>
-                        <button className="w-10 h-full hover:bg-gray-800 transition-colors" onClick={() => addToCart(p)}>+</button>
+                      <div className="flex items-center justify-between bg-black text-white h-9 rounded-md font-bold text-xs">
+                        <button className="w-9 h-full" onClick={() => changeQty(p.id, -1)}>-</button>
+                        <span>{inCart.qty}</span>
+                        <button className="w-9 h-full" onClick={() => addToCart(p)}>+</button>
                       </div>
                     ) : (
                       <button 
                         onClick={() => addToCart(p)} 
-                        className="w-full bg-[#d4af37] hover:bg-black hover:text-[#d4af37] py-3 text-[10px] font-bold uppercase rounded-md transition-all duration-300 shadow-md"
+                        className="w-full bg-[#d4af37] hover:bg-black hover:text-[#d4af37] py-2.5 text-[10px] font-bold uppercase rounded-md transition-all"
                       >
-                        Añadir al Carrito
+                        Añadir
                       </button>
                     )}
                   </div>
@@ -207,94 +213,83 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer Flotante del Carrito */}
+      {/* Footer Flotante */}
       {getTotalItems() > 0 && (
-        <div className="fixed bottom-0 left-0 w-full bg-[#121212]/95 backdrop-blur-md p-5 border-t border-[#d4af37]/40 text-white flex justify-between items-center z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-full duration-500">
+        <div className="fixed bottom-0 left-0 w-full bg-[#121212]/95 backdrop-blur-md p-4 border-t border-[#d4af37]/40 text-white flex justify-between items-center z-50 shadow-2xl">
           <div>
-            <p className="text-[9px] text-[#d4af37] font-black uppercase tracking-[0.2em] mb-1">Total Estimado</p>
-            <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-black tracking-tighter">{CONFIG.currencySymbol}{formatPrice(calculateTotal())}</p>
-              <span className="text-[10px] text-gray-400">({getTotalItems()} ítems)</span>
-            </div>
+            <p className="text-[9px] text-[#d4af37] font-black uppercase tracking-widest">Total</p>
+            <p className="text-xl font-black tracking-tighter">{CONFIG.currencySymbol}{formatPrice(calculateTotal())}</p>
           </div>
           <button 
             onClick={() => setIsCartOpen(true)} 
-            className="bg-[#d4af37] text-black px-8 py-3 rounded-md font-black text-xs uppercase shadow-[0_0_15px_rgba(212,175,55,0.3)] hover:scale-105 active:scale-95 transition-all"
+            className="bg-[#d4af37] text-black px-6 py-2.5 rounded-md font-black text-[11px] uppercase"
           >
-            Pagar Pedido
+            Ver Pedido
           </button>
         </div>
       )}
 
-      {/* Modal del Carrito Pro */}
+      {/* Modal del Carrito */}
       {isCartOpen && (
         <div className="fixed inset-0 z-[60] flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} />
-          <div className="relative bg-white p-6 rounded-t-[2.5rem] max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom-full duration-300">
-            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" onClick={() => setIsCartOpen(false)} />
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-black uppercase tracking-tight">Mi Selección</h2>
-              <button onClick={() => setIsCartOpen(false)} className="text-gray-300 hover:text-black transition-colors">
-                <i className="fas fa-times text-2xl"></i>
+          <div className="absolute inset-0 bg-black/80" onClick={() => setIsCartOpen(false)} />
+          <div className="relative bg-white p-6 rounded-t-3xl max-h-[85vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-black uppercase">Resumen</h2>
+              <button onClick={() => setIsCartOpen(false)} className="text-gray-400">
+                <i className="fas fa-times text-xl"></i>
               </button>
             </div>
 
-            <div className="space-y-4 mb-8">
+            <div className="space-y-4 mb-6">
               {cart.map(item => (
-                <div key={item.id} className="flex justify-between items-center border-b border-gray-50 pb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                    </div>
+                <div key={item.id} className="flex justify-between items-center border-b border-gray-50 pb-3">
+                  <div className="flex items-center gap-3">
+                    <img src={item.image} className="w-10 h-10 rounded object-cover" alt="" />
                     <div>
-                      <p className="font-bold text-xs md:text-sm uppercase text-gray-800">{item.name}</p>
-                      <p className="text-[10px] text-gray-400 font-bold">{item.qty} unidad{item.qty > 1 ? 'es' : ''}</p>
+                      <p className="font-bold text-[11px] uppercase">{item.name}</p>
+                      <p className="text-[9px] text-gray-400">{item.qty} un.</p>
                     </div>
                   </div>
-                  <p className="font-black text-[#d4af37] text-sm tracking-tighter">{CONFIG.currencySymbol}{formatPrice(item.qty * getUnitPromoPrice())}</p>
+                  <p className="font-black text-[#d4af37] text-xs">{CONFIG.currencySymbol}{formatPrice(item.qty * getUnitPromoPrice())}</p>
                 </div>
               ))}
-              {cart.length === 0 && <p className="text-center py-12 text-gray-300 font-medium italic underline decoration-[#d4af37]/30">Tu carrito está esperando ser llenado...</p>}
             </div>
 
-            {/* Opciones de Entrega */}
-            {cart.length > 0 && (
-              <div className="bg-gray-50 p-5 rounded-2xl mb-8 border border-gray-100 shadow-inner">
-                <p className="font-black text-[10px] mb-4 uppercase text-gray-500 tracking-widest">Información de Entrega</p>
-                <div className="flex gap-4 mb-5 text-xs font-bold">
-                  <button 
-                    onClick={() => setDeliveryMethod('retiro')}
-                    className={`flex-1 py-3 rounded-xl border transition-all ${deliveryMethod === 'retiro' ? 'bg-black text-white border-black shadow-lg scale-105' : 'bg-white text-gray-400 border-gray-200'}`}
-                  >
-                    Retiro Local
-                  </button>
-                  <button 
-                    onClick={() => setDeliveryMethod('envio')}
-                    className={`flex-1 py-3 rounded-xl border transition-all ${deliveryMethod === 'envio' ? 'bg-black text-white border-black shadow-lg scale-105' : 'bg-white text-gray-400 border-gray-200'}`}
-                  >
-                    Envío Moto
-                  </button>
-                </div>
-                {deliveryMethod === 'envio' && (
-                  <div className="flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-300">
-                    <input type="text" placeholder="Calle y número exacto" value={address} onChange={(e) => setAddress(e.target.value)} className="p-4 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 ring-[#d4af37]/20 shadow-sm" />
-                    <input type="text" placeholder="Barrio / Zona / Localidad" value={zone} onChange={(e) => setZone(e.target.value)} className="p-4 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 ring-[#d4af37]/20 shadow-sm" />
-                  </div>
-                )}
+            <div className="bg-gray-50 p-4 rounded-xl mb-6">
+              <p className="font-bold text-[10px] mb-3 uppercase text-gray-500">Opciones de Entrega</p>
+              <div className="flex gap-3 mb-4 text-[10px] font-bold">
+                <button 
+                  onClick={() => setDeliveryMethod('retiro')}
+                  className={`flex-1 py-2 rounded-lg border ${deliveryMethod === 'retiro' ? 'bg-black text-white' : 'bg-white text-gray-400'}`}
+                >
+                  Retiro
+                </button>
+                <button 
+                  onClick={() => setDeliveryMethod('envio')}
+                  className={`flex-1 py-2 rounded-lg border ${deliveryMethod === 'envio' ? 'bg-black text-white' : 'bg-white text-gray-400'}`}
+                >
+                  Envío
+                </button>
               </div>
-            )}
+              {deliveryMethod === 'envio' && (
+                <div className="flex flex-col gap-2">
+                  <input type="text" placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} className="p-3 border rounded-lg text-xs outline-none focus:border-[#d4af37]" />
+                  <input type="text" placeholder="Barrio" value={zone} onChange={(e) => setZone(e.target.value)} className="p-3 border rounded-lg text-xs outline-none focus:border-[#d4af37]" />
+                </div>
+              )}
+            </div>
 
-            <div className="flex flex-col gap-4">
-               <div className="flex justify-between items-center px-2">
-                  <span className="font-bold text-gray-400 text-xs uppercase tracking-widest">Total Final</span>
-                  <span className="font-black text-3xl text-black tracking-tighter">{CONFIG.currencySymbol}{formatPrice(calculateTotal())}</span>
+            <div className="flex flex-col gap-3">
+               <div className="flex justify-between items-baseline">
+                  <span className="font-bold text-gray-400 text-[10px] uppercase">Final</span>
+                  <span className="font-black text-2xl text-black tracking-tighter">{CONFIG.currencySymbol}{formatPrice(calculateTotal())}</span>
                </div>
                <button 
                 onClick={handleCheckout} 
-                disabled={cart.length === 0}
-                className="w-full bg-[#25D366] text-white font-black py-5 rounded-2xl uppercase text-xs flex justify-center items-center gap-3 hover:opacity-90 active:scale-95 transition-all shadow-xl shadow-green-200 disabled:grayscale disabled:opacity-50"
+                className="w-full bg-[#25D366] text-white font-black py-4 rounded-xl uppercase text-xs flex justify-center items-center gap-2"
               >
-                <i className="fab fa-whatsapp text-2xl"></i> Confirmar Pedido
+                <i className="fab fa-whatsapp text-xl"></i> Finalizar por WhatsApp
               </button>
             </div>
           </div>
