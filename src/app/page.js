@@ -2,23 +2,57 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
+import { 
+  getFirestore, 
+  collection, 
+  doc, 
+  addDoc, 
+  onSnapshot, 
+  serverTimestamp 
+} from "firebase/firestore";
+import { 
+  getAuth, 
+  signInAnonymously, 
+  onAuthStateChanged,
+  signInWithCustomToken
+} from "firebase/auth";
+import { 
+  ShoppingCart, 
+  Menu, 
+  X, 
+  Plus, 
+  Minus 
+} from 'lucide-react';
 
-// --- CONFIGURACIÓN DE LA TIENDA ---
+// --- CONFIGURACIÓN DE FIREBASE (Misma lógica que Admin) ---
+const firebaseConfig = typeof __firebase_config !== 'undefined' 
+  ? JSON.parse(__firebase_config) 
+  : {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
+      authDomain: "shop-028.firebaseapp.com",
+      projectId: "shop-028",
+      storageBucket: "shop-028.appspot.com",
+      messagingSenderId: "12345",
+      appId: "12345"
+    };
+
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const db = getFirestore(app);
+const auth = getAuth(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : (firebaseConfig.projectId || '028import');
+
+// --- CONFIGURACIÓN DE TIENDA ---
 const CONFIG = {
   whatsappNumber: "5491155669960",
   brandName: "028",
-  brandSuffix: "import",
   currencySymbol: "$",
-  shippingText: "Espero confirmacion para abonar",
-  bannerImage: "https://i.postimg.cc/wBdHsm94/banner-web.jpg", 
+  bannerImage: "https://i.postimg.cc/wBdHsm94/banner-web.jpg",
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png"
 };
 
 const INITIAL_PRODUCTS = [
-  // Nicotina
-  { id: 1, name: "BAJA SPLASH", price: 27000, category: "VAPES NICOTINA", tag: "Nuevo", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
+  // Nicotina (1-17)
+  { id: 1, name: "BAJA SPLASH", price: 27000, category: "VAPES NICOTINA", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
   { id: 2, name: "BLUE RAZZ ICE", price: 27000, category: "VAPES NICOTINA", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
   { id: 3, name: "CHERRY FUSE", price: 27000, category: "VAPES NICOTINA", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png" },
   { id: 4, name: "CHERRY STRAZZ", price: 27000, category: "VAPES NICOTINA", tag: "Destacado", image: "https://i.postimg.cc/7PFVsTG2/CHERRY-STRAZZ.jpg" },
@@ -35,176 +69,253 @@ const INITIAL_PRODUCTS = [
   { id: 15, name: "SUMMER SPLASH", price: 27000, category: "VAPES NICOTINA", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png" },
   { id: 16, name: "TIGERS BLOOD", price: 27000, category: "VAPES NICOTINA", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg" },
   { id: 17, name: "WATERMELON ICE", price: 27000, category: "VAPES NICOTINA", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp" },
-  // THC
+  // THC (18-20)
   { id: 18, name: "BLOW THC", price: 60000, category: "VAPES THC", tag: "THC", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp" },
   { id: 19, name: "TORCH 7.5G", price: 53000, category: "VAPES THC", tag: "THC", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png" },
   { id: 20, name: "PHENOM 6G", price: 56000, category: "VAPES THC", tag: "THC", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg" },
-  // Cargadores
+  // Cargadores (21-24)
   { id: 21, name: "CARGADOR 20W", price: 16500, category: "CARGADORES", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
   { id: 22, name: "CARGADOR 35W", price: 20500, category: "CARGADORES", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg" },
   { id: 23, name: "CABLE USB-C A USB-C", price: 13500, category: "CARGADORES", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg" },
   { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, category: "CARGADORES", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg" }
 ];
 
-const IconCart = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.56-7.43H5.12"/></svg>;
-const IconMenu = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>;
-const IconX = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
-
-export default function Home() {
-  const [cart, setCart] = useState([]);
+export default function App() {
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  const [cart, setCart] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('TODOS');
+  const [user, setUser] = useState(null);
 
-  const firebase = useMemo(() => {
-    if (typeof window === "undefined") return { auth: null, db: null, appId: 'default' };
-    const config = {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+  // 1. Autenticación (Regla 3)
+  useEffect(() => {
+    const initAuth = async () => {
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        await signInWithCustomToken(auth, __initial_auth_token);
+      } else {
+        await signInAnonymously(auth);
+      }
     };
-    if (!config.apiKey) return { auth: null, db: null, appId: '028import' };
-    const appInstance = !getApps().length ? initializeApp(config) : getApp();
-    return { auth: getAuth(appInstance), db: getFirestore(appInstance), appId: config.projectId || '028import' };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    return () => unsubscribe();
   }, []);
 
+  // 2. Sincronización con Lógica de ID String (Misma que Admin)
   useEffect(() => {
-    if (!firebase.auth) return;
-    onAuthStateChanged(firebase.auth, (u) => {
-      if (!u) signInAnonymously(firebase.auth).catch(() => {});
-      setUser(u);
-    });
-  }, [firebase.auth]);
-
-  useEffect(() => {
-    if (!firebase.db) return;
-    const prodsRef = collection(firebase.db, 'artifacts', firebase.appId, 'public', 'data', 'products');
+    if (!user) return;
+    
+    // Ruta estricta obligatoria (Regla 1)
+    const prodsRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
+    
     const unsub = onSnapshot(prodsRef, (snap) => {
       const dbData = {};
-      snap.forEach(d => dbData[d.id] = d.data());
-      setProducts(prev => prev.map(p => ({
-        ...p,
-        price: dbData[p.id]?.price ?? p.price,
-        inStock: dbData[p.id]?.inStock ?? true
-      })));
-    });
+      snap.forEach(d => {
+        dbData[d.id] = d.data(); // d.id es el String de Firebase
+      });
+      
+      setProducts(prev => INITIAL_PRODUCTS.map(p => {
+        // Buscamos el ID numérico convertido a texto para que coincida con Firebase
+        const remote = dbData[p.id.toString()]; 
+        return {
+          ...p,
+          price: remote?.price ?? p.price,
+          inStock: remote?.inStock ?? true
+        };
+      }));
+    }, (error) => console.error("Firestore sync error:", error));
+
     return () => unsub();
-  }, [firebase.db, firebase.appId]);
+  }, [user]);
 
   const formatP = (n) => n?.toLocaleString('es-AR');
+  
   const getUnitPrice = (p) => {
     if (p.category !== "VAPES NICOTINA") return p.price;
     const count = cart.filter(i => i.category === "VAPES NICOTINA").reduce((a, b) => a + b.qty, 0);
-    return count >= 5 ? 24500 : (count >= 2 ? 26000 : p.price);
+    if (count >= 5) return 24500;
+    if (count >= 2) return 26000;
+    return p.price;
   };
+
   const totalCart = cart.reduce((acc, item) => acc + (getUnitPrice(item) * item.qty), 0);
 
   const addToCart = (p) => {
     if (p.inStock === false) return;
     setCart(prev => {
-      const ex = prev.find(i => i.id === p.id);
-      return ex ? prev.map(i => i.id === p.id ? { ...i, qty: i.qty + 1 } : i) : [...prev, { ...p, qty: 1 }];
+      const exists = prev.find(i => i.id === p.id);
+      if (exists) return prev.map(i => i.id === p.id ? { ...i, qty: i.qty + 1 } : i);
+      return [...prev, { ...p, qty: 1 }];
     });
   };
 
-  const changeQty = (id, delta) => {
-    setCart(prev => prev.map(i => i.id === id ? { ...i, qty: Math.max(0, i.qty + delta) } : i).filter(i => i.qty > 0));
+  const removeFromCart = (id) => {
+    setCart(prev => prev.map(i => i.id === id ? { ...i, qty: i.qty - 1 } : i).filter(i => i.qty > 0));
   };
 
   const handleCheckout = async () => {
-    if (!firebase.db) return;
-    const orderData = { 
-      items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPrice(i) })), 
-      total: totalCart, 
-      createdAt: serverTimestamp() 
-    };
-    await addDoc(collection(firebase.db, 'artifacts', firebase.appId, 'public', 'data', 'orders'), orderData);
-    const msg = `*Pedido 028*\n${cart.map(i => `• ${i.qty}x ${i.name}`).join('\n')}\n*Total:* $${formatP(totalCart)}`;
-    window.location.href = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+    if (!user) return;
+    try {
+      const ordersRef = collection(db, 'artifacts', appId, 'public', 'data', 'orders');
+      await addDoc(ordersRef, {
+        items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPrice(i) })),
+        total: totalCart,
+        createdAt: serverTimestamp(),
+        status: 'pendiente'
+      });
+
+      const msg = `*Pedido 028*\n${cart.map(i => `• ${i.qty}x ${i.name}`).join('\n')}\n\n*Total:* $${formatP(totalCart)}`;
+      window.location.href = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+    } catch (error) {
+      console.error("Checkout error:", error);
+    }
   };
 
   return (
-    <div className="bg-[#f4f4f4] min-h-screen font-sans pb-24">
-      <nav className="bg-[#121212] py-3 px-4 sticky top-0 z-50 border-b border-[#d4af37]/30 text-white flex justify-between items-center shadow-xl">
-        <img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain" />
-        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-[#d4af37] p-2">{isMenuOpen ? <IconX /> : <IconMenu />}</button>
+    <div className="min-h-screen bg-[#fafafa] font-sans pb-24">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+        body { font-family: 'Montserrat', sans-serif; }
+      `}</style>
+
+      {/* Navbar */}
+      <nav className="bg-[#0a0a0a] p-4 sticky top-0 z-50 border-b border-[#d4af37]/20 flex justify-between items-center shadow-xl">
+        <img src={CONFIG.logoImage} className="h-10 object-contain" alt="028" />
+        <button onClick={() => setIsMenuOpen(true)} className="text-[#d4af37] p-2">
+          <Menu size={28}/>
+        </button>
       </nav>
 
+      {/* Menú Lateral */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-[60] bg-[#121212]/95 flex flex-col items-center justify-center gap-6 p-10">
-          <button onClick={() => setIsMenuOpen(false)} className="text-white font-bold text-2xl uppercase">Tienda</button>
-          <button onClick={() => {setIsCartOpen(true); setIsMenuOpen(false)}} className="text-white font-bold text-2xl uppercase">Carrito</button>
-          <a href="/admin" className="text-gray-500 font-bold text-sm tracking-widest mt-10 border border-gray-800 px-6 py-2 rounded-full uppercase">Acceso Admin</a>
+        <div className="fixed inset-0 z-[60] bg-black/95 flex flex-col items-center justify-center gap-8 p-10 animate-in fade-in duration-300">
+          <button onClick={() => setIsMenuOpen(false)} className="absolute top-6 right-6 text-white p-2"><X size={32}/></button>
+          <button onClick={() => setIsMenuOpen(false)} className="text-white font-black text-3xl hover:text-[#d4af37] transition-all">TIENDA</button>
+          <button onClick={() => {setIsCartOpen(true); setIsMenuOpen(false)}} className="text-white font-black text-3xl hover:text-[#d4af37] transition-all tracking-tighter">MI CARRITO</button>
+          <a href="/admin" className="text-slate-700 font-bold text-xs tracking-widest mt-10 hover:text-white border border-slate-900 px-8 py-3 rounded-full uppercase transition-colors">Admin Panel</a>
         </div>
       )}
 
-      <header className="relative h-[25vh] md:h-[45vh] bg-black overflow-hidden flex items-center justify-center">
-        <div className="absolute inset-0 bg-cover bg-no-repeat opacity-70" style={{ backgroundImage: `url(${CONFIG.bannerImage})`, backgroundPosition: 'center 30%' }} />
+      {/* Banner Optimizado (Opacidad 70% y encuadre 30%) */}
+      <header className="relative h-[28vh] md:h-[55vh] bg-black overflow-hidden flex items-center justify-center shadow-2xl">
+        <div 
+          className="absolute inset-0 bg-cover bg-no-repeat opacity-70"
+          style={{ backgroundImage: `url(${CONFIG.bannerImage})`, backgroundPosition: 'center 30%' }}
+        />
       </header>
 
-      <div className="sticky top-[64px] z-40 bg-white/90 backdrop-blur-md border-b flex overflow-x-auto no-scrollbar shadow-sm">
+      {/* Categorías Sticky */}
+      <div className="sticky top-[73px] z-40 bg-white/95 backdrop-blur-md border-b flex overflow-x-auto no-scrollbar shadow-sm">
         {['TODOS', 'VAPES NICOTINA', 'VAPES THC', 'CARGADORES'].map(cat => (
-          <button key={cat} onClick={() => setActiveCategory(cat)} className={`flex-1 py-4 px-6 text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat ? 'border-b-2 border-[#d4af37] text-black' : 'text-gray-400'}`}>
+          <button 
+            key={cat} 
+            onClick={() => setActiveCategory(cat)}
+            className={`flex-1 py-5 px-6 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeCategory === cat ? 'border-b-[3px] border-[#d4af37] text-black' : 'text-gray-400'}`}
+          >
             {cat.replace('VAPES ', '')}
           </button>
         ))}
       </div>
 
-      <section className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto mt-8">
-        {products.filter(p => activeCategory === 'TODOS' || p.category === activeCategory).map(p => (
-          <div key={p.id} className={`bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col hover:shadow-lg transition-all ${p.inStock === false ? 'opacity-60 grayscale' : ''}`}>
-            <div className="relative aspect-square">
-              <img src={p.image} className="w-full h-full object-cover" alt={p.name} />
-              {p.inStock === false && <div className="absolute inset-0 flex items-center justify-center bg-black/60"><span className="text-white font-black text-xs uppercase">SIN STOCK</span></div>}
-            </div>
-            <div className="p-4 flex-grow flex flex-col">
-              <h3 className="font-bold text-[11px] md:text-sm uppercase mb-1 text-gray-800 line-clamp-2 leading-tight h-10">{p.name}</h3>
-              <p className="font-black text-lg mb-4 text-[#d4af37]">${formatP(p.price)}</p>
-              <button onClick={() => addToCart(p)} disabled={p.inStock === false} className="w-full bg-[#d4af37] text-black py-3 rounded-xl font-black text-[10px] uppercase transition-all active:scale-95 disabled:bg-gray-200">
-                {p.inStock === false ? 'Agotado' : 'Añadir'}
-              </button>
-            </div>
-          </div>
-        ))}
+      {/* Catálogo de Productos */}
+      <section className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-10 max-w-7xl mx-auto mt-10">
+        {products
+          .filter(p => activeCategory === 'TODOS' || p.category === activeCategory)
+          .map(p => {
+            const inCart = cart.find(i => i.id === p.id);
+            return (
+              <div key={p.id} className={`bg-white rounded-[2.5rem] overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.03)] flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ${p.inStock === false ? 'opacity-60 grayscale' : ''}`}>
+                <div className="relative aspect-square bg-slate-50">
+                  <img src={p.image} className="w-full h-full object-cover" alt={p.name} />
+                  {p.inStock === false && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                      <span className="text-white font-black text-[11px] uppercase tracking-tighter bg-rose-600 px-4 py-1.5 rounded-full">AGOTADO</span>
+                    </div>
+                  )}
+                  {p.tag && p.inStock !== false && (
+                    <span className="absolute top-4 left-4 bg-black text-[#d4af37] text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-lg">
+                      {p.tag}
+                    </span>
+                  )}
+                </div>
+                <div className="p-5 md:p-8 flex-grow flex flex-col">
+                  <h3 className="font-bold text-[12px] md:text-[14px] uppercase mb-3 line-clamp-2 min-h-[2.5rem] leading-tight text-slate-900">{p.name}</h3>
+                  <div className="mt-auto">
+                    <p className="font-black text-xl md:text-2xl mb-5 tracking-tighter text-slate-900">${formatP(p.price)}</p>
+                    {inCart ? (
+                      <div className="flex items-center justify-between bg-black text-white h-12 rounded-3xl font-bold overflow-hidden shadow-xl">
+                        <button className="w-12 h-full hover:bg-slate-800 flex items-center justify-center" onClick={() => removeFromCart(p.id)}><Minus size={16}/></button>
+                        <span className="text-lg">{inCart.qty}</span>
+                        <button className="w-12 h-full hover:bg-slate-800 flex items-center justify-center" onClick={() => addToCart(p)}><Plus size={16}/></button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => addToCart(p)}
+                        disabled={p.inStock === false}
+                        className="w-full bg-[#d4af37] text-black py-4 rounded-3xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 disabled:bg-slate-100 disabled:text-slate-400"
+                      >
+                        {p.inStock === false ? 'SIN STOCK' : 'Añadir al Carrito'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
       </section>
 
+      {/* Botón Flotante de Pedido */}
       {cart.length > 0 && (
-        <div className="fixed bottom-0 left-0 w-full bg-[#121212]/95 p-4 border-t border-[#d4af37]/30 text-white flex justify-between items-center z-50 shadow-2xl">
-          <div><p className="text-[10px] text-[#d4af37] font-black uppercase tracking-widest">Total</p><p className="text-xl font-black">${formatP(totalCart)}</p></div>
-          <button onClick={() => setIsCartOpen(true)} className="bg-[#d4af37] text-black px-6 py-3 rounded-xl font-black text-[11px] uppercase shadow-lg">Ver Pedido</button>
+        <div className="fixed bottom-0 left-0 w-full bg-[#0a0a0a]/98 backdrop-blur-xl p-6 border-t border-[#d4af37]/30 text-white flex justify-between items-center z-50 animate-in slide-in-from-bottom duration-500 shadow-[0_-20px_50px_rgba(0,0,0,0.3)]">
+          <div>
+            <p className="text-[10px] text-[#d4af37] font-black mb-1 uppercase tracking-widest">Total del pedido</p>
+            <p className="text-3xl font-black tracking-tighter">${formatP(totalCart)}</p>
+          </div>
+          <button 
+            onClick={() => setIsCartOpen(true)} 
+            className="bg-[#d4af37] text-black px-12 py-4 rounded-2xl font-black text-xs uppercase shadow-xl active:scale-95 transition-transform"
+          >
+            Ver Pedido ({cart.reduce((a,b)=>a+b.qty,0)})
+          </button>
         </div>
       )}
 
+      {/* Modal Carrito Completo */}
       {isCartOpen && (
         <div className="fixed inset-0 z-[100] flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/80" onClick={() => setIsCartOpen(false)} />
-          <div className="relative bg-white p-6 rounded-t-3xl max-h-[85vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black uppercase">Mi Pedido</h2>
-              <button onClick={() => setIsCartOpen(false)} className="text-gray-400"><IconX /></button>
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setIsCartOpen(false)} />
+          <div className="relative bg-white p-10 rounded-t-[3.5rem] max-h-[92vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-center mb-10">
+              <h2 className="text-3xl font-black uppercase tracking-tighter text-black">Mi Pedido</h2>
+              <button onClick={() => setIsCartOpen(false)} className="text-slate-300 hover:text-black p-2"><X size={36}/></button>
             </div>
-            <div className="space-y-4 mb-8">
+            
+            <div className="space-y-8 mb-10">
               {cart.map(item => (
-                <div key={item.id} className="flex justify-between items-center border-b pb-4">
-                  <div className="flex items-center gap-3">
-                    <img src={item.image} className="w-12 h-12 rounded-lg object-cover" alt="" />
-                    <div><p className="font-black text-[10px] uppercase">{item.name}</p><div className="flex items-center gap-2 mt-1">
-                      <button onClick={() => changeQty(item.id, -1)} className="bg-gray-100 p-1 rounded px-2">-</button>
-                      <span className="font-bold">{item.qty}</span>
-                      <button onClick={() => addToCart(item)} className="bg-gray-100 p-1 rounded px-2">+</button>
-                    </div></div>
+                <div key={item.id} className="flex justify-between items-center border-b border-slate-50 pb-6">
+                  <div className="flex items-center gap-5">
+                    <img src={item.image} className="w-20 h-20 rounded-[1.5rem] object-cover shadow-sm" alt="" />
+                    <div>
+                      <p className="font-black text-sm uppercase text-slate-900 leading-tight mb-1">{item.name}</p>
+                      <p className="text-[10px] text-[#d4af37] font-black uppercase">{item.category}</p>
+                      <div className="flex items-center gap-4 mt-3">
+                        <button onClick={() => removeFromCart(item.id)} className="w-9 h-9 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100"><Minus size={16}/></button>
+                        <span className="text-lg font-black w-6 text-center">{item.qty}</span>
+                        <button onClick={() => addToCart(item)} className="w-9 h-9 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100"><Plus size={16}/></button>
+                      </div>
+                    </div>
                   </div>
-                  <p className="font-black text-sm">${formatP(item.qty * getUnitPrice(item))}</p>
+                  <p className="font-black text-slate-900 text-xl tracking-tighter">${formatP(item.qty * getUnitPrice(item))}</p>
                 </div>
               ))}
             </div>
-            <button onClick={handleCheckout} className="w-full bg-[#25D366] text-white py-4 rounded-2xl font-black uppercase flex justify-center items-center gap-2 shadow-lg">
-              ENVIAR A WHATSAPP
+
+            <button 
+              onClick={handleCheckout} 
+              className="w-full bg-[#25D366] text-white py-6 rounded-[2.5rem] font-black text-sm uppercase flex justify-center items-center gap-4 shadow-[0_20px_50px_rgba(37,211,102,0.3)] active:scale-95 transition-all tracking-widest"
+            >
+              <ShoppingCart size={24}/> ENVIAR PEDIDO A WHATSAPP
             </button>
           </div>
         </div>
