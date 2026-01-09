@@ -16,24 +16,34 @@ import {
   onAuthStateChanged,
   signInWithCustomToken
 } from "firebase/auth";
-import { 
-  ShoppingCart, 
-  Menu, 
-  X, 
-  Plus, 
-  Minus 
-} from 'lucide-react';
 
-// --- CONFIGURACIÓN DE FIREBASE (Misma lógica que Admin) ---
+// --- ICONOS SVG NATIVOS (Para evitar errores de dependencias en Vercel) ---
+const IconCart = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.56-7.43H5.12"/></svg>
+);
+const IconMenu = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+);
+const IconX = () => (
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+);
+const IconPlus = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+);
+const IconMinus = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" x2="19" y1="12" y2="12"/></svg>
+);
+
+// --- CONFIGURACIÓN DE FIREBASE ---
 const firebaseConfig = typeof __firebase_config !== 'undefined' 
   ? JSON.parse(__firebase_config) 
   : {
       apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-      authDomain: "shop-028.firebaseapp.com",
-      projectId: "shop-028",
-      storageBucket: "shop-028.appspot.com",
-      messagingSenderId: "12345",
-      appId: "12345"
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "shop-028.firebaseapp.com",
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "shop-028",
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "shop-028.appspot.com",
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "12345",
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "12345"
     };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -91,10 +101,14 @@ export default function App() {
   // 1. Autenticación (Regla 3)
   useEffect(() => {
     const initAuth = async () => {
-      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-        await signInWithCustomToken(auth, __initial_auth_token);
-      } else {
-        await signInAnonymously(auth);
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (err) {
+        console.error("Auth Init Error:", err);
       }
     };
     initAuth();
@@ -102,7 +116,7 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Sincronización con Lógica de ID String (Misma que Admin)
+  // 2. Sincronización con Lógica de ID String (Coincide con Admin)
   useEffect(() => {
     if (!user) return;
     
@@ -116,7 +130,6 @@ export default function App() {
       });
       
       setProducts(prev => INITIAL_PRODUCTS.map(p => {
-        // Buscamos el ID numérico convertido a texto para que coincida con Firebase
         const remote = dbData[p.id.toString()]; 
         return {
           ...p,
@@ -165,7 +178,7 @@ export default function App() {
         status: 'pendiente'
       });
 
-      const msg = `*Pedido 028*\n${cart.map(i => `• ${i.qty}x ${i.name}`).join('\n')}\n\n*Total:* $${formatP(totalCart)}`;
+      const msg = `*Pedido 028*\n${cart.map(i => `• ${i.qty}x ${i.name} ($${formatP(getUnitPrice(i))})`).join('\n')}\n\n*Total:* $${formatP(totalCart)}`;
       window.location.href = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
     } catch (error) {
       console.error("Checkout error:", error);
@@ -182,15 +195,25 @@ export default function App() {
       {/* Navbar */}
       <nav className="bg-[#0a0a0a] p-4 sticky top-0 z-50 border-b border-[#d4af37]/20 flex justify-between items-center shadow-xl">
         <img src={CONFIG.logoImage} className="h-10 object-contain" alt="028" />
-        <button onClick={() => setIsMenuOpen(true)} className="text-[#d4af37] p-2">
-          <Menu size={28}/>
-        </button>
+        <div className="flex items-center gap-4">
+          <button onClick={() => setIsCartOpen(true)} className="text-[#d4af37] relative p-2">
+            <IconCart />
+            {cart.length > 0 && (
+              <span className="absolute top-0 right-0 bg-white text-black text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-black">
+                {cart.reduce((a, b) => a + b.qty, 0)}
+              </span>
+            )}
+          </button>
+          <button onClick={() => setIsMenuOpen(true)} className="text-[#d4af37] p-2">
+            <IconMenu />
+          </button>
+        </div>
       </nav>
 
       {/* Menú Lateral */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-[60] bg-black/95 flex flex-col items-center justify-center gap-8 p-10 animate-in fade-in duration-300">
-          <button onClick={() => setIsMenuOpen(false)} className="absolute top-6 right-6 text-white p-2"><X size={32}/></button>
+          <button onClick={() => setIsMenuOpen(false)} className="absolute top-6 right-6 text-white p-2"><IconX /></button>
           <button onClick={() => setIsMenuOpen(false)} className="text-white font-black text-3xl hover:text-[#d4af37] transition-all">TIENDA</button>
           <button onClick={() => {setIsCartOpen(true); setIsMenuOpen(false)}} className="text-white font-black text-3xl hover:text-[#d4af37] transition-all tracking-tighter">MI CARRITO</button>
           <a href="/admin" className="text-slate-700 font-bold text-xs tracking-widest mt-10 hover:text-white border border-slate-900 px-8 py-3 rounded-full uppercase transition-colors">Admin Panel</a>
@@ -245,9 +268,9 @@ export default function App() {
                     <p className="font-black text-xl md:text-2xl mb-5 tracking-tighter text-slate-900">${formatP(p.price)}</p>
                     {inCart ? (
                       <div className="flex items-center justify-between bg-black text-white h-12 rounded-3xl font-bold overflow-hidden shadow-xl">
-                        <button className="w-12 h-full hover:bg-slate-800 flex items-center justify-center" onClick={() => removeFromCart(p.id)}><Minus size={16}/></button>
+                        <button className="w-12 h-full hover:bg-slate-800 flex items-center justify-center" onClick={() => removeFromCart(p.id)}><IconMinus size={18}/></button>
                         <span className="text-lg">{inCart.qty}</span>
-                        <button className="w-12 h-full hover:bg-slate-800 flex items-center justify-center" onClick={() => addToCart(p)}><Plus size={16}/></button>
+                        <button className="w-12 h-full hover:bg-slate-800 flex items-center justify-center" onClick={() => addToCart(p)}><IconPlus size={18}/></button>
                       </div>
                     ) : (
                       <button 
@@ -288,7 +311,7 @@ export default function App() {
           <div className="relative bg-white p-10 rounded-t-[3.5rem] max-h-[92vh] overflow-y-auto shadow-2xl">
             <div className="flex justify-between items-center mb-10">
               <h2 className="text-3xl font-black uppercase tracking-tighter text-black">Mi Pedido</h2>
-              <button onClick={() => setIsCartOpen(false)} className="text-slate-300 hover:text-black p-2"><X size={36}/></button>
+              <button onClick={() => setIsCartOpen(false)} className="text-slate-300 hover:text-black p-2"><IconX /></button>
             </div>
             
             <div className="space-y-8 mb-10">
@@ -300,9 +323,9 @@ export default function App() {
                       <p className="font-black text-sm uppercase text-slate-900 leading-tight mb-1">{item.name}</p>
                       <p className="text-[10px] text-[#d4af37] font-black uppercase">{item.category}</p>
                       <div className="flex items-center gap-4 mt-3">
-                        <button onClick={() => removeFromCart(item.id)} className="w-9 h-9 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100"><Minus size={16}/></button>
+                        <button onClick={() => removeFromCart(item.id)} className="w-9 h-9 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100"><IconMinus size={16}/></button>
                         <span className="text-lg font-black w-6 text-center">{item.qty}</span>
-                        <button onClick={() => addToCart(item)} className="w-9 h-9 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100"><Plus size={16}/></button>
+                        <button onClick={() => addToCart(item)} className="w-9 h-9 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100"><IconPlus size={16}/></button>
                       </div>
                     </div>
                   </div>
@@ -315,7 +338,7 @@ export default function App() {
               onClick={handleCheckout} 
               className="w-full bg-[#25D366] text-white py-6 rounded-[2.5rem] font-black text-sm uppercase flex justify-center items-center gap-4 shadow-[0_20px_50px_rgba(37,211,102,0.3)] active:scale-95 transition-all tracking-widest"
             >
-              <ShoppingCart size={24}/> ENVIAR PEDIDO A WHATSAPP
+              <IconCart /> ENVIAR PEDIDO A WHATSAPP
             </button>
           </div>
         </div>
