@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { 
   getFirestore, 
   collection, 
-  onSnapshot, 
-  orderBy, 
-  query, 
   doc, 
   setDoc, 
-  updateDoc 
+  onSnapshot, 
+  query, 
+  orderBy 
 } from "firebase/firestore";
 import { 
   getAuth, 
@@ -18,14 +17,14 @@ import {
   onAuthStateChanged 
 } from "firebase/auth";
 
-// --- CONFIGURACIÓN DE FIREBASE ---
+// --- CONFIGURACIÓN DE FIREBASE (Segura para Build) ---
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "shop-028.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "shop-028",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "shop-028.appspot.com",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "12345",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "12345"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -34,7 +33,7 @@ const auth = getAuth(app);
 const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '028import';
 
 const ALL_PRODUCTS_LIST = [
-  // Nicotina (1-17)
+  // Mismo Catálogo que el Main (24 Productos)
   { id: 1, name: "BAJA SPLASH", category: "VAPES NICOTINA", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
   { id: 2, name: "BLUE RAZZ ICE", category: "VAPES NICOTINA", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
   { id: 3, name: "CHERRY FUSE", category: "VAPES NICOTINA", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png" },
@@ -52,11 +51,9 @@ const ALL_PRODUCTS_LIST = [
   { id: 15, name: "SUMMER SPLASH", category: "VAPES NICOTINA", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png" },
   { id: 16, name: "TIGERS BLOOD", category: "VAPES NICOTINA", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg" },
   { id: 17, name: "WATERMELON ICE", category: "VAPES NICOTINA", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp" },
-  // THC (18-20)
   { id: 18, name: "BLOW THC", category: "VAPES THC", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp" },
   { id: 19, name: "TORCH 7.5G", category: "VAPES THC", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png" },
   { id: 20, name: "PHENOM 6G", category: "VAPES THC", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg" },
-  // Cargadores (21-24)
   { id: 21, name: "CARGADOR 20W", category: "CARGADORES", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
   { id: 22, name: "CARGADOR 35W", category: "CARGADORES", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg" },
   { id: 23, name: "CABLE USB-C A USB-C", category: "CARGADORES", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg" },
@@ -64,165 +61,139 @@ const ALL_PRODUCTS_LIST = [
 ];
 
 // ICONOS SVG
-const IconArrowLeft = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>;
-const IconSave = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>;
+const IconArrowLeft = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>;
+const IconSave = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>;
+const IconX = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
 
-export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState('pedidos');
-  const [orders, setOrders] = useState([]);
+export default function Admin() {
   const [products, setProducts] = useState(ALL_PRODUCTS_LIST.map(p => ({ ...p, price: 27000, inStock: true })));
+  const [orders, setOrders] = useState([]);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('stock');
   const [tempPrices, setTempPrices] = useState({});
+  const [saveStatus, setSaveStatus] = useState(null);
 
   useEffect(() => {
-    signInAnonymously(auth).catch(console.error);
-    const unsubAuth = onAuthStateChanged(auth, setUser);
-
-    const ordersRef = collection(db, 'artifacts', appId, 'public', 'data', 'orders');
-    const qOrders = query(ordersRef, orderBy('createdAt', 'desc'));
-    const unsubOrders = onSnapshot(qOrders, (snap) => {
-      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      setLoading(false);
+    onAuthStateChanged(auth, (u) => {
+      if (!u) signInAnonymously(auth).catch(() => {});
+      setUser(u);
     });
+  }, []);
 
+  useEffect(() => {
+    if (!user) return;
+
+    // Sincronizar Productos con ID corregido (STRING)
     const prodsRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
     const unsubProds = onSnapshot(prodsRef, (snap) => {
       const dbData = {};
-      snap.forEach(d => dbData[d.id] = d.data());
-      setProducts(prev => ALL_PRODUCTS_LIST.map(p => {
-        const remote = dbData[p.id.toString()];
-        return {
-          ...p,
-          price: remote?.price || p.price,
-          inStock: remote?.inStock ?? true
-        };
-      }));
+      snap.forEach(d => { dbData[d.id] = d.data(); });
+      setProducts(ALL_PRODUCTS_LIST.map(p => ({
+        ...p,
+        price: dbData[p.id.toString()]?.price || 27000,
+        inStock: dbData[p.id.toString()]?.inStock ?? true
+      })));
     });
 
-    return () => { unsubAuth(); unsubOrders(); unsubProds(); };
-  }, []);
+    // Sincronizar Pedidos
+    const ordersRef = collection(db, 'artifacts', appId, 'public', 'data', 'orders');
+    const q = query(ordersRef, orderBy('createdAt', 'desc'));
+    const unsubOrders = onSnapshot(q, (snap) => {
+      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
 
-  const updateProduct = async (id, data) => {
-    const pRef = doc(db, 'artifacts', appId, 'public', 'data', 'products', id.toString());
-    await setDoc(pRef, data, { merge: true });
+    return () => { unsubProds(); unsubOrders(); };
+  }, [user]);
+
+  const updateDocField = async (id, data) => {
+    setSaveStatus('guardando');
+    try {
+      const pRef = doc(db, 'artifacts', appId, 'public', 'data', 'products', id.toString());
+      await setDoc(pRef, data, { merge: true });
+      setSaveStatus('listo');
+      setTimeout(() => setSaveStatus(null), 2000);
+    } catch (e) { console.error(e); setSaveStatus('error'); }
   };
 
   const handlePriceSave = (id) => {
-    const newPrice = tempPrices[id];
-    if (!newPrice) return;
-    updateProduct(id, { price: parseInt(newPrice) });
-    setTempPrices(prev => {
-      const n = { ...prev };
-      delete n[id];
-      return n;
-    });
+    const val = parseInt(tempPrices[id]);
+    if (isNaN(val)) return;
+    updateDocField(id, { price: val });
+    setTempPrices(prev => { const n = {...prev}; delete n[id]; return n; });
   };
-
-  const completeOrder = async (id) => {
-    const oRef = doc(db, 'artifacts', appId, 'public', 'data', 'orders', id);
-    await updateDoc(oRef, { status: 'completed' });
-  };
-
-  const filteredOrders = orders.filter(o => activeTab === 'pedidos' ? o.status === 'pending' : o.status === 'completed');
-
-  if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-black uppercase text-[10px] tracking-widest text-slate-400 animate-pulse">Iniciando Sistema 028...</div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-10">
-      <nav className="bg-[#121212] py-5 px-6 text-white flex justify-between items-center sticky top-0 z-50 shadow-xl border-b border-[#d4af37]/20">
+    <div className="min-h-screen bg-[#f8fafc] font-sans pb-20">
+      <nav className="bg-[#0a0a0a] text-white p-5 sticky top-0 z-50 flex justify-between items-center border-b border-[#d4af37]/30 shadow-2xl">
         <div className="flex items-center gap-3">
-           <h1 className="text-lg font-black tracking-tighter uppercase">028<span className="text-[#d4af37]">PANEL</span></h1>
+          <button onClick={() => window.location.href = '/'} className="p-2 hover:bg-slate-800 rounded-full transition-all"><IconArrowLeft /></button>
+          <h1 className="font-black text-sm uppercase tracking-widest text-[#d4af37]">028 ADMIN</h1>
         </div>
-        <a href="/" className="text-[10px] font-bold uppercase text-slate-500 hover:text-[#d4af37]">Ir a la Tienda</a>
+        <div className="flex items-center gap-3">
+           {saveStatus === 'guardando' && <span className="text-[9px] font-bold text-amber-500 animate-pulse uppercase">Sincronizando...</span>}
+           {saveStatus === 'listo' && <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-tighter">Guardado Correctamente ✔</span>}
+           <div className="bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest">En Línea</div>
+        </div>
       </nav>
 
-      <div className="bg-white border-b sticky top-[72px] z-40">
+      <div className="bg-white border-b sticky top-[77px] z-40 shadow-sm">
         <div className="max-w-4xl mx-auto flex">
-          {['pedidos', 'ventas', 'stock'].map(t => (
-            <button 
-              key={t}
-              onClick={() => setActiveTab(t)}
-              className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === t ? 'border-b-2 border-[#d4af37] text-black' : 'text-slate-400'}`}
-            >
-              {t}
-            </button>
+          {['stock', 'pedidos'].map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'border-b-2 border-[#d4af37] text-black' : 'text-slate-400'}`}>{tab}</button>
           ))}
         </div>
       </div>
 
-      <main className="max-w-4xl mx-auto p-4 md:p-8">
+      <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-10">
         {activeTab === 'stock' ? (
           <div className="grid gap-4">
             {products.map(p => (
-              <div key={p.id} className="bg-white p-5 rounded-[2.5rem] flex flex-col md:flex-row md:items-center justify-between shadow-sm border border-slate-100 gap-4">
+              <div key={p.id} className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-4">
-                  <img src={p.image} className={`w-14 h-14 rounded-2xl object-cover ${!p.inStock ? 'grayscale opacity-50' : ''}`} alt="" />
+                  <div className="relative">
+                    <img src={p.image} className="w-16 h-16 rounded-2xl object-cover bg-slate-50" alt="" />
+                    {!p.inStock && <div className="absolute inset-0 bg-white/60 flex items-center justify-center rounded-2xl"><IconX /></div>}
+                  </div>
                   <div>
-                    <p className="font-black text-[11px] uppercase text-slate-800 leading-tight">{p.name}</p>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{p.category}</p>
+                    <h3 className="text-[10px] font-black uppercase text-slate-800 leading-tight mb-2">{p.name}</h3>
+                    <div className="flex items-center gap-1 bg-slate-50 border rounded-xl px-3 py-1.5 focus-within:border-[#d4af37] transition-all">
+                      <span className="text-[10px] font-bold text-slate-400">$</span>
+                      <input 
+                        type="number" 
+                        placeholder={p.price} 
+                        value={tempPrices[p.id] || ''} 
+                        onChange={(e) => setTempPrices({...tempPrices, [p.id]: e.target.value})}
+                        className="w-20 bg-transparent border-none p-0 text-sm font-black focus:ring-0 text-indigo-600" 
+                      />
+                      {tempPrices[p.id] && <button onClick={() => handlePriceSave(p.id)} className="ml-2 bg-indigo-600 text-white p-1.5 rounded-lg shadow-lg hover:scale-105 transition-transform"><IconSave /></button>}
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1 bg-slate-50 border rounded-xl px-3 py-2">
-                    <span className="text-[10px] font-bold text-slate-400">$</span>
-                    <input 
-                      type="number" 
-                      placeholder={p.price}
-                      value={tempPrices[p.id] || ''}
-                      onChange={(e) => setTempPrices({ ...tempPrices, [p.id]: e.target.value })}
-                      className="w-20 bg-transparent border-none p-0 text-sm font-black focus:ring-0 text-indigo-600" 
-                    />
-                    {tempPrices[p.id] && (
-                      <button onClick={() => handlePriceSave(p.id)} className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-md hover:bg-black transition-all">
-                        <IconSave />
-                      </button>
-                    )}
-                  </div>
-                  <button 
-                    onClick={() => updateProduct(p.id, { inStock: !p.inStock })}
-                    className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase transition-all shadow-sm ${p.inStock ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}
-                  >
-                    {p.inStock ? 'AGOTAR' : 'HABILITAR'}
-                  </button>
-                </div>
+                <button 
+                  onClick={() => updateDocField(p.id, { inStock: !p.inStock })}
+                  className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase transition-all shadow-sm active:scale-95 ${p.inStock ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-100'}`}
+                >
+                  {p.inStock ? 'Habilitado' : 'Agotado'}
+                </button>
               </div>
             ))}
           </div>
         ) : (
           <div className="space-y-6">
-            {filteredOrders.length === 0 ? (
-              <div className="bg-white p-20 rounded-[3rem] text-center border-2 border-dashed border-slate-100 uppercase text-[10px] font-bold text-slate-300 tracking-widest">Sin registros</div>
-            ) : filteredOrders.map(o => (
-              <div key={o.id} className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-6 bg-slate-900 text-[#d4af37] font-black text-xl rounded-bl-[2.5rem] shadow-xl">
-                  ${o.total?.toLocaleString('es-AR')}
-                </div>
-                <div className="mb-6">
-                  <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{o.createdAt?.toDate().toLocaleString() || 'Procesando...'}</span>
-                  <p className="text-xs font-black uppercase text-slate-600 mt-1">Orden #{o.id.slice(-6).toUpperCase()}</p>
-                </div>
-                <div className="space-y-3 mb-8 bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                  {o.items?.map((it, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-xs font-bold uppercase">
-                      <span>{it.qty}x {it.name}</span>
-                      <span className="text-slate-400">${it.price?.toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-                {o.delivery === 'envio' && (
-                  <div className="mb-8 p-5 bg-[#121212] text-[#d4af37] rounded-3xl text-[11px] font-black border-l-8 border-[#d4af37]">
-                    ENTREGA: {o.address}, {o.zone}
-                  </div>
-                )}
-                {activeTab === 'pedidos' && (
-                  <button onClick={() => completeOrder(o.id)} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-[11px] uppercase shadow-lg shadow-emerald-100 active:scale-95 transition-all">Completar Pedido</button>
-                )}
+            {orders.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200 text-slate-400 uppercase text-[10px] font-bold">No hay pedidos registrados</div>
+            ) : orders.map(o => (
+              <div key={o.id} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-xl transition-all">
+                <div className="absolute top-0 right-0 p-6 bg-slate-900 text-[#d4af37] font-black text-xl rounded-bl-[2.5rem] shadow-xl">${o.total?.toLocaleString('es-AR')}</div>
+                <div className="mb-6"><span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{o.createdAt?.toDate().toLocaleString() || 'Recién recibido'}</span><p className="text-xs font-black uppercase text-slate-600 mt-1">Orden #{o.id.slice(-6).toUpperCase()}</p></div>
+                <div className="space-y-3 mb-8 bg-slate-50 p-6 rounded-3xl border border-slate-100">{o.items?.map((it, idx) => (<div key={idx} className="flex justify-between items-center text-xs font-bold uppercase"><span>{it.qty}x {it.name}</span><span className="text-slate-400">${it.price?.toLocaleString()}</span></div>))}</div>
+                {o.delivery === 'envio' && <div className="p-5 bg-[#121212] text-[#d4af37] rounded-3xl text-[11px] font-black border-l-8 border-[#d4af37] uppercase tracking-tighter shadow-lg">ENTREGA: {o.address?.street}, {o.address?.zone}</div>}
               </div>
             ))}
           </div>
         )}
-      </main>
+      </div>
+      <style>{`input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }`}</style>
     </div>
   );
 }
