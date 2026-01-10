@@ -10,6 +10,7 @@ import {
   query, 
   orderBy, 
   updateDoc, 
+  deleteDoc, // Agregado deleteDoc
   doc,
   setDoc
 } from "firebase/firestore";
@@ -120,6 +121,18 @@ export default function AdminPage() {
         });
       } catch (err) {
         alert("Error: No se pudo completar el pedido. Revisa las reglas de Firestore.");
+      }
+    }
+  };
+
+  // Función para eliminar pedido
+  const deleteOrder = async (id) => {
+    if (confirm("¿Estás seguro de que quieres eliminar este pedido permanentemente? Esta acción no se puede deshacer.")) {
+      try {
+        await deleteDoc(doc(firebaseRefs.db, 'orders', id));
+      } catch (err) {
+        console.error(err);
+        alert("Error al eliminar el pedido: " + err.message);
       }
     }
   };
@@ -324,14 +337,26 @@ export default function AdminPage() {
                           </p>
                         </div>
                       </div>
-                      {activeTab === 'pendientes' && (
-                        <button 
-                          onClick={() => completeOrder(order.id)} 
-                          className={`${darkMode ? 'bg-[#262626] text-gray-400 hover:text-white' : 'bg-gray-50 text-gray-300 hover:text-white'} hover:bg-green-600 w-12 h-12 rounded-2xl transition-all flex items-center justify-center shadow-inner`}
-                        >
-                          <i className="fas fa-check text-lg"></i>
-                        </button>
-                      )}
+                      
+                      <div className="flex gap-2">
+                          {activeTab === 'pendientes' && (
+                            <button 
+                              onClick={() => completeOrder(order.id)} 
+                              className={`${darkMode ? 'bg-[#262626] text-gray-400 hover:text-white' : 'bg-gray-50 text-gray-300 hover:text-white'} hover:bg-green-600 w-12 h-12 rounded-2xl transition-all flex items-center justify-center shadow-inner`}
+                              title="Marcar como entregado"
+                            >
+                              <i className="fas fa-check text-lg"></i>
+                            </button>
+                          )}
+                          
+                          <button 
+                              onClick={() => deleteOrder(order.id)} 
+                              className={`${darkMode ? 'bg-[#262626] text-gray-400 hover:text-white' : 'bg-gray-50 text-gray-300 hover:text-white'} hover:bg-red-600 w-12 h-12 rounded-2xl transition-all flex items-center justify-center shadow-inner`}
+                              title="Eliminar pedido"
+                            >
+                              <i className="fas fa-trash text-lg"></i>
+                          </button>
+                      </div>
                     </div>
 
                     <div className={`space-y-3 mb-6 p-6 rounded-2xl border shadow-inner ${darkMode ? 'bg-[#0a0a0a] border-[#262626]' : 'bg-gray-50/50 border-gray-100'}`}>
