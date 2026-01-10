@@ -87,13 +87,16 @@ export default function Home() {
       signInAnonymously(firebaseRefs.auth).catch(console.error);
       const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (u) => setUser(u));
 
-      // ESCUCHAR STOCK EN TIEMPO REAL
+      // ESCUCHAR STOCK Y PRECIOS EN TIEMPO REAL
       const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
           setProducts(prev => prev.map(p => {
             const match = dbProducts.find(dbP => dbP.id === p.id);
-            return match ? { ...p, inStock: match.inStock } : { ...p, inStock: true };
+            // ACTUALIZACIÓN: Ahora también leemos el 'price' si existe en la DB
+            return match 
+              ? { ...p, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } 
+              : { ...p, inStock: true };
           }));
         }
       });
@@ -110,8 +113,9 @@ export default function Home() {
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
   
-  // Lógica de precios promocionales
+  // Lógica de precios promocionales (Simplificada para usar el precio base dinámico)
   const getUnitPromoPrice = (productPrice) => {
+    // Solo aplica descuento si el precio es exactamente 27000 (Vapes regulares)
     if (productPrice !== 27000) return productPrice;
 
     const count = getTotalItems();
@@ -190,7 +194,6 @@ export default function Home() {
     if (sectionProducts.length === 0) return null;
 
     return (
-      // Added id and scroll-mt-28 for sticky header offset
       <section id={sectionId} className="mb-12 scroll-mt-28 transition-all duration-500">
         <div className="flex flex-col md:flex-row justify-between items-baseline mb-6 gap-3 border-b border-gray-200 pb-4">
           <h2 className="text-xl md:text-2xl font-black border-l-4 border-[#d4af37] pl-4 uppercase tracking-tight">{title}</h2>

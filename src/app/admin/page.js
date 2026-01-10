@@ -96,7 +96,10 @@ export default function AdminPage() {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
           setProducts(prev => prev.map(p => {
             const match = dbProducts.find(dbP => dbP.id === p.id);
-            return match ? { ...p, inStock: match.inStock } : { ...p, inStock: true };
+            // ACTUALIZACIÓN: También traemos el precio del servidor
+            return match 
+              ? { ...p, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } 
+              : { ...p, inStock: true };
           }));
         }
       });
@@ -133,22 +136,39 @@ export default function AdminPage() {
       }, { merge: true });
     } catch (err) {
       console.error(err);
-      alert("Error de permisos: Asegúrate de haber publicado las nuevas reglas en Firebase (pestaña Rules).");
+      alert("Error de permisos.");
     }
   };
 
+  const updatePrice = async (product, newPrice) => {
+    const price = parseInt(newPrice);
+    if(isNaN(price) || price < 0) return alert("Por favor ingresa un precio válido");
+    
+    try {
+        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
+        // Solo actualizamos el precio, mantenemos el stock actual
+        await setDoc(productRef, {
+            id: product.id,
+            price: price
+        }, { merge: true });
+    } catch(err) {
+        console.error(err);
+        alert("Error al actualizar precio.");
+    }
+  }
+
   const syncAllProducts = async () => {
-    if (confirm("¿Sincronizar catálogo con la base de datos? Esto subirá los productos nuevos.")) {
+    if (confirm("¿Sincronizar catálogo? Esto asegurará que todos los productos existan en la base de datos.")) {
         setLoading(true);
         try {
             for (const p of initialProducts) {
+                // Usamos merge: true para no sobrescribir precios personalizados ya existentes
                 await setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), {
                     id: p.id,
                     name: p.name,
-                    inStock: true
                 }, { merge: true });
             }
-            alert("Catálogo sincronizado con éxito.");
+            alert("Catálogo sincronizado.");
         } catch (err) {
             alert("Error al sincronizar: " + err.message);
         }
@@ -180,9 +200,25 @@ export default function AdminPage() {
                                 <img src={p.image} className={`w-full h-full rounded-xl object-cover ${p.inStock === false ? 'grayscale opacity-50' : ''}`} alt="" />
                                 {p.inStock === false && <div className="absolute inset-0 flex items-center justify-center"><i className="fas fa-times text-red-500 text-xs"></i></div>}
                             </div>
-                            <div>
+                            <div className="flex flex-col gap-1">
                                 <p className="font-black text-[11px] uppercase text-gray-800">{p.name}</p>
-                                <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.inStock === false ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}`}>
+                                <div className="flex items-center gap-2">
+                                     <span className="text-gray-400 text-[10px]">$</span>
+                                     {/* Input de Edición de Precio */}
+                                     <input 
+                                        type="number" 
+                                        key={p.price} // Truco React: Si el precio cambia en DB, actualiza el input
+                                        defaultValue={p.price}
+                                        className="w-20 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-[10px] font-bold focus:border-[#d4af37] outline-none transition-colors"
+                                        onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }}
+                                        onBlur={(e) => {
+                                            if (parseInt(e.target.value) !== p.price) {
+                                                updatePrice(p, e.target.value);
+                                            }
+                                        }}
+                                     />
+                                </div>
+                                <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.inStock === false ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}`}>
                                     {p.inStock === false ? 'Agotado' : 'Disponible'}
                                 </span>
                             </div>
@@ -191,7 +227,7 @@ export default function AdminPage() {
                             onClick={() => toggleStock(p)}
                             className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-50 text-red-600'}`}
                         >
-                            {p.inStock === false ? 'Habilitar' : 'Agotar Stock'}
+                            {p.inStock === false ? 'Habilitar' : 'Agotar'}
                         </button>
                     </div>
                 ))}
