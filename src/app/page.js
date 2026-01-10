@@ -110,11 +110,8 @@ export default function Home() {
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
   
-  // Lógica de precios promocionales (Aplica generalmente o puedes personalizar si las promos no aplican a cargadores)
+  // Lógica de precios promocionales
   const getUnitPromoPrice = (productPrice) => {
-    // Si quieres que las promos de cantidad solo apliquen a los vapes de 27000, puedes filtrar aqui.
-    // Por ahora, mantendré la lógica original solo si el precio base es 27000, 
-    // para no descontar precio a los cargadores o vapes caros erróneamente.
     if (productPrice !== 27000) return productPrice;
 
     const count = getTotalItems();
@@ -181,8 +178,8 @@ export default function Home() {
     }
   };
 
-  // Helper para renderizar secciones
-  const renderProductSection = (title, categoryFilter, promoText = null) => {
+  // Helper para renderizar secciones - AHORA ACEPTA sectionId
+  const renderProductSection = (title, categoryFilter, sectionId, promoText = null) => {
     const sectionProducts = products.filter(p => {
         if (categoryFilter === 'Vapes') return p.category === 'Vapes';
         if (categoryFilter === 'Vapes THC') return p.category === 'Vapes THC';
@@ -193,7 +190,8 @@ export default function Home() {
     if (sectionProducts.length === 0) return null;
 
     return (
-      <section className="mb-12">
+      // Added id and scroll-mt-28 for sticky header offset
+      <section id={sectionId} className="mb-12 scroll-mt-28 transition-all duration-500">
         <div className="flex flex-col md:flex-row justify-between items-baseline mb-6 gap-3 border-b border-gray-200 pb-4">
           <h2 className="text-xl md:text-2xl font-black border-l-4 border-[#d4af37] pl-4 uppercase tracking-tight">{title}</h2>
           {promoText && <div className="bg-[#d4af37] text-black px-3 py-1 text-[10px] font-black rounded uppercase tracking-widest">{promoText}</div>}
@@ -248,9 +246,12 @@ export default function Home() {
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-xl p-2"><i className={`fas ${isMenuOpen ? 'fa-times' : 'fa-bars'}`}></i></button>
         </div>
         {isMenuOpen && (
-          <div className="absolute top-full left-0 w-full bg-[#121212] p-6 flex flex-col gap-4 text-center font-bold border-t border-[#d4af37]/20 shadow-2xl">
-            <a href="#catalogo" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors">CATÁLOGO</a>
-            <button onClick={() => {setIsCartOpen(true); setIsMenuOpen(false)}} className="hover:text-[#d4af37] transition-colors uppercase">MI CARRITO</button>
+          <div className="absolute top-full left-0 w-full bg-[#121212] p-6 flex flex-col gap-4 text-center font-bold border-t border-[#d4af37]/20 shadow-2xl z-50">
+             {/* Menú Actualizado con links directos */}
+            <a href="#vapes" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">VAPES</a>
+            <a href="#thc" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">VAPES THC</a>
+            <a href="#accesorios" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">CARGADORES</a>
+            <button onClick={() => {setIsCartOpen(true); setIsMenuOpen(false)}} className="hover:text-[#d4af37] transition-colors uppercase py-2 mt-2">MI CARRITO</button>
           </div>
         )}
       </nav>
@@ -264,9 +265,22 @@ export default function Home() {
       </header>
 
       <div id="catalogo" className="py-8 px-4 max-w-6xl mx-auto">
-        {renderProductSection("Selección Exclusiva", "Vapes", "2+ un: $26.000 | 5+ un: $24.500")}
-        {renderProductSection("Vapes de THC", "Vapes THC")}
-        {renderProductSection("Cargadores y Accesorios", "Cargadores")}
+        {/* BARRA DE ACCESOS RÁPIDOS (Sticky) */}
+        <div className="flex gap-3 overflow-x-auto pb-4 mb-4 no-scrollbar sticky top-[60px] md:top-[70px] z-30 bg-[#f4f4f4]/95 backdrop-blur-sm py-3 -mx-4 px-4 md:mx-0 md:px-0 mask-image-gradient">
+            <a href="#vapes" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
+                Vapes
+            </a>
+            <a href="#thc" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
+                Vapes THC
+            </a>
+            <a href="#accesorios" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
+                Cargadores
+            </a>
+        </div>
+
+        {renderProductSection("Selección Exclusiva", "Vapes", "vapes", "2+ un: $26.000 | 5+ un: $24.500")}
+        {renderProductSection("Vapes de THC", "Vapes THC", "thc")}
+        {renderProductSection("Cargadores y Accesorios", "Cargadores", "accesorios")}
       </div>
 
       {getTotalItems() > 0 && (
