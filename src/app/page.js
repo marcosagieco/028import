@@ -12,13 +12,13 @@ const CONFIG = {
   brandSuffix: "import",
   currencySymbol: "$",
   shippingText: "Espero confirmacion para abonar",
-  bannerImage: "https://i.postimg.cc/GtQfRVK4/028banner.jpg",
+  bannerImage: "https://i.postimg.cc/wBdHsm94/banner-web.jpg", // IMAGEN DE BANNER ACTUALIZADA
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png"
 };
 
 const initialProducts = [
   // --- VAPES REGULARES ---
-  { id: 1, name: "BAJA SPLASH", price: 27000, category: "Vapes", tag: "Nuevo", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
+  { id: 1, name: "BAJA SPLASH", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
   { id: 2, name: "BLUE RAZZ ICE", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
   { id: 3, name: "CHERRY FUSE", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png" },
   { id: 4, name: "CHERRY STRAZZ", price: 27000, category: "Vapes", tag: "Destacado", image: "https://i.postimg.cc/7PFVsTG2/CHERRY-STRAZZ.jpg" },
@@ -261,10 +261,7 @@ export default function Home() {
 
       <header className="relative h-[30vh] md:h-[45vh] flex items-center justify-center bg-black overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center opacity-50" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
-        <div className="relative z-10 text-center px-4">
-          <h1 className="text-4xl md:text-7xl font-bold text-[#d4af37] tracking-tighter uppercase drop-shadow-2xl">{CONFIG.brandName}{CONFIG.brandSuffix}</h1>
-          <p className="text-white text-[10px] md:text-xs tracking-[0.4em] font-light mt-2 uppercase opacity-80">Premium Boutique & Lifestyle</p>
-        </div>
+        {/* TEXTO ELIMINADO SEGÚN SOLICITUD */}
       </header>
 
       <div id="catalogo" className="py-8 px-4 max-w-6xl mx-auto">
