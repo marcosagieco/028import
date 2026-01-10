@@ -260,8 +260,8 @@ export default function Home() {
       </nav>
 
       <header className="relative h-[30vh] md:h-[45vh] flex items-center justify-center bg-black overflow-hidden">
-        {/* Restaurado a bg-center para centrar el texto/imagen y que se lea completo */}
-        <div className="absolute inset-0 bg-cover bg-center opacity-50" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
+        {/* Ajustado con backgroundPosition 'center 40%' para bajar la imagen muy sutilmente */}
+        <div className="absolute inset-0 bg-cover opacity-50" style={{backgroundImage: `url(${CONFIG.bannerImage})`, backgroundPosition: 'center 40%'}} />
         {/* TEXTO ELIMINADO SEGÚN SOLICITUD */}
       </header>
 
