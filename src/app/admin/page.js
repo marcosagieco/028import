@@ -21,6 +21,7 @@ const CONFIG = {
 };
 
 const initialProducts = [
+  // --- VAPES REGULARES ---
   { id: 1, name: "BAJA SPLASH", price: 27000, category: "Vapes", tag: "Nuevo", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
   { id: 2, name: "BLUE RAZZ ICE", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
   { id: 3, name: "CHERRY FUSE", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png" },
@@ -37,7 +38,18 @@ const initialProducts = [
   { id: 14, name: "STRAWBERRY WATERMELON", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/MG30ycJD/STRAWBERRY-WATERMELON.webp" },
   { id: 15, name: "SUMMER SPLASH", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png" },
   { id: 16, name: "TIGERS BLOOD", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg" },
-  { id: 17, name: "WATERMELON ICE", price: 27000, category: "Vapes", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp" }
+  { id: 17, name: "WATERMELON ICE", price: 27000, category: "Vapes", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp" },
+  
+  // --- VAPES THC ---
+  { id: 18, name: "BLOW THC", price: 55000, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp" },
+  { id: 19, name: "TORCH 7.5G", price: 53000, category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png" },
+  { id: 20, name: "PHENOM 6G", price: 56000, category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg" },
+
+  // --- CARGADORES ---
+  { id: 21, name: "CARGADOR 20W", price: 16500, category: "Cargadores", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
+  { id: 22, name: "CARGADOR 35W", price: 20500, category: "Cargadores", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg" },
+  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, category: "Cargadores", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg" },
+  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, category: "Cargadores", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg" }
 ];
 
 export default function AdminPage() {
@@ -126,7 +138,7 @@ export default function AdminPage() {
   };
 
   const syncAllProducts = async () => {
-    if (confirm("¿Sincronizar catálogo con la base de datos?")) {
+    if (confirm("¿Sincronizar catálogo con la base de datos? Esto subirá los productos nuevos.")) {
         setLoading(true);
         try {
             for (const p of initialProducts) {
@@ -145,6 +157,48 @@ export default function AdminPage() {
   };
 
   const filteredOrders = orders.filter(o => activeTab === 'pendientes' ? o.status !== 'completed' : o.status === 'completed');
+
+  // Helper para renderizar grupos en admin
+  const renderStockGroup = (title, categoryFilter) => {
+    const group = products.filter(p => {
+        if (categoryFilter === 'Vapes') return p.category === 'Vapes';
+        if (categoryFilter === 'Vapes THC') return p.category === 'Vapes THC';
+        if (categoryFilter === 'Cargadores') return p.category === 'Cargadores';
+        return false;
+    });
+
+    if (group.length === 0) return null;
+
+    return (
+        <div className="mb-8">
+            <h3 className="text-xl font-bold mb-4 uppercase text-gray-400 border-b pb-2">{title}</h3>
+            <div className="grid gap-4">
+                {group.map(p => (
+                    <div key={p.id} className="bg-white p-5 rounded-[1.5rem] flex justify-between items-center shadow-sm border border-gray-100 hover:border-[#d4af37]/20 transition-all">
+                        <div className="flex items-center gap-4">
+                            <div className="relative w-12 h-12">
+                                <img src={p.image} className={`w-full h-full rounded-xl object-cover ${p.inStock === false ? 'grayscale opacity-50' : ''}`} alt="" />
+                                {p.inStock === false && <div className="absolute inset-0 flex items-center justify-center"><i className="fas fa-times text-red-500 text-xs"></i></div>}
+                            </div>
+                            <div>
+                                <p className="font-black text-[11px] uppercase text-gray-800">{p.name}</p>
+                                <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.inStock === false ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}`}>
+                                    {p.inStock === false ? 'Agotado' : 'Disponible'}
+                                </span>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => toggleStock(p)}
+                            className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-50 text-red-600'}`}
+                        >
+                            {p.inStock === false ? 'Habilitar' : 'Agotar Stock'}
+                        </button>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
@@ -178,30 +232,11 @@ export default function AdminPage() {
                 <h2 className="text-2xl font-black uppercase tracking-tighter">Gestión de Stock</h2>
                 <button onClick={syncAllProducts} className="text-[9px] bg-black text-white px-4 py-2 rounded-lg font-black uppercase tracking-widest shadow-lg hover:bg-[#d4af37] transition-all">Sincronizar DB</button>
              </div>
-             <div className="grid gap-4">
-                {products.map(p => (
-                   <div key={p.id} className="bg-white p-5 rounded-[1.5rem] flex justify-between items-center shadow-sm border border-gray-100 hover:border-[#d4af37]/20 transition-all">
-                      <div className="flex items-center gap-4">
-                         <div className="relative w-12 h-12">
-                            <img src={p.image} className={`w-full h-full rounded-xl object-cover ${p.inStock === false ? 'grayscale opacity-50' : ''}`} alt="" />
-                            {p.inStock === false && <div className="absolute inset-0 flex items-center justify-center"><i className="fas fa-times text-red-500 text-xs"></i></div>}
-                         </div>
-                         <div>
-                            <p className="font-black text-[11px] uppercase text-gray-800">{p.name}</p>
-                            <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.inStock === false ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}`}>
-                               {p.inStock === false ? 'Agotado' : 'Disponible'}
-                            </span>
-                         </div>
-                      </div>
-                      <button 
-                        onClick={() => toggleStock(p)}
-                        className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-50 text-red-600'}`}
-                      >
-                         {p.inStock === false ? 'Habilitar' : 'Agotar Stock'}
-                      </button>
-                   </div>
-                ))}
-             </div>
+             
+             {renderStockGroup("Vapes", "Vapes")}
+             {renderStockGroup("Vapes THC", "Vapes THC")}
+             {renderStockGroup("Cargadores y Accesorios", "Cargadores")}
+
           </div>
         ) : (
           <div className="animate-in fade-in duration-500">

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 
 // --- CONFIGURACIÓN DE LA TIENDA ---
 const CONFIG = {
@@ -17,6 +17,7 @@ const CONFIG = {
 };
 
 const initialProducts = [
+  // --- VAPES REGULARES ---
   { id: 1, name: "BAJA SPLASH", price: 27000, category: "Vapes", tag: "Nuevo", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
   { id: 2, name: "BLUE RAZZ ICE", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
   { id: 3, name: "CHERRY FUSE", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png" },
@@ -33,7 +34,18 @@ const initialProducts = [
   { id: 14, name: "STRAWBERRY WATERMELON", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/MG30ycJD/STRAWBERRY-WATERMELON.webp" },
   { id: 15, name: "SUMMER SPLASH", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png" },
   { id: 16, name: "TIGERS BLOOD", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg" },
-  { id: 17, name: "WATERMELON ICE", price: 27000, category: "Vapes", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp" }
+  { id: 17, name: "WATERMELON ICE", price: 27000, category: "Vapes", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp" },
+  
+  // --- VAPES THC ---
+  { id: 18, name: "BLOW THC", price: 55000, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp" },
+  { id: 19, name: "TORCH 7.5G", price: 53000, category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png" },
+  { id: 20, name: "PHENOM 6G", price: 56000, category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg" },
+
+  // --- CARGADORES ---
+  { id: 21, name: "CARGADOR 20W", price: 16500, category: "Cargadores", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
+  { id: 22, name: "CARGADOR 35W", price: 20500, category: "Cargadores", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg" },
+  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, category: "Cargadores", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg" },
+  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, category: "Cargadores", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg" }
 ];
 
 export default function Home() {
@@ -97,13 +109,21 @@ export default function Home() {
 
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
-  const getUnitPromoPrice = () => {
+  
+  // Lógica de precios promocionales (Aplica generalmente o puedes personalizar si las promos no aplican a cargadores)
+  const getUnitPromoPrice = (productPrice) => {
+    // Si quieres que las promos de cantidad solo apliquen a los vapes de 27000, puedes filtrar aqui.
+    // Por ahora, mantendré la lógica original solo si el precio base es 27000, 
+    // para no descontar precio a los cargadores o vapes caros erróneamente.
+    if (productPrice !== 27000) return productPrice;
+
     const count = getTotalItems();
     if (count >= 5) return 24500;
     if (count >= 2) return 26000;
     return 27000;
   };
-  const calculateTotal = () => cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice()), 0);
+
+  const calculateTotal = () => cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice(item.price)), 0);
 
   const addToCart = (product) => {
     if (product.inStock === false) return;
@@ -130,11 +150,11 @@ export default function Home() {
       return;
     }
     setIsSending(true);
-    const unitPrice = getUnitPromoPrice();
     const finalTotal = calculateTotal();
     
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
     cart.forEach(item => {
+      const unitPrice = getUnitPromoPrice(item.price);
       msg += `- ${item.qty}x ${item.name} ($${formatPrice(unitPrice)} c/u)\n`;
     });
     msg += `\n*TOTAL: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
@@ -146,12 +166,12 @@ export default function Home() {
       if (firebaseRefs.db) {
         await addDoc(collection(firebaseRefs.db, 'orders'), {
           userId: user?.uid || "anon",
-          items: cart.map(i => ({ name: i.name, qty: i.qty, price: unitPrice })),
+          items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPromoPrice(i.price) })),
           total: finalTotal,
           delivery: deliveryMethod,
           address: address || '',
           zone: zone || '',
-          status: 'pending', // ESTADO INICIAL: PENDIENTE
+          status: 'pending',
           createdAt: serverTimestamp()
         });
       }
@@ -161,37 +181,26 @@ export default function Home() {
     }
   };
 
-  return (
-    <div className="bg-[#f4f4f4] text-[#1a1a1a] min-h-screen font-sans pb-24">
-      <nav className="bg-[#121212] py-3 px-4 sticky top-0 z-40 border-b border-[#d4af37]/30 text-white shadow-xl">
-        <div className="container mx-auto flex justify-between items-center">
-          <img src={CONFIG.logoImage} alt="028 Logo" className="h-10 md:h-12 w-auto object-contain" />
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-xl p-2"><i className={`fas ${isMenuOpen ? 'fa-times' : 'fa-bars'}`}></i></button>
-        </div>
-        {isMenuOpen && (
-          <div className="absolute top-full left-0 w-full bg-[#121212] p-6 flex flex-col gap-4 text-center font-bold border-t border-[#d4af37]/20 shadow-2xl">
-            <a href="#catalogo" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors">CATÁLOGO</a>
-            <button onClick={() => {setIsCartOpen(true); setIsMenuOpen(false)}} className="hover:text-[#d4af37] transition-colors uppercase">MI CARRITO</button>
-          </div>
-        )}
-      </nav>
+  // Helper para renderizar secciones
+  const renderProductSection = (title, categoryFilter, promoText = null) => {
+    const sectionProducts = products.filter(p => {
+        if (categoryFilter === 'Vapes') return p.category === 'Vapes';
+        if (categoryFilter === 'Vapes THC') return p.category === 'Vapes THC';
+        if (categoryFilter === 'Cargadores') return p.category === 'Cargadores';
+        return false;
+    });
 
-      <header className="relative h-[30vh] md:h-[45vh] flex items-center justify-center bg-black overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center opacity-50" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
-        <div className="relative z-10 text-center px-4">
-          <h1 className="text-4xl md:text-7xl font-bold text-[#d4af37] tracking-tighter uppercase drop-shadow-2xl">{CONFIG.brandName}{CONFIG.brandSuffix}</h1>
-          <p className="text-white text-[10px] md:text-xs tracking-[0.4em] font-light mt-2 uppercase opacity-80">Premium Boutique & Lifestyle</p>
-        </div>
-      </header>
+    if (sectionProducts.length === 0) return null;
 
-      <section id="catalogo" className="py-8 px-4 max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-3">
-          <h2 className="text-xl md:text-2xl font-black border-l-4 border-[#d4af37] pl-4 uppercase tracking-tight">Selección Exclusiva</h2>
-          <div className="bg-[#d4af37] text-black px-3 py-1 text-[10px] font-black rounded uppercase tracking-widest">2+ un: $26.000 | 5+ un: $24.500</div>
+    return (
+      <section className="mb-12">
+        <div className="flex flex-col md:flex-row justify-between items-baseline mb-6 gap-3 border-b border-gray-200 pb-4">
+          <h2 className="text-xl md:text-2xl font-black border-l-4 border-[#d4af37] pl-4 uppercase tracking-tight">{title}</h2>
+          {promoText && <div className="bg-[#d4af37] text-black px-3 py-1 text-[10px] font-black rounded uppercase tracking-widest">{promoText}</div>}
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {products.map(p => {
+          {sectionProducts.map(p => {
             const inCart = cart.find(i => i.id === p.id);
             const isOutOfStock = p.inStock === false;
             return (
@@ -228,6 +237,37 @@ export default function Home() {
           })}
         </div>
       </section>
+    );
+  };
+
+  return (
+    <div className="bg-[#f4f4f4] text-[#1a1a1a] min-h-screen font-sans pb-24">
+      <nav className="bg-[#121212] py-3 px-4 sticky top-0 z-40 border-b border-[#d4af37]/30 text-white shadow-xl">
+        <div className="container mx-auto flex justify-between items-center">
+          <img src={CONFIG.logoImage} alt="028 Logo" className="h-10 md:h-12 w-auto object-contain" />
+          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-xl p-2"><i className={`fas ${isMenuOpen ? 'fa-times' : 'fa-bars'}`}></i></button>
+        </div>
+        {isMenuOpen && (
+          <div className="absolute top-full left-0 w-full bg-[#121212] p-6 flex flex-col gap-4 text-center font-bold border-t border-[#d4af37]/20 shadow-2xl">
+            <a href="#catalogo" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors">CATÁLOGO</a>
+            <button onClick={() => {setIsCartOpen(true); setIsMenuOpen(false)}} className="hover:text-[#d4af37] transition-colors uppercase">MI CARRITO</button>
+          </div>
+        )}
+      </nav>
+
+      <header className="relative h-[30vh] md:h-[45vh] flex items-center justify-center bg-black overflow-hidden">
+        <div className="absolute inset-0 bg-cover bg-center opacity-50" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
+        <div className="relative z-10 text-center px-4">
+          <h1 className="text-4xl md:text-7xl font-bold text-[#d4af37] tracking-tighter uppercase drop-shadow-2xl">{CONFIG.brandName}{CONFIG.brandSuffix}</h1>
+          <p className="text-white text-[10px] md:text-xs tracking-[0.4em] font-light mt-2 uppercase opacity-80">Premium Boutique & Lifestyle</p>
+        </div>
+      </header>
+
+      <div id="catalogo" className="py-8 px-4 max-w-6xl mx-auto">
+        {renderProductSection("Selección Exclusiva", "Vapes", "2+ un: $26.000 | 5+ un: $24.500")}
+        {renderProductSection("Vapes de THC", "Vapes THC")}
+        {renderProductSection("Cargadores y Accesorios", "Cargadores")}
+      </div>
 
       {getTotalItems() > 0 && (
         <div className="fixed bottom-0 left-0 w-full bg-[#121212]/95 backdrop-blur-md p-4 border-t border-[#d4af37]/40 text-white flex justify-between items-center z-50 shadow-2xl">
@@ -245,7 +285,7 @@ export default function Home() {
               {cart.map(item => (
                 <div key={item.id} className="flex justify-between items-center border-b border-gray-50 pb-3">
                   <div className="flex items-center gap-3"><img src={item.image} className="w-10 h-10 rounded object-cover" alt="" /><div><p className="font-bold text-[11px] uppercase">{item.name}</p><p className="text-[9px] text-gray-400">{item.qty} un.</p></div></div>
-                  <p className="font-black text-[#d4af37] text-xs">{CONFIG.currencySymbol}{formatPrice(item.qty * getUnitPromoPrice())}</p>
+                  <p className="font-black text-[#d4af37] text-xs">{CONFIG.currencySymbol}{formatPrice(item.qty * getUnitPromoPrice(item.price))}</p>
                 </div>
               ))}
             </div>
