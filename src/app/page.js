@@ -292,7 +292,7 @@ export default function Home() {
             </a>
         </div>
 
-        {renderProductSection("Selección Exclusiva", "Vapes", "vapes", "2+ un: $26.000 | 5+ un: $24.500")}
+        {renderProductSection("Selección Exclusiva", "Vapes", "vapes", "2+ un: $24.500 | 5+ un: $23.500")}
         {renderProductSection("Vapes de THC", "Vapes THC", "thc")}
         {renderProductSection("PlayStation 5", "PlayStation", "playstation")}
         {renderProductSection("Cargadores y Accesorios", "Cargadores", "accesorios")}
