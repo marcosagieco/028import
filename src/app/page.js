@@ -125,8 +125,8 @@ export default function Home() {
     if (productPrice !== 27000) return productPrice;
 
     const count = getTotalItems();
-    if (count >= 5) return 24500;
-    if (count >= 2) return 26000;
+    if (count >= 5) return 23500;
+    if (count >= 2) return 24500;
     return 27000;
   };
 
