@@ -12,7 +12,7 @@ const CONFIG = {
   brandSuffix: "import",
   currencySymbol: "$",
   shippingText: "Espero confirmacion para abonar",
-  bannerImage: "https://i.postimg.cc/wBdHsm94/banner-web.jpg", // IMAGEN DE BANNER ACTUALIZADA
+  bannerImage: "https://i.postimg.cc/YCwsXkVg/pedime-te-llega-en-30.jpg", // IMAGEN DE BANNER ACTUALIZADA
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png"
 };
 
