@@ -35,11 +35,17 @@ const initialProducts = [
   { id: 15, name: "SUMMER SPLASH", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png" },
   { id: 16, name: "TIGERS BLOOD", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg" },
   { id: 17, name: "WATERMELON ICE", price: 27000, category: "Vapes", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp" },
+  // NUEVOS PRODUCTOS AGREGADOS
+  { id: 25, name: "SOUR APPLE ICE", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg" },
+  { id: 26, name: "MIAMI MINT", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg" },
   
   // --- VAPES THC ---
   { id: 18, name: "BLOW THC", price: 55000, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp" },
   { id: 19, name: "TORCH 7.5G", price: 53000, category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png" },
   { id: 20, name: "PHENOM 6G", price: 56000, category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg" },
+
+  // --- PLAYSTATION ---
+  { id: 27, name: "PLAYSTATION 5", price: 550, category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg" },
 
   // --- CARGADORES ---
   { id: 21, name: "CARGADOR 20W", price: 16500, category: "Cargadores", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
@@ -156,9 +162,11 @@ export default function Home() {
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
     cart.forEach(item => {
       const unitPrice = getUnitPromoPrice(item.price);
-      msg += `- ${item.qty}x ${item.name} ($${formatPrice(unitPrice)} c/u)\n`;
+      // Ajuste para mostrar si es USD en el mensaje si el precio es bajo (heurística simple para este caso)
+      const currency = item.price < 2000 ? "USD" : "$"; 
+      msg += `- ${item.qty}x ${item.name} (${currency}${formatPrice(unitPrice)} c/u)\n`;
     });
-    msg += `\n*TOTAL: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
+    msg += `\n*TOTAL ESTIMADO: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
     msg += deliveryMethod === 'envio' ? `*ENVIO:* ${address}, ${zone}\n` : `*RETIRO EN LOCAL*\n`;
 
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
@@ -188,6 +196,7 @@ export default function Home() {
         if (categoryFilter === 'Vapes') return p.category === 'Vapes';
         if (categoryFilter === 'Vapes THC') return p.category === 'Vapes THC';
         if (categoryFilter === 'Cargadores') return p.category === 'Cargadores';
+        if (categoryFilter === 'PlayStation') return p.category === 'PlayStation';
         return false;
     });
 
@@ -253,6 +262,7 @@ export default function Home() {
              {/* Menú Actualizado con links directos */}
             <a href="#vapes" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">VAPES</a>
             <a href="#thc" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">VAPES THC</a>
+            <a href="#playstation" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">PLAYSTATION</a>
             <a href="#accesorios" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">CARGADORES</a>
             <button onClick={() => {setIsCartOpen(true); setIsMenuOpen(false)}} className="hover:text-[#d4af37] transition-colors uppercase py-2 mt-2">MI CARRITO</button>
           </div>
@@ -274,6 +284,9 @@ export default function Home() {
             <a href="#thc" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
                 Vapes THC
             </a>
+            <a href="#playstation" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
+                PlayStation
+            </a>
             <a href="#accesorios" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
                 Cargadores
             </a>
@@ -281,6 +294,7 @@ export default function Home() {
 
         {renderProductSection("Selección Exclusiva", "Vapes", "vapes", "2+ un: $26.000 | 5+ un: $24.500")}
         {renderProductSection("Vapes de THC", "Vapes THC", "thc")}
+        {renderProductSection("PlayStation 5", "PlayStation", "playstation")}
         {renderProductSection("Cargadores y Accesorios", "Cargadores", "accesorios")}
       </div>
 

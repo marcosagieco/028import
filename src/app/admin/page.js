@@ -40,11 +40,17 @@ const initialProducts = [
   { id: 15, name: "SUMMER SPLASH", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png" },
   { id: 16, name: "TIGERS BLOOD", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg" },
   { id: 17, name: "WATERMELON ICE", price: 27000, category: "Vapes", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp" },
+  // NUEVOS PRODUCTOS AGREGADOS
+  { id: 25, name: "SOUR APPLE ICE", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg" },
+  { id: 26, name: "MIAMI MINT", price: 27000, category: "Vapes", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg" },
   
   // --- VAPES THC ---
   { id: 18, name: "BLOW THC", price: 55000, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp" },
   { id: 19, name: "TORCH 7.5G", price: 53000, category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png" },
   { id: 20, name: "PHENOM 6G", price: 56000, category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg" },
+
+  // --- PLAYSTATION ---
+  { id: 27, name: "PLAYSTATION 5", price: 550, category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg" },
 
   // --- CARGADORES ---
   { id: 21, name: "CARGADOR 20W", price: 16500, category: "Cargadores", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
@@ -209,6 +215,7 @@ export default function AdminPage() {
         if (categoryFilter === 'Vapes') return p.category === 'Vapes';
         if (categoryFilter === 'Vapes THC') return p.category === 'Vapes THC';
         if (categoryFilter === 'Cargadores') return p.category === 'Cargadores';
+        if (categoryFilter === 'PlayStation') return p.category === 'PlayStation';
         return false;
     });
 
@@ -303,6 +310,7 @@ export default function AdminPage() {
              
              {renderStockGroup("Vapes", "Vapes")}
              {renderStockGroup("Vapes THC", "Vapes THC")}
+             {renderStockGroup("PlayStation", "PlayStation")}
              {renderStockGroup("Cargadores y Accesorios", "Cargadores")}
 
           </div>
