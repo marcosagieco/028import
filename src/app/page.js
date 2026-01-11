@@ -12,7 +12,7 @@ const CONFIG = {
   brandSuffix: "import",
   currencySymbol: "$",
   shippingText: "Espero confirmacion para abonar",
-  bannerImage: "https://i.postimg.cc/YCwsXkVg/pedime-te-llega-en-30.jpg", // IMAGEN DE BANNER ACTUALIZADA
+  bannerImage: "https://i.postimg.cc/wBdHsm94/banner-web.jpg",
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png"
 };
 
@@ -47,11 +47,12 @@ const initialProducts = [
   // --- PLAYSTATION ---
   { id: 27, name: "PLAYSTATION 5", price: 550, category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg" },
 
-  // --- CARGADORES ---
-  { id: 21, name: "CARGADOR 20W", price: 16500, category: "Cargadores", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
-  { id: 22, name: "CARGADOR 35W", price: 20500, category: "Cargadores", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg" },
-  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, category: "Cargadores", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg" },
-  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, category: "Cargadores", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg" }
+  // --- PRODUCTOS APPLE (Antes Cargadores) ---
+  { id: 28, name: "AIRPODS PRO", price: 35000, category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg" }, // NUEVO PRODUCTO
+  { id: 21, name: "CARGADOR 20W", price: 16500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
+  { id: 22, name: "CARGADOR 35W", price: 20500, category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg" },
+  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg" },
+  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg" }
 ];
 
 export default function Home() {
@@ -99,7 +100,6 @@ export default function Home() {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
           setProducts(prev => prev.map(p => {
             const match = dbProducts.find(dbP => dbP.id === p.id);
-            // ACTUALIZACIÓN: Ahora también leemos el 'price' si existe en la DB
             return match 
               ? { ...p, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } 
               : { ...p, inStock: true };
@@ -119,14 +119,13 @@ export default function Home() {
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
   
-  // Lógica de precios promocionales (Simplificada para usar el precio base dinámico)
+  // Lógica de precios promocionales
   const getUnitPromoPrice = (productPrice) => {
-    // Solo aplica descuento si el precio es exactamente 27000 (Vapes regulares)
     if (productPrice !== 27000) return productPrice;
 
     const count = getTotalItems();
-    if (count >= 5) return 23500;
-    if (count >= 2) return 24500;
+    if (count >= 5) return 24500;
+    if (count >= 2) return 26000;
     return 27000;
   };
 
@@ -162,7 +161,6 @@ export default function Home() {
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
     cart.forEach(item => {
       const unitPrice = getUnitPromoPrice(item.price);
-      // Ajuste para mostrar si es USD en el mensaje si el precio es bajo (heurística simple para este caso)
       const currency = item.price < 2000 ? "USD" : "$"; 
       msg += `- ${item.qty}x ${item.name} (${currency}${formatPrice(unitPrice)} c/u)\n`;
     });
@@ -195,8 +193,9 @@ export default function Home() {
     const sectionProducts = products.filter(p => {
         if (categoryFilter === 'Vapes') return p.category === 'Vapes';
         if (categoryFilter === 'Vapes THC') return p.category === 'Vapes THC';
-        if (categoryFilter === 'Cargadores') return p.category === 'Cargadores';
         if (categoryFilter === 'PlayStation') return p.category === 'PlayStation';
+        // CAMBIADO: AHORA FILTRA POR PRODUCTOS APPLE
+        if (categoryFilter === 'PRODUCTOS APPLE') return p.category === 'PRODUCTOS APPLE';
         return false;
     });
 
@@ -259,20 +258,19 @@ export default function Home() {
         </div>
         {isMenuOpen && (
           <div className="absolute top-full left-0 w-full bg-[#121212] p-6 flex flex-col gap-4 text-center font-bold border-t border-[#d4af37]/20 shadow-2xl z-50">
-             {/* Menú Actualizado con links directos */}
+             {/* Menú Actualizado */}
             <a href="#vapes" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">VAPES</a>
             <a href="#thc" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">VAPES THC</a>
             <a href="#playstation" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">PLAYSTATION</a>
-            <a href="#accesorios" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">CARGADORES</a>
+            {/* CAMBIADO A PRODUCTOS APPLE */}
+            <a href="#apple" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">PRODUCTOS APPLE</a>
             <button onClick={() => {setIsCartOpen(true); setIsMenuOpen(false)}} className="hover:text-[#d4af37] transition-colors uppercase py-2 mt-2">MI CARRITO</button>
           </div>
         )}
       </nav>
 
       <header className="relative h-[30vh] md:h-[45vh] flex items-center justify-center bg-black overflow-hidden">
-        {/* Ajustado con backgroundPosition 'center 40%' para bajar la imagen muy sutilmente */}
         <div className="absolute inset-0 bg-cover opacity-50" style={{backgroundImage: `url(${CONFIG.bannerImage})`, backgroundPosition: 'center 40%'}} />
-        {/* TEXTO ELIMINADO SEGÚN SOLICITUD */}
       </header>
 
       <div id="catalogo" className="py-8 px-4 max-w-6xl mx-auto">
@@ -287,15 +285,17 @@ export default function Home() {
             <a href="#playstation" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
                 PlayStation
             </a>
-            <a href="#accesorios" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
-                Cargadores
+            {/* CAMBIADO A PRODUCTOS APPLE */}
+            <a href="#apple" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
+                Productos Apple
             </a>
         </div>
 
-        {renderProductSection("Selección Exclusiva", "Vapes", "vapes", "2+ un: $24.500 | 5+ un: $23.500")}
+        {renderProductSection("Selección Exclusiva", "Vapes", "vapes", "2+ un: $26.000 | 5+ un: $24.500")}
         {renderProductSection("Vapes de THC", "Vapes THC", "thc")}
         {renderProductSection("PlayStation 5", "PlayStation", "playstation")}
-        {renderProductSection("Cargadores y Accesorios", "Cargadores", "accesorios")}
+        {/* SECCION ACTUALIZADA */}
+        {renderProductSection("Productos Apple", "PRODUCTOS APPLE", "apple")}
       </div>
 
       {getTotalItems() > 0 && (

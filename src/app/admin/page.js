@@ -10,7 +10,7 @@ import {
   query, 
   orderBy, 
   updateDoc, 
-  deleteDoc, // Agregado deleteDoc
+  deleteDoc, 
   doc,
   setDoc
 } from "firebase/firestore";
@@ -52,11 +52,12 @@ const initialProducts = [
   // --- PLAYSTATION ---
   { id: 27, name: "PLAYSTATION 5", price: 550, category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg" },
 
-  // --- CARGADORES ---
-  { id: 21, name: "CARGADOR 20W", price: 16500, category: "Cargadores", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
-  { id: 22, name: "CARGADOR 35W", price: 20500, category: "Cargadores", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg" },
-  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, category: "Cargadores", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg" },
-  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, category: "Cargadores", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg" }
+  // --- PRODUCTOS APPLE (Antes Cargadores) ---
+  { id: 28, name: "AIRPODS PRO", price: 35000, category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg" }, // NUEVO PRODUCTO
+  { id: 21, name: "CARGADOR 20W", price: 16500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
+  { id: 22, name: "CARGADOR 35W", price: 20500, category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg" },
+  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg" },
+  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg" }
 ];
 
 export default function AdminPage() {
@@ -214,8 +215,9 @@ export default function AdminPage() {
     const group = products.filter(p => {
         if (categoryFilter === 'Vapes') return p.category === 'Vapes';
         if (categoryFilter === 'Vapes THC') return p.category === 'Vapes THC';
-        if (categoryFilter === 'Cargadores') return p.category === 'Cargadores';
         if (categoryFilter === 'PlayStation') return p.category === 'PlayStation';
+        // CAMBIADO: FILTRO ACTUALIZADO
+        if (categoryFilter === 'PRODUCTOS APPLE') return p.category === 'PRODUCTOS APPLE';
         return false;
     });
 
@@ -311,7 +313,8 @@ export default function AdminPage() {
              {renderStockGroup("Vapes", "Vapes")}
              {renderStockGroup("Vapes THC", "Vapes THC")}
              {renderStockGroup("PlayStation", "PlayStation")}
-             {renderStockGroup("Cargadores y Accesorios", "Cargadores")}
+             {/* SECCION ACTUALIZADA EN ADMIN */}
+             {renderStockGroup("Productos Apple", "PRODUCTOS APPLE")}
 
           </div>
         ) : (
