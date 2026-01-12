@@ -5,15 +5,14 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 
-// --- CONFIGURACIÓN DE LA TIENDA ---
+// --- CONFIGURACIÓN DE TU MARCA (EDITAR AQUÍ) ---
 const CONFIG = {
-  whatsappNumber: "5491155669960",
-  brandName: "028",
-  brandSuffix: "import",
+  brandName: "028", // NOMBRE DE LA PESTAÑA
+  whatsappNumber: "5491155669960", 
+  logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png", // ICONO DE LA PESTAÑA
+  bannerImage: "https://i.postimg.cc/wBdHsm94/banner-web.jpg", 
   currencySymbol: "$",
   shippingText: "Espero confirmacion para abonar",
-  bannerImage: "https://i.postimg.cc/wBdHsm94/banner-web.jpg",
-  logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png"
 };
 
 const initialProducts = [
@@ -47,8 +46,8 @@ const initialProducts = [
   // --- PLAYSTATION ---
   { id: 27, name: "PLAYSTATION 5", price: 550, category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg" },
 
-  // --- PRODUCTOS APPLE (Antes Cargadores) ---
-  { id: 28, name: "AIRPODS PRO", price: 35000, category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg" }, // NUEVO PRODUCTO
+  // --- PRODUCTOS APPLE ---
+  { id: 28, name: "AIRPODS PRO", price: 35000, category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg" },
   { id: 21, name: "CARGADOR 20W", price: 16500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
   { id: 22, name: "CARGADOR 35W", price: 20500, category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg" },
   { id: 23, name: "CABLE USB-C A USB-C", price: 13500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg" },
@@ -65,6 +64,21 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
+
+  // --- EFECTO PARA CAMBIAR TÍTULO DE PESTAÑA Y FAVICON ---
+  useEffect(() => {
+    // Cambiar Título
+    document.title = CONFIG.brandName;
+
+    // Cambiar Favicon (Icono de pestaña)
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.getElementsByTagName('head')[0].appendChild(link);
+    }
+    link.href = CONFIG.logoImage;
+  }, []);
 
   // Inicialización de Firebase
   const firebaseRefs = useMemo(() => {
@@ -188,13 +202,12 @@ export default function Home() {
     }
   };
 
-  // Helper para renderizar secciones - AHORA ACEPTA sectionId
+  // Helper para renderizar secciones
   const renderProductSection = (title, categoryFilter, sectionId, promoText = null) => {
     const sectionProducts = products.filter(p => {
         if (categoryFilter === 'Vapes') return p.category === 'Vapes';
         if (categoryFilter === 'Vapes THC') return p.category === 'Vapes THC';
         if (categoryFilter === 'PlayStation') return p.category === 'PlayStation';
-        // CAMBIADO: AHORA FILTRA POR PRODUCTOS APPLE
         if (categoryFilter === 'PRODUCTOS APPLE') return p.category === 'PRODUCTOS APPLE';
         return false;
     });
@@ -253,16 +266,14 @@ export default function Home() {
     <div className="bg-[#f4f4f4] text-[#1a1a1a] min-h-screen font-sans pb-24">
       <nav className="bg-[#121212] py-3 px-4 sticky top-0 z-40 border-b border-[#d4af37]/30 text-white shadow-xl">
         <div className="container mx-auto flex justify-between items-center">
-          <img src={CONFIG.logoImage} alt="028 Logo" className="h-10 md:h-12 w-auto object-contain" />
+          <img src={CONFIG.logoImage} alt={`${CONFIG.brandName} Logo`} className="h-10 md:h-12 w-auto object-contain" />
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-xl p-2"><i className={`fas ${isMenuOpen ? 'fa-times' : 'fa-bars'}`}></i></button>
         </div>
         {isMenuOpen && (
           <div className="absolute top-full left-0 w-full bg-[#121212] p-6 flex flex-col gap-4 text-center font-bold border-t border-[#d4af37]/20 shadow-2xl z-50">
-             {/* Menú Actualizado */}
             <a href="#vapes" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">VAPES</a>
             <a href="#thc" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">VAPES THC</a>
             <a href="#playstation" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">PLAYSTATION</a>
-            {/* CAMBIADO A PRODUCTOS APPLE */}
             <a href="#apple" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">PRODUCTOS APPLE</a>
             <button onClick={() => {setIsCartOpen(true); setIsMenuOpen(false)}} className="hover:text-[#d4af37] transition-colors uppercase py-2 mt-2">MI CARRITO</button>
           </div>
@@ -274,7 +285,6 @@ export default function Home() {
       </header>
 
       <div id="catalogo" className="py-8 px-4 max-w-6xl mx-auto">
-        {/* BARRA DE ACCESOS RÁPIDOS (Sticky) */}
         <div className="flex gap-3 overflow-x-auto pb-4 mb-4 no-scrollbar sticky top-[60px] md:top-[70px] z-30 bg-[#f4f4f4]/95 backdrop-blur-sm py-3 -mx-4 px-4 md:mx-0 md:px-0 mask-image-gradient">
             <a href="#vapes" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
                 Vapes
@@ -285,7 +295,6 @@ export default function Home() {
             <a href="#playstation" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
                 PlayStation
             </a>
-            {/* CAMBIADO A PRODUCTOS APPLE */}
             <a href="#apple" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
                 Productos Apple
             </a>
@@ -294,7 +303,6 @@ export default function Home() {
         {renderProductSection("Selección Exclusiva", "Vapes", "vapes", "2+ un: $26.000 | 5+ un: $24.500")}
         {renderProductSection("Vapes de THC", "Vapes THC", "thc")}
         {renderProductSection("PlayStation 5", "PlayStation", "playstation")}
-        {/* SECCION ACTUALIZADA */}
         {renderProductSection("Productos Apple", "PRODUCTOS APPLE", "apple")}
       </div>
 

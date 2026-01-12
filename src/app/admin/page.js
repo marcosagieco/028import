@@ -15,10 +15,10 @@ import {
   setDoc
 } from "firebase/firestore";
 
+// --- CONFIGURACIÓN DE TU MARCA (EDITAR AQUÍ) ---
 const CONFIG = {
-  brandName: "028",
-  brandSuffix: "import",
-  logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png"
+  brandName: "028", // NOMBRE DE LA PESTAÑA
+  logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png", // ICONO DE LA PESTAÑA
 };
 
 const initialProducts = [
@@ -52,8 +52,8 @@ const initialProducts = [
   // --- PLAYSTATION ---
   { id: 27, name: "PLAYSTATION 5", price: 550, category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg" },
 
-  // --- PRODUCTOS APPLE (Antes Cargadores) ---
-  { id: 28, name: "AIRPODS PRO", price: 35000, category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg" }, // NUEVO PRODUCTO
+  // --- PRODUCTOS APPLE ---
+  { id: 28, name: "AIRPODS PRO", price: 35000, category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg" },
   { id: 21, name: "CARGADOR 20W", price: 16500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
   { id: 22, name: "CARGADOR 35W", price: 20500, category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg" },
   { id: 23, name: "CABLE USB-C A USB-C", price: 13500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg" },
@@ -66,6 +66,18 @@ export default function AdminPage() {
   const [products, setProducts] = useState(initialProducts);
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false); // Estado para Modo Oscuro
+
+  // --- EFECTO PARA CAMBIAR TÍTULO DE PESTAÑA Y FAVICON EN ADMIN ---
+  useEffect(() => {
+    document.title = `${CONFIG.brandName} - Admin`;
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.getElementsByTagName('head')[0].appendChild(link);
+    }
+    link.href = CONFIG.logoImage;
+  }, []);
 
   const firebaseRefs = useMemo(() => {
     if (typeof window === "undefined") return { auth: null, db: null };
@@ -216,7 +228,6 @@ export default function AdminPage() {
         if (categoryFilter === 'Vapes') return p.category === 'Vapes';
         if (categoryFilter === 'Vapes THC') return p.category === 'Vapes THC';
         if (categoryFilter === 'PlayStation') return p.category === 'PlayStation';
-        // CAMBIADO: FILTRO ACTUALIZADO
         if (categoryFilter === 'PRODUCTOS APPLE') return p.category === 'PRODUCTOS APPLE';
         return false;
     });
@@ -280,8 +291,8 @@ export default function AdminPage() {
     <div className={`min-h-screen font-sans pb-10 transition-colors duration-300 ${theme.bg} ${theme.text}`}>
       <nav className={`${theme.nav} py-5 px-6 text-white flex justify-between items-center shadow-2xl border-b border-[#d4af37]/30 sticky top-0 z-50`}>
         <div className="flex items-center gap-4">
-          <img src={CONFIG.logoImage} alt="028 Logo" className="h-10 w-auto object-contain" />
-          <h1 className="text-lg font-black tracking-tighter uppercase">028<span className="text-[#d4af37]">Control</span></h1>
+          <img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain" />
+          <h1 className="text-lg font-black tracking-tighter uppercase">{CONFIG.brandName}<span className="text-[#d4af37]">Control</span></h1>
         </div>
         <div className="flex items-center gap-4">
             <button 
@@ -313,7 +324,6 @@ export default function AdminPage() {
              {renderStockGroup("Vapes", "Vapes")}
              {renderStockGroup("Vapes THC", "Vapes THC")}
              {renderStockGroup("PlayStation", "PlayStation")}
-             {/* SECCION ACTUALIZADA EN ADMIN */}
              {renderStockGroup("Productos Apple", "PRODUCTOS APPLE")}
 
           </div>
