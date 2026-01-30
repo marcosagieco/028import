@@ -17,25 +17,25 @@ const CONFIG = {
 
 const initialProducts = [
   // --- ELFBAR ICE KING (Ex Vapes) ---
-  { id: 1, name: "BAJA SPLASH", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
-  { id: 2, name: "BLUE RAZZ ICE", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
-  { id: 3, name: "CHERRY FUSE", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png" },
-  { id: 4, name: "CHERRY STRAZZ", price: 27000, category: "Elfbar Ice King", tag: "Destacado", image: "https://i.postimg.cc/7PFVsTG2/CHERRY-STRAZZ.jpg" },
-  { id: 5, name: "DOUBLE APPLE ICE", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QN9mJqtk/DOUBLE-APPLE-ICE.webp" },
-  { id: 6, name: "DRAGON STRAWNANA", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/9X6p8qRB/DRAGON-STRAWNANA.png" },
-  { id: 7, name: "GRAPE ICE", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/hPV0HPTw/GRAPE-ICE.webp" },
-  { id: 8, name: "MANGO MAGIC", price: 27000, category: "Elfbar Ice King", tag: "Best Seller", image: "https://i.postimg.cc/tCFzLCFC/MANGO-MAGIC.png" },
-  { id: 9, name: "PEACH", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/4xZ1Zk1f/PEACH.webp" },
-  { id: 10, name: "SCARY BERRY", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/K8F5FS5D/SCARY-BERRY.png" },
-  { id: 11, name: "SOUR LUSH GUMMY", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/P54Q536R/SOUR-LUSH-GUMMY.png" },
-  { id: 12, name: "STRAWBERRY DRAGON FRUIT", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QMdk9QwW/STRAWBERRY-DRAGON-FRUIT.png" },
-  { id: 13, name: "STRAWBERRY ICE", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/7Lt1gCrC/STRAWBERRY-ICE.png" },
-  { id: 14, name: "STRAWBERRY WATERMELON", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/MG30ycJD/STRAWBERRY-WATERMELON.webp" },
-  { id: 15, name: "SUMMER SPLASH", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png" },
-  { id: 16, name: "TIGERS BLOOD", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg" },
-  { id: 17, name: "WATERMELON ICE", price: 27000, category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp" },
-  { id: 25, name: "SOUR APPLE ICE", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg" },
-  { id: 26, name: "MIAMI MINT", price: 27000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg" },
+  { id: 1, name: "BAJA SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
+  { id: 2, name: "BLUE RAZZ ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
+  { id: 3, name: "CHERRY FUSE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png" },
+  { id: 4, name: "CHERRY STRAZZ", price: 26000, category: "Elfbar Ice King", tag: "Destacado", image: "https://i.postimg.cc/7PFVsTG2/CHERRY-STRAZZ.jpg" },
+  { id: 5, name: "DOUBLE APPLE ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QN9mJqtk/DOUBLE-APPLE-ICE.webp" },
+  { id: 6, name: "DRAGON STRAWNANA", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/9X6p8qRB/DRAGON-STRAWNANA.png" },
+  { id: 7, name: "GRAPE ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/hPV0HPTw/GRAPE-ICE.webp" },
+  { id: 8, name: "MANGO MAGIC", price: 26000, category: "Elfbar Ice King", tag: "Best Seller", image: "https://i.postimg.cc/tCFzLCFC/MANGO-MAGIC.png" },
+  { id: 9, name: "PEACH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/4xZ1Zk1f/PEACH.webp" },
+  { id: 10, name: "SCARY BERRY", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/K8F5FS5D/SCARY-BERRY.png" },
+  { id: 11, name: "SOUR LUSH GUMMY", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/P54Q536R/SOUR-LUSH-GUMMY.png" },
+  { id: 12, name: "STRAWBERRY DRAGON FRUIT", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QMdk9QwW/STRAWBERRY-DRAGON-FRUIT.png" },
+  { id: 13, name: "STRAWBERRY ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/7Lt1gCrC/STRAWBERRY-ICE.png" },
+  { id: 14, name: "STRAWBERRY WATERMELON", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/MG30ycJD/STRAWBERRY-WATERMELON.webp" },
+  { id: 15, name: "SUMMER SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png" },
+  { id: 16, name: "TIGERS BLOOD", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg" },
+  { id: 17, name: "WATERMELON ICE", price: 26000, category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp" },
+  { id: 25, name: "SOUR APPLE ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg" },
+  { id: 26, name: "MIAMI MINT", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg" },
 
   // --- IGNITE V400 ---
   { id: 30, name: "BLUE RAZZ LEMON", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Jh48hT4x/ignite-v400-BLUE-RAZZ-LEMON.jpg" },
@@ -155,17 +155,28 @@ export default function Home() {
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
   
-  // Lógica de precios promocionales
-  const getUnitPromoPrice = (productPrice) => {
-    if (productPrice !== 27000) return productPrice;
+  // Lógica de precios promocionales ACTUALIZADA
+  const getUnitPromoPrice = (item) => {
+    // Lógica para Elfbar Ice King (Precio base 26000)
+    // Se mantiene lógica global (Mix & Match) por coherencia, 2+ unidades en total activan el descuento
+    if (item.category === 'Elfbar Ice King') {
+        const count = getTotalItems();
+        if (count >= 2) return 24500;
+        return 26000;
+    }
 
-    const count = getTotalItems();
-    if (count >= 5) return 24500;
-    if (count >= 2) return 26000;
-    return 27000;
+    // Lógica para Lost Mary 20000 (Precio base 23000)
+    // Lógica específica: Llevando 2 Lost Mary o más
+    if (item.category === 'Lost Mary 20000') {
+        const lmCount = cart.filter(i => i.category === 'Lost Mary 20000').reduce((acc, curr) => acc + curr.qty, 0);
+        if (lmCount >= 2) return 20000;
+        return 23000;
+    }
+
+    return item.price;
   };
 
-  const calculateTotal = () => cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice(item.price)), 0);
+  const calculateTotal = () => cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice(item)), 0);
 
   const addToCart = (product) => {
     if (product.inStock === false) return;
@@ -196,7 +207,7 @@ export default function Home() {
     
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
     cart.forEach(item => {
-      const unitPrice = getUnitPromoPrice(item.price);
+      const unitPrice = getUnitPromoPrice(item);
       const currency = item.price < 2000 ? "USD" : "$"; 
       msg += `- ${item.qty}x ${item.name} (${currency}${formatPrice(unitPrice)} c/u)\n`;
     });
@@ -209,7 +220,7 @@ export default function Home() {
       if (firebaseRefs.db) {
         await addDoc(collection(firebaseRefs.db, 'orders'), {
           userId: user?.uid || "anon",
-          items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPromoPrice(i.price) })),
+          items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPromoPrice(i) })),
           total: finalTotal,
           delivery: deliveryMethod,
           address: address || '',
@@ -346,9 +357,10 @@ export default function Home() {
         <div className="mb-16">
             <h2 className="text-3xl md:text-5xl font-black text-center mb-10 text-gray-200 uppercase tracking-tighter opacity-30 select-none">VAPE ZONE</h2>
             
-            {renderProductSection("Elfbar Ice King", "Elfbar Ice King", "elfbar", "2+ un: $26.000 | 5+ un: $24.500")}
+            {/* Actualizado texto promocional */}
+            {renderProductSection("Elfbar Ice King", "Elfbar Ice King", "elfbar", "2+ un: $24.500 c/u")}
             {renderProductSection("Ignite v400", "Ignite v400", "ignite")}
-            {renderProductSection("Lost Mary 20000", "Lost Mary 20000", "lostmary")}
+            {renderProductSection("Lost Mary 20000", "Lost Mary 20000", "lostmary", "2+ Lost Mary: $20.000 c/u")}
         </div>
 
         {renderProductSection("Vapes de THC", "Vapes THC", "thc")}
@@ -372,7 +384,7 @@ export default function Home() {
               {cart.map(item => (
                 <div key={item.id} className="flex justify-between items-center border-b border-gray-50 pb-3">
                   <div className="flex items-center gap-3"><img src={item.image} className="w-10 h-10 rounded object-cover" alt="" /><div><p className="font-bold text-[11px] uppercase">{item.name}</p><p className="text-[9px] text-gray-400">{item.qty} un.</p></div></div>
-                  <p className="font-black text-[#d4af37] text-xs">{CONFIG.currencySymbol}{formatPrice(item.qty * getUnitPromoPrice(item.price))}</p>
+                  <p className="font-black text-[#d4af37] text-xs">{CONFIG.currencySymbol}{formatPrice(item.qty * getUnitPromoPrice(item))}</p>
                 </div>
               ))}
             </div>
