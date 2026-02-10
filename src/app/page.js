@@ -5,7 +5,6 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 
-// --- CONFIGURACIÓN DE TU MARCA (EDITAR AQUÍ) ---
 const CONFIG = {
   brandName: "028", 
   whatsappNumber: "5491155669960", 
@@ -15,8 +14,8 @@ const CONFIG = {
   shippingText: "Espero confirmacion para abonar",
 };
 
+// Usamos la misma lista inicial base
 const initialProducts = [
-  // --- ELFBAR ICE KING ---
   { id: 1, name: "BAJA SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
   { id: 3, name: "CHERRY FUSE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png" },
@@ -36,8 +35,6 @@ const initialProducts = [
   { id: 17, name: "WATERMELON ICE", price: 26000, category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp" },
   { id: 25, name: "SOUR APPLE ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg" },
   { id: 26, name: "MIAMI MINT", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg" },
-
-  // --- IGNITE V400 ---
   { id: 30, name: "BLUE RAZZ LEMON", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Jh48hT4x/ignite-v400-BLUE-RAZZ-LEMON.jpg" },
   { id: 31, name: "CHERRY WATERMELON", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/nLRJ9vCd/ignite-v400-cherry-watermelon.jpg" },
   { id: 32, name: "GRAPE", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/0QzqYbSv/ignite-v400-GRAPE.jpg" },
@@ -47,8 +44,6 @@ const initialProducts = [
   { id: 36, name: "STRAWBERRY KIWI", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Hsw19GrJ/ignite-v400-STRAWBERRY-KIWI.jpg" },
   { id: 37, name: "STRAWBERRY", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/cLdyDD35/ignite-v400-strawberry.jpg" },
   { id: 38, name: "TUTTI FRUTI", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/mgVxKQ3v/ignite-v400-TUTI-FRUTI.jpg" },
-
-  // --- LOST MARY 20000 ---
   { id: 39, name: "BLUE RAZZ ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yYk7mpF9/Lost-mary-20000-BLUE-RAZZ-ICE.jpg" },
   { id: 40, name: "GRAPE ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05VC/Lost-mary-20000-GRAPE-ICE.jpg" },
   { id: 41, name: "ICE MINT", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05V5/lost-mary-20000-ICE-MINT.jpg" },
@@ -58,17 +53,11 @@ const initialProducts = [
   { id: 45, name: "MIAMI MINT", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yWqpSNmv/Lost-mary-20000-MIAMI-MINT.jpg" },
   { id: 46, name: "STRAWBERRY ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/zDLJWPw3/Lost-mary-20000-STRAWBERRY-ICE.jpg" },
   { id: 47, name: "STRAWBERRY KIWI", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/59Hxvk5q/Lost-mary-20000-STRAWBERRY-KIWI.jpg" },
-  
-  // --- VAPES THC ---
   { id: 18, name: "BLOW THC", price: 55000, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp" },
   { id: 19, name: "TORCH 7.5G", price: 53000, category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png" },
   { id: 29, name: "TORCH 4.5G", price: 52500, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/vmFK42hC/TORCH-4-5G.jpg" },
   { id: 20, name: "PHENOM 6G", price: 56000, category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg" },
-
-  // --- PLAYSTATION ---
   { id: 27, name: "PLAYSTATION 5", price: 550, category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg" },
-
-  // --- PRODUCTOS APPLE ---
   { id: 28, name: "AIRPODS PRO", price: 35000, category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg" },
   { id: 21, name: "CARGADOR 20W", price: 16500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
   { id: 22, name: "CARGADOR 35W", price: 20500, category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg" },
@@ -87,7 +76,19 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
-  // --- EFECTO PARA CAMBIAR TÍTULO DE PESTAÑA Y FAVICON ---
+  // --- OBTENER CATEGORÍAS ÚNICAS ---
+  // Esto hace que el menú y las secciones sean dinámicos
+  const categoriesList = useMemo(() => {
+    // Usamos Set para eliminar duplicados
+    const unique = new Set(products.map(p => p.category));
+    // Podemos ordenar alfabéticamente o dejarlas como aparecen
+    // Si quieres un orden específico, podrías definirlo, pero sort() es lo más fácil
+    return Array.from(unique); 
+  }, [products]);
+
+  // Helper para crear IDs de enlaces (ej: "Elfbar Ice King" -> "elfbar-ice-king")
+  const slugify = (text) => text.toString().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+
   useEffect(() => {
     document.title = CONFIG.brandName;
     let link = document.querySelector("link[rel~='icon']");
@@ -99,7 +100,6 @@ export default function Home() {
     link.href = CONFIG.logoImage;
   }, []);
 
-  // Inicialización de Firebase
   const firebaseRefs = useMemo(() => {
     if (typeof window === "undefined") return { auth: null, db: null };
     try {
@@ -127,66 +127,41 @@ export default function Home() {
       signInAnonymously(firebaseRefs.auth).catch(console.error);
       const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (u) => setUser(u));
 
-      // ESCUCHAR STOCK Y PRECIOS EN TIEMPO REAL
       const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
           
           setProducts(prev => {
-             // 1. Clonar lista base
              const combined = [...initialProducts];
-             
              dbProducts.forEach(dbItem => {
                 const index = combined.findIndex(p => p.id == dbItem.id);
-                
-                // Si está marcado como borrado en Firebase, lo quitamos de la lista
                 if (dbItem.isDeleted) {
-                    if (index > -1) {
-                        combined.splice(index, 1);
-                    }
+                    if (index > -1) combined.splice(index, 1);
                 } else {
-                    // Si no está borrado, actualizamos o agregamos
-                    if (index > -1) {
-                        combined[index] = { ...combined[index], ...dbItem };
-                    } else {
-                        combined.push(dbItem);
-                    }
+                    if (index > -1) combined[index] = { ...combined[index], ...dbItem };
+                    else combined.push(dbItem);
                 }
              });
-             
              return combined;
           });
         }
       });
-
-      return () => {
-        unsubscribeAuth();
-        unsubscribeStock();
-        window.removeEventListener('focus', handleFocus);
-        window.removeEventListener('pageshow', handleFocus);
-      };
+      return () => { unsubscribeAuth(); unsubscribeStock(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
     }
   }, [firebaseRefs]);
 
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
   
-  // Lógica de precios promocionales
   const getUnitPromoPrice = (item) => {
-    // Promo Elfbar: Más de 2 unidades
     if (item.category === 'Elfbar Ice King') {
         const count = getTotalItems();
-        if (count >= 2) return 24500;
-        return 26000;
+        return count >= 2 ? 24500 : 26000;
     }
-
-    // Promo Lost Mary: Más de 2 unidades
     if (item.category === 'Lost Mary 20000') {
         const lmCount = cart.filter(i => i.category === 'Lost Mary 20000').reduce((acc, curr) => acc + curr.qty, 0);
-        if (lmCount >= 2) return 20000;
-        return 23000;
+        return lmCount >= 2 ? 20000 : 23000;
     }
-
     return item.price;
   };
 
@@ -227,7 +202,6 @@ export default function Home() {
     });
     msg += `\n*TOTAL ESTIMADO: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
     msg += deliveryMethod === 'envio' ? `*ENVIO:* ${address}, ${zone}\n` : `*RETIRO EN LOCAL*\n`;
-
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
 
     try {
@@ -244,75 +218,64 @@ export default function Home() {
         });
       }
       setTimeout(() => { window.location.href = whatsappUrl; }, 400);
-    } catch (e) {
-      window.location.href = whatsappUrl;
-    }
+    } catch (e) { window.location.href = whatsappUrl; }
   };
 
-  const renderProductSection = (title, categoryFilter, sectionId, promoText = null) => {
-    const sectionProducts = products.filter(p => {
-        if (categoryFilter === 'Elfbar Ice King') return p.category === 'Elfbar Ice King';
-        if (categoryFilter === 'Ignite v400') return p.category === 'Ignite v400';
-        if (categoryFilter === 'Lost Mary 20000') return p.category === 'Lost Mary 20000';
-        if (categoryFilter === 'Vapes THC') return p.category === 'Vapes THC';
-        if (categoryFilter === 'PlayStation') return p.category === 'PlayStation';
-        if (categoryFilter === 'PRODUCTOS APPLE') return p.category === 'PRODUCTOS APPLE';
-        return false;
-    });
+  // --- RENDERIZADO DINÁMICO DE SECCIÓN ---
+  const renderProductSection = (category) => {
+    const sectionProducts = products.filter(p => p.category === category);
+    
+    // Configuración de textos promocionales específicos
+    let promoText = null;
+    if (category === 'Elfbar Ice King') promoText = "2+ un: $24.500 c/u";
+    if (category === 'Lost Mary 20000') promoText = "2+ Lost Mary: $20.000 c/u";
 
-    const alwaysShowCategories = ['Ignite v400', 'Lost Mary 20000'];
-    if (sectionProducts.length === 0 && !alwaysShowCategories.includes(categoryFilter)) return null;
+    if (sectionProducts.length === 0) return null;
 
     return (
-      <section id={sectionId} className="mb-12 scroll-mt-28 transition-all duration-500">
+      <section id={slugify(category)} key={category} className="mb-12 scroll-mt-28 transition-all duration-500">
         <div className="flex flex-col md:flex-row justify-between items-baseline mb-6 gap-3 border-b border-gray-200 pb-4">
-          <h2 className="text-xl md:text-2xl font-black border-l-4 border-[#d4af37] pl-4 uppercase tracking-tight">{title}</h2>
+          <h2 className="text-xl md:text-2xl font-black border-l-4 border-[#d4af37] pl-4 uppercase tracking-tight">{category}</h2>
           {promoText && <div className="bg-[#d4af37] text-black px-3 py-1 text-[10px] font-black rounded uppercase tracking-widest">{promoText}</div>}
         </div>
 
-        {sectionProducts.length === 0 ? (
-           <div className="text-center py-10 text-gray-400 bg-white rounded-xl border border-gray-100 border-dashed">
-             <p className="text-[10px] font-bold uppercase tracking-widest">Próximamente</p>
-           </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {sectionProducts.map(p => {
-              const inCart = cart.find(i => i.id === p.id);
-              const isOutOfStock = p.inStock === false;
-              return (
-                <div key={p.id} className={`bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm flex flex-col hover:shadow-lg transition-all duration-300 ${isOutOfStock ? 'opacity-70 grayscale' : ''}`}>
-                  <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
-                    <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          {sectionProducts.map(p => {
+            const inCart = cart.find(i => i.id === p.id);
+            const isOutOfStock = p.inStock === false;
+            return (
+              <div key={p.id} className={`bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm flex flex-col hover:shadow-lg transition-all duration-300 ${isOutOfStock ? 'opacity-70 grayscale' : ''}`}>
+                <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
+                  <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                  {isOutOfStock ? (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <span className="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-sm uppercase tracking-tighter">SIN STOCK</span>
+                    </div>
+                  ) : p.tag && (
+                    <span className="absolute top-2 left-2 bg-black text-[#d4af37] text-[8px] font-black px-2 py-1 uppercase rounded-sm">{p.tag}</span>
+                  )}
+                </div>
+                <div className="p-3 md:p-4 flex-grow flex flex-col">
+                  <h3 className="font-bold text-[11px] md:text-sm uppercase mb-1 text-gray-800 line-clamp-1">{p.name}</h3>
+                  <div className="mt-auto">
+                    <p className="text-[#d4af37] font-black text-base md:text-lg mb-3 tracking-tighter">{CONFIG.currencySymbol}{formatPrice(p.price)}</p>
                     {isOutOfStock ? (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                          <span className="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-sm uppercase tracking-tighter">SIN STOCK</span>
+                        <button disabled className="w-full bg-gray-200 text-gray-400 py-2.5 text-[10px] font-bold uppercase rounded-md cursor-not-allowed">No Disponible</button>
+                    ) : inCart ? (
+                      <div className="flex items-center justify-between bg-black text-white h-9 rounded-md font-bold text-xs">
+                        <button className="w-9 h-full" onClick={() => changeQty(p.id, -1)}>-</button>
+                        <span>{inCart.qty}</span>
+                        <button className="w-9 h-full" onClick={() => addToCart(p)}>+</button>
                       </div>
-                    ) : p.tag && (
-                      <span className="absolute top-2 left-2 bg-black text-[#d4af37] text-[8px] font-black px-2 py-1 uppercase rounded-sm">{p.tag}</span>
+                    ) : (
+                      <button onClick={() => addToCart(p)} className="w-full bg-[#d4af37] hover:bg-black hover:text-[#d4af37] py-2.5 text-[10px] font-bold uppercase rounded-md transition-all">Añadir</button>
                     )}
                   </div>
-                  <div className="p-3 md:p-4 flex-grow flex flex-col">
-                    <h3 className="font-bold text-[11px] md:text-sm uppercase mb-1 text-gray-800 line-clamp-1">{p.name}</h3>
-                    <div className="mt-auto">
-                      <p className="text-[#d4af37] font-black text-base md:text-lg mb-3 tracking-tighter">{CONFIG.currencySymbol}{formatPrice(p.price)}</p>
-                      {isOutOfStock ? (
-                          <button disabled className="w-full bg-gray-200 text-gray-400 py-2.5 text-[10px] font-bold uppercase rounded-md cursor-not-allowed">No Disponible</button>
-                      ) : inCart ? (
-                        <div className="flex items-center justify-between bg-black text-white h-9 rounded-md font-bold text-xs">
-                          <button className="w-9 h-full" onClick={() => changeQty(p.id, -1)}>-</button>
-                          <span>{inCart.qty}</span>
-                          <button className="w-9 h-full" onClick={() => addToCart(p)}>+</button>
-                        </div>
-                      ) : (
-                        <button onClick={() => addToCart(p)} className="w-full bg-[#d4af37] hover:bg-black hover:text-[#d4af37] py-2.5 text-[10px] font-bold uppercase rounded-md transition-all">Añadir</button>
-                      )}
-                    </div>
-                  </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              </div>
+            );
+          })}
+        </div>
       </section>
     );
   };
@@ -326,12 +289,9 @@ export default function Home() {
         </div>
         {isMenuOpen && (
           <div className="absolute top-full left-0 w-full bg-[#121212] p-6 flex flex-col gap-4 text-center font-bold border-t border-[#d4af37]/20 shadow-2xl z-50">
-            <a href="#elfbar" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">ELFBAR ICE KING</a>
-            <a href="#ignite" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">IGNITE V400</a>
-            <a href="#lostmary" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">LOST MARY</a>
-            <a href="#thc" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">VAPES THC</a>
-            <a href="#playstation" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">PLAYSTATION</a>
-            <a href="#apple" onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800">PRODUCTOS APPLE</a>
+            {categoriesList.map(cat => (
+                <a key={cat} href={`#${slugify(cat)}`} onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800 uppercase">{cat}</a>
+            ))}
             <button onClick={() => {setIsCartOpen(true); setIsMenuOpen(false)}} className="hover:text-[#d4af37] transition-colors uppercase py-2 mt-2">MI CARRITO</button>
           </div>
         )}
@@ -342,25 +302,21 @@ export default function Home() {
       </header>
 
       <div id="catalogo" className="py-8 px-4 max-w-6xl mx-auto">
+        {/* MENÚ DE FILTROS SUPERIOR (SCROLLABLE) */}
         <div className="flex gap-3 overflow-x-auto pb-4 mb-4 no-scrollbar sticky top-[60px] md:top-[70px] z-30 bg-[#f4f4f4]/95 backdrop-blur-sm py-3 -mx-4 px-4 md:mx-0 md:px-0 mask-image-gradient">
-            <a href="#elfbar" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">Elfbar</a>
-            <a href="#ignite" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">Ignite</a>
-             <a href="#lostmary" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">Lost Mary</a>
-            <a href="#thc" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">Vapes THC</a>
-            <a href="#playstation" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">PlayStation</a>
-            <a href="#apple" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">Productos Apple</a>
+            {categoriesList.map(cat => (
+                <a key={cat} href={`#${slugify(cat)}`} className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
+                    {cat}
+                </a>
+            ))}
         </div>
 
         <div className="mb-16">
-            <h2 className="text-3xl md:text-5xl font-black text-center mb-10 text-gray-200 uppercase tracking-tighter opacity-30 select-none">VAPE ZONE</h2>
-            {renderProductSection("Elfbar Ice King", "Elfbar Ice King", "elfbar", "2+ un: $24.500 c/u")}
-            {renderProductSection("Ignite v400", "Ignite v400", "ignite")}
-            {renderProductSection("Lost Mary 20000", "Lost Mary 20000", "lostmary", "2+ Lost Mary: $20.000 c/u")}
+            <h2 className="text-3xl md:text-5xl font-black text-center mb-10 text-gray-200 uppercase tracking-tighter opacity-30 select-none">CATÁLOGO</h2>
+            
+            {/* AQUÍ OCURRE LA MAGIA: RENDERIZA TODAS LAS CATEGORÍAS AUTOMÁTICAMENTE */}
+            {categoriesList.map(category => renderProductSection(category))}
         </div>
-
-        {renderProductSection("Vapes de THC", "Vapes THC", "thc")}
-        {renderProductSection("PlayStation 5", "PlayStation", "playstation")}
-        {renderProductSection("Productos Apple", "PRODUCTOS APPLE", "apple")}
       </div>
 
       {getTotalItems() > 0 && (
@@ -374,6 +330,7 @@ export default function Home() {
         <div className="fixed inset-0 z-[60] flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/80" onClick={() => setIsCartOpen(false)} />
           <div className="relative bg-white p-6 rounded-t-3xl max-h-[85vh] overflow-y-auto shadow-2xl">
+            {/* ... (Contenido del carrito igual que antes) ... */}
             <div className="flex justify-between items-center mb-6"><h2 className="text-xl font-black uppercase">Resumen</h2><button onClick={() => setIsCartOpen(false)} className="text-gray-400"><i className="fas fa-times text-xl"></i></button></div>
             <div className="space-y-4 mb-6">
               {cart.map(item => (

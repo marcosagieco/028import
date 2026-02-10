@@ -16,15 +16,13 @@ import {
   serverTimestamp 
 } from "firebase/firestore";
 
-// --- CONFIGURACIÓN DE TU MARCA ---
 const CONFIG = {
   brandName: "028", 
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png",
 };
 
-// Mantenemos la lista base
+// Mantenemos la lista base inicial
 const initialProducts = [
-  // --- ELFBAR ICE KING ---
   { id: 1, name: "BAJA SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
   { id: 3, name: "CHERRY FUSE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png" },
@@ -44,8 +42,6 @@ const initialProducts = [
   { id: 17, name: "WATERMELON ICE", price: 26000, category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp" },
   { id: 25, name: "SOUR APPLE ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg" },
   { id: 26, name: "MIAMI MINT", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg" },
-
-  // --- IGNITE V400 ---
   { id: 30, name: "BLUE RAZZ LEMON", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Jh48hT4x/ignite-v400-BLUE-RAZZ-LEMON.jpg" },
   { id: 31, name: "CHERRY WATERMELON", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/nLRJ9vCd/ignite-v400-cherry-watermelon.jpg" },
   { id: 32, name: "GRAPE", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/0QzqYbSv/ignite-v400-GRAPE.jpg" },
@@ -55,8 +51,6 @@ const initialProducts = [
   { id: 36, name: "STRAWBERRY KIWI", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Hsw19GrJ/ignite-v400-STRAWBERRY-KIWI.jpg" },
   { id: 37, name: "STRAWBERRY", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/cLdyDD35/ignite-v400-strawberry.jpg" },
   { id: 38, name: "TUTTI FRUTI", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/mgVxKQ3v/ignite-v400-TUTI-FRUTI.jpg" },
-
-  // --- LOST MARY 20000 ---
   { id: 39, name: "BLUE RAZZ ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yYk7mpF9/Lost-mary-20000-BLUE-RAZZ-ICE.jpg" },
   { id: 40, name: "GRAPE ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05VC/Lost-mary-20000-GRAPE-ICE.jpg" },
   { id: 41, name: "ICE MINT", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05V5/lost-mary-20000-ICE-MINT.jpg" },
@@ -66,17 +60,11 @@ const initialProducts = [
   { id: 45, name: "MIAMI MINT", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yWqpSNmv/Lost-mary-20000-MIAMI-MINT.jpg" },
   { id: 46, name: "STRAWBERRY ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/zDLJWPw3/Lost-mary-20000-STRAWBERRY-ICE.jpg" },
   { id: 47, name: "STRAWBERRY KIWI", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/59Hxvk5q/Lost-mary-20000-STRAWBERRY-KIWI.jpg" },
-  
-  // --- VAPES THC ---
   { id: 18, name: "BLOW THC", price: 55000, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp" },
   { id: 19, name: "TORCH 7.5G", price: 53000, category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png" },
   { id: 29, name: "TORCH 4.5G", price: 52500, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/vmFK42hC/TORCH-4-5G.jpg" },
   { id: 20, name: "PHENOM 6G", price: 56000, category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg" },
-
-  // --- PLAYSTATION ---
   { id: 27, name: "PLAYSTATION 5", price: 550, category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg" },
-
-  // --- PRODUCTOS APPLE ---
   { id: 28, name: "AIRPODS PRO", price: 35000, category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg" },
   { id: 21, name: "CARGADOR 20W", price: 16500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
   { id: 22, name: "CARGADOR 35W", price: 20500, category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg" },
@@ -96,12 +84,18 @@ export default function AdminPage() {
     name: '',
     price: '',
     category: 'Elfbar Ice King',
+    customCategory: '', // Para cuando escribe una nueva
     image: '',
     tag: ''
   });
   const [isAdding, setIsAdding] = useState(false);
 
-  // --- EFECTO PARA CAMBIAR TÍTULO ---
+  // Generamos lista de categorías únicas para el selector
+  const categoriesList = useMemo(() => {
+    const cats = new Set(products.map(p => p.category));
+    return Array.from(cats).sort();
+  }, [products]);
+
   useEffect(() => {
     document.title = `${CONFIG.brandName} - Admin`;
     let link = document.querySelector("link[rel~='icon']");
@@ -133,14 +127,11 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!firebaseRefs.auth || !firebaseRefs.db) return;
-
     signInAnonymously(firebaseRefs.auth).catch(console.error);
-
     const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (user) => {
       if (!user) return;
 
-      const qOrders = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'));
-      const unsubscribeOrders = onSnapshot(qOrders, (snapshot) => {
+      const unsubscribeOrders = onSnapshot(query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc')), (snapshot) => {
         setOrders(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
         setLoading(false);
       });
@@ -148,51 +139,45 @@ export default function AdminPage() {
       const unsubscribeProducts = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
-          
           setProducts(prev => {
-             // 1. Actualizar los existentes
              const updatedInitial = initialProducts.map(p => {
                 const match = dbProducts.find(dbP => dbP.id === p.id);
-                // Si está marcado como borrado (isDeleted: true), no lo devolvemos
                 if (match && match.isDeleted) return null;
-                
-                return match 
-                  ? { ...p, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } 
-                  : { ...p, inStock: true };
-             }).filter(Boolean); // Eliminamos los nulos (borrados)
+                return match ? { ...p, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } : { ...p, inStock: true };
+             }).filter(Boolean);
              
-             // 2. Agregar productos nuevos (solo si no están borrados)
-             const newFromDb = dbProducts.filter(dbP => 
-                !initialProducts.find(p => p.id === dbP.id) && 
-                !dbP.isDeleted
-             );
-             
+             const newFromDb = dbProducts.filter(dbP => !initialProducts.find(p => p.id === dbP.id) && !dbP.isDeleted);
              return [...updatedInitial, ...newFromDb];
           });
         }
       });
-
-      return () => {
-        unsubscribeOrders();
-        unsubscribeProducts();
-      };
+      return () => { unsubscribeOrders(); unsubscribeProducts(); };
     });
-
     return () => unsubscribeAuth();
   }, [firebaseRefs]);
 
-  // --- FUNCIONES DE GESTIÓN ---
+  // --- HANDLERS ---
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
     setIsAdding(true);
+    
+    // Determinar categoría final: Si eligió "OTRA", usar el campo de texto custom
+    const finalCategory = newProduct.category === 'OTRA' ? newProduct.customCategory : newProduct.category;
+
+    if (!finalCategory.trim()) {
+        alert("Por favor escribe un nombre para la categoría.");
+        setIsAdding(false);
+        return;
+    }
+
     try {
       const newId = Date.now(); 
       await setDoc(doc(firebaseRefs.db, 'products', `prod_${newId}`), {
         id: newId,
         name: newProduct.name.toUpperCase(),
         price: Number(newProduct.price),
-        category: newProduct.category,
+        category: finalCategory, // Guardamos la categoría (existente o nueva)
         image: newProduct.image,
         tag: newProduct.tag,
         inStock: true,
@@ -200,85 +185,54 @@ export default function AdminPage() {
         isDeleted: false
       });
       alert("¡Producto agregado con éxito!");
-      setNewProduct({ name: '', price: '', category: 'Elfbar Ice King', image: '', tag: '' });
+      setNewProduct({ name: '', price: '', category: 'Elfbar Ice King', customCategory: '', image: '', tag: '' });
     } catch (error) {
       alert("Error al crear: " + error.message);
     }
     setIsAdding(false);
   };
 
-  // --- NUEVA FUNCIÓN PARA ELIMINAR ---
   const handleDeleteProduct = async (product) => {
     if(!confirm(`¿Seguro que quieres eliminar "${product.name}"?`)) return;
-
     try {
-        // En lugar de borrar el documento, le ponemos una marca 'isDeleted'
-        // Esto sirve para que también se oculte si es un producto de initialProducts
-        await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), {
-            id: product.id,
-            isDeleted: true
-        }, { merge: true });
-        
-        // Si quieres, aquí podrías agregar lógica para borrarlo "de verdad" si no es de initialProducts,
-        // pero marcarlo como borrado es más seguro y consistente.
-    } catch (err) {
-        console.error(err);
-        alert("Error al eliminar: " + err.message);
-    }
+        await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, isDeleted: true }, { merge: true });
+    } catch (err) { alert("Error al eliminar: " + err.message); }
   };
 
   const completeOrder = async (id) => {
-    if (confirm("¿Confirmas que el pedido fue entregado? Se moverá al historial.")) {
-      try {
-        await updateDoc(doc(firebaseRefs.db, 'orders', id), { status: 'completed' });
-      } catch (err) { alert("Error: No se pudo completar el pedido."); }
+    if (confirm("¿Confirmas entrega?")) {
+      try { await updateDoc(doc(firebaseRefs.db, 'orders', id), { status: 'completed' }); } catch (err) { alert("Error."); }
     }
   };
 
   const deleteOrder = async (id) => {
-    if (confirm("¿Estás seguro de que quieres eliminar este pedido permanentemente?")) {
-      try {
-        await deleteDoc(doc(firebaseRefs.db, 'orders', id));
-      } catch (err) { alert("Error al eliminar el pedido."); }
+    if (confirm("¿Eliminar pedido?")) {
+      try { await deleteDoc(doc(firebaseRefs.db, 'orders', id)); } catch (err) { alert("Error."); }
     }
   };
 
   const toggleStock = async (product) => {
     try {
       const newStockStatus = product.inStock === false ? true : false;
-      const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
-      await setDoc(productRef, {
-        id: product.id,
-        name: product.name,
-        inStock: newStockStatus,
-        price: product.price 
-      }, { merge: true });
-    } catch (err) { alert("Error de permisos o conexión."); }
+      await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, name: product.name, inStock: newStockStatus, price: product.price }, { merge: true });
+    } catch (err) { alert("Error."); }
   };
 
   const updatePrice = async (product, newPrice) => {
     const price = parseInt(newPrice);
-    if(isNaN(price) || price < 0) return alert("Por favor ingresa un precio válido");
-    try {
-        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
-        await setDoc(productRef, { id: product.id, price: price }, { merge: true });
-    } catch(err) { alert("Error al actualizar precio."); }
+    if(isNaN(price) || price < 0) return alert("Precio inválido");
+    try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, price: price }, { merge: true }); } catch(err) { alert("Error."); }
   }
 
   const syncAllProducts = async () => {
-    if (confirm("¿Sincronizar catálogo inicial?")) {
+    if (confirm("¿Sincronizar catálogo?")) {
         setLoading(true);
         try {
             for (const p of initialProducts) {
-                await setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), {
-                    id: p.id,
-                    name: p.name,
-                    category: p.category, 
-                    image: p.image 
-                }, { merge: true });
+                await setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, name: p.name, category: p.category, image: p.image }, { merge: true });
             }
-            alert("Catálogo sincronizado.");
-        } catch (err) { alert("Error al sincronizar: " + err.message); }
+            alert("Sincronizado.");
+        } catch (err) { alert("Error: " + err.message); }
         setLoading(false);
     }
   };
@@ -299,21 +253,11 @@ export default function AdminPage() {
     stickyHeader: darkMode ? 'bg-[#0a0a0a] border-[#262626]' : 'bg-white border-gray-200'
   };
 
-  const renderStockGroup = (title, categoryFilter) => {
-    const group = products.filter(p => {
-        if (categoryFilter === 'Elfbar Ice King') return p.category === 'Elfbar Ice King';
-        if (categoryFilter === 'Ignite v400') return p.category === 'Ignite v400';
-        if (categoryFilter === 'Lost Mary 20000') return p.category === 'Lost Mary 20000';
-        if (categoryFilter === 'Vapes THC') return p.category === 'Vapes THC';
-        if (categoryFilter === 'PlayStation') return p.category === 'PlayStation';
-        if (categoryFilter === 'PRODUCTOS APPLE') return p.category === 'PRODUCTOS APPLE';
-        return false;
-    });
-
+  const renderStockGroup = (title) => {
+    const group = products.filter(p => p.category === title);
     if (group.length === 0) return null;
-
     return (
-        <div className="mb-8">
+        <div className="mb-8" key={title}>
             <h3 className={`text-xl font-bold mb-4 uppercase ${theme.subText} border-b ${darkMode ? 'border-[#262626]' : 'border-gray-200'} pb-2`}>{title}</h3>
             <div className="grid gap-4">
                 {group.map(p => (
@@ -327,35 +271,14 @@ export default function AdminPage() {
                                 <p className={`font-black text-[11px] uppercase ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{p.name}</p>
                                 <div className="flex items-center gap-2">
                                      <span className="text-gray-400 text-[10px]">$</span>
-                                     <input 
-                                         type="number" 
-                                         key={p.price}
-                                         defaultValue={p.price}
-                                         className={`w-20 rounded px-2 py-1 text-[10px] font-bold focus:border-[#d4af37] outline-none transition-colors ${theme.input}`}
-                                         onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }}
-                                         onBlur={(e) => { if (parseInt(e.target.value) !== p.price) updatePrice(p, e.target.value); }}
-                                      />
+                                     <input type="number" key={p.price} defaultValue={p.price} className={`w-20 rounded px-2 py-1 text-[10px] font-bold focus:border-[#d4af37] outline-none transition-colors ${theme.input}`} onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }} onBlur={(e) => { if (parseInt(e.target.value) !== p.price) updatePrice(p, e.target.value); }} />
                                 </div>
-                                <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400'}`}>
-                                    {p.inStock === false ? 'Agotado' : 'Disponible'}
-                                </span>
+                                <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400'}`}>{p.inStock === false ? 'Agotado' : 'Disponible'}</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                             <button 
-                                onClick={() => toggleStock(p)}
-                                className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-900/20 text-red-500 border border-red-900/30'}`}
-                            >
-                                {p.inStock === false ? 'Habilitar' : 'Agotar'}
-                            </button>
-                            {/* BOTÓN DE ELIMINAR */}
-                            <button 
-                                onClick={() => handleDeleteProduct(p)}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-200 hover:bg-red-500 hover:text-white transition-all text-gray-500"
-                                title="Eliminar producto"
-                            >
-                                <i className="fas fa-trash text-xs"></i>
-                            </button>
+                            <button onClick={() => toggleStock(p)} className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-900/20 text-red-500 border border-red-900/30'}`}>{p.inStock === false ? 'Habilitar' : 'Agotar'}</button>
+                            <button onClick={() => handleDeleteProduct(p)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-200 hover:bg-red-500 hover:text-white transition-all text-gray-500" title="Eliminar"><i className="fas fa-trash text-xs"></i></button>
                         </div>
                     </div>
                 ))}
@@ -395,7 +318,7 @@ export default function AdminPage() {
 
       <main className="max-w-4xl mx-auto p-4 md:p-8">
         
-        {/* --- PESTAÑA CREAR (NUEVO) --- */}
+        {/* --- PESTAÑA CREAR (NUEVO CON OPCIÓN CUSTOM) --- */}
         {activeTab === 'crear' && (
           <div className="animate-in fade-in duration-500 max-w-lg mx-auto">
             <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 text-center">Nuevo Producto</h2>
@@ -413,16 +336,24 @@ export default function AdminPage() {
                 </div>
                 <div className="flex-1">
                   <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Categoría</label>
-                  <select value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all appearance-none uppercase ${theme.input}`}>
-                    <option value="Elfbar Ice King">Elfbar Ice King</option>
-                    <option value="Ignite v400">Ignite v400</option>
-                    <option value="Lost Mary 20000">Lost Mary 20000</option>
-                    <option value="Vapes THC">Vapes THC</option>
-                    <option value="PlayStation">PlayStation</option>
-                    <option value="PRODUCTOS APPLE">Productos Apple</option>
+                  <select 
+                      value={newProduct.category} 
+                      onChange={e => setNewProduct({...newProduct, category: e.target.value})} 
+                      className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all appearance-none uppercase ${theme.input}`}
+                  >
+                    {categoriesList.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                    <option value="OTRA">✨ NUEVA CATEGORÍA...</option>
                   </select>
                 </div>
               </div>
+
+              {/* INPUT CONDICIONAL PARA NUEVA CATEGORÍA */}
+              {newProduct.category === 'OTRA' && (
+                 <div className="animate-in slide-in-from-top-2">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-[#d4af37] mb-2">Escribe el nombre de la nueva categoría</label>
+                    <input type="text" required placeholder="Ej: PODS DESCARTABLES" value={newProduct.customCategory} onChange={e => setNewProduct({...newProduct, customCategory: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-2 border-[#d4af37] transition-all ${theme.input}`} />
+                 </div>
+              )}
 
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Link de Imagen (URL)</label>
@@ -446,23 +377,19 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* --- PESTAÑA STOCK --- */}
+        {/* --- PESTAÑA STOCK (RENDERIZADO DINÁMICO) --- */}
         {activeTab === 'stock' && (
           <div className="animate-in fade-in duration-500">
              <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-black uppercase tracking-tighter">Gestión de Stock</h2>
                 <button onClick={syncAllProducts} className="text-[9px] bg-black text-white px-4 py-2 rounded-lg font-black uppercase tracking-widest shadow-lg hover:bg-[#d4af37] transition-all">Sincronizar DB</button>
              </div>
-             {renderStockGroup("Elfbar Ice King", "Elfbar Ice King")}
-             {renderStockGroup("Ignite v400", "Ignite v400")}
-             {renderStockGroup("Lost Mary 20000", "Lost Mary 20000")}
-             {renderStockGroup("Vapes THC", "Vapes THC")}
-             {renderStockGroup("PlayStation", "PlayStation")}
-             {renderStockGroup("Productos Apple", "PRODUCTOS APPLE")}
+             {/* Renderizamos dinámicamente todas las categorías que existan */}
+             {categoriesList.map(category => renderStockGroup(category))}
           </div>
         )}
 
-        {/* --- PESTAÑA PEDIDOS (PENDIENTES O HISTORIAL) --- */}
+        {/* --- PESTAÑA PEDIDOS (Sin Cambios) --- */}
         {(activeTab === 'pendientes' || activeTab === 'historial') && (
           <div className="animate-in fade-in duration-500">
             <div className="flex justify-between items-end mb-8">
@@ -482,7 +409,6 @@ export default function AdminPage() {
               <div className="grid gap-6">
                 {filteredOrders.map((order) => (
                   <div key={order.id} className={`${theme.card} rounded-[2rem] shadow-sm border p-6 md:p-8 hover:shadow-2xl transition-all duration-500 ${theme.cardHover}`}>
-                    {/* ... (Contenido de la tarjeta de pedido) ... */}
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex items-center gap-4">
                         <div className="bg-black text-[#d4af37] w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shadow-xl">{order.items?.reduce((a, b) => a + b.qty, 0)}</div>
