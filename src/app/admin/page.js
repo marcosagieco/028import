@@ -12,7 +12,8 @@ import {
   updateDoc, 
   deleteDoc, 
   doc,
-  setDoc
+  setDoc,
+  serverTimestamp 
 } from "firebase/firestore";
 
 // --- CONFIGURACIÓN DE TU MARCA (EDITAR AQUÍ) ---
@@ -21,8 +22,9 @@ const CONFIG = {
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png", // ICONO DE LA PESTAÑA
 };
 
+// Mantenemos esto por ahora para la sincronización inicial, luego lo quitaremos
 const initialProducts = [
-  // --- ELFBAR ICE KING (Ex Vapes) ---
+  // --- ELFBAR ICE KING ---
   { id: 1, name: "BAJA SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
   { id: 3, name: "CHERRY FUSE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png" },
@@ -64,7 +66,7 @@ const initialProducts = [
   { id: 45, name: "MIAMI MINT", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yWqpSNmv/Lost-mary-20000-MIAMI-MINT.jpg" },
   { id: 46, name: "STRAWBERRY ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/zDLJWPw3/Lost-mary-20000-STRAWBERRY-ICE.jpg" },
   { id: 47, name: "STRAWBERRY KIWI", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/59Hxvk5q/Lost-mary-20000-STRAWBERRY-KIWI.jpg" },
-
+  
   // --- VAPES THC ---
   { id: 18, name: "BLOW THC", price: 55000, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp" },
   { id: 19, name: "TORCH 7.5G", price: 53000, category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png" },
@@ -87,9 +89,19 @@ export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState(initialProducts);
   const [loading, setLoading] = useState(true);
-  const [darkMode, setDarkMode] = useState(false); // Estado para Modo Oscuro
+  const [darkMode, setDarkMode] = useState(false); 
 
-  // --- EFECTO PARA CAMBIAR TÍTULO DE PESTAÑA Y FAVICON EN ADMIN ---
+  // --- ESTADOS PARA NUEVO PRODUCTO ---
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    price: '',
+    category: 'Elfbar Ice King',
+    image: '',
+    tag: ''
+  });
+  const [isAdding, setIsAdding] = useState(false);
+
+  // --- EFECTO PARA CAMBIAR TÍTULO ---
   useEffect(() => {
     document.title = `${CONFIG.brandName} - Admin`;
     let link = document.querySelector("link[rel~='icon']");
@@ -136,12 +148,24 @@ export default function AdminPage() {
       const unsubscribeProducts = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
-          setProducts(prev => prev.map(p => {
-            const match = dbProducts.find(dbP => dbP.id === p.id);
-            return match 
-              ? { ...p, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } 
-              : { ...p, inStock: true };
-          }));
+          
+          // Aquí fusionamos la lista fija con la de la base de datos
+          // Si el producto existe en DB, usa sus datos. Si no, usa los de initialProducts.
+          // NOTA: Para ver productos NUEVOS, tendremos que cambiar esto en el siguiente paso.
+          setProducts(prev => {
+             // 1. Actualizar los existentes en la lista fija
+             const updatedInitial = initialProducts.map(p => {
+                const match = dbProducts.find(dbP => dbP.id === p.id);
+                return match 
+                  ? { ...p, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } 
+                  : { ...p, inStock: true };
+             });
+             
+             // 2. Buscar productos NUEVOS en la DB que NO están en initialProducts
+             const newFromDb = dbProducts.filter(dbP => !initialProducts.find(p => p.id === dbP.id));
+             
+             return [...updatedInitial, ...newFromDb];
+          });
         }
       });
 
@@ -154,27 +178,48 @@ export default function AdminPage() {
     return () => unsubscribeAuth();
   }, [firebaseRefs]);
 
+  // --- FUNCIONES DE GESTIÓN ---
+
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
+    setIsAdding(true);
+    
+    try {
+      const newId = Date.now(); // ID único basado en tiempo
+      
+      await setDoc(doc(firebaseRefs.db, 'products', `prod_${newId}`), {
+        id: newId,
+        name: newProduct.name.toUpperCase(),
+        price: Number(newProduct.price),
+        category: newProduct.category,
+        image: newProduct.image,
+        tag: newProduct.tag,
+        inStock: true,
+        createdAt: serverTimestamp()
+      });
+
+      alert("¡Producto agregado con éxito!");
+      setNewProduct({ name: '', price: '', category: 'Elfbar Ice King', image: '', tag: '' });
+    } catch (error) {
+      console.error(error);
+      alert("Error al crear: " + error.message);
+    }
+    setIsAdding(false);
+  };
+
   const completeOrder = async (id) => {
     if (confirm("¿Confirmas que el pedido fue entregado? Se moverá al historial.")) {
       try {
-        await updateDoc(doc(firebaseRefs.db, 'orders', id), {
-          status: 'completed'
-        });
-      } catch (err) {
-        alert("Error: No se pudo completar el pedido. Revisa las reglas de Firestore.");
-      }
+        await updateDoc(doc(firebaseRefs.db, 'orders', id), { status: 'completed' });
+      } catch (err) { alert("Error: No se pudo completar el pedido."); }
     }
   };
 
-  // Función para eliminar pedido
   const deleteOrder = async (id) => {
-    if (confirm("¿Estás seguro de que quieres eliminar este pedido permanentemente? Esta acción no se puede deshacer.")) {
+    if (confirm("¿Estás seguro de que quieres eliminar este pedido permanentemente?")) {
       try {
         await deleteDoc(doc(firebaseRefs.db, 'orders', id));
-      } catch (err) {
-        console.error(err);
-        alert("Error al eliminar el pedido: " + err.message);
-      }
+      } catch (err) { alert("Error al eliminar el pedido."); }
     }
   };
 
@@ -185,58 +230,48 @@ export default function AdminPage() {
       await setDoc(productRef, {
         id: product.id,
         name: product.name,
-        inStock: newStockStatus
+        inStock: newStockStatus,
+        price: product.price // Aseguramos que se guarde el precio también
       }, { merge: true });
-    } catch (err) {
-      console.error(err);
-      alert("Error de permisos.");
-    }
+    } catch (err) { alert("Error de permisos o conexión."); }
   };
 
   const updatePrice = async (product, newPrice) => {
     const price = parseInt(newPrice);
     if(isNaN(price) || price < 0) return alert("Por favor ingresa un precio válido");
-    
     try {
         const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
-        await setDoc(productRef, {
-            id: product.id,
-            price: price
-        }, { merge: true });
-    } catch(err) {
-        console.error(err);
-        alert("Error al actualizar precio.");
-    }
+        await setDoc(productRef, { id: product.id, price: price }, { merge: true });
+    } catch(err) { alert("Error al actualizar precio."); }
   }
 
   const syncAllProducts = async () => {
-    if (confirm("¿Sincronizar catálogo? Esto asegurará que todos los productos existan en la base de datos.")) {
+    if (confirm("¿Sincronizar catálogo inicial?")) {
         setLoading(true);
         try {
             for (const p of initialProducts) {
                 await setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), {
                     id: p.id,
                     name: p.name,
+                    category: p.category, // Importante guardar categoría para filtrar después
+                    image: p.image 
                 }, { merge: true });
             }
             alert("Catálogo sincronizado.");
-        } catch (err) {
-            alert("Error al sincronizar: " + err.message);
-        }
+        } catch (err) { alert("Error al sincronizar: " + err.message); }
         setLoading(false);
     }
   };
 
   const filteredOrders = orders.filter(o => activeTab === 'pendientes' ? o.status !== 'completed' : o.status === 'completed');
 
-  // Colores dinámicos según el modo
   const theme = {
     bg: darkMode ? 'bg-[#0a0a0a]' : 'bg-gray-50',
     text: darkMode ? 'text-gray-100' : 'text-gray-900',
     card: darkMode ? 'bg-[#171717] border-[#262626]' : 'bg-white border-gray-100',
     cardHover: darkMode ? 'hover:border-[#d4af37]/40' : 'hover:border-[#d4af37]/20',
     subText: darkMode ? 'text-gray-400' : 'text-gray-400',
-    nav: 'bg-[#121212]', // El nav siempre oscuro queda bien
+    nav: 'bg-[#121212]',
     input: darkMode ? 'bg-[#262626] border-[#404040] text-white' : 'bg-gray-50 border-gray-200 text-black',
     tabActive: 'border-[#d4af37]',
     tabActiveText: darkMode ? 'text-white' : 'text-black',
@@ -244,7 +279,6 @@ export default function AdminPage() {
     stickyHeader: darkMode ? 'bg-[#0a0a0a] border-[#262626]' : 'bg-white border-gray-200'
   };
 
-  // Helper para renderizar grupos en admin
   const renderStockGroup = (title, categoryFilter) => {
     const group = products.filter(p => {
         if (categoryFilter === 'Elfbar Ice King') return p.category === 'Elfbar Ice King';
@@ -274,17 +308,13 @@ export default function AdminPage() {
                                 <div className="flex items-center gap-2">
                                      <span className="text-gray-400 text-[10px]">$</span>
                                      <input 
-                                        type="number" 
-                                        key={p.price}
-                                        defaultValue={p.price}
-                                        className={`w-20 rounded px-2 py-1 text-[10px] font-bold focus:border-[#d4af37] outline-none transition-colors ${theme.input}`}
-                                        onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }}
-                                        onBlur={(e) => {
-                                            if (parseInt(e.target.value) !== p.price) {
-                                                updatePrice(p, e.target.value);
-                                            }
-                                        }}
-                                     />
+                                         type="number" 
+                                         key={p.price}
+                                         defaultValue={p.price}
+                                         className={`w-20 rounded px-2 py-1 text-[10px] font-bold focus:border-[#d4af37] outline-none transition-colors ${theme.input}`}
+                                         onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }}
+                                         onBlur={(e) => { if (parseInt(e.target.value) !== p.price) updatePrice(p, e.target.value); }}
+                                      />
                                 </div>
                                 <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400'}`}>
                                     {p.inStock === false ? 'Agotado' : 'Disponible'}
@@ -307,7 +337,7 @@ export default function AdminPage() {
   if (loading) return (
     <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${darkMode ? 'bg-[#0a0a0a]' : 'bg-gray-50'}`}>
       <div className="w-12 h-12 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin mb-6"></div>
-      <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Sincronizando Boutique 028...</p>
+      <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Cargando...</p>
     </div>
   );
 
@@ -319,12 +349,7 @@ export default function AdminPage() {
           <h1 className="text-lg font-black tracking-tighter uppercase">{CONFIG.brandName}<span className="text-[#d4af37]">Control</span></h1>
         </div>
         <div className="flex items-center gap-4">
-            <button 
-                onClick={() => setDarkMode(!darkMode)} 
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-all text-xs"
-            >
-                {darkMode ? '☀️' : '🌙'}
-            </button>
+            <button onClick={() => setDarkMode(!darkMode)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-all text-xs">{darkMode ? '☀️' : '🌙'}</button>
             <a href="/" className="text-[10px] text-gray-500 font-bold uppercase hover:text-white transition-all">Ver Web</a>
         </div>
       </nav>
@@ -334,26 +359,81 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('pendientes')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'pendientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Pedidos</button>
           <button onClick={() => setActiveTab('historial')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'historial' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Ventas</button>
           <button onClick={() => setActiveTab('stock')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'stock' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Stock</button>
+          <button onClick={() => setActiveTab('crear')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'crear' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Crear +</button>
         </div>
       </div>
 
       <main className="max-w-4xl mx-auto p-4 md:p-8">
-        {activeTab === 'stock' ? (
+        
+        {/* --- PESTAÑA CREAR (NUEVO) --- */}
+        {activeTab === 'crear' && (
+          <div className="animate-in fade-in duration-500 max-w-lg mx-auto">
+            <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 text-center">Nuevo Producto</h2>
+            
+            <form onSubmit={handleAddProduct} className={`${theme.card} p-8 rounded-[2rem] shadow-xl border ${darkMode ? 'border-[#262626]' : 'border-gray-100'} flex flex-col gap-5`}>
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Nombre del Producto</label>
+                <input type="text" required placeholder="Ej: BLUE RAZZ ICE" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-2 focus:border-[#d4af37] transition-all ${theme.input}`} />
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Precio</label>
+                  <input type="number" required placeholder="26000" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-2 focus:border-[#d4af37] transition-all ${theme.input}`} />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Categoría</label>
+                  <select value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all appearance-none uppercase ${theme.input}`}>
+                    <option value="Elfbar Ice King">Elfbar Ice King</option>
+                    <option value="Ignite v400">Ignite v400</option>
+                    <option value="Lost Mary 20000">Lost Mary 20000</option>
+                    <option value="Vapes THC">Vapes THC</option>
+                    <option value="PlayStation">PlayStation</option>
+                    <option value="PRODUCTOS APPLE">Productos Apple</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Link de Imagen (URL)</label>
+                <input type="url" required placeholder="https://i.postimg.cc/..." value={newProduct.image} onChange={e => setNewProduct({...newProduct, image: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[10px] border-2 focus:border-[#d4af37] transition-all ${theme.input}`} />
+                {newProduct.image && (
+                  <div className="mt-4 relative h-32 rounded-xl overflow-hidden border border-dashed border-gray-500/30">
+                     <img src={newProduct.image} alt="Vista previa" className="w-full h-full object-contain bg-gray-100/10" />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Etiqueta (Opcional)</label>
+                <input type="text" placeholder="Ej: Nuevo, Destacado..." value={newProduct.tag} onChange={e => setNewProduct({...newProduct, tag: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-2 focus:border-[#d4af37] transition-all ${theme.input}`} />
+              </div>
+
+              <button type="submit" disabled={isAdding} className="bg-[#d4af37] text-black font-black uppercase py-4 rounded-xl mt-4 hover:bg-white hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                {isAdding ? 'Guardando...' : 'Guardar Producto'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* --- PESTAÑA STOCK --- */}
+        {activeTab === 'stock' && (
           <div className="animate-in fade-in duration-500">
              <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-black uppercase tracking-tighter">Gestión de Stock</h2>
                 <button onClick={syncAllProducts} className="text-[9px] bg-black text-white px-4 py-2 rounded-lg font-black uppercase tracking-widest shadow-lg hover:bg-[#d4af37] transition-all">Sincronizar DB</button>
              </div>
-             
              {renderStockGroup("Elfbar Ice King", "Elfbar Ice King")}
              {renderStockGroup("Ignite v400", "Ignite v400")}
              {renderStockGroup("Lost Mary 20000", "Lost Mary 20000")}
              {renderStockGroup("Vapes THC", "Vapes THC")}
              {renderStockGroup("PlayStation", "PlayStation")}
              {renderStockGroup("Productos Apple", "PRODUCTOS APPLE")}
-
           </div>
-        ) : (
+        )}
+
+        {/* --- PESTAÑA PEDIDOS (PENDIENTES O HISTORIAL) --- */}
+        {(activeTab === 'pendientes' || activeTab === 'historial') && (
           <div className="animate-in fade-in duration-500">
             <div className="flex justify-between items-end mb-8">
               <div>
@@ -372,51 +452,30 @@ export default function AdminPage() {
               <div className="grid gap-6">
                 {filteredOrders.map((order) => (
                   <div key={order.id} className={`${theme.card} rounded-[2rem] shadow-sm border p-6 md:p-8 hover:shadow-2xl transition-all duration-500 ${theme.cardHover}`}>
+                    {/* ... (Contenido de la tarjeta de pedido se mantiene igual) ... */}
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex items-center gap-4">
-                        <div className="bg-black text-[#d4af37] w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shadow-xl">
-                          {order.items?.reduce((a, b) => a + b.qty, 0)}
-                        </div>
+                        <div className="bg-black text-[#d4af37] w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shadow-xl">{order.items?.reduce((a, b) => a + b.qty, 0)}</div>
                         <div>
                           <span className="text-[9px] font-black text-[#d4af37] uppercase tracking-widest block mb-0.5">ID: {order.id.slice(-6).toUpperCase()}</span>
-                          <p className="text-gray-400 text-[10px] font-bold">
-                            {order.createdAt ? order.createdAt.toDate().toLocaleString('es-AR') : 'Procesando...'}
-                          </p>
+                          <p className="text-gray-400 text-[10px] font-bold">{order.createdAt ? order.createdAt.toDate().toLocaleString('es-AR') : 'Procesando...'}</p>
                         </div>
                       </div>
-                      
                       <div className="flex gap-2">
                           {activeTab === 'pendientes' && (
-                            <button 
-                              onClick={() => completeOrder(order.id)} 
-                              className={`${darkMode ? 'bg-[#262626] text-gray-400 hover:text-white' : 'bg-gray-50 text-gray-300 hover:text-white'} hover:bg-green-600 w-12 h-12 rounded-2xl transition-all flex items-center justify-center shadow-inner`}
-                              title="Marcar como entregado"
-                            >
-                              <i className="fas fa-check text-lg"></i>
-                            </button>
+                            <button onClick={() => completeOrder(order.id)} className={`${darkMode ? 'bg-[#262626] text-gray-400 hover:text-white' : 'bg-gray-50 text-gray-300 hover:text-white'} hover:bg-green-600 w-12 h-12 rounded-2xl transition-all flex items-center justify-center shadow-inner`}><i className="fas fa-check text-lg"></i></button>
                           )}
-                          
-                          <button 
-                              onClick={() => deleteOrder(order.id)} 
-                              className={`${darkMode ? 'bg-[#262626] text-gray-400 hover:text-white' : 'bg-gray-50 text-gray-300 hover:text-white'} hover:bg-red-600 w-12 h-12 rounded-2xl transition-all flex items-center justify-center shadow-inner`}
-                              title="Eliminar pedido"
-                            >
-                              <i className="fas fa-trash text-lg"></i>
-                          </button>
+                          <button onClick={() => deleteOrder(order.id)} className={`${darkMode ? 'bg-[#262626] text-gray-400 hover:text-white' : 'bg-gray-50 text-gray-300 hover:text-white'} hover:bg-red-600 w-12 h-12 rounded-2xl transition-all flex items-center justify-center shadow-inner`}><i className="fas fa-trash text-lg"></i></button>
                       </div>
                     </div>
-
                     <div className={`space-y-3 mb-6 p-6 rounded-2xl border shadow-inner ${darkMode ? 'bg-[#0a0a0a] border-[#262626]' : 'bg-gray-50/50 border-gray-100'}`}>
                       {order.items?.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center text-xs">
-                          <span className={`font-bold uppercase ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                            <span className={`${darkMode ? 'text-white' : 'text-black'} font-black mr-2`}>{item.qty}x</span> {item.name}
-                          </span>
+                          <span className={`font-bold uppercase ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}><span className={`${darkMode ? 'text-white' : 'text-black'} font-black mr-2`}>{item.qty}x</span> {item.name}</span>
                           <span className="text-gray-400 font-black">${item.price?.toLocaleString('es-AR')}</span>
                         </div>
                       ))}
                     </div>
-
                     {order.delivery === 'envio' && order.address && (
                       <div className="mb-6 p-5 bg-[#121212] text-white rounded-2xl text-[11px] font-bold border-l-8 border-[#d4af37] shadow-xl">
                         <p className="text-[#d4af37] text-[8px] font-black uppercase mb-1 tracking-widest">Envío a Domicilio</p>
@@ -424,13 +483,9 @@ export default function AdminPage() {
                         <p className="opacity-40 text-[9px] mt-1 uppercase font-black tracking-widest">{order.zone}</p>
                       </div>
                     )}
-
                     <div className={`flex justify-between items-end border-t pt-6 ${darkMode ? 'border-[#262626]' : 'border-gray-50'}`}>
                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total</span>
-                      <div className={`text-3xl font-black tracking-tighter leading-none ${darkMode ? 'text-white' : 'text-black'}`}>
-                        <span className="text-[#d4af37] text-sm mr-1.5 font-black">$</span>
-                        {order.total?.toLocaleString('es-AR')}
-                      </div>
+                      <div className={`text-3xl font-black tracking-tighter leading-none ${darkMode ? 'text-white' : 'text-black'}`}><span className="text-[#d4af37] text-sm mr-1.5 font-black">$</span>{order.total?.toLocaleString('es-AR')}</div>
                     </div>
                   </div>
                 ))}

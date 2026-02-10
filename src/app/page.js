@@ -15,8 +15,10 @@ const CONFIG = {
   shippingText: "Espero confirmacion para abonar",
 };
 
+// Esta lista se mantiene como "base" para que la página cargue rápido
+// Pero si agregas cosas en el Admin, se sumarán a esto.
 const initialProducts = [
-  // --- ELFBAR ICE KING (Ex Vapes) ---
+  // --- ELFBAR ICE KING ---
   { id: 1, name: "BAJA SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
   { id: 3, name: "CHERRY FUSE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png" },
@@ -89,10 +91,7 @@ export default function Home() {
 
   // --- EFECTO PARA CAMBIAR TÍTULO DE PESTAÑA Y FAVICON ---
   useEffect(() => {
-    // Cambiar Título
     document.title = CONFIG.brandName;
-
-    // Cambiar Favicon (Icono de pestaña)
     let link = document.querySelector("link[rel~='icon']");
     if (!link) {
       link = document.createElement('link');
@@ -130,16 +129,32 @@ export default function Home() {
       signInAnonymously(firebaseRefs.auth).catch(console.error);
       const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (u) => setUser(u));
 
-      // ESCUCHAR STOCK Y PRECIOS EN TIEMPO REAL
+      // --- AQUÍ ESTÁ EL CAMBIO IMPORTANTE: LECTURA TOTAL DE PRODUCTOS ---
       const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
+          // 1. Obtenemos TODOS los productos de la base de datos
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
-          setProducts(prev => prev.map(p => {
-            const match = dbProducts.find(dbP => dbP.id === p.id);
-            return match 
-              ? { ...p, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } 
-              : { ...p, inStock: true };
-          }));
+          
+          setProducts(prev => {
+             // 2. Empezamos con la lista base (initialProducts) para asegurar que los viejos estén
+             const combined = [...initialProducts];
+             
+             dbProducts.forEach(dbItem => {
+                // Buscamos si el producto de la DB ya existe en la lista combinada
+                // Usamos == para comparar porque a veces ID es string y a veces numero
+                const index = combined.findIndex(p => p.id == dbItem.id);
+                
+                if (index > -1) {
+                    // SI EXISTE: Actualizamos sus datos (precio, stock, etc)
+                    combined[index] = { ...combined[index], ...dbItem };
+                } else {
+                    // SI NO EXISTE (Es nuevo del Admin): Lo agregamos a la lista
+                    combined.push(dbItem);
+                }
+             });
+             
+             return combined;
+          });
         }
       });
 
@@ -155,18 +170,16 @@ export default function Home() {
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
   
-  // Lógica de precios promocionales ACTUALIZADA
+  // Lógica de precios promocionales
   const getUnitPromoPrice = (item) => {
-    // Lógica para Elfbar Ice King (Precio base 26000)
-    // Se mantiene lógica global (Mix & Match) por coherencia, 2+ unidades en total activan el descuento
+    // Promo Elfbar: Más de 2 unidades
     if (item.category === 'Elfbar Ice King') {
         const count = getTotalItems();
         if (count >= 2) return 24500;
         return 26000;
     }
 
-    // Lógica para Lost Mary 20000 (Precio base 23000)
-    // Lógica específica: Llevando 2 Lost Mary o más
+    // Promo Lost Mary: Más de 2 unidades
     if (item.category === 'Lost Mary 20000') {
         const lmCount = cart.filter(i => i.category === 'Lost Mary 20000').reduce((acc, curr) => acc + curr.qty, 0);
         if (lmCount >= 2) return 20000;
@@ -235,9 +248,9 @@ export default function Home() {
     }
   };
 
-  // Helper para renderizar secciones
   const renderProductSection = (title, categoryFilter, sectionId, promoText = null) => {
     const sectionProducts = products.filter(p => {
+        // Aseguramos que la comparación sea exacta, igual que como guardamos en Admin
         if (categoryFilter === 'Elfbar Ice King') return p.category === 'Elfbar Ice King';
         if (categoryFilter === 'Ignite v400') return p.category === 'Ignite v400';
         if (categoryFilter === 'Lost Mary 20000') return p.category === 'Lost Mary 20000';
@@ -247,7 +260,6 @@ export default function Home() {
         return false;
     });
 
-    // Permitir renderizar secciones vacías si son las nuevas para mantener la estructura
     const alwaysShowCategories = ['Ignite v400', 'Lost Mary 20000'];
     if (sectionProducts.length === 0 && !alwaysShowCategories.includes(categoryFilter)) return null;
 
@@ -331,33 +343,16 @@ export default function Home() {
 
       <div id="catalogo" className="py-8 px-4 max-w-6xl mx-auto">
         <div className="flex gap-3 overflow-x-auto pb-4 mb-4 no-scrollbar sticky top-[60px] md:top-[70px] z-30 bg-[#f4f4f4]/95 backdrop-blur-sm py-3 -mx-4 px-4 md:mx-0 md:px-0 mask-image-gradient">
-            {/* Secciones de Vapes */}
-            <a href="#elfbar" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
-                Elfbar
-            </a>
-            <a href="#ignite" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
-                Ignite
-            </a>
-             <a href="#lostmary" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
-                Lost Mary
-            </a>
-            {/* Resto de Categorías */}
-            <a href="#thc" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
-                Vapes THC
-            </a>
-            <a href="#playstation" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
-                PlayStation
-            </a>
-            <a href="#apple" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
-                Productos Apple
-            </a>
+            <a href="#elfbar" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">Elfbar</a>
+            <a href="#ignite" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">Ignite</a>
+             <a href="#lostmary" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">Lost Mary</a>
+            <a href="#thc" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">Vapes THC</a>
+            <a href="#playstation" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">PlayStation</a>
+            <a href="#apple" className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">Productos Apple</a>
         </div>
 
-        {/* Sección Contenedora VAPES */}
         <div className="mb-16">
             <h2 className="text-3xl md:text-5xl font-black text-center mb-10 text-gray-200 uppercase tracking-tighter opacity-30 select-none">VAPE ZONE</h2>
-            
-            {/* Actualizado texto promocional */}
             {renderProductSection("Elfbar Ice King", "Elfbar Ice King", "elfbar", "2+ un: $24.500 c/u")}
             {renderProductSection("Ignite v400", "Ignite v400", "ignite")}
             {renderProductSection("Lost Mary 20000", "Lost Mary 20000", "lostmary", "2+ Lost Mary: $20.000 c/u")}
