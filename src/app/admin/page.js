@@ -16,13 +16,13 @@ import {
   serverTimestamp 
 } from "firebase/firestore";
 
-// --- CONFIGURACIÓN DE TU MARCA (EDITAR AQUÍ) ---
+// --- CONFIGURACIÓN DE TU MARCA ---
 const CONFIG = {
-  brandName: "028", // NOMBRE DE LA PESTAÑA
-  logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png", // ICONO DE LA PESTAÑA
+  brandName: "028", 
+  logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png",
 };
 
-// Mantenemos esto por ahora para la sincronización inicial, luego lo quitaremos
+// Mantenemos la lista base
 const initialProducts = [
   // --- ELFBAR ICE KING ---
   { id: 1, name: "BAJA SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
@@ -149,20 +149,23 @@ export default function AdminPage() {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
           
-          // Aquí fusionamos la lista fija con la de la base de datos
-          // Si el producto existe en DB, usa sus datos. Si no, usa los de initialProducts.
-          // NOTA: Para ver productos NUEVOS, tendremos que cambiar esto en el siguiente paso.
           setProducts(prev => {
-             // 1. Actualizar los existentes en la lista fija
+             // 1. Actualizar los existentes
              const updatedInitial = initialProducts.map(p => {
                 const match = dbProducts.find(dbP => dbP.id === p.id);
+                // Si está marcado como borrado (isDeleted: true), no lo devolvemos
+                if (match && match.isDeleted) return null;
+                
                 return match 
                   ? { ...p, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } 
                   : { ...p, inStock: true };
-             });
+             }).filter(Boolean); // Eliminamos los nulos (borrados)
              
-             // 2. Buscar productos NUEVOS en la DB que NO están en initialProducts
-             const newFromDb = dbProducts.filter(dbP => !initialProducts.find(p => p.id === dbP.id));
+             // 2. Agregar productos nuevos (solo si no están borrados)
+             const newFromDb = dbProducts.filter(dbP => 
+                !initialProducts.find(p => p.id === dbP.id) && 
+                !dbP.isDeleted
+             );
              
              return [...updatedInitial, ...newFromDb];
           });
@@ -183,10 +186,8 @@ export default function AdminPage() {
   const handleAddProduct = async (e) => {
     e.preventDefault();
     setIsAdding(true);
-    
     try {
-      const newId = Date.now(); // ID único basado en tiempo
-      
+      const newId = Date.now(); 
       await setDoc(doc(firebaseRefs.db, 'products', `prod_${newId}`), {
         id: newId,
         name: newProduct.name.toUpperCase(),
@@ -195,16 +196,35 @@ export default function AdminPage() {
         image: newProduct.image,
         tag: newProduct.tag,
         inStock: true,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        isDeleted: false
       });
-
       alert("¡Producto agregado con éxito!");
       setNewProduct({ name: '', price: '', category: 'Elfbar Ice King', image: '', tag: '' });
     } catch (error) {
-      console.error(error);
       alert("Error al crear: " + error.message);
     }
     setIsAdding(false);
+  };
+
+  // --- NUEVA FUNCIÓN PARA ELIMINAR ---
+  const handleDeleteProduct = async (product) => {
+    if(!confirm(`¿Seguro que quieres eliminar "${product.name}"?`)) return;
+
+    try {
+        // En lugar de borrar el documento, le ponemos una marca 'isDeleted'
+        // Esto sirve para que también se oculte si es un producto de initialProducts
+        await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), {
+            id: product.id,
+            isDeleted: true
+        }, { merge: true });
+        
+        // Si quieres, aquí podrías agregar lógica para borrarlo "de verdad" si no es de initialProducts,
+        // pero marcarlo como borrado es más seguro y consistente.
+    } catch (err) {
+        console.error(err);
+        alert("Error al eliminar: " + err.message);
+    }
   };
 
   const completeOrder = async (id) => {
@@ -231,7 +251,7 @@ export default function AdminPage() {
         id: product.id,
         name: product.name,
         inStock: newStockStatus,
-        price: product.price // Aseguramos que se guarde el precio también
+        price: product.price 
       }, { merge: true });
     } catch (err) { alert("Error de permisos o conexión."); }
   };
@@ -253,7 +273,7 @@ export default function AdminPage() {
                 await setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), {
                     id: p.id,
                     name: p.name,
-                    category: p.category, // Importante guardar categoría para filtrar después
+                    category: p.category, 
                     image: p.image 
                 }, { merge: true });
             }
@@ -321,12 +341,22 @@ export default function AdminPage() {
                                 </span>
                             </div>
                         </div>
-                        <button 
-                            onClick={() => toggleStock(p)}
-                            className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-900/20 text-red-500 border border-red-900/30'}`}
-                        >
-                            {p.inStock === false ? 'Habilitar' : 'Agotar'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                             <button 
+                                onClick={() => toggleStock(p)}
+                                className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-900/20 text-red-500 border border-red-900/30'}`}
+                            >
+                                {p.inStock === false ? 'Habilitar' : 'Agotar'}
+                            </button>
+                            {/* BOTÓN DE ELIMINAR */}
+                            <button 
+                                onClick={() => handleDeleteProduct(p)}
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-200 hover:bg-red-500 hover:text-white transition-all text-gray-500"
+                                title="Eliminar producto"
+                            >
+                                <i className="fas fa-trash text-xs"></i>
+                            </button>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -452,7 +482,7 @@ export default function AdminPage() {
               <div className="grid gap-6">
                 {filteredOrders.map((order) => (
                   <div key={order.id} className={`${theme.card} rounded-[2rem] shadow-sm border p-6 md:p-8 hover:shadow-2xl transition-all duration-500 ${theme.cardHover}`}>
-                    {/* ... (Contenido de la tarjeta de pedido se mantiene igual) ... */}
+                    {/* ... (Contenido de la tarjeta de pedido) ... */}
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex items-center gap-4">
                         <div className="bg-black text-[#d4af37] w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shadow-xl">{order.items?.reduce((a, b) => a + b.qty, 0)}</div>

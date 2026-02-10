@@ -7,16 +7,14 @@ import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot } from "f
 
 // --- CONFIGURACIÓN DE TU MARCA (EDITAR AQUÍ) ---
 const CONFIG = {
-  brandName: "028", // NOMBRE DE LA PESTAÑA
+  brandName: "028", 
   whatsappNumber: "5491155669960", 
-  logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png", // ICONO DE LA PESTAÑA
+  logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png", 
   bannerImage: "https://i.postimg.cc/wBdHsm94/banner-web.jpg", 
   currencySymbol: "$",
   shippingText: "Espero confirmacion para abonar",
 };
 
-// Esta lista se mantiene como "base" para que la página cargue rápido
-// Pero si agregas cosas en el Admin, se sumarán a esto.
 const initialProducts = [
   // --- ELFBAR ICE KING ---
   { id: 1, name: "BAJA SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
@@ -129,27 +127,30 @@ export default function Home() {
       signInAnonymously(firebaseRefs.auth).catch(console.error);
       const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (u) => setUser(u));
 
-      // --- AQUÍ ESTÁ EL CAMBIO IMPORTANTE: LECTURA TOTAL DE PRODUCTOS ---
+      // ESCUCHAR STOCK Y PRECIOS EN TIEMPO REAL
       const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
-          // 1. Obtenemos TODOS los productos de la base de datos
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
           
           setProducts(prev => {
-             // 2. Empezamos con la lista base (initialProducts) para asegurar que los viejos estén
+             // 1. Clonar lista base
              const combined = [...initialProducts];
              
              dbProducts.forEach(dbItem => {
-                // Buscamos si el producto de la DB ya existe en la lista combinada
-                // Usamos == para comparar porque a veces ID es string y a veces numero
                 const index = combined.findIndex(p => p.id == dbItem.id);
                 
-                if (index > -1) {
-                    // SI EXISTE: Actualizamos sus datos (precio, stock, etc)
-                    combined[index] = { ...combined[index], ...dbItem };
+                // Si está marcado como borrado en Firebase, lo quitamos de la lista
+                if (dbItem.isDeleted) {
+                    if (index > -1) {
+                        combined.splice(index, 1);
+                    }
                 } else {
-                    // SI NO EXISTE (Es nuevo del Admin): Lo agregamos a la lista
-                    combined.push(dbItem);
+                    // Si no está borrado, actualizamos o agregamos
+                    if (index > -1) {
+                        combined[index] = { ...combined[index], ...dbItem };
+                    } else {
+                        combined.push(dbItem);
+                    }
                 }
              });
              
@@ -250,7 +251,6 @@ export default function Home() {
 
   const renderProductSection = (title, categoryFilter, sectionId, promoText = null) => {
     const sectionProducts = products.filter(p => {
-        // Aseguramos que la comparación sea exacta, igual que como guardamos en Admin
         if (categoryFilter === 'Elfbar Ice King') return p.category === 'Elfbar Ice King';
         if (categoryFilter === 'Ignite v400') return p.category === 'Ignite v400';
         if (categoryFilter === 'Lost Mary 20000') return p.category === 'Lost Mary 20000';
