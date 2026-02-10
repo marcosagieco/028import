@@ -16,12 +16,13 @@ import {
   serverTimestamp 
 } from "firebase/firestore";
 
+// --- CONFIGURACIÓN DE TU MARCA ---
 const CONFIG = {
   brandName: "028", 
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png",
 };
 
-// Mantenemos la lista base inicial
+// Mantenemos la lista base para la primera carga
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
@@ -79,21 +80,18 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false); 
 
-  // --- ESTADOS PARA NUEVO PRODUCTO ---
   const [newProduct, setNewProduct] = useState({
     name: '',
     price: '',
-    category: 'Elfbar Ice King',
-    customCategory: '', // Para cuando escribe una nueva
+    category: '', // Inicializamos vacío
     image: '',
     tag: ''
   });
   const [isAdding, setIsAdding] = useState(false);
 
-  // Generamos lista de categorías únicas para el selector
-  const categoriesList = useMemo(() => {
-    const cats = new Set(products.map(p => p.category));
-    return Array.from(cats).sort();
+  // Obtener categorías únicas dinámicamente
+  const uniqueCategories = useMemo(() => {
+    return [...new Set(products.map(p => p.category))].sort();
   }, [products]);
 
   useEffect(() => {
@@ -127,11 +125,14 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!firebaseRefs.auth || !firebaseRefs.db) return;
+
     signInAnonymously(firebaseRefs.auth).catch(console.error);
+
     const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (user) => {
       if (!user) return;
 
-      const unsubscribeOrders = onSnapshot(query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc')), (snapshot) => {
+      const qOrders = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'));
+      const unsubscribeOrders = onSnapshot(qOrders, (snapshot) => {
         setOrders(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
         setLoading(false);
       });
@@ -139,45 +140,47 @@ export default function AdminPage() {
       const unsubscribeProducts = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
+          
           setProducts(prev => {
              const updatedInitial = initialProducts.map(p => {
                 const match = dbProducts.find(dbP => dbP.id === p.id);
                 if (match && match.isDeleted) return null;
-                return match ? { ...p, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } : { ...p, inStock: true };
+                return match 
+                  ? { ...p, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } 
+                  : { ...p, inStock: true };
              }).filter(Boolean);
              
-             const newFromDb = dbProducts.filter(dbP => !initialProducts.find(p => p.id === dbP.id) && !dbP.isDeleted);
+             const newFromDb = dbProducts.filter(dbP => 
+                !initialProducts.find(p => p.id === dbP.id) && 
+                !dbP.isDeleted
+             );
+             
              return [...updatedInitial, ...newFromDb];
           });
         }
       });
-      return () => { unsubscribeOrders(); unsubscribeProducts(); };
+
+      return () => {
+        unsubscribeOrders();
+        unsubscribeProducts();
+      };
     });
+
     return () => unsubscribeAuth();
   }, [firebaseRefs]);
 
-  // --- HANDLERS ---
-
   const handleAddProduct = async (e) => {
     e.preventDefault();
+    if (!newProduct.category) return alert("Por favor escribe o selecciona una categoría.");
+
     setIsAdding(true);
-    
-    // Determinar categoría final: Si eligió "OTRA", usar el campo de texto custom
-    const finalCategory = newProduct.category === 'OTRA' ? newProduct.customCategory : newProduct.category;
-
-    if (!finalCategory.trim()) {
-        alert("Por favor escribe un nombre para la categoría.");
-        setIsAdding(false);
-        return;
-    }
-
     try {
       const newId = Date.now(); 
       await setDoc(doc(firebaseRefs.db, 'products', `prod_${newId}`), {
         id: newId,
         name: newProduct.name.toUpperCase(),
         price: Number(newProduct.price),
-        category: finalCategory, // Guardamos la categoría (existente o nueva)
+        category: newProduct.category, // Se guarda lo que escribas
         image: newProduct.image,
         tag: newProduct.tag,
         inStock: true,
@@ -185,7 +188,7 @@ export default function AdminPage() {
         isDeleted: false
       });
       alert("¡Producto agregado con éxito!");
-      setNewProduct({ name: '', price: '', category: 'Elfbar Ice King', customCategory: '', image: '', tag: '' });
+      setNewProduct({ name: '', price: '', category: '', image: '', tag: '' });
     } catch (error) {
       alert("Error al crear: " + error.message);
     }
@@ -195,44 +198,65 @@ export default function AdminPage() {
   const handleDeleteProduct = async (product) => {
     if(!confirm(`¿Seguro que quieres eliminar "${product.name}"?`)) return;
     try {
-        await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, isDeleted: true }, { merge: true });
-    } catch (err) { alert("Error al eliminar: " + err.message); }
-  };
-
-  const completeOrder = async (id) => {
-    if (confirm("¿Confirmas entrega?")) {
-      try { await updateDoc(doc(firebaseRefs.db, 'orders', id), { status: 'completed' }); } catch (err) { alert("Error."); }
-    }
-  };
-
-  const deleteOrder = async (id) => {
-    if (confirm("¿Eliminar pedido?")) {
-      try { await deleteDoc(doc(firebaseRefs.db, 'orders', id)); } catch (err) { alert("Error."); }
+        await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), {
+            id: product.id,
+            isDeleted: true
+        }, { merge: true });
+    } catch (err) {
+        alert("Error al eliminar: " + err.message);
     }
   };
 
   const toggleStock = async (product) => {
     try {
       const newStockStatus = product.inStock === false ? true : false;
-      await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, name: product.name, inStock: newStockStatus, price: product.price }, { merge: true });
-    } catch (err) { alert("Error."); }
+      const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
+      await setDoc(productRef, {
+        id: product.id,
+        name: product.name,
+        inStock: newStockStatus,
+        price: product.price 
+      }, { merge: true });
+    } catch (err) { alert("Error de permisos o conexión."); }
   };
 
   const updatePrice = async (product, newPrice) => {
     const price = parseInt(newPrice);
-    if(isNaN(price) || price < 0) return alert("Precio inválido");
-    try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, price: price }, { merge: true }); } catch(err) { alert("Error."); }
+    if(isNaN(price) || price < 0) return alert("Por favor ingresa un precio válido");
+    try {
+        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
+        await setDoc(productRef, { id: product.id, price: price }, { merge: true });
+    } catch(err) { alert("Error al actualizar precio."); }
   }
 
+  const completeOrder = async (id) => {
+    if (confirm("¿Confirmas que el pedido fue entregado?")) {
+      try {
+        await updateDoc(doc(firebaseRefs.db, 'orders', id), { status: 'completed' });
+      } catch (err) { alert("Error al completar."); }
+    }
+  };
+
+  const deleteOrder = async (id) => {
+    if (confirm("¿Eliminar pedido permanentemente?")) {
+      try { await deleteDoc(doc(firebaseRefs.db, 'orders', id)); } catch (err) { alert("Error al eliminar."); }
+    }
+  };
+
   const syncAllProducts = async () => {
-    if (confirm("¿Sincronizar catálogo?")) {
+    if (confirm("¿Sincronizar catálogo inicial?")) {
         setLoading(true);
         try {
             for (const p of initialProducts) {
-                await setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, name: p.name, category: p.category, image: p.image }, { merge: true });
+                await setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), {
+                    id: p.id,
+                    name: p.name,
+                    category: p.category, 
+                    image: p.image 
+                }, { merge: true });
             }
-            alert("Sincronizado.");
-        } catch (err) { alert("Error: " + err.message); }
+            alert("Catálogo sincronizado.");
+        } catch (err) { alert("Error al sincronizar: " + err.message); }
         setLoading(false);
     }
   };
@@ -253,12 +277,13 @@ export default function AdminPage() {
     stickyHeader: darkMode ? 'bg-[#0a0a0a] border-[#262626]' : 'bg-white border-gray-200'
   };
 
-  const renderStockGroup = (title) => {
-    const group = products.filter(p => p.category === title);
+  const renderStockGroup = (categoryFilter) => {
+    const group = products.filter(p => p.category === categoryFilter);
     if (group.length === 0) return null;
+
     return (
-        <div className="mb-8" key={title}>
-            <h3 className={`text-xl font-bold mb-4 uppercase ${theme.subText} border-b ${darkMode ? 'border-[#262626]' : 'border-gray-200'} pb-2`}>{title}</h3>
+        <div className="mb-8" key={categoryFilter}>
+            <h3 className={`text-xl font-bold mb-4 uppercase ${theme.subText} border-b ${darkMode ? 'border-[#262626]' : 'border-gray-200'} pb-2`}>{categoryFilter}</h3>
             <div className="grid gap-4">
                 {group.map(p => (
                     <div key={p.id} className={`${theme.card} p-5 rounded-[1.5rem] flex justify-between items-center shadow-sm border ${theme.cardHover} transition-all`}>
@@ -273,12 +298,14 @@ export default function AdminPage() {
                                      <span className="text-gray-400 text-[10px]">$</span>
                                      <input type="number" key={p.price} defaultValue={p.price} className={`w-20 rounded px-2 py-1 text-[10px] font-bold focus:border-[#d4af37] outline-none transition-colors ${theme.input}`} onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }} onBlur={(e) => { if (parseInt(e.target.value) !== p.price) updatePrice(p, e.target.value); }} />
                                 </div>
-                                <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400'}`}>{p.inStock === false ? 'Agotado' : 'Disponible'}</span>
+                                <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400'}`}>
+                                    {p.inStock === false ? 'Agotado' : 'Disponible'}
+                                </span>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => toggleStock(p)} className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-900/20 text-red-500 border border-red-900/30'}`}>{p.inStock === false ? 'Habilitar' : 'Agotar'}</button>
-                            <button onClick={() => handleDeleteProduct(p)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-200 hover:bg-red-500 hover:text-white transition-all text-gray-500" title="Eliminar"><i className="fas fa-trash text-xs"></i></button>
+                             <button onClick={() => toggleStock(p)} className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-900/20 text-red-500 border border-red-900/30'}`}>{p.inStock === false ? 'Habilitar' : 'Agotar'}</button>
+                            <button onClick={() => handleDeleteProduct(p)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-200 hover:bg-red-500 hover:text-white transition-all text-gray-500"><i className="fas fa-trash text-xs"></i></button>
                         </div>
                     </div>
                 ))}
@@ -318,7 +345,6 @@ export default function AdminPage() {
 
       <main className="max-w-4xl mx-auto p-4 md:p-8">
         
-        {/* --- PESTAÑA CREAR (NUEVO CON OPCIÓN CUSTOM) --- */}
         {activeTab === 'crear' && (
           <div className="animate-in fade-in duration-500 max-w-lg mx-auto">
             <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 text-center">Nuevo Producto</h2>
@@ -336,24 +362,21 @@ export default function AdminPage() {
                 </div>
                 <div className="flex-1">
                   <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Categoría</label>
-                  <select 
-                      value={newProduct.category} 
-                      onChange={e => setNewProduct({...newProduct, category: e.target.value})} 
-                      className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all appearance-none uppercase ${theme.input}`}
-                  >
-                    {categoriesList.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                    <option value="OTRA">✨ NUEVA CATEGORÍA...</option>
-                  </select>
+                  
+                  {/* --- INPUT CON AUTOCOMPLETADO PARA CATEGORÍAS --- */}
+                  <input 
+                    list="category-suggestions" 
+                    placeholder="Escribe o selecciona..." 
+                    value={newProduct.category} 
+                    onChange={e => setNewProduct({...newProduct, category: e.target.value})} 
+                    className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all uppercase ${theme.input}`} 
+                  />
+                  <datalist id="category-suggestions">
+                    {uniqueCategories.map(cat => <option key={cat} value={cat} />)}
+                  </datalist>
+
                 </div>
               </div>
-
-              {/* INPUT CONDICIONAL PARA NUEVA CATEGORÍA */}
-              {newProduct.category === 'OTRA' && (
-                 <div className="animate-in slide-in-from-top-2">
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-[#d4af37] mb-2">Escribe el nombre de la nueva categoría</label>
-                    <input type="text" required placeholder="Ej: PODS DESCARTABLES" value={newProduct.customCategory} onChange={e => setNewProduct({...newProduct, customCategory: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-2 border-[#d4af37] transition-all ${theme.input}`} />
-                 </div>
-              )}
 
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Link de Imagen (URL)</label>
@@ -377,19 +400,17 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* --- PESTAÑA STOCK (RENDERIZADO DINÁMICO) --- */}
         {activeTab === 'stock' && (
           <div className="animate-in fade-in duration-500">
              <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-black uppercase tracking-tighter">Gestión de Stock</h2>
                 <button onClick={syncAllProducts} className="text-[9px] bg-black text-white px-4 py-2 rounded-lg font-black uppercase tracking-widest shadow-lg hover:bg-[#d4af37] transition-all">Sincronizar DB</button>
              </div>
-             {/* Renderizamos dinámicamente todas las categorías que existan */}
-             {categoriesList.map(category => renderStockGroup(category))}
+             {/* Renderizamos TODAS las categorías que existen automáticamente */}
+             {uniqueCategories.map(cat => renderStockGroup(cat))}
           </div>
         )}
 
-        {/* --- PESTAÑA PEDIDOS (Sin Cambios) --- */}
         {(activeTab === 'pendientes' || activeTab === 'historial') && (
           <div className="animate-in fade-in duration-500">
             <div className="flex justify-between items-end mb-8">

@@ -14,7 +14,6 @@ const CONFIG = {
   shippingText: "Espero confirmacion para abonar",
 };
 
-// Usamos la misma lista inicial base
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
@@ -77,17 +76,19 @@ export default function Home() {
   const [isSending, setIsSending] = useState(false);
 
   // --- OBTENER CATEGORÍAS ÚNICAS ---
-  // Esto hace que el menú y las secciones sean dinámicos
-  const categoriesList = useMemo(() => {
-    // Usamos Set para eliminar duplicados
-    const unique = new Set(products.map(p => p.category));
-    // Podemos ordenar alfabéticamente o dejarlas como aparecen
-    // Si quieres un orden específico, podrías definirlo, pero sort() es lo más fácil
-    return Array.from(unique); 
+  const uniqueCategories = useMemo(() => {
+    // Extraemos todas las categorías únicas de los productos disponibles
+    // El Set elimina duplicados automáticamente
+    return [...new Set(products.map(p => p.category))];
   }, [products]);
 
-  // Helper para crear IDs de enlaces (ej: "Elfbar Ice King" -> "elfbar-ice-king")
-  const slugify = (text) => text.toString().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+  // Helper para crear IDs de ancla (ej: "Elfbar Ice King" -> "elfbar-ice-king")
+  const slugify = (text) => text.toString().toLowerCase()
+    .replace(/\s+/g, '-')           // Reemplaza espacios con -
+    .replace(/[^\w\-]+/g, '')       // Elimina caracteres no palabras
+    .replace(/\-\-+/g, '-')         // Reemplaza múltiples - con uno solo
+    .replace(/^-+/, '')             // Trim - del inicio
+    .replace(/-+$/, '');            // Trim - del final
 
   useEffect(() => {
     document.title = CONFIG.brandName;
@@ -146,7 +147,13 @@ export default function Home() {
           });
         }
       });
-      return () => { unsubscribeAuth(); unsubscribeStock(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
+
+      return () => {
+        unsubscribeAuth();
+        unsubscribeStock();
+        window.removeEventListener('focus', handleFocus);
+        window.removeEventListener('pageshow', handleFocus);
+      };
     }
   }, [firebaseRefs]);
 
@@ -156,11 +163,13 @@ export default function Home() {
   const getUnitPromoPrice = (item) => {
     if (item.category === 'Elfbar Ice King') {
         const count = getTotalItems();
-        return count >= 2 ? 24500 : 26000;
+        if (count >= 2) return 24500;
+        return 26000;
     }
     if (item.category === 'Lost Mary 20000') {
         const lmCount = cart.filter(i => i.category === 'Lost Mary 20000').reduce((acc, curr) => acc + curr.qty, 0);
-        return lmCount >= 2 ? 20000 : 23000;
+        if (lmCount >= 2) return 20000;
+        return 23000;
     }
     return item.price;
   };
@@ -202,6 +211,7 @@ export default function Home() {
     });
     msg += `\n*TOTAL ESTIMADO: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
     msg += deliveryMethod === 'envio' ? `*ENVIO:* ${address}, ${zone}\n` : `*RETIRO EN LOCAL*\n`;
+
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
 
     try {
@@ -218,22 +228,24 @@ export default function Home() {
         });
       }
       setTimeout(() => { window.location.href = whatsappUrl; }, 400);
-    } catch (e) { window.location.href = whatsappUrl; }
+    } catch (e) {
+      window.location.href = whatsappUrl;
+    }
   };
 
-  // --- RENDERIZADO DINÁMICO DE SECCIÓN ---
+  // --- RENDERIZADO DINÁMICO DE SECCIONES ---
   const renderProductSection = (category) => {
     const sectionProducts = products.filter(p => p.category === category);
     
-    // Configuración de textos promocionales específicos
+    // Configuración de textos promo específicos (esto sí queda hardcodeado por ahora)
     let promoText = null;
     if (category === 'Elfbar Ice King') promoText = "2+ un: $24.500 c/u";
     if (category === 'Lost Mary 20000') promoText = "2+ Lost Mary: $20.000 c/u";
 
-    if (sectionProducts.length === 0) return null;
+    const sectionId = slugify(category);
 
     return (
-      <section id={slugify(category)} key={category} className="mb-12 scroll-mt-28 transition-all duration-500">
+      <section key={category} id={sectionId} className="mb-12 scroll-mt-28 transition-all duration-500">
         <div className="flex flex-col md:flex-row justify-between items-baseline mb-6 gap-3 border-b border-gray-200 pb-4">
           <h2 className="text-xl md:text-2xl font-black border-l-4 border-[#d4af37] pl-4 uppercase tracking-tight">{category}</h2>
           {promoText && <div className="bg-[#d4af37] text-black px-3 py-1 text-[10px] font-black rounded uppercase tracking-widest">{promoText}</div>}
@@ -289,7 +301,8 @@ export default function Home() {
         </div>
         {isMenuOpen && (
           <div className="absolute top-full left-0 w-full bg-[#121212] p-6 flex flex-col gap-4 text-center font-bold border-t border-[#d4af37]/20 shadow-2xl z-50">
-            {categoriesList.map(cat => (
+            {/* Menú generado dinámicamente */}
+            {uniqueCategories.map(cat => (
                 <a key={cat} href={`#${slugify(cat)}`} onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800 uppercase">{cat}</a>
             ))}
             <button onClick={() => {setIsCartOpen(true); setIsMenuOpen(false)}} className="hover:text-[#d4af37] transition-colors uppercase py-2 mt-2">MI CARRITO</button>
@@ -302,9 +315,9 @@ export default function Home() {
       </header>
 
       <div id="catalogo" className="py-8 px-4 max-w-6xl mx-auto">
-        {/* MENÚ DE FILTROS SUPERIOR (SCROLLABLE) */}
         <div className="flex gap-3 overflow-x-auto pb-4 mb-4 no-scrollbar sticky top-[60px] md:top-[70px] z-30 bg-[#f4f4f4]/95 backdrop-blur-sm py-3 -mx-4 px-4 md:mx-0 md:px-0 mask-image-gradient">
-            {categoriesList.map(cat => (
+            {/* Botones de navegación generados dinámicamente */}
+            {uniqueCategories.map(cat => (
                 <a key={cat} href={`#${slugify(cat)}`} className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
                     {cat}
                 </a>
@@ -313,9 +326,8 @@ export default function Home() {
 
         <div className="mb-16">
             <h2 className="text-3xl md:text-5xl font-black text-center mb-10 text-gray-200 uppercase tracking-tighter opacity-30 select-none">CATÁLOGO</h2>
-            
-            {/* AQUÍ OCURRE LA MAGIA: RENDERIZA TODAS LAS CATEGORÍAS AUTOMÁTICAMENTE */}
-            {categoriesList.map(category => renderProductSection(category))}
+            {/* Secciones generadas dinámicamente */}
+            {uniqueCategories.map(cat => renderProductSection(cat))}
         </div>
       </div>
 
@@ -330,7 +342,6 @@ export default function Home() {
         <div className="fixed inset-0 z-[60] flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/80" onClick={() => setIsCartOpen(false)} />
           <div className="relative bg-white p-6 rounded-t-3xl max-h-[85vh] overflow-y-auto shadow-2xl">
-            {/* ... (Contenido del carrito igual que antes) ... */}
             <div className="flex justify-between items-center mb-6"><h2 className="text-xl font-black uppercase">Resumen</h2><button onClick={() => setIsCartOpen(false)} className="text-gray-400"><i className="fas fa-times text-xl"></i></button></div>
             <div className="space-y-4 mb-6">
               {cart.map(item => (
