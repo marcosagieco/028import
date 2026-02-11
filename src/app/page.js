@@ -75,20 +75,16 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
-  // --- OBTENER CATEGORÍAS ÚNICAS ---
   const uniqueCategories = useMemo(() => {
-    // Extraemos todas las categorías únicas de los productos disponibles
-    // El Set elimina duplicados automáticamente
     return [...new Set(products.map(p => p.category))];
   }, [products]);
 
-  // Helper para crear IDs de ancla (ej: "Elfbar Ice King" -> "elfbar-ice-king")
   const slugify = (text) => text.toString().toLowerCase()
-    .replace(/\s+/g, '-')           // Reemplaza espacios con -
-    .replace(/[^\w\-]+/g, '')       // Elimina caracteres no palabras
-    .replace(/\-\-+/g, '-')         // Reemplaza múltiples - con uno solo
-    .replace(/^-+/, '')             // Trim - del inicio
-    .replace(/-+$/, '');            // Trim - del final
+    .replace(/\s+/g, '-')          
+    .replace(/[^\w\-]+/g, '')       
+    .replace(/\-\-+/g, '-')         
+    .replace(/^-+/, '')             
+    .replace(/-+$/, '');            
 
   useEffect(() => {
     document.title = CONFIG.brandName;
@@ -195,6 +191,7 @@ export default function Home() {
     }).filter(Boolean));
   };
 
+  // --- LÓGICA DE WHATSAPP ACTUALIZADA ---
   const handleCheckout = async () => {
     if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) {
       alert("Por favor completa los datos de envío.");
@@ -207,7 +204,16 @@ export default function Home() {
     cart.forEach(item => {
       const unitPrice = getUnitPromoPrice(item);
       const currency = item.price < 2000 ? "USD" : "$"; 
-      msg += `- ${item.qty}x ${item.name} (${currency}${formatPrice(unitPrice)} c/u)\n`;
+      
+      // Lógica para mostrar la categoría solo en productos específicos para evitar confusión
+      let displayName = item.name;
+      const categoriesToShow = ['Elfbar Ice King', 'Ignite v400', 'Lost Mary 20000'];
+      
+      if (categoriesToShow.includes(item.category)) {
+          displayName = `${item.category} - ${item.name}`;
+      }
+
+      msg += `- ${item.qty}x ${displayName} (${currency}${formatPrice(unitPrice)} c/u)\n`;
     });
     msg += `\n*TOTAL ESTIMADO: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
     msg += deliveryMethod === 'envio' ? `*ENVIO:* ${address}, ${zone}\n` : `*RETIRO EN LOCAL*\n`;
@@ -233,11 +239,9 @@ export default function Home() {
     }
   };
 
-  // --- RENDERIZADO DINÁMICO DE SECCIONES ---
   const renderProductSection = (category) => {
     const sectionProducts = products.filter(p => p.category === category);
     
-    // Configuración de textos promo específicos (esto sí queda hardcodeado por ahora)
     let promoText = null;
     if (category === 'Elfbar Ice King') promoText = "2+ un: $24.500 c/u";
     if (category === 'Lost Mary 20000') promoText = "2+ Lost Mary: $20.000 c/u";
@@ -301,7 +305,6 @@ export default function Home() {
         </div>
         {isMenuOpen && (
           <div className="absolute top-full left-0 w-full bg-[#121212] p-6 flex flex-col gap-4 text-center font-bold border-t border-[#d4af37]/20 shadow-2xl z-50">
-            {/* Menú generado dinámicamente */}
             {uniqueCategories.map(cat => (
                 <a key={cat} href={`#${slugify(cat)}`} onClick={() => setIsMenuOpen(false)} className="hover:text-[#d4af37] transition-colors py-2 border-b border-gray-800 uppercase">{cat}</a>
             ))}
@@ -316,7 +319,6 @@ export default function Home() {
 
       <div id="catalogo" className="py-8 px-4 max-w-6xl mx-auto">
         <div className="flex gap-3 overflow-x-auto pb-4 mb-4 no-scrollbar sticky top-[60px] md:top-[70px] z-30 bg-[#f4f4f4]/95 backdrop-blur-sm py-3 -mx-4 px-4 md:mx-0 md:px-0 mask-image-gradient">
-            {/* Botones de navegación generados dinámicamente */}
             {uniqueCategories.map(cat => (
                 <a key={cat} href={`#${slugify(cat)}`} className="whitespace-nowrap bg-white border border-gray-200 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
                     {cat}
@@ -326,7 +328,6 @@ export default function Home() {
 
         <div className="mb-16">
             <h2 className="text-3xl md:text-5xl font-black text-center mb-10 text-gray-200 uppercase tracking-tighter opacity-30 select-none">CATÁLOGO</h2>
-            {/* Secciones generadas dinámicamente */}
             {uniqueCategories.map(cat => renderProductSection(cat))}
         </div>
       </div>
