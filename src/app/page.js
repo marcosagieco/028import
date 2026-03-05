@@ -1,4 +1,3 @@
-pagina ventas
 
 "use client";
 
