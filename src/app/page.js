@@ -9,7 +9,7 @@ const CONFIG = {
   brandName: "028", 
   whatsappNumber: "5491155669960", 
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png", 
-  bannerImage: "https://i.postimg.cc/W1QbNByk/image.png", 
+  bannerImage: "https://i.postimg.cc/zXYm0TQn/image.png", 
   currencySymbol: "$",
   shippingText: "Pedime te llega en 30'⏰",
 };
