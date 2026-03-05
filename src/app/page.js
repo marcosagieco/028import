@@ -577,7 +577,7 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-[#fafafa] text-[#1a1a1a] min-h-screen font-sans pb-32 flex flex-col">
+    <div className="bg-[#fafafa] text-[#1a1a1a] min-h-screen font-sans flex flex-col">
       
       {/* 2. TOAST NOTIFICACIÓN */}
       {toastMessage && (
