@@ -7,7 +7,7 @@ import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot } from "f
 
 const CONFIG = {
   brandName: "028", 
-  whatsappNumber: "5491155669960", 
+  whatsappNumber: "5491153412358", 
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png", 
   bannerImage: "https://i.postimg.cc/zXYm0TQn/image.png", 
   currencySymbol: "$",
@@ -711,7 +711,7 @@ export default function Home() {
               <ul className="space-y-4 text-gray-400 font-medium">
                  <li className="flex items-center gap-3">
                     <i className="fab fa-whatsapp text-xl text-[#d4af37]"></i>
-                    <span className="text-sm font-bold tracking-wider">11 5566 9960</span>
+                    <span className="text-sm font-bold tracking-wider">11 5341 2358</span>
                  </li>
                  <li className="flex items-start gap-3 mt-4">
                     <i className="fas fa-location-dot text-lg text-[#d4af37] mt-0.5"></i>
@@ -739,7 +739,7 @@ export default function Home() {
               <div className="flex gap-3">
                 <a href="https://www.instagram.com/028.import?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-[#d4af37] hover:text-black transition-colors shadow-lg"><i className="fab fa-instagram text-xl"></i></a>
                 <a href="https://www.tiktok.com/@028.import?is_from_webapp=1&sender_device=pc" target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-[#d4af37] hover:text-black transition-colors shadow-lg"><i className="fab fa-tiktok text-xl"></i></a>
-                <a href={`https://wa.me/5491155669960`} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-[#25D366] hover:text-white transition-colors shadow-lg"><i className="fab fa-whatsapp text-xl"></i></a>
+                <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-[#25D366] hover:text-white transition-colors shadow-lg"><i className="fab fa-whatsapp text-xl"></i></a>
               </div>
             </div>
             
