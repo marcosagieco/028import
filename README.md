@@ -3,7 +3,7 @@
 Desarrollé esta plataforma para digitalizar el catálogo de productos de una tienda de vapes y automatizar el proceso de pedidos. Mi objetivo principal fue sustituir la gestión manual por un sistema centralizado que optimizara la experiencia tanto del cliente como del dueño del negocio.
 
 El Panel Administrativo
-Es la sección de la que más orgulloso estoy en este desarrollo. Diseñé un panel privado donde el dueño posee control total de la operativa sin necesidad de manipular código:
+ Es la sección de la que más orgulloso estoy en este desarrollo. Diseñé un panel privado donde el dueño posee control total de la operativa sin necesidad de manipular código:
 
 Gestión de contenido: Implementé funciones para editar, agregar o pausar productos en tiempo real.
 
