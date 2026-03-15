@@ -1,36 +1,24 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+028import 💨
+Este proyecto nació para digitalizar y organizar las ventas de 028import, una tienda de vapes. El objetivo fue centralizar el catálogo y automatizar el proceso de pedidos que antes se manejaba de forma manual por WhatsApp.
 
-## Getting Started
+🛠️ Lo que más destaco: El Admin Dashboard
+Es la parte de la que más orgulloso estoy. Desarrollé un panel administrativo privado donde el dueño tiene control total sin tocar código:
 
-First, run the development server:
+Gestión de contenido: Editar, agregar o pausar productos en tiempo real.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Control de Stock: Cambios instantáneos en el catálogo del cliente.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Gestión de Pedidos: Centralización de datos para despachos rápidos.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+🏗️ Tech Stack
+Elegí estas herramientas para lograr un sitio ultra liviano y rápido:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Next.js: Rendimiento superior y ruteo limpio.
 
-## Learn More
+Firebase (Firestore & Auth): Base de datos en tiempo real y seguridad en el panel admin.
 
-To learn more about Next.js, take a look at the following resources:
+Tailwind CSS: Diseño responsive enfocado en dispositivos móviles.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Vercel: Despliegue automático y hosting.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+🔗 Sitio en vivo: 028import.vercel.app
