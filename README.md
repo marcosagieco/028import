@@ -21,4 +21,4 @@ Tailwind CSS: Diseño responsive enfocado en dispositivos móviles.
 
 Vercel: Despliegue automático y hosting.
 
-🔗 Sitio en vivo: 028import.vercel.app
+🔗 Sitio en vivo: 028import.com
