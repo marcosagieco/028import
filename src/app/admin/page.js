@@ -134,7 +134,7 @@ export default function AdminPage() {
       const qOrders = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'));
       const unsubscribeOrders = onSnapshot(qOrders, (snapshot) => {
         setOrders(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-        setLoading(false); // 
+        setLoading(false); // <- CORREGIDO
       });
 
       const unsubscribeProducts = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
@@ -145,7 +145,6 @@ export default function AdminPage() {
              const updatedInitial = initialProducts.map(p => {
                 const match = dbProducts.find(dbP => dbP.id === p.id);
                 if (match && match.isDeleted) return null;
-                // AQUI AGREGAMOS LA LECTURA DEL NOMBRE DESDE FIREBASE TAMBIÉN:
                 return match 
                   ? { ...p, ...match, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } 
                   : { ...p, inStock: true };
@@ -230,7 +229,6 @@ export default function AdminPage() {
     } catch(err) { alert("Error al actualizar precio."); }
   }
 
-  // --- NUEVA FUNCIÓN PARA ACTUALIZAR EL NOMBRE ---
   const updateName = async (product, newName) => {
     const name = newName.trim().toUpperCase();
     if(!name) return alert("El nombre no puede estar vacío");
@@ -272,7 +270,8 @@ export default function AdminPage() {
     }
   };
 
-  const filteredOrders = orders.filter(o => activeTab === 'pendientes' ? o.status !== 'completed' : o.status === 'completed');
+  // Solo filtramos los pedidos pendientes
+  const filteredOrders = orders.filter(o => o.status !== 'completed');
 
   const theme = {
     bg: darkMode ? 'bg-[#0a0a0a]' : 'bg-gray-50',
@@ -304,7 +303,6 @@ export default function AdminPage() {
                                 {p.inStock === false && <div className="absolute inset-0 flex items-center justify-center"><i className="fas fa-times text-red-500 text-xs"></i></div>}
                             </div>
                             <div className="flex flex-col gap-1 w-full">
-                                {/* AQUI CAMBIAMOS LA ETIQUETA <P> POR UN <INPUT> EDITABLE */}
                                 <input 
                                     type="text" 
                                     defaultValue={p.name} 
@@ -359,8 +357,8 @@ export default function AdminPage() {
 
       <div className={`${theme.stickyHeader} border-b sticky top-[72px] z-40 transition-colors duration-300`}>
         <div className="max-w-4xl mx-auto flex">
+          {/* SE ELIMINÓ EL BOTÓN "VENTAS" AQUÍ */}
           <button onClick={() => setActiveTab('pendientes')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'pendientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Pedidos</button>
-          <button onClick={() => setActiveTab('historial')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'historial' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Ventas</button>
           <button onClick={() => setActiveTab('stock')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'stock' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Stock</button>
           <button onClick={() => setActiveTab('crear')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'crear' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Crear +</button>
         </div>
@@ -386,7 +384,6 @@ export default function AdminPage() {
                 <div className="flex-1">
                   <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Categoría</label>
                   
-                  {/* --- INPUT CON AUTOCOMPLETADO PARA CATEGORÍAS --- */}
                   <input 
                     list="category-suggestions" 
                     placeholder="Escribe o selecciona..." 
@@ -429,19 +426,19 @@ export default function AdminPage() {
                 <h2 className="text-2xl font-black uppercase tracking-tighter">Gestión de Stock</h2>
                 <button onClick={syncAllProducts} className="text-[9px] bg-black text-white px-4 py-2 rounded-lg font-black uppercase tracking-widest shadow-lg hover:bg-[#d4af37] transition-all">Sincronizar DB</button>
              </div>
-             {/* Renderizamos TODAS las categorías que existen automáticamente */}
              {uniqueCategories.map(cat => renderStockGroup(cat))}
           </div>
         )}
 
-        {(activeTab === 'pendientes' || activeTab === 'historial') && (
+        {/* LÓGICA SIMPLIFICADA PARA PEDIDOS PENDIENTES */}
+        {activeTab === 'pendientes' && (
           <div className="animate-in fade-in duration-500">
             <div className="flex justify-between items-end mb-8">
               <div>
-                <h2 className={`text-3xl font-black uppercase tracking-tighter leading-none ${theme.text}`}>{activeTab === 'pendientes' ? 'Activos' : 'Historial'}</h2>
-                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">{activeTab === 'pendientes' ? 'Nuevos pedidos recibidos' : 'Registro de ventas cerradas'}</p>
+                <h2 className={`text-3xl font-black uppercase tracking-tighter leading-none ${theme.text}`}>Activos</h2>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">Nuevos pedidos recibidos</p>
               </div>
-              <span className="bg-black text-[#d4af37] text-[10px] font-black px-4 py-2 rounded-full shadow-xl">{filteredOrders.length} {activeTab === 'pendientes' ? 'PENDIENTES' : 'TOTALES'}</span>
+              <span className="bg-black text-[#d4af37] text-[10px] font-black px-4 py-2 rounded-full shadow-xl">{filteredOrders.length} PENDIENTES</span>
             </div>
 
             {filteredOrders.length === 0 ? (
@@ -462,9 +459,7 @@ export default function AdminPage() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                          {activeTab === 'pendientes' && (
-                            <button onClick={() => completeOrder(order.id)} className={`${darkMode ? 'bg-[#262626] text-gray-400 hover:text-white' : 'bg-gray-50 text-gray-300 hover:text-white'} hover:bg-green-600 w-12 h-12 rounded-2xl transition-all flex items-center justify-center shadow-inner`}><i className="fas fa-check text-lg"></i></button>
-                          )}
+                          <button onClick={() => completeOrder(order.id)} className={`${darkMode ? 'bg-[#262626] text-gray-400 hover:text-white' : 'bg-gray-50 text-gray-300 hover:text-white'} hover:bg-green-600 w-12 h-12 rounded-2xl transition-all flex items-center justify-center shadow-inner`}><i className="fas fa-check text-lg"></i></button>
                           <button onClick={() => deleteOrder(order.id)} className={`${darkMode ? 'bg-[#262626] text-gray-400 hover:text-white' : 'bg-gray-50 text-gray-300 hover:text-white'} hover:bg-red-600 w-12 h-12 rounded-2xl transition-all flex items-center justify-center shadow-inner`}><i className="fas fa-trash text-lg"></i></button>
                       </div>
                     </div>
