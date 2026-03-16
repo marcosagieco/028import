@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+*028import - Catálogo Digital y E-commerce 💨*
 
-## Getting Started
+Desarrollé esta plataforma para digitalizar el catálogo de productos de una tienda de vapes y automatizar el proceso de pedidos. Mi objetivo principal fue sustituir la gestión manual por un sistema centralizado que optimizara la experiencia tanto del cliente como del dueño del negocio.
 
-First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+*El Panel Administrativo*
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ Es la sección de la que más orgulloso estoy en este desarrollo. Diseñé un panel privado donde el dueño posee control total de la operativa sin necesidad de manipular código:
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Gestión de contenido: Implementé funciones para editar, agregar o pausar productos en tiempo real.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Control de Stock: Decidí utilizar la sincronización de Firebase para que los cambios se reflejen de forma instantánea en el catálogo del cliente.
 
-## Learn More
+Gestión de Pedidos: Desarrollé una interfaz para centralizar los datos entrantes, facilitando despachos más rápidos y organizados.
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Decisiones del Tech Stack:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Elegí estas herramientas con el fin de lograr un sitio ultra liviano y de alto rendimiento:
 
-## Deploy on Vercel
+Next.js: Lo seleccioné por su rendimiento superior y su sistema de ruteo limpio, fundamental para una navegación fluida.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Firebase (Firestore & Auth): Lo implementé para garantizar una base de datos en tiempo real y asegurar el acceso restringido al panel administrativo.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Tailwind CSS: Decidí utilizarlo para lograr un diseño responsive optimizado específicamente para dispositivos móviles.
+
+Vercel: Utilizado para el despliegue automático y el hosting del proyecto.
+
+🔗 Sitio en vivo: 028import.vercel.app
