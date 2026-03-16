@@ -83,7 +83,7 @@ export default function AdminPage() {
   const [newProduct, setNewProduct] = useState({
     name: '',
     price: '',
-    category: '', // Inicializamos vacío
+    category: '', 
     image: '',
     tag: ''
   });
@@ -134,7 +134,7 @@ export default function AdminPage() {
       const qOrders = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'));
       const unsubscribeOrders = onSnapshot(qOrders, (snapshot) => {
         setOrders(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-        setLoading(false);
+        Loading(false);
       });
 
       const unsubscribeProducts = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
@@ -145,8 +145,9 @@ export default function AdminPage() {
              const updatedInitial = initialProducts.map(p => {
                 const match = dbProducts.find(dbP => dbP.id === p.id);
                 if (match && match.isDeleted) return null;
+                // AQUI AGREGAMOS LA LECTURA DEL NOMBRE DESDE FIREBASE TAMBIÉN:
                 return match 
-                  ? { ...p, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } 
+                  ? { ...p, ...match, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } 
                   : { ...p, inStock: true };
              }).filter(Boolean);
              
@@ -180,7 +181,7 @@ export default function AdminPage() {
         id: newId,
         name: newProduct.name.toUpperCase(),
         price: Number(newProduct.price),
-        category: newProduct.category, // Se guarda lo que escribas
+        category: newProduct.category,
         image: newProduct.image,
         tag: newProduct.tag,
         inStock: true,
@@ -227,6 +228,16 @@ export default function AdminPage() {
         const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
         await setDoc(productRef, { id: product.id, price: price }, { merge: true });
     } catch(err) { alert("Error al actualizar precio."); }
+  }
+
+  // --- NUEVA FUNCIÓN PARA ACTUALIZAR EL NOMBRE ---
+  const updateName = async (product, newName) => {
+    const name = newName.trim().toUpperCase();
+    if(!name) return alert("El nombre no puede estar vacío");
+    try {
+        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
+        await setDoc(productRef, { id: product.id, name: name }, { merge: true });
+    } catch(err) { alert("Error al actualizar nombre."); }
   }
 
   const completeOrder = async (id) => {
@@ -287,13 +298,25 @@ export default function AdminPage() {
             <div className="grid gap-4">
                 {group.map(p => (
                     <div key={p.id} className={`${theme.card} p-5 rounded-[1.5rem] flex justify-between items-center shadow-sm border ${theme.cardHover} transition-all`}>
-                        <div className="flex items-center gap-4">
-                            <div className="relative w-12 h-12">
+                        <div className="flex items-center gap-4 w-2/3">
+                            <div className="relative w-12 h-12 flex-shrink-0">
                                 <img src={p.image} className={`w-full h-full rounded-xl object-cover ${p.inStock === false ? 'grayscale opacity-50' : ''}`} alt="" />
                                 {p.inStock === false && <div className="absolute inset-0 flex items-center justify-center"><i className="fas fa-times text-red-500 text-xs"></i></div>}
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <p className={`font-black text-[11px] uppercase ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{p.name}</p>
+                            <div className="flex flex-col gap-1 w-full">
+                                {/* AQUI CAMBIAMOS LA ETIQUETA <P> POR UN <INPUT> EDITABLE */}
+                                <input 
+                                    type="text" 
+                                    defaultValue={p.name} 
+                                    className={`font-black text-[11px] uppercase w-full bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#d4af37] outline-none transition-colors pb-0.5 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`} 
+                                    onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }} 
+                                    onBlur={(e) => { 
+                                        if (e.target.value.toUpperCase() !== p.name.toUpperCase()) {
+                                            updateName(p, e.target.value); 
+                                        }
+                                    }} 
+                                    title="Haz clic para editar el nombre"
+                                />
                                 <div className="flex items-center gap-2">
                                      <span className="text-gray-400 text-[10px]">$</span>
                                      <input type="number" key={p.price} defaultValue={p.price} className={`w-20 rounded px-2 py-1 text-[10px] font-bold focus:border-[#d4af37] outline-none transition-colors ${theme.input}`} onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }} onBlur={(e) => { if (parseInt(e.target.value) !== p.price) updatePrice(p, e.target.value); }} />
@@ -303,7 +326,7 @@ export default function AdminPage() {
                                 </span>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                              <button onClick={() => toggleStock(p)} className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-900/20 text-red-500 border border-red-900/30'}`}>{p.inStock === false ? 'Habilitar' : 'Agotar'}</button>
                             <button onClick={() => handleDeleteProduct(p)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-200 hover:bg-red-500 hover:text-white transition-all text-gray-500"><i className="fas fa-trash text-xs"></i></button>
                         </div>
