@@ -134,7 +134,7 @@ export default function AdminPage() {
       const qOrders = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'));
       const unsubscribeOrders = onSnapshot(qOrders, (snapshot) => {
         setOrders(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-        Loading(false);
+        setLoading(false); // 
       });
 
       const unsubscribeProducts = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
