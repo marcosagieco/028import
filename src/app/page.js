@@ -41,7 +41,7 @@ const initialProducts = [
   { id: 34, name: "PASSION FRUIT", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/vT9FKkXt/Ignite-v400-PASSION-FRUIT.jpg" },
   { id: 35, name: "STRAWBERRY WATERMELON", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/FFJ41kmG/Ignite-v400-STRAWBERR-WATERMELON.jpg" },
   { id: 36, name: "STRAWBERRY KIWI", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Hsw19GrJ/ignite-v400-STRAWBERRY-KIWI.jpg" },
-  { id: 37, name: "STRAWBERRY", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/cLdyDD35/ignite-v400-strawberry.jpg" },
+  { id: 37, name: "STRAWBERRY", price: 28000, category: "Ignite v400", tag: "", image: "https://i.i.postimg.cc/cLdyDD35/ignite-v400-strawberry.jpg" },
   { id: 38, name: "TUTTI FRUTI", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/mgVxKQ3v/ignite-v400-TUTI-FRUTI.jpg" },
   { id: 39, name: "BLUE RAZZ ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yYk7mpF9/Lost-mary-20000-BLUE-RAZZ-ICE.jpg" },
   { id: 40, name: "GRAPE ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05VC/Lost-mary-20000-GRAPE-ICE.jpg" },
@@ -64,23 +64,8 @@ const initialProducts = [
   { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg" }
 ];
 
-// --- CONTENIDO DE PÁGINAS LEGALES E INFORMATIVAS (DISEÑO LUXURY) ---
+// --- CONTENIDO DE PÁGINAS LEGALES (MANTENEMOS ESTAS PARA LA HOME) ---
 const PAGE_CONTENT = {
-  nosotros: {
-    title: "Nuestra Esencia",
-    subtitle: "Acerca de 028 IMPORT",
-    body: (
-      <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
-        <p className="text-xl font-medium text-black leading-snug">En 028 IMPORT no solo entregamos productos; brindamos una experiencia de exclusividad, confianza y absoluta prioridad al tiempo de nuestros clientes.</p>
-        <p>Nacimos con el firme propósito de establecer un nuevo estándar en la importación y distribución de artículos premium. Entendemos que el lujo moderno no se trata únicamente de lo que adquieres, sino de cómo lo adquieres. Por ello, hemos diseñado un ecosistema de atención al cliente meticuloso, donde la amabilidad, la inmediatez y la transparencia son nuestros pilares innegociables.</p>
-        <p>Nuestro catálogo es el resultado de una curaduría exhaustiva. Cada marca y cada modelo que ofrecemos ha sido seleccionado bajo los más estrictos controles de calidad e idoneidad, garantizando a nuestros usuarios el acceso a lo mejor del mercado global sin intermediarios innecesarios y con la certeza de un origen 100% legítimo.</p>
-        <div className="border-l-4 border-[#d4af37] pl-6 py-2 my-10 bg-gray-50 rounded-r-2xl">
-          <p className="italic text-gray-800 text-lg font-medium">"Creemos firmemente que el tiempo de nuestro cliente es su activo más valioso. Por eso, nuestro compromiso es la excelencia y la velocidad en cada entrega."</p>
-        </div>
-        <p>Agradecemos tu confianza y te damos la bienvenida a la experiencia 028.</p>
-      </div>
-    )
-  },
   terminos: {
     title: "Términos y Condiciones",
     subtitle: "Legal & Políticas Comerciales",
@@ -147,30 +132,6 @@ const PAGE_CONTENT = {
         <p>Nuestra plataforma está diseñada desde una perspectiva de mínima invasión. No empleamos cookies de rastreo publicitario de terceros que sigan su actividad en otros sitios web ni realizamos prácticas de "retargeting" agresivo.</p>
         
         <p className="mt-8">Al continuar utilizando este sitio, usted comprende y acepta el uso de estas herramientas tecnológicas esenciales para el funcionamiento del carrito de compras.</p>
-      </div>
-    )
-  },
-  envios: {
-    title: "Envíos y Entregas",
-    subtitle: "Logística Premium",
-    body: (
-      <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
-        <p className="text-lg font-medium text-black">Sabemos que la inmediatez es fundamental. Por ello, hemos diseñado un esquema logístico ágil, seguro y adaptado a sus necesidades.</p>
-        
-        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 my-6">
-          <h3 className="text-[#d4af37] font-black uppercase tracking-widest text-sm mb-3 flex items-center gap-2"><i className="fas fa-bolt"></i> Envío Flex (En el día)</h3>
-          <p className="text-sm">Para zonas seleccionadas de CABA y GBA, ofrecemos un servicio de motomensajería prioritaria. Concretando su pedido antes de nuestro horario de corte, recibirá sus productos en sus manos el mismo día de la compra, con total discreción y cuidado.</p>
-        </div>
-
-        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 my-6">
-          <h3 className="text-black font-black uppercase tracking-widest text-sm mb-3 flex items-center gap-2"><i className="fas fa-plane"></i> Envíos a Toda Argentina</h3>
-          <p className="text-sm">Llegamos a cada rincón del país. Todos nuestros despachos nacionales se realizan a través de empresas de correo de primera línea. Su paquete será embalado con estrictas medidas de protección y contará con un número de seguimiento (Tracking) en tiempo real.</p>
-        </div>
-
-        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 my-6">
-          <h3 className="text-black font-black uppercase tracking-widest text-sm mb-3 flex items-center gap-2"><i className="fas fa-store"></i> Retiro Pick-Up</h3>
-          <p className="text-sm">Si prefiere gestionar el retiro de manera personal o enviar a su propia mensajería de confianza, puede seleccionar esta opción. Una vez preparado el pedido, le informaremos por WhatsApp la dirección exacta (Zona Belgrano) y la franja horaria habilitada.</p>
-        </div>
       </div>
     )
   },
@@ -251,14 +212,13 @@ export default function Home() {
   const [address, setAddress] = useState('');
   const [zone, setZone] = useState('');
   const [user, setUser] = useState(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   
-  // ESTADO PARA NAVEGACIÓN ENTRE PÁGINAS ("home" o claves de PAGE_CONTENT)
+  // ESTADO PARA NAVEGACIÓN ENTRE PÁGINAS LEGALES INTERNAS
   const [currentView, setCurrentView] = useState('home');
 
   const uniqueCategories = useMemo(() => {
@@ -271,17 +231,6 @@ export default function Home() {
     .replace(/\-\-+/g, '-')         
     .replace(/^-+/, '')             
     .replace(/-+$/, '');            
-
-  useEffect(() => {
-    document.title = CONFIG.brandName;
-    let link = document.querySelector("link[rel~='icon']");
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'icon';
-      document.getElementsByTagName('head')[0].appendChild(link);
-    }
-    link.href = CONFIG.logoImage;
-  }, []);
 
   const firebaseRefs = useMemo(() => {
     if (typeof window === "undefined") return { auth: null, db: null };
@@ -365,11 +314,10 @@ export default function Home() {
     }, 3000);
   };
 
-  // FUNCIÓN PARA NAVEGAR ENTRE PÁGINAS
+  // FUNCIÓN PARA NAVEGAR ENTRE PÁGINAS LEGALES INTERNAS
   const navigateTo = (view) => {
     setCurrentView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setIsMenuOpen(false);
   };
 
   const addToCart = (product) => {
@@ -544,7 +492,7 @@ export default function Home() {
     );
   };
 
-  // --- RENDERIZADOR DE PÁGINAS LEGALES (LUXURY STYLE) ---
+  // --- RENDERIZADOR DE PÁGINAS LEGALES (Términos, Privacidad, etc) ---
   const renderLegalPage = () => {
     const pageData = PAGE_CONTENT[currentView];
     if (!pageData) return null;
@@ -577,94 +525,65 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-[#fafafa] text-[#1a1a1a] min-h-screen font-sans flex flex-col relative">
+    <div className="bg-[#fafafa] text-[#1a1a1a] font-sans flex flex-col relative">
       
-      {/* 2. TOAST NOTIFICACIÓN */}
+      {/* TOAST NOTIFICACIÓN */}
       {toastMessage && (
          <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-black text-white px-6 py-3 rounded-full shadow-[0_10px_40px_rgba(212,175,55,0.3)] border border-[#d4af37]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">
             {toastMessage}
          </div>
       )}
 
-      {/* NAVBAR GLASSMORPHISM */}
-      <nav className="bg-black/90 backdrop-blur-md py-4 px-6 sticky top-0 z-40 border-b border-white/10 text-white shadow-2xl transition-all">
-        <div className="container mx-auto flex justify-between items-center max-w-7xl">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('home')}>
-            <img src={CONFIG.logoImage} alt={`${CONFIG.brandName} Logo`} className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(212,175,55,0.3)]" />
-          </div>
-          
-          <div className="hidden md:flex gap-6 items-center">
-             <button onClick={() => navigateTo('home')} className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${currentView === 'home' ? 'text-[#d4af37]' : 'text-gray-300 hover:text-[#d4af37]'}`}>Inicio</button>
-             <button onClick={() => navigateTo('nosotros')} className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${currentView === 'nosotros' ? 'text-[#d4af37]' : 'text-gray-300 hover:text-[#d4af37]'}`}>Nuestra Esencia</button>
-             <button onClick={() => navigateTo('envios')} className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${currentView === 'envios' ? 'text-[#d4af37]' : 'text-gray-300 hover:text-[#d4af37]'}`}>Logística</button>
-          </div>
-
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-2xl p-2 md:hidden text-white hover:text-[#d4af37] transition-colors">
-            <i className={`fas ${isMenuOpen ? 'fa-times' : 'fa-bars'}`}></i>
-          </button>
-        </div>
-
-        {/* MENU MOVIL */}
-      <div className={`md:hidden absolute top-full left-0 w-full bg-black/95 backdrop-blur-xl overflow-hidden transition-all duration-300 ${isMenuOpen ? 'max-h-[80vh] border-b border-[#d4af37]/30 shadow-2xl' : 'max-h-0'}`}>
-        <div className="p-6 flex flex-col gap-4 text-center font-black">
-          <button onClick={() => navigateTo('home')} className="hover:text-[#d4af37] text-white/80 transition-colors py-3 border-b border-white/5 uppercase tracking-widest text-xs">Catálogo Principal</button>
-          <button onClick={() => navigateTo('nosotros')} className="hover:text-[#d4af37] text-white/80 transition-colors py-3 border-b border-white/5 uppercase tracking-widest text-xs">Quiénes Somos</button>
-          <button onClick={() => navigateTo('pagos')} className="hover:text-[#d4af37] text-white/80 transition-colors py-3 border-b border-white/5 uppercase tracking-widest text-xs">Medios de Pago</button>
-        </div>
-      </div>
-    </nav>
-
-    {/* RENDERIZADO CONDICIONAL DE VISTAS */}
-    {currentView === 'home' ? (
-      <>
-        {/* HERO SECTION */}
-        <header className="relative h-[40vh] md:h-[50vh] flex items-center justify-center bg-black overflow-hidden shadow-2xl animate-in fade-in duration-1000">
-          <div className="absolute inset-0 bg-cover bg-center opacity-40 scale-105" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-black/50" />
-          
-          <div className="relative z-10 text-center px-4 max-w-3xl flex flex-col items-center">
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4 drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-r from-[#d4af37] via-[#f2e196] to-[#d4af37]">
-              028 IMPORT
-            </h1>
-            <p className="text-white text-xs md:text-sm font-bold tracking-widest uppercase bg-black/40 px-5 py-2 rounded-full backdrop-blur-md border border-[#d4af37]/30 shadow-xl">
-              {CONFIG.shippingText}
-            </p>
-          </div>
-        </header>
-
-        {/* BUSCADOR Y SUBNAVEGACION */}
-        <div className="sticky top-[72px] md:top-[80px] z-30 bg-[#fafafa]/90 backdrop-blur-xl border-b border-gray-200 shadow-sm transition-all">
-            <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row gap-4 items-center justify-between">
-              
-              <div className="flex gap-3 overflow-x-auto no-scrollbar w-full md:w-auto mask-image-gradient py-1">
-                  <span className="text-[10px] font-black uppercase text-gray-400 mr-2 tracking-widest hidden md:flex items-center">Filtrar:</span>
-                  {uniqueCategories.map(cat => (
-                      <a key={cat} href={`#${slugify(cat)}`} className="whitespace-nowrap bg-white border border-gray-200 text-gray-600 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
-                          {cat}
-                      </a>
-                  ))}
-              </div>
-
-              {/* LÍNEA SEPARADORA (Visible solo en PC/Tablet) */}
-              <div className="hidden md:block w-px h-8 bg-gray-300 mx-1 flex-shrink-0"></div>
-
-              <div className="relative w-full md:w-64 flex-shrink-0">
-                 <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                 <input 
-                    type="text" 
-                    placeholder="Buscar producto o sabor..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-white border border-gray-200 pl-10 pr-4 py-2.5 rounded-full text-xs font-bold outline-none focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/20 transition-all shadow-inner placeholder:text-gray-300"
-                 />
-                 {searchTerm && (
-                    <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
-                       <i className="fas fa-times text-xs"></i>
-                    </button>
-                 )}
-              </div>
-
+      {/* RENDERIZADO CONDICIONAL DE VISTAS */}
+      {currentView === 'home' ? (
+        <>
+          {/* HERO SECTION */}
+          <header className="relative h-[40vh] md:h-[50vh] flex items-center justify-center bg-black overflow-hidden shadow-2xl animate-in fade-in duration-1000">
+            <div className="absolute inset-0 bg-cover bg-center opacity-40 scale-105" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-black/50" />
+            
+            <div className="relative z-10 text-center px-4 max-w-3xl flex flex-col items-center">
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4 drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-r from-[#d4af37] via-[#f2e196] to-[#d4af37]">
+                028 IMPORT
+              </h1>
+              <p className="text-white text-xs md:text-sm font-bold tracking-widest uppercase bg-black/40 px-5 py-2 rounded-full backdrop-blur-md border border-[#d4af37]/30 shadow-xl">
+                {CONFIG.shippingText}
+              </p>
             </div>
+          </header>
+
+          {/* BUSCADOR Y SUBNAVEGACION */}
+          <div className="sticky top-[72px] md:top-[80px] z-30 bg-[#fafafa]/90 backdrop-blur-xl border-b border-gray-200 shadow-sm transition-all">
+              <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row gap-4 items-center justify-between">
+                
+                <div className="flex gap-3 overflow-x-auto no-scrollbar w-full md:w-auto mask-image-gradient py-1">
+                    <span className="text-[10px] font-black uppercase text-gray-400 mr-2 tracking-widest hidden md:flex items-center">Filtrar:</span>
+                    {uniqueCategories.map(cat => (
+                        <a key={cat} href={`#${slugify(cat)}`} className="whitespace-nowrap bg-white border border-gray-200 text-gray-600 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
+                            {cat}
+                        </a>
+                    ))}
+                </div>
+
+                <div className="hidden md:block w-px h-8 bg-gray-300 mx-1 flex-shrink-0"></div>
+
+                <div className="relative w-full md:w-64 flex-shrink-0">
+                   <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                   <input 
+                      type="text" 
+                      placeholder="Buscar producto o sabor..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full bg-white border border-gray-200 pl-10 pr-4 py-2.5 rounded-full text-xs font-bold outline-none focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/20 transition-all shadow-inner placeholder:text-gray-300"
+                   />
+                   {searchTerm && (
+                      <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
+                         <i className="fas fa-times text-xs"></i>
+                      </button>
+                   )}
+                </div>
+
+              </div>
           </div>
 
           {/* CONTENIDO PRINCIPAL (PRODUCTOS) */}
@@ -679,19 +598,18 @@ export default function Home() {
 
             {uniqueCategories.map(cat => renderProductSection(cat))}
           </main>
-      </>
-    ) : (
-      /* RENDERIZADO DE LAS PÁGINAS INTERNAS LUXURY */
-      <main className="flex-grow">
-         {renderLegalPage()}
-      </main>
-    )}
+        </>
+      ) : (
+        /* RENDERIZADO DE LAS PÁGINAS LEGALES INTERNAS */
+        <main className="flex-grow">
+           {renderLegalPage()}
+        </main>
+      )}
 
       {/* FOOTER PROFESIONAL */}
       <footer className="bg-black text-white pt-16 pb-32 md:pb-16 border-t-4 border-[#d4af37] relative z-40">
         <div className="max-w-7xl mx-auto px-6">
 
-          {/* Links Grid RE-DISEÑADO CON TUS DATOS */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-12 text-xs md:text-sm">
             
             {/* Columna 1: Marca y Descripción */}
@@ -720,13 +638,13 @@ export default function Home() {
               </ul>
             </div>
 
-            {/* Columna 3: Información y Legales (AHORA USAN NAVIGATE TO) */}
+            {/* Columna 3: Información y Legales (ACÁ ACTUALIZAMOS LOS LINKS) */}
             <div>
               <h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-5">Información Legal</h4>
               <ul className="space-y-3 text-gray-400 font-medium">
-                <li><button onClick={() => navigateTo('nosotros')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#d4af37] text-[10px]"></i> Sobre Nosotros</button></li>
+                <li><a href="/nosotros" className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#d4af37] text-[10px]"></i> Sobre Nosotros</a></li>
                 <li><button onClick={() => navigateTo('pagos')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#d4af37] text-[10px]"></i> Medios de Pago</button></li>
-                <li><button onClick={() => navigateTo('envios')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#d4af37] text-[10px]"></i> Logística de Envío</button></li>
+                <li><a href="/envios" className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#d4af37] text-[10px]"></i> Logística de Envío</a></li>
                 <li><button onClick={() => navigateTo('terminos')} className="hover:text-white transition-colors flex items-center gap-2 mt-4 pt-2 border-t border-white/10"><i className="fas fa-file-contract text-gray-600 text-[10px]"></i> Términos y Condiciones</button></li>
                 <li><button onClick={() => navigateTo('privacidad')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-shield-alt text-gray-600 text-[10px]"></i> Política de Privacidad</button></li>
               </ul>
@@ -896,21 +814,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* GLOBO FLOTANTE DE WHATSAPP */}
-      <a
-        href={`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent("¡Hola! Vengo de la página web, tengo una consulta.")}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-4 md:right-6 z-[90] bg-[#25D366] text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-[0_8px_30px_rgba(37,211,102,0.4)] hover:scale-110 hover:bg-[#20ba59] transition-all duration-300 group"
-        aria-label="Contactar por WhatsApp"
-      >
-        <i className="fab fa-whatsapp"></i>
-        <span className="absolute right-16 bg-white text-black text-[10px] font-black uppercase px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg pointer-events-none whitespace-nowrap hidden md:block">
-          ¿Necesitas ayuda?
-        </span>
-      </a>
-
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     </div>
   );
 }
