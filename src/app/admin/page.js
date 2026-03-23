@@ -89,9 +89,9 @@ export default function AdminPage() {
   });
   const [isAdding, setIsAdding] = useState(false);
 
-  // Obtener categorías únicas dinámicamente
+  // Obtener categorías únicas dinámicamente - SIN ORDENAR ALFABÉTICAMENTE PARA RESPETAR LA POSICIÓN
   const uniqueCategories = useMemo(() => {
-    return [...new Set(products.map(p => p.category))].sort();
+    return [...new Set(products.map(p => p.category))];
   }, [products]);
 
   useEffect(() => {
@@ -134,7 +134,7 @@ export default function AdminPage() {
       const qOrders = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'));
       const unsubscribeOrders = onSnapshot(qOrders, (snapshot) => {
         setOrders(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-        setLoading(false); // <- CORREGIDO
+        setLoading(false);
       });
 
       const unsubscribeProducts = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
@@ -146,8 +146,8 @@ export default function AdminPage() {
                 const match = dbProducts.find(dbP => dbP.id === p.id);
                 if (match && match.isDeleted) return null;
                 return match 
-                  ? { ...p, ...match, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price } 
-                  : { ...p, inStock: true };
+                  ? { ...p, ...match, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price, order: match.order !== undefined ? match.order : 99 } 
+                  : { ...p, inStock: true, order: 99 };
              }).filter(Boolean);
              
              const newFromDb = dbProducts.filter(dbP => 
@@ -155,7 +155,8 @@ export default function AdminPage() {
                 !dbP.isDeleted
              );
              
-             return [...updatedInitial, ...newFromDb];
+             // ORDENAMOS LOS PRODUCTOS POR LA POSICIÓN (ORDER) DE MENOR A MAYOR
+             return [...updatedInitial, ...newFromDb].sort((a, b) => (a.order || 99) - (b.order || 99));
           });
         }
       });
@@ -184,6 +185,7 @@ export default function AdminPage() {
         image: newProduct.image,
         tag: newProduct.tag,
         inStock: true,
+        order: 99, // Posición por defecto al crear
         createdAt: serverTimestamp(),
         isDeleted: false
       });
@@ -238,6 +240,16 @@ export default function AdminPage() {
     } catch(err) { alert("Error al actualizar nombre."); }
   }
 
+  // NUEVA FUNCIÓN PARA ACTUALIZAR LA POSICIÓN
+  const updateOrder = async (product, newOrder) => {
+    const orderNum = parseInt(newOrder);
+    if(isNaN(orderNum)) return;
+    try {
+        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
+        await setDoc(productRef, { id: product.id, order: orderNum }, { merge: true });
+    } catch(err) { alert("Error al actualizar posición."); }
+  }
+
   const completeOrder = async (id) => {
     if (confirm("¿Confirmas que el pedido fue entregado?")) {
       try {
@@ -261,7 +273,8 @@ export default function AdminPage() {
                     id: p.id,
                     name: p.name,
                     category: p.category, 
-                    image: p.image 
+                    image: p.image,
+                    order: 99 // Posición por defecto
                 }, { merge: true });
             }
             alert("Catálogo sincronizado.");
@@ -317,7 +330,21 @@ export default function AdminPage() {
                                 />
                                 <div className="flex items-center gap-2">
                                      <span className="text-gray-400 text-[10px]">$</span>
-                                     <input type="number" key={p.price} defaultValue={p.price} className={`w-20 rounded px-2 py-1 text-[10px] font-bold focus:border-[#d4af37] outline-none transition-colors ${theme.input}`} onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }} onBlur={(e) => { if (parseInt(e.target.value) !== p.price) updatePrice(p, e.target.value); }} />
+                                     <input type="number" key={`price-${p.price}`} defaultValue={p.price} className={`w-20 rounded px-2 py-1 text-[10px] font-bold focus:border-[#d4af37] outline-none transition-colors ${theme.input}`} onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }} onBlur={(e) => { if (parseInt(e.target.value) !== p.price) updatePrice(p, e.target.value); }} />
+                                     
+                                     {/* AQUÍ ESTÁ EL NUEVO CAMPO DE POSICIÓN */}
+                                     <div className="flex items-center gap-1 ml-2 pl-2 border-l border-gray-200 dark:border-[#404040]">
+                                        <span className="text-gray-400 text-[10px]">Pos:</span>
+                                        <input 
+                                            type="number" 
+                                            key={`order-${p.order}`} 
+                                            defaultValue={p.order || 99} 
+                                            className={`w-12 rounded px-1 py-1 text-[10px] font-bold text-center focus:border-[#d4af37] outline-none transition-colors ${theme.input}`} 
+                                            onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }} 
+                                            onBlur={(e) => { updateOrder(p, e.target.value); }} 
+                                            title="Posición/Orden"
+                                        />
+                                     </div>
                                 </div>
                                 <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400'}`}>
                                     {p.inStock === false ? 'Agotado' : 'Disponible'}
@@ -357,7 +384,6 @@ export default function AdminPage() {
 
       <div className={`${theme.stickyHeader} border-b sticky top-[72px] z-40 transition-colors duration-300`}>
         <div className="max-w-4xl mx-auto flex">
-          {/* SE ELIMINÓ EL BOTÓN "VENTAS" AQUÍ */}
           <button onClick={() => setActiveTab('pendientes')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'pendientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Pedidos</button>
           <button onClick={() => setActiveTab('stock')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'stock' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Stock</button>
           <button onClick={() => setActiveTab('crear')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'crear' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Crear +</button>
@@ -430,7 +456,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* LÓGICA SIMPLIFICADA PARA PEDIDOS PENDIENTES */}
         {activeTab === 'pendientes' && (
           <div className="animate-in fade-in duration-500">
             <div className="flex justify-between items-end mb-8">

@@ -41,7 +41,7 @@ const initialProducts = [
   { id: 34, name: "PASSION FRUIT", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/vT9FKkXt/Ignite-v400-PASSION-FRUIT.jpg" },
   { id: 35, name: "STRAWBERRY WATERMELON", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/FFJ41kmG/Ignite-v400-STRAWBERR-WATERMELON.jpg" },
   { id: 36, name: "STRAWBERRY KIWI", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Hsw19GrJ/ignite-v400-STRAWBERRY-KIWI.jpg" },
-  { id: 37, name: "STRAWBERRY", price: 28000, category: "Ignite v400", tag: "", image: "https://i.i.postimg.cc/cLdyDD35/ignite-v400-strawberry.jpg" },
+  { id: 37, name: "STRAWBERRY", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/cLdyDD35/ignite-v400-strawberry.jpg" },
   { id: 38, name: "TUTTI FRUTI", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/mgVxKQ3v/ignite-v400-TUTI-FRUTI.jpg" },
   { id: 39, name: "BLUE RAZZ ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yYk7mpF9/Lost-mary-20000-BLUE-RAZZ-ICE.jpg" },
   { id: 40, name: "GRAPE ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05VC/Lost-mary-20000-GRAPE-ICE.jpg" },
@@ -64,7 +64,7 @@ const initialProducts = [
   { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg" }
 ];
 
-// --- CONTENIDO DE PÁGINAS LEGALES (MANTENEMOS ESTAS PARA LA HOME) ---
+// --- CONTENIDO DE PÁGINAS LEGALES ---
 const PAGE_CONTENT = {
   terminos: {
     title: "Términos y Condiciones",
@@ -203,7 +203,6 @@ const PAGE_CONTENT = {
   }
 };
 
-
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState(initialProducts);
@@ -218,9 +217,9 @@ export default function Home() {
   const [toastMessage, setToastMessage] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   
-  // ESTADO PARA NAVEGACIÓN ENTRE PÁGINAS LEGALES INTERNAS
   const [currentView, setCurrentView] = useState('home');
 
+  // ELIMINAMOS EL SORT ALFABÉTICO PARA RESPETAR LA POSICIÓN CONFIGURADA
   const uniqueCategories = useMemo(() => {
     return [...new Set(products.map(p => p.category))];
   }, [products]);
@@ -274,7 +273,8 @@ export default function Home() {
                     else combined.push(dbItem);
                 }
              });
-             return combined;
+             // AQUÍ ORDENAMOS LOS PRODUCTOS LEYENDO EL NÚMERO DE POSICIÓN
+             return combined.sort((a, b) => (a.order || 99) - (b.order || 99));
           });
         }
       });
@@ -314,7 +314,6 @@ export default function Home() {
     }, 3000);
   };
 
-  // FUNCIÓN PARA NAVEGAR ENTRE PÁGINAS LEGALES INTERNAS
   const navigateTo = (view) => {
     setCurrentView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -492,7 +491,6 @@ export default function Home() {
     );
   };
 
-  // --- RENDERIZADOR DE PÁGINAS LEGALES (Términos, Privacidad, etc) ---
   const renderLegalPage = () => {
     const pageData = PAGE_CONTENT[currentView];
     if (!pageData) return null;
@@ -527,17 +525,14 @@ export default function Home() {
   return (
     <div className="bg-[#fafafa] text-[#1a1a1a] font-sans flex flex-col relative">
       
-      {/* TOAST NOTIFICACIÓN */}
       {toastMessage && (
          <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-black text-white px-6 py-3 rounded-full shadow-[0_10px_40px_rgba(212,175,55,0.3)] border border-[#d4af37]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">
             {toastMessage}
          </div>
       )}
 
-      {/* RENDERIZADO CONDICIONAL DE VISTAS */}
       {currentView === 'home' ? (
         <>
-          {/* HERO SECTION */}
           <header className="relative h-[40vh] md:h-[50vh] flex items-center justify-center bg-black overflow-hidden shadow-2xl animate-in fade-in duration-1000">
             <div className="absolute inset-0 bg-cover bg-center opacity-40 scale-105" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
             <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-black/50" />
@@ -552,7 +547,6 @@ export default function Home() {
             </div>
           </header>
 
-          {/* BUSCADOR Y SUBNAVEGACION */}
           <div className="sticky top-[72px] md:top-[80px] z-30 bg-[#fafafa]/90 backdrop-blur-xl border-b border-gray-200 shadow-sm transition-all">
               <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row gap-4 items-center justify-between">
                 
@@ -578,7 +572,7 @@ export default function Home() {
                    />
                    {searchTerm && (
                       <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
-                         <i className="fas fa-times text-xs"></i>
+                          <i className="fas fa-times text-xs"></i>
                       </button>
                    )}
                 </div>
@@ -586,7 +580,6 @@ export default function Home() {
               </div>
           </div>
 
-          {/* CONTENIDO PRINCIPAL (PRODUCTOS) */}
           <main className="flex-grow px-4 py-8 max-w-7xl mx-auto min-h-[50vh] pb-24">
             {searchTerm && products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
                <div className="text-center py-20 text-gray-400 bg-white rounded-3xl border-2 border-dashed border-gray-200">
@@ -600,19 +593,16 @@ export default function Home() {
           </main>
         </>
       ) : (
-        /* RENDERIZADO DE LAS PÁGINAS LEGALES INTERNAS */
         <main className="flex-grow">
            {renderLegalPage()}
         </main>
       )}
 
-      {/* FOOTER PROFESIONAL */}
       <footer className="bg-black text-white pt-16 pb-32 md:pb-16 border-t-4 border-[#d4af37] relative z-40">
         <div className="max-w-7xl mx-auto px-6">
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-12 text-xs md:text-sm">
             
-            {/* Columna 1: Marca y Descripción */}
             <div className="space-y-5">
               <div className="flex items-center gap-3">
                  <img src={CONFIG.logoImage} alt="028Import Logo" className="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(212,175,55,0.3)]" />
@@ -623,7 +613,6 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Columna 2: Contacto Directo */}
             <div>
               <h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-5">Contacto</h4>
               <ul className="space-y-4 text-gray-400 font-medium">
@@ -638,7 +627,6 @@ export default function Home() {
               </ul>
             </div>
 
-            {/* Columna 3: Información y Legales (ACÁ ACTUALIZAMOS LOS LINKS) */}
             <div>
               <h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-5">Información Legal</h4>
               <ul className="space-y-3 text-gray-400 font-medium">
@@ -650,7 +638,6 @@ export default function Home() {
               </ul>
             </div>
 
-            {/* Columna 4: Redes Sociales */}
             <div>
               <h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-5">Nuestras Redes</h4>
               <p className="text-gray-400 font-medium mb-4">Seguinos para enterarte de los nuevos ingresos antes que nadie.</p>
@@ -663,7 +650,6 @@ export default function Home() {
             
           </div>
 
-          {/* Bottom Bar */}
           <div className="flex flex-col md:flex-row justify-between items-center border-t border-white/10 pt-8 text-[9px] md:text-[10px] text-gray-500 uppercase tracking-widest text-center md:text-left gap-4">
             <p className="flex items-center gap-2 justify-center">
                <i className="fas fa-map-marker-alt"></i> Argentina
@@ -677,7 +663,6 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* MODAL DETALLE DE PRODUCTO */}
       {selectedProduct && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6">
            <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setSelectedProduct(null)}></div>
@@ -718,7 +703,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* CARRITO FLOTANTE */}
       {getTotalItems() > 0 && currentView === 'home' && (
         <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none animate-in slide-in-from-bottom-10 duration-500">
           <div className="bg-black/90 backdrop-blur-lg border border-[#d4af37]/30 p-2 pl-6 rounded-full text-white flex justify-between items-center shadow-[0_10px_40px_rgba(0,0,0,0.5)] max-w-md w-full pointer-events-auto">
@@ -733,7 +717,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* MODAL DEL CARRITO */}
       {isCartOpen && (
         <div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} />
