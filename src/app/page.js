@@ -219,7 +219,6 @@ export default function Home() {
   
   const [currentView, setCurrentView] = useState('home');
 
-  // ELIMINAMOS EL SORT ALFABÉTICO PARA RESPETAR LA POSICIÓN CONFIGURADA
   const uniqueCategories = useMemo(() => {
     return [...new Set(products.map(p => p.category))];
   }, [products]);
@@ -273,7 +272,6 @@ export default function Home() {
                     else combined.push(dbItem);
                 }
              });
-             // AQUÍ ORDENAMOS LOS PRODUCTOS LEYENDO EL NÚMERO DE POSICIÓN
              return combined.sort((a, b) => (a.order || 99) - (b.order || 99));
           });
         }
@@ -681,8 +679,9 @@ export default function Home() {
                  <p className="text-[#d4af37] font-black uppercase tracking-[0.2em] text-[10px] mb-2">{selectedProduct.category}</p>
                  <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-gray-900 leading-none mb-6">{selectedProduct.name}</h2>
                  
-                 <p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed">
-                   Experimenta la mejor calidad con nuestra selección de productos premium. El sabor y rendimiento que estabas buscando en un formato elegante y exclusivo.
+                 {/* ACÁ SE MUESTRA LA BIOGRAFÍA DEL PRODUCTO O UN TEXTO POR DEFECTO */}
+                 <p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed whitespace-pre-line">
+                   {selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium. El sabor y rendimiento que estabas buscando en un formato elegante y exclusivo."}
                  </p>
 
                  <div className="mt-auto border-t border-gray-100 pt-8">

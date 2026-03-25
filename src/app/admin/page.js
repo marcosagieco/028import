@@ -80,16 +80,17 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false); 
 
+  // Agregamos description al state inicial
   const [newProduct, setNewProduct] = useState({
     name: '',
     price: '',
     category: '', 
     image: '',
-    tag: ''
+    tag: '',
+    description: ''
   });
   const [isAdding, setIsAdding] = useState(false);
 
-  // Obtener categorías únicas dinámicamente - SIN ORDENAR ALFABÉTICAMENTE PARA RESPETAR LA POSICIÓN
   const uniqueCategories = useMemo(() => {
     return [...new Set(products.map(p => p.category))];
   }, [products]);
@@ -146,7 +147,7 @@ export default function AdminPage() {
                 const match = dbProducts.find(dbP => dbP.id === p.id);
                 if (match && match.isDeleted) return null;
                 return match 
-                  ? { ...p, ...match, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price, order: match.order !== undefined ? match.order : 99 } 
+                  ? { ...p, ...match, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price, order: match.order !== undefined ? match.order : 99, description: match.description !== undefined ? match.description : p.description } 
                   : { ...p, inStock: true, order: 99 };
              }).filter(Boolean);
              
@@ -155,7 +156,6 @@ export default function AdminPage() {
                 !dbP.isDeleted
              );
              
-             // ORDENAMOS LOS PRODUCTOS POR LA POSICIÓN (ORDER) DE MENOR A MAYOR
              return [...updatedInitial, ...newFromDb].sort((a, b) => (a.order || 99) - (b.order || 99));
           });
         }
@@ -184,13 +184,14 @@ export default function AdminPage() {
         category: newProduct.category,
         image: newProduct.image,
         tag: newProduct.tag,
+        description: newProduct.description, // Guardamos la biografía
         inStock: true,
-        order: 99, // Posición por defecto al crear
+        order: 99,
         createdAt: serverTimestamp(),
         isDeleted: false
       });
       alert("¡Producto agregado con éxito!");
-      setNewProduct({ name: '', price: '', category: '', image: '', tag: '' });
+      setNewProduct({ name: '', price: '', category: '', image: '', tag: '', description: '' });
     } catch (error) {
       alert("Error al crear: " + error.message);
     }
@@ -240,7 +241,6 @@ export default function AdminPage() {
     } catch(err) { alert("Error al actualizar nombre."); }
   }
 
-  // NUEVA FUNCIÓN PARA ACTUALIZAR LA POSICIÓN
   const updateOrder = async (product, newOrder) => {
     const orderNum = parseInt(newOrder);
     if(isNaN(orderNum)) return;
@@ -248,6 +248,15 @@ export default function AdminPage() {
         const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
         await setDoc(productRef, { id: product.id, order: orderNum }, { merge: true });
     } catch(err) { alert("Error al actualizar posición."); }
+  }
+
+  // NUEVA FUNCIÓN PARA ACTUALIZAR LA BIOGRAFÍA
+  const updateDescription = async (product, newDesc) => {
+    const desc = newDesc.trim();
+    try {
+        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
+        await setDoc(productRef, { id: product.id, description: desc }, { merge: true });
+    } catch(err) { alert("Error al actualizar descripción."); }
   }
 
   const completeOrder = async (id) => {
@@ -274,7 +283,7 @@ export default function AdminPage() {
                     name: p.name,
                     category: p.category, 
                     image: p.image,
-                    order: 99 // Posición por defecto
+                    order: 99
                 }, { merge: true });
             }
             alert("Catálogo sincronizado.");
@@ -283,7 +292,6 @@ export default function AdminPage() {
     }
   };
 
-  // Solo filtramos los pedidos pendientes
   const filteredOrders = orders.filter(o => o.status !== 'completed');
 
   const theme = {
@@ -309,9 +317,9 @@ export default function AdminPage() {
             <h3 className={`text-xl font-bold mb-4 uppercase ${theme.subText} border-b ${darkMode ? 'border-[#262626]' : 'border-gray-200'} pb-2`}>{categoryFilter}</h3>
             <div className="grid gap-4">
                 {group.map(p => (
-                    <div key={p.id} className={`${theme.card} p-5 rounded-[1.5rem] flex justify-between items-center shadow-sm border ${theme.cardHover} transition-all`}>
-                        <div className="flex items-center gap-4 w-2/3">
-                            <div className="relative w-12 h-12 flex-shrink-0">
+                    <div key={p.id} className={`${theme.card} p-5 rounded-[1.5rem] flex justify-between items-start shadow-sm border ${theme.cardHover} transition-all`}>
+                        <div className="flex items-start gap-4 w-3/4">
+                            <div className="relative w-12 h-12 flex-shrink-0 mt-1">
                                 <img src={p.image} className={`w-full h-full rounded-xl object-cover ${p.inStock === false ? 'grayscale opacity-50' : ''}`} alt="" />
                                 {p.inStock === false && <div className="absolute inset-0 flex items-center justify-center"><i className="fas fa-times text-red-500 text-xs"></i></div>}
                             </div>
@@ -332,7 +340,6 @@ export default function AdminPage() {
                                      <span className="text-gray-400 text-[10px]">$</span>
                                      <input type="number" key={`price-${p.price}`} defaultValue={p.price} className={`w-20 rounded px-2 py-1 text-[10px] font-bold focus:border-[#d4af37] outline-none transition-colors ${theme.input}`} onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }} onBlur={(e) => { if (parseInt(e.target.value) !== p.price) updatePrice(p, e.target.value); }} />
                                      
-                                     {/* AQUÍ ESTÁ EL NUEVO CAMPO DE POSICIÓN */}
                                      <div className="flex items-center gap-1 ml-2 pl-2 border-l border-gray-200 dark:border-[#404040]">
                                         <span className="text-gray-400 text-[10px]">Pos:</span>
                                         <input 
@@ -346,12 +353,26 @@ export default function AdminPage() {
                                         />
                                      </div>
                                 </div>
-                                <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400'}`}>
+                                <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 mb-1 rounded-full ${p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400'}`}>
                                     {p.inStock === false ? 'Agotado' : 'Disponible'}
                                 </span>
+
+                                {/* CAJA DE TEXTO PARA EDITAR LA BIOGRAFÍA */}
+                                <textarea
+                                    defaultValue={p.description || ""}
+                                    placeholder="Escribe la biografía o descripción del producto aquí..."
+                                    className={`w-full mt-1 text-[10px] p-2 rounded-lg outline-none transition-colors border focus:border-[#d4af37] resize-none ${darkMode ? 'bg-[#262626] border-[#404040] text-gray-300 placeholder-gray-500' : 'bg-gray-50 border-gray-200 text-gray-600 placeholder-gray-400'}`}
+                                    rows="2"
+                                    onBlur={(e) => {
+                                        if (e.target.value !== (p.description || "")) {
+                                            updateDescription(p, e.target.value);
+                                        }
+                                    }}
+                                    title="Haz clic para editar la biografía"
+                                />
                             </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex flex-col md:flex-row items-center gap-2 flex-shrink-0 mt-1">
                              <button onClick={() => toggleStock(p)} className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-900/20 text-red-500 border border-red-900/30'}`}>{p.inStock === false ? 'Habilitar' : 'Agotar'}</button>
                             <button onClick={() => handleDeleteProduct(p)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-200 hover:bg-red-500 hover:text-white transition-all text-gray-500"><i className="fas fa-trash text-xs"></i></button>
                         </div>
@@ -439,7 +460,19 @@ export default function AdminPage() {
                 <input type="text" placeholder="Ej: Nuevo, Destacado..." value={newProduct.tag} onChange={e => setNewProduct({...newProduct, tag: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-2 focus:border-[#d4af37] transition-all ${theme.input}`} />
               </div>
 
-              <button type="submit" disabled={isAdding} className="bg-[#d4af37] text-black font-black uppercase py-4 rounded-xl mt-4 hover:bg-white hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+              {/* NUEVO CAMPO DE BIOGRAFÍA AL CREAR PRODUCTO */}
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Descripción (Biografía)</label>
+                <textarea 
+                   rows="2" 
+                   placeholder="Ej: Disfruta de un sabor increíble con este nuevo vape..." 
+                   value={newProduct.description} 
+                   onChange={e => setNewProduct({...newProduct, description: e.target.value})} 
+                   className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-2 focus:border-[#d4af37] transition-all resize-none ${theme.input}`}
+                ></textarea>
+              </div>
+
+              <button type="submit" disabled={isAdding} className="bg-[#d4af37] text-black font-black uppercase py-4 rounded-xl mt-2 hover:bg-white hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                 {isAdding ? 'Guardando...' : 'Guardar Producto'}
               </button>
             </form>
