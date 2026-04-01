@@ -257,7 +257,8 @@ export default function Home() {
              const combined = [...initialProducts];
              dbProducts.forEach(dbItem => {
                 const index = combined.findIndex(p => p.id == dbItem.id);
-                if (dbItem.isDeleted) {
+                // Si está oculto (o eliminado del sistema anterior), lo sacamos de la vista del cliente
+                if (dbItem.isHidden || dbItem.isDeleted) {
                     if (index > -1) combined.splice(index, 1);
                 } else {
                     if (index > -1) combined[index] = { ...combined[index], ...dbItem };

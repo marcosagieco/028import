@@ -145,16 +145,15 @@ export default function AdminPage() {
           setProducts(prev => {
              const updatedInitial = initialProducts.map(p => {
                 const match = dbProducts.find(dbP => dbP.id === p.id);
-                if (match && match.isDeleted) return null;
+                // Si hace match en DB, mapeamos todos los datos, inclusive si estaba "isDeleted" lo pasamos a "isHidden"
                 return match 
-                  ? { ...p, ...match, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price, order: match.order !== undefined ? match.order : 99, description: match.description !== undefined ? match.description : p.description } 
-                  : { ...p, inStock: true, order: 99 };
+                  ? { ...p, ...match, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price, order: match.order !== undefined ? match.order : 99, description: match.description !== undefined ? match.description : p.description, isHidden: match.isHidden || match.isDeleted } 
+                  : { ...p, inStock: true, order: 99, isHidden: false };
              }).filter(Boolean);
              
              const newFromDb = dbProducts.filter(dbP => 
-                !initialProducts.find(p => p.id === dbP.id) && 
-                !dbP.isDeleted
-             );
+                !initialProducts.find(p => p.id === dbP.id)
+             ).map(dbP => ({...dbP, isHidden: dbP.isHidden || dbP.isDeleted})); // Aca tambien mapeamos la visibilidad
              
              return [...updatedInitial, ...newFromDb].sort((a, b) => (a.order || 99) - (b.order || 99));
           });
@@ -184,10 +183,11 @@ export default function AdminPage() {
         category: newProduct.category,
         image: newProduct.image,
         tag: newProduct.tag,
-        description: newProduct.description, // Guardamos la biografía
+        description: newProduct.description,
         inStock: true,
         order: 99,
         createdAt: serverTimestamp(),
+        isHidden: false, // Ahora se crea visible por defecto
         isDeleted: false
       });
       alert("¡Producto agregado con éxito!");
@@ -198,13 +198,24 @@ export default function AdminPage() {
     setIsAdding(false);
   };
 
-  const handleDeleteProduct = async (product) => {
-    if(!confirm(`¿Seguro que quieres eliminar "${product.name}"?`)) return;
+  // NUEVA FUNCIÓN PARA OCULTAR/MOSTRAR
+  const toggleVisibility = async (product) => {
     try {
-        await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), {
+        const newHiddenStatus = !(product.isHidden);
+        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
+        await setDoc(productRef, {
             id: product.id,
-            isDeleted: true
+            isHidden: newHiddenStatus,
+            isDeleted: false // Limpiamos la etiqueta vieja por las dudas
         }, { merge: true });
+    } catch (err) { alert("Error al cambiar la visibilidad."); }
+  };
+
+  // ELIMINAR AHORA BORRA DE VERDAD
+  const handleDeleteProduct = async (product) => {
+    if(!confirm(`¿Seguro que quieres ELIMINAR DEFINITIVAMENTE "${product.name}" de la base de datos? Si solo quieres que los clientes no lo vean, usa el botón del Ojo para Pausarlo.`)) return;
+    try {
+        await deleteDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`));
     } catch (err) {
         alert("Error al eliminar: " + err.message);
     }
@@ -250,7 +261,6 @@ export default function AdminPage() {
     } catch(err) { alert("Error al actualizar posición."); }
   }
 
-  // NUEVA FUNCIÓN PARA ACTUALIZAR LA BIOGRAFÍA
   const updateDescription = async (product, newDesc) => {
     const desc = newDesc.trim();
     try {
@@ -283,7 +293,8 @@ export default function AdminPage() {
                     name: p.name,
                     category: p.category, 
                     image: p.image,
-                    order: 99
+                    order: 99,
+                    isHidden: false
                 }, { merge: true });
             }
             alert("Catálogo sincronizado.");
@@ -317,11 +328,12 @@ export default function AdminPage() {
             <h3 className={`text-xl font-bold mb-4 uppercase ${theme.subText} border-b ${darkMode ? 'border-[#262626]' : 'border-gray-200'} pb-2`}>{categoryFilter}</h3>
             <div className="grid gap-4">
                 {group.map(p => (
-                    <div key={p.id} className={`${theme.card} p-5 rounded-[1.5rem] flex justify-between items-start shadow-sm border ${theme.cardHover} transition-all`}>
+                    <div key={p.id} className={`${theme.card} p-5 rounded-[1.5rem] flex justify-between items-start shadow-sm border ${theme.cardHover} transition-all ${p.isHidden ? 'opacity-60 bg-gray-50/50' : ''}`}>
                         <div className="flex items-start gap-4 w-3/4">
                             <div className="relative w-12 h-12 flex-shrink-0 mt-1">
-                                <img src={p.image} className={`w-full h-full rounded-xl object-cover ${p.inStock === false ? 'grayscale opacity-50' : ''}`} alt="" />
-                                {p.inStock === false && <div className="absolute inset-0 flex items-center justify-center"><i className="fas fa-times text-red-500 text-xs"></i></div>}
+                                <img src={p.image} className={`w-full h-full rounded-xl object-cover ${(p.inStock === false || p.isHidden) ? 'grayscale opacity-50' : ''}`} alt="" />
+                                {p.inStock === false && !p.isHidden && <div className="absolute inset-0 flex items-center justify-center"><i className="fas fa-times text-red-500 text-xs"></i></div>}
+                                {p.isHidden && <div className="absolute inset-0 flex items-center justify-center"><i className="fas fa-eye-slash text-amber-500 text-xs"></i></div>}
                             </div>
                             <div className="flex flex-col gap-1 w-full">
                                 <input 
@@ -353,11 +365,10 @@ export default function AdminPage() {
                                         />
                                      </div>
                                 </div>
-                                <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 mb-1 rounded-full ${p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400'}`}>
-                                    {p.inStock === false ? 'Agotado' : 'Disponible'}
+                                <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 mb-1 rounded-full ${p.isHidden ? 'bg-amber-900/30 text-amber-500' : (p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400')}`}>
+                                    {p.isHidden ? 'Oculto' : (p.inStock === false ? 'Agotado' : 'Disponible')}
                                 </span>
 
-                                {/* CAJA DE TEXTO PARA EDITAR LA BIOGRAFÍA */}
                                 <textarea
                                     defaultValue={p.description || ""}
                                     placeholder="Escribe la biografía o descripción del producto aquí..."
@@ -372,9 +383,12 @@ export default function AdminPage() {
                                 />
                             </div>
                         </div>
-                        <div className="flex flex-col md:flex-row items-center gap-2 flex-shrink-0 mt-1">
-                             <button onClick={() => toggleStock(p)} className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-900/20 text-red-500 border border-red-900/30'}`}>{p.inStock === false ? 'Habilitar' : 'Agotar'}</button>
-                            <button onClick={() => handleDeleteProduct(p)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-200 hover:bg-red-500 hover:text-white transition-all text-gray-500"><i className="fas fa-trash text-xs"></i></button>
+                        <div className="flex flex-col lg:flex-row items-center gap-2 flex-shrink-0 mt-1">
+                             <button onClick={() => toggleStock(p)} className={`w-full lg:w-auto px-4 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-900/20 text-red-500 border border-red-900/30'}`}>{p.inStock === false ? 'Habilitar' : 'Agotar'}</button>
+                             <button onClick={() => toggleVisibility(p)} title={p.isHidden ? 'Mostrar en tienda' : 'Ocultar de la tienda'} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm ${p.isHidden ? 'bg-amber-100 text-amber-600 hover:bg-amber-500 hover:text-white' : 'bg-gray-200 text-gray-500 hover:bg-amber-500 hover:text-white'}`}>
+                                 <i className={`fas ${p.isHidden ? 'fa-eye-slash' : 'fa-eye'} text-xs`}></i>
+                             </button>
+                             <button onClick={() => handleDeleteProduct(p)} title="Eliminar definitivamente" className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-200 hover:bg-red-500 hover:text-white transition-all text-gray-500 shadow-sm"><i className="fas fa-trash text-xs"></i></button>
                         </div>
                     </div>
                 ))}
@@ -460,7 +474,6 @@ export default function AdminPage() {
                 <input type="text" placeholder="Ej: Nuevo, Destacado..." value={newProduct.tag} onChange={e => setNewProduct({...newProduct, tag: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-2 focus:border-[#d4af37] transition-all ${theme.input}`} />
               </div>
 
-              {/* NUEVO CAMPO DE BIOGRAFÍA AL CREAR PRODUCTO */}
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Descripción (Biografía)</label>
                 <textarea 
