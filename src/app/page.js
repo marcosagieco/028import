@@ -14,7 +14,7 @@ const CONFIG = {
   shippingText: "Pedime te llega en 30'⏰",
 };
 
-// Mantenemos la lista base para la primera carga (CON BIOGRAFÍAS INCLUIDAS)
+// Mantenemos la lista base para la primera carga
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante. Batería de larga duración y la garantía de autenticidad de 028 IMPORT." },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto. Rendimiento superior en cada calada." },
@@ -44,6 +44,15 @@ const initialProducts = [
   { id: 36, name: "STRAWBERRY KIWI", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Hsw19GrJ/ignite-v400-STRAWBERRY-KIWI.jpg", description: "Fresa dulce combinada con el toque tropical del kiwi. Ignite te ofrece elegancia, rendimiento y una experiencia sin fallas." },
   { id: 37, name: "STRAWBERRY", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/cLdyDD35/ignite-v400-strawberry.jpg", description: "Auténtico sabor a fresa de principio a fin. Fabricado bajo los estrictos controles de calidad de la marca Ignite." },
   { id: 38, name: "TUTTI FRUTI", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/mgVxKQ3v/ignite-v400-TUTI-FRUTI.jpg", description: "Explosión de golosinas frutales en un vaporizador compacto. Diseñado para un consumo discreto, rápido y lleno de sabor." },
+  { id: 39, name: "BLUE RAZZ ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yYk7mpF9/Lost-mary-20000-BLUE-RAZZ-ICE.jpg" },
+  { id: 40, name: "GRAPE ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05VC/Lost-mary-20000-GRAPE-ICE.jpg" },
+  { id: 41, name: "ICE MINT", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05V5/lost-mary-20000-ICE-MINT.jpg" },
+  { id: 42, name: "LIME GRAPE FRUIT", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/7LqcVbpW/Lost-mary-20000-LIME-GRAPE-FRUIT.jpg" },
+  { id: 43, name: "MANGO MAGIC", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/8CwYnNGc/Lost-mary-20000-MANGO-TWIST.jpg" },
+  { id: 44, name: "MEXICAN MANGO", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/bvL5FpPx/Lost-mary-20000-MEXICAN-MANGO.jpg" },
+  { id: 45, name: "MIAMI MINT", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yWqpSNmv/Lost-mary-20000-MIAMI-MINT.jpg" },
+  { id: 46, name: "STRAWBERRY ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/zDLJWPw3/Lost-mary-20000-STRAWBERRY-ICE.jpg" },
+  { id: 47, name: "STRAWBERRY KIWI", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/59Hxvk5q/Lost-mary-20000-STRAWBERRY-KIWI.jpg" },
   { id: 18, name: "BLOW THC", price: 55000, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp", description: "Dispositivo de alta pureza con extracciones premium. Diseño discreto, golpe suave y un efecto prolongado garantizado." },
   { id: 19, name: "TORCH 7.5G", price: 53000, category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png", description: "Capacidad extrema de 7.5G de extracto premium. Pantalla digital, función de precalentamiento y la mejor potencia del mercado." },
   { id: 29, name: "TORCH 4.5G", price: 52500, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/vmFK42hC/TORCH-4-5G.jpg", description: "4.5G de puro rendimiento. Diseño ergonómico, tecnología avanzada anti-obstrucciones y un efecto potente e inmediato." },
@@ -56,7 +65,7 @@ const initialProducts = [
   { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg", description: "Cable original Apple USB-C a Lightning de 2 metros de longitud. Extrema comodidad y compatibilidad garantizada para carga rápida." }
 ];
 
-// --- CONTENIDO DE PÁGINAS LEGALES ---
+// --- CONTENIDO DE PÁGINAS LEGALES COMPLETO ---
 const PAGE_CONTENT = {
   terminos: {
     title: "Términos y Condiciones",
@@ -121,7 +130,7 @@ const PAGE_CONTENT = {
         <p>Implementamos soluciones de "Local Storage" (Almacenamiento Local del Navegador) con el único fin de conservar los productos que usted añade a su "Bolsa". Esto permite que, si usted recarga la página o cierra accidentalmente la ventana, su selección de productos se mantenga intacta al regresar.</p>
 
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">Cookies Analíticas y Publicitarias</h3>
-        <p>Nuestra plataforma está diseñada desde una perspectiva de mínima invasión. No empleamos cookies de rastreo publicitario de terceros que sigan su actividad en otros sitios web ni realizamos prácticas de "retargeting" agresivo.</p>
+        <p>Nuestra plataforma está diseñada desde una perspectiva de mínima invasión. No empleamos cookies de rastreo publicitario de terceros que sigan su actividad en otros sitios web ni realizamos practices de "retargeting" agresivo.</p>
         
         <p className="mt-8">Al continuar utilizando este sitio, usted comprende y acepta el uso de estas herramientas tecnológicas esenciales para el funcionamiento del carrito de compras.</p>
       </div>
@@ -204,10 +213,13 @@ const PAGE_CONTENT = {
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState(initialProducts);
+  
+  // NUEVO ESTADO PARA PROMOS DINÁMICAS
+  const [promos, setPromos] = useState([]);
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState('retiro');
   
-  // ESTADOS NUEVOS (OBLIGATORIOS)
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
 
@@ -280,9 +292,19 @@ export default function Home() {
         }
       });
 
+      // NUEVO: ESCUCHAR LAS PROMOS DESDE FIREBASE
+      const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (snapshot) => {
+        if (!snapshot.empty) {
+            setPromos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        } else {
+            setPromos([]);
+        }
+      });
+
       return () => {
         unsubscribeAuth();
         unsubscribeStock();
+        unsubscribePromos();
         window.removeEventListener('focus', handleFocus);
         window.removeEventListener('pageshow', handleFocus);
       };
@@ -293,16 +315,14 @@ export default function Home() {
   
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
   
+  // NUEVA LÓGICA DE PRECIOS PROMOCIONALES DINÁMICOS
   const getUnitPromoPrice = (item) => {
-    if (item.category === 'Elfbar Ice King') {
-        const count = getTotalItems();
-        if (count >= 2) return 24500;
-        return 26000;
-    }
-    if (item.category === 'Lost Mary 20000') {
-        const lmCount = cart.filter(i => i.category === 'Lost Mary 20000').reduce((acc, curr) => acc + curr.qty, 0);
-        if (lmCount >= 2) return 20000;
-        return 23000;
+    const promo = promos.find(p => p.category === item.category);
+    if (promo) {
+        const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0);
+        if (catCount >= promo.minQty) {
+            return promo.totalPrice / promo.minQty;
+        }
     }
     return item.price;
   };
@@ -343,13 +363,11 @@ export default function Home() {
   };
 
   const handleCheckout = async () => {
-    // VALIDACIÓN OBLIGATORIA (Tus Datos)
     if (!clientName.trim() || !clientPhone.trim()) {
       showToast("⚠️ Por favor completá tu Nombre y Teléfono.");
       return;
     }
 
-    // VALIDACIÓN OBLIGATORIA (Si eligió envío, debe poner dirección)
     if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) {
       showToast("⚠️ Por favor completá tu dirección y localidad.");
       return;
@@ -384,7 +402,6 @@ export default function Home() {
       if (firebaseRefs.db) {
         await addDoc(collection(firebaseRefs.db, 'orders'), {
           userId: user?.uid || "anon",
-          // GUARDAMOS NOMBRE Y TELÉFONO EN LA BASE DE DATOS
           clientName: clientName.trim(),
           clientPhone: clientPhone.trim(),
           items: cart.map(i => {
@@ -419,9 +436,12 @@ export default function Home() {
 
     if (sectionProducts.length === 0) return null;
     
+    // NUEVA LÓGICA DE TEXTO DE PROMOS DINÁMICAS
+    const promo = promos.find(p => p.category === category);
     let promoText = null;
-    if (category === 'Elfbar Ice King') promoText = "2+ un: $24.500 c/u";
-    if (category === 'Lost Mary 20000') promoText = "2+ Lost Mary: $20.000 c/u";
+    if (promo) {
+       promoText = `${promo.minQty}+ un: $${formatPrice(promo.totalPrice / promo.minQty)} c/u`;
+    }
 
     const sectionId = slugify(category);
 
@@ -770,7 +790,6 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* BLOQUE OBLIGATORIO: DATOS DEL CLIENTE */}
               <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm mb-4">
                 <p className="font-black text-[11px] mb-4 uppercase tracking-widest text-gray-800 flex items-center gap-2">
                   <i className="fas fa-user text-[#d4af37]"></i> Tus Datos

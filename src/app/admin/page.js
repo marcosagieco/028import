@@ -16,11 +16,13 @@ import {
   serverTimestamp 
 } from "firebase/firestore";
 
+// --- CONFIGURACIÓN DE TU MARCA ---
 const CONFIG = {
   brandName: "028", 
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png",
 };
 
+// Mantenemos la lista base para la primera carga
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
@@ -75,6 +77,11 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('pendientes'); 
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState(initialProducts);
+  
+  // ESTADO NUEVO: PROMOS
+  const [promos, setPromos] = useState([]);
+  const [newPromo, setNewPromo] = useState({ category: '', minQty: 2, totalPrice: '' });
+
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false); 
 
@@ -87,11 +94,9 @@ export default function AdminPage() {
     return [...new Set(products.map(p => p.category))];
   }, [products]);
 
-  // LÓGICA MÁGICA: Extraer la lista de clientes a partir del historial de órdenes
   const clientsList = useMemo(() => {
     const clientsMap = new Map();
     orders.forEach(o => {
-      // Solo tomamos en cuenta órdenes que tengan número y nombre
       if (o.clientPhone && o.clientName) {
         if (!clientsMap.has(o.clientPhone)) {
           clientsMap.set(o.clientPhone, {
@@ -103,12 +108,10 @@ export default function AdminPage() {
         } else {
           const existing = clientsMap.get(o.clientPhone);
           existing.orderCount += 1;
-          // Actualizamos a la orden más reciente si hay varias
           if (o.createdAt > existing.lastOrder) existing.lastOrder = o.createdAt;
         }
       }
     });
-    // Convertimos el mapa en un Array para poder pintarlo en pantalla
     return Array.from(clientsMap.values()).sort((a, b) => b.lastOrder - a.lastOrder);
   }, [orders]);
 
@@ -176,9 +179,19 @@ export default function AdminPage() {
         }
       });
 
+      // NUEVO: ESCUCHAR LAS PROMOS
+      const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (snapshot) => {
+        if (!snapshot.empty) {
+            setPromos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        } else {
+            setPromos([]);
+        }
+      });
+
       return () => {
         unsubscribeOrders();
         unsubscribeProducts();
+        unsubscribePromos();
       };
     });
 
@@ -212,6 +225,35 @@ export default function AdminPage() {
       alert("Error al crear: " + error.message);
     }
     setIsAdding(false);
+  };
+
+  // NUEVA FUNCIÓN: CREAR PROMO
+  const handleAddPromo = async (e) => {
+    e.preventDefault();
+    if(!newPromo.category || !newPromo.minQty || !newPromo.totalPrice) return alert("Completa todos los campos");
+    
+    try {
+      // Usamos el nombre de la categoría en minúsculas y sin espacios como ID único para sobreescribir promos si ya existe
+      const promoId = newPromo.category.toLowerCase().replace(/\s+/g, '-');
+      await setDoc(doc(firebaseRefs.db, 'promos', promoId), {
+        category: newPromo.category,
+        minQty: Number(newPromo.minQty),
+        totalPrice: Number(newPromo.totalPrice),
+        createdAt: serverTimestamp()
+      });
+      alert("¡Promoción guardada y activada con éxito!");
+      setNewPromo({ category: '', minQty: 2, totalPrice: '' });
+    } catch(err) {
+      alert("Error al guardar promo: " + err.message);
+    }
+  };
+
+  // NUEVA FUNCIÓN: ELIMINAR PROMO
+  const handleDeletePromo = async (id) => {
+    if(confirm("¿Seguro que quieres eliminar esta promoción? Los precios volverán a la normalidad.")) {
+       try { await deleteDoc(doc(firebaseRefs.db, 'promos', id)); }
+       catch(err) { alert("Error al eliminar promo: " + err.message); }
+    }
   };
 
   const toggleVisibility = async (product) => {
@@ -432,17 +474,81 @@ export default function AdminPage() {
       </nav>
 
       <div className={`${theme.stickyHeader} border-b sticky top-[72px] z-40 transition-colors duration-300`}>
-        <div className="max-w-4xl mx-auto flex">
-          <button onClick={() => setActiveTab('pendientes')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'pendientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Pedidos</button>
-          <button onClick={() => setActiveTab('stock')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'stock' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Stock</button>
-          <button onClick={() => setActiveTab('crear')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'crear' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Crear +</button>
-          {/* NUEVA PESTAÑA: CLIENTES */}
-          <button onClick={() => setActiveTab('clientes')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'clientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Clientes</button>
+        <div className="max-w-4xl mx-auto flex overflow-x-auto no-scrollbar">
+          <button onClick={() => setActiveTab('pendientes')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'pendientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Pedidos</button>
+          <button onClick={() => setActiveTab('stock')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'stock' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Stock</button>
+          <button onClick={() => setActiveTab('crear')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'crear' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Crear +</button>
+          {/* PESTAÑA CLIENTES Y NUEVA PESTAÑA PROMOS */}
+          <button onClick={() => setActiveTab('clientes')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'clientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Clientes</button>
+          <button onClick={() => setActiveTab('promos')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'promos' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Promos %</button>
         </div>
       </div>
 
       <main className="max-w-4xl mx-auto p-4 md:p-8">
         
+        {/* PESTAÑA NUEVA: PROMOS */}
+        {activeTab === 'promos' && (
+          <div className="animate-in fade-in duration-500 max-w-lg mx-auto">
+            <div className="flex justify-between items-end mb-8">
+              <div>
+                <h2 className={`text-3xl font-black uppercase tracking-tighter leading-none ${theme.text}`}>Promociones</h2>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">Descuentos automáticos por cantidad</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleAddPromo} className={`${theme.card} p-8 rounded-[2rem] shadow-xl border ${darkMode ? 'border-[#262626]' : 'border-gray-100'} flex flex-col gap-5 mb-8`}>
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Categoría a bonificar</label>
+                <input 
+                  list="promo-category-suggestions" 
+                  placeholder="Escribe o selecciona (Ej: Ignite v400)..." 
+                  value={newPromo.category} 
+                  onChange={e => setNewPromo({...newPromo, category: e.target.value})} 
+                  className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all uppercase ${theme.input}`} 
+                  required
+                />
+                <datalist id="promo-category-suggestions">
+                  {uniqueCategories.map(cat => <option key={cat} value={cat} />)}
+                </datalist>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Cantidad Mínima</label>
+                  <input type="number" required min="2" placeholder="Ej: 2" value={newPromo.minQty} onChange={e => setNewPromo({...newPromo, minQty: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-2 focus:border-[#d4af37] transition-all ${theme.input}`} />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Precio Total</label>
+                  <input type="number" required placeholder="Ej: 49000" value={newPromo.totalPrice} onChange={e => setNewPromo({...newPromo, totalPrice: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-2 focus:border-[#d4af37] transition-all ${theme.input}`} />
+                </div>
+              </div>
+              <p className="text-[10px] text-gray-400 italic">Ejemplo: Si pones Cantidad "2" y Precio Total "49000", cuando el cliente lleve 2 o más unidades de esa categoría, cada una le quedará a $24.500 automáticamente.</p>
+
+              <button type="submit" className="bg-[#d4af37] text-black font-black uppercase py-4 rounded-xl mt-2 hover:bg-white hover:shadow-xl transition-all">
+                Crear / Actualizar Promoción
+              </button>
+            </form>
+
+            <div className="grid gap-4">
+              {promos.length === 0 ? (
+                 <p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest">No hay promos activas</p>
+              ) : (
+                promos.map(promo => (
+                  <div key={promo.id} className={`${theme.card} p-5 rounded-[1.5rem] flex justify-between items-center shadow-sm border`}>
+                    <div>
+                      <h4 className="font-black uppercase text-sm mb-1">{promo.category}</h4>
+                      <p className="text-gray-400 text-[10px] font-bold tracking-widest uppercase">Llevando {promo.minQty} o más: ${(promo.totalPrice / promo.minQty).toLocaleString('es-AR')} c/u</p>
+                    </div>
+                    <button onClick={() => handleDeletePromo(promo.id)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-200 hover:bg-red-500 hover:text-white transition-all text-gray-500 shadow-sm">
+                      <i className="fas fa-trash text-xs"></i>
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
         {activeTab === 'crear' && (
           <div className="animate-in fade-in duration-500 max-w-lg mx-auto">
             <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 text-center">Nuevo Producto</h2>
@@ -460,6 +566,7 @@ export default function AdminPage() {
                 </div>
                 <div className="flex-1">
                   <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Categoría</label>
+                  
                   <input 
                     list="category-suggestions" 
                     placeholder="Escribe o selecciona..." 
@@ -470,6 +577,7 @@ export default function AdminPage() {
                   <datalist id="category-suggestions">
                     {uniqueCategories.map(cat => <option key={cat} value={cat} />)}
                   </datalist>
+
                 </div>
               </div>
 
@@ -516,7 +624,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* NUEVA PESTAÑA: CLIENTES */}
         {activeTab === 'clientes' && (
           <div className="animate-in fade-in duration-500">
             <div className="flex justify-between items-end mb-8">
@@ -591,7 +698,6 @@ export default function AdminPage() {
                       </div>
                     </div>
                     
-                    {/* ACÁ TAMBIÉN MOSTRAMOS EL NOMBRE DEL CLIENTE SI LO COMPLETÓ */}
                     {order.clientName && (
                        <div className={`mb-4 pb-4 border-b ${darkMode ? 'border-[#262626]' : 'border-gray-100'} flex items-center gap-3`}>
                           <i className="fas fa-user-circle text-gray-400 text-xl"></i>
