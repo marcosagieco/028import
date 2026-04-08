@@ -138,21 +138,27 @@ const PAGE_CONTENT = {
         
         <ul className="space-y-4">
           <li className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black"><i className="fas fa-university"></i></div>
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black">
+              <i className="fas fa-university"></i>
+            </div>
             <div>
               <p className="font-bold text-black">Transferencia Bancaria (ARS)</p>
               <p className="text-sm mt-1">Acreditación rápida mediante CBU/CVU o Alias. Ideal para operaciones a distancia.</p>
             </div>
           </li>
           <li className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black"><i className="fab fa-bitcoin"></i></div>
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black">
+              <i className="fab fa-bitcoin"></i>
+            </div>
             <div>
               <p className="font-bold text-black">Criptoactivos (USDT)</p>
               <p className="text-sm mt-1">Aceptamos pagos internacionales o descentralizados a través de redes estables como TRC20, BSC o Binance Pay.</p>
             </div>
           </li>
           <li className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black"><i className="fas fa-money-bill-wave"></i></div>
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black">
+              <i className="fas fa-money-bill-wave"></i>
+            </div>
             <div>
               <p className="font-bold text-black">Efectivo</p>
               <p className="text-sm mt-1">Exclusivo para la modalidad de Retiro Pick-up o envío mediante motomensajería propia (Pago contra entrega).</p>
@@ -200,6 +206,11 @@ export default function Home() {
   const [products, setProducts] = useState(initialProducts);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState('retiro');
+  
+  // ESTADOS NUEVOS (OBLIGATORIOS)
+  const [clientName, setClientName] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
+
   const [address, setAddress] = useState('');
   const [zone, setZone] = useState('');
   const [user, setUser] = useState(null);
@@ -257,7 +268,6 @@ export default function Home() {
              const combined = [...initialProducts];
              dbProducts.forEach(dbItem => {
                 const index = combined.findIndex(p => p.id == dbItem.id);
-                // Si está oculto (o eliminado del sistema anterior), lo sacamos de la vista del cliente
                 if (dbItem.isHidden || dbItem.isDeleted) {
                     if (index > -1) combined.splice(index, 1);
                 } else {
@@ -280,6 +290,7 @@ export default function Home() {
   }, [firebaseRefs]);
 
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
+  
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
   
   const getUnitPromoPrice = (item) => {
@@ -332,10 +343,18 @@ export default function Home() {
   };
 
   const handleCheckout = async () => {
-    if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) {
-      alert("Por favor completa los datos de envío.");
+    // VALIDACIÓN OBLIGATORIA (Tus Datos)
+    if (!clientName.trim() || !clientPhone.trim()) {
+      showToast("⚠️ Por favor completá tu Nombre y Teléfono.");
       return;
     }
+
+    // VALIDACIÓN OBLIGATORIA (Si eligió envío, debe poner dirección)
+    if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) {
+      showToast("⚠️ Por favor completá tu dirección y localidad.");
+      return;
+    }
+    
     setIsSending(true);
     const finalTotal = calculateTotal();
     
@@ -365,6 +384,9 @@ export default function Home() {
       if (firebaseRefs.db) {
         await addDoc(collection(firebaseRefs.db, 'orders'), {
           userId: user?.uid || "anon",
+          // GUARDAMOS NOMBRE Y TELÉFONO EN LA BASE DE DATOS
+          clientName: clientName.trim(),
+          clientPhone: clientPhone.trim(),
           items: cart.map(i => {
              let dbName = i.name;
              const cUp = i.category.toUpperCase().trim();
@@ -463,9 +485,13 @@ export default function Home() {
                         </button>
                     ) : inCart ? (
                       <div className="flex items-center justify-between bg-black text-white h-11 rounded-xl font-bold text-sm px-1 shadow-lg">
-                        <button className="w-10 h-full flex items-center justify-center hover:text-[#d4af37] transition-colors" onClick={() => changeQty(p.id, -1)}><i className="fas fa-minus text-xs"></i></button>
+                        <button className="w-10 h-full flex items-center justify-center hover:text-[#d4af37] transition-colors" onClick={() => changeQty(p.id, -1)}>
+                          <i className="fas fa-minus text-xs"></i>
+                        </button>
                         <span className="font-black text-[#d4af37]">{inCart.qty}</span>
-                        <button className="w-10 h-full flex items-center justify-center hover:text-[#d4af37] transition-colors" onClick={() => addToCart(p)}><i className="fas fa-plus text-xs"></i></button>
+                        <button className="w-10 h-full flex items-center justify-center hover:text-[#d4af37] transition-colors" onClick={() => addToCart(p)}>
+                          <i className="fas fa-plus text-xs"></i>
+                        </button>
                       </div>
                     ) : (
                       <button onClick={() => addToCart(p)} className="w-full bg-black text-white hover:bg-[#d4af37] hover:text-black hover:shadow-lg hover:shadow-[#d4af37]/30 py-3.5 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
@@ -672,7 +698,6 @@ export default function Home() {
                  <p className="text-[#d4af37] font-black uppercase tracking-[0.2em] text-[10px] mb-2">{selectedProduct.category}</p>
                  <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-gray-900 leading-none mb-6">{selectedProduct.name}</h2>
                  
-                 {/* ACÁ SE MUESTRA LA BIOGRAFÍA DEL PRODUCTO O UN TEXTO POR DEFECTO */}
                  <p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed whitespace-pre-line">
                    {selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium. El sabor y rendimiento que estabas buscando en un formato elegante y exclusivo."}
                  </p>
@@ -745,6 +770,29 @@ export default function Home() {
                 ))}
               </div>
 
+              {/* BLOQUE OBLIGATORIO: DATOS DEL CLIENTE */}
+              <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm mb-4">
+                <p className="font-black text-[11px] mb-4 uppercase tracking-widest text-gray-800 flex items-center gap-2">
+                  <i className="fas fa-user text-[#d4af37]"></i> Tus Datos
+                </p>
+                <div className="flex flex-col gap-3">
+                  <input 
+                    type="text" 
+                    placeholder="Nombre completo" 
+                    value={clientName} 
+                    onChange={(e) => setClientName(e.target.value)} 
+                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" 
+                  />
+                  <input 
+                    type="tel" 
+                    placeholder="Número de WhatsApp (Ej: 1123456789)" 
+                    value={clientPhone} 
+                    onChange={(e) => setClientPhone(e.target.value)} 
+                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" 
+                  />
+                </div>
+              </div>
+
               <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
                 <p className="font-black text-[11px] mb-4 uppercase tracking-widest text-gray-800 flex items-center gap-2">
                   <i className="fas fa-truck text-[#d4af37]"></i> Entrega
@@ -756,8 +804,20 @@ export default function Home() {
                 
                 {deliveryMethod === 'envio' && (
                   <div className="flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-300">
-                    <input type="text" placeholder="Dirección completa" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" />
-                    <input type="text" placeholder="Barrio / Localidad" value={zone} onChange={(e) => setZone(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" />
+                    <input 
+                       type="text" 
+                       placeholder="Dirección completa" 
+                       value={address} 
+                       onChange={(e) => setAddress(e.target.value)} 
+                       className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" 
+                    />
+                    <input 
+                       type="text" 
+                       placeholder="Barrio / Localidad" 
+                       value={zone} 
+                       onChange={(e) => setZone(e.target.value)} 
+                       className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" 
+                    />
                   </div>
                 )}
               </div>

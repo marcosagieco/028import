@@ -16,13 +16,11 @@ import {
   serverTimestamp 
 } from "firebase/firestore";
 
-// --- CONFIGURACIÓN DE TU MARCA ---
 const CONFIG = {
   brandName: "028", 
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png",
 };
 
-// Mantenemos la lista base para la primera carga
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
@@ -80,20 +78,39 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false); 
 
-  // Agregamos description al state inicial
   const [newProduct, setNewProduct] = useState({
-    name: '',
-    price: '',
-    category: '', 
-    image: '',
-    tag: '',
-    description: ''
+    name: '', price: '', category: '', image: '', tag: '', description: ''
   });
   const [isAdding, setIsAdding] = useState(false);
 
   const uniqueCategories = useMemo(() => {
     return [...new Set(products.map(p => p.category))];
   }, [products]);
+
+  // LÓGICA MÁGICA: Extraer la lista de clientes a partir del historial de órdenes
+  const clientsList = useMemo(() => {
+    const clientsMap = new Map();
+    orders.forEach(o => {
+      // Solo tomamos en cuenta órdenes que tengan número y nombre
+      if (o.clientPhone && o.clientName) {
+        if (!clientsMap.has(o.clientPhone)) {
+          clientsMap.set(o.clientPhone, {
+            name: o.clientName,
+            phone: o.clientPhone,
+            orderCount: 1,
+            lastOrder: o.createdAt
+          });
+        } else {
+          const existing = clientsMap.get(o.clientPhone);
+          existing.orderCount += 1;
+          // Actualizamos a la orden más reciente si hay varias
+          if (o.createdAt > existing.lastOrder) existing.lastOrder = o.createdAt;
+        }
+      }
+    });
+    // Convertimos el mapa en un Array para poder pintarlo en pantalla
+    return Array.from(clientsMap.values()).sort((a, b) => b.lastOrder - a.lastOrder);
+  }, [orders]);
 
   useEffect(() => {
     document.title = `${CONFIG.brandName} - Admin`;
@@ -145,7 +162,6 @@ export default function AdminPage() {
           setProducts(prev => {
              const updatedInitial = initialProducts.map(p => {
                 const match = dbProducts.find(dbP => dbP.id === p.id);
-                // Si hace match en DB, mapeamos todos los datos, inclusive si estaba "isDeleted" lo pasamos a "isHidden"
                 return match 
                   ? { ...p, ...match, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price, order: match.order !== undefined ? match.order : 99, description: match.description !== undefined ? match.description : p.description, isHidden: match.isHidden || match.isDeleted } 
                   : { ...p, inStock: true, order: 99, isHidden: false };
@@ -153,7 +169,7 @@ export default function AdminPage() {
              
              const newFromDb = dbProducts.filter(dbP => 
                 !initialProducts.find(p => p.id === dbP.id)
-             ).map(dbP => ({...dbP, isHidden: dbP.isHidden || dbP.isDeleted})); // Aca tambien mapeamos la visibilidad
+             ).map(dbP => ({...dbP, isHidden: dbP.isHidden || dbP.isDeleted})); 
              
              return [...updatedInitial, ...newFromDb].sort((a, b) => (a.order || 99) - (b.order || 99));
           });
@@ -187,7 +203,7 @@ export default function AdminPage() {
         inStock: true,
         order: 99,
         createdAt: serverTimestamp(),
-        isHidden: false, // Ahora se crea visible por defecto
+        isHidden: false, 
         isDeleted: false
       });
       alert("¡Producto agregado con éxito!");
@@ -198,7 +214,6 @@ export default function AdminPage() {
     setIsAdding(false);
   };
 
-  // NUEVA FUNCIÓN PARA OCULTAR/MOSTRAR
   const toggleVisibility = async (product) => {
     try {
         const newHiddenStatus = !(product.isHidden);
@@ -206,12 +221,11 @@ export default function AdminPage() {
         await setDoc(productRef, {
             id: product.id,
             isHidden: newHiddenStatus,
-            isDeleted: false // Limpiamos la etiqueta vieja por las dudas
+            isDeleted: false
         }, { merge: true });
     } catch (err) { alert("Error al cambiar la visibilidad."); }
   };
 
-  // ELIMINAR AHORA BORRA DE VERDAD
   const handleDeleteProduct = async (product) => {
     if(!confirm(`¿Seguro que quieres ELIMINAR DEFINITIVAMENTE "${product.name}" de la base de datos? Si solo quieres que los clientes no lo vean, usa el botón del Ojo para Pausarlo.`)) return;
     try {
@@ -422,6 +436,8 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('pendientes')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'pendientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Pedidos</button>
           <button onClick={() => setActiveTab('stock')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'stock' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Stock</button>
           <button onClick={() => setActiveTab('crear')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'crear' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Crear +</button>
+          {/* NUEVA PESTAÑA: CLIENTES */}
+          <button onClick={() => setActiveTab('clientes')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'clientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Clientes</button>
         </div>
       </div>
 
@@ -444,7 +460,6 @@ export default function AdminPage() {
                 </div>
                 <div className="flex-1">
                   <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Categoría</label>
-                  
                   <input 
                     list="category-suggestions" 
                     placeholder="Escribe o selecciona..." 
@@ -455,7 +470,6 @@ export default function AdminPage() {
                   <datalist id="category-suggestions">
                     {uniqueCategories.map(cat => <option key={cat} value={cat} />)}
                   </datalist>
-
                 </div>
               </div>
 
@@ -502,6 +516,48 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* NUEVA PESTAÑA: CLIENTES */}
+        {activeTab === 'clientes' && (
+          <div className="animate-in fade-in duration-500">
+            <div className="flex justify-between items-end mb-8">
+              <div>
+                <h2 className={`text-3xl font-black uppercase tracking-tighter leading-none ${theme.text}`}>Tu Base</h2>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">Directorio de Clientes CRM</p>
+              </div>
+              <span className="bg-[#d4af37] text-black text-[10px] font-black px-4 py-2 rounded-full shadow-xl">{clientsList.length} Registros</span>
+            </div>
+
+            {clientsList.length === 0 ? (
+               <div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed ${darkMode ? 'border-[#262626]' : 'border-gray-100'} text-center flex flex-col items-center`}>
+                <i className="fas fa-users text-gray-400 text-5xl mb-6 opacity-30"></i>
+                <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest opacity-50">Aún no hay clientes registrados</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 {clientsList.map((client, index) => (
+                    <div key={index} className={`${theme.card} p-6 rounded-[1.5rem] shadow-sm border flex flex-col gap-4 hover:border-[#d4af37]/30 transition-all`}>
+                       <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-black text-[#d4af37] flex items-center justify-center text-xl font-black shadow-md uppercase">
+                             {client.name.charAt(0)}
+                          </div>
+                          <div>
+                             <h4 className="font-black tracking-tight text-lg uppercase leading-none mb-1">{client.name}</h4>
+                             <p className="text-gray-400 font-bold text-xs"><i className="fas fa-phone text-[10px] mr-1"></i> {client.phone}</p>
+                          </div>
+                       </div>
+                       <div className="flex justify-between items-center mt-2 border-t pt-4 dark:border-[#262626]">
+                          <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">{client.orderCount} Pedido{client.orderCount > 1 ? 's' : ''}</span>
+                          <a href={`https://wa.me/${client.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="bg-[#25D366] text-white text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest flex items-center gap-2 hover:opacity-80 transition-all shadow-md">
+                             <i className="fab fa-whatsapp text-sm"></i> Escribir
+                          </a>
+                       </div>
+                    </div>
+                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'pendientes' && (
           <div className="animate-in fade-in duration-500">
             <div className="flex justify-between items-end mb-8">
@@ -534,6 +590,18 @@ export default function AdminPage() {
                           <button onClick={() => deleteOrder(order.id)} className={`${darkMode ? 'bg-[#262626] text-gray-400 hover:text-white' : 'bg-gray-50 text-gray-300 hover:text-white'} hover:bg-red-600 w-12 h-12 rounded-2xl transition-all flex items-center justify-center shadow-inner`}><i className="fas fa-trash text-lg"></i></button>
                       </div>
                     </div>
+                    
+                    {/* ACÁ TAMBIÉN MOSTRAMOS EL NOMBRE DEL CLIENTE SI LO COMPLETÓ */}
+                    {order.clientName && (
+                       <div className={`mb-4 pb-4 border-b ${darkMode ? 'border-[#262626]' : 'border-gray-100'} flex items-center gap-3`}>
+                          <i className="fas fa-user-circle text-gray-400 text-xl"></i>
+                          <div>
+                             <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest leading-none">Cliente</p>
+                             <p className="font-bold text-sm uppercase">{order.clientName} <span className="font-normal text-gray-400 ml-2">({order.clientPhone})</span></p>
+                          </div>
+                       </div>
+                    )}
+
                     <div className={`space-y-3 mb-6 p-6 rounded-2xl border shadow-inner ${darkMode ? 'bg-[#0a0a0a] border-[#262626]' : 'bg-gray-50/50 border-gray-100'}`}>
                       {order.items?.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center text-xs">
