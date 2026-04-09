@@ -14,7 +14,7 @@ const CONFIG = {
   shippingText: "Pedime te llega en 30'⏰",
 };
 
-// Mantenemos la lista base original, SOLO sumamos la propiedad "department" para el Menú tipo Nike
+// Mantenemos la lista base original completa con la propiedad "department"
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante. Batería de larga duración y la garantía de autenticidad de 028 IMPORT." },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto. Rendimiento superior en cada calada." },
@@ -62,10 +62,13 @@ const initialProducts = [
   { id: 21, name: "CARGADOR 20W", price: 16500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg", description: "Adaptador de corriente USB-C de 20W original Apple. Carga rápida, segura y eficiente en caja sellada de fábrica." },
   { id: 22, name: "CARGADOR 35W", price: 20500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg", description: "Adaptador de corriente dual USB-C de 35W original Apple. Potencia de sobra para cargar múltiples dispositivos al mismo tiempo." },
   { id: 23, name: "CABLE USB-C A USB-C", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg", description: "Cable original Apple de USB-C a USB-C. Sincronización impecable y soporte de alta potencia. Material resistente y duradero." },
-  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg", description: "Cable original Apple USB-C a Lightning de 2 metros de longitud. Extrema comodidad y compatibilidad garantizada para carga rápida." }
+  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg", description: "Cable original Apple USB-C a Lightning de 2 metros de longitud. Extrema comodidad y compatibilidad garantizada para carga rápida." },
+  { id: 50, name: "LABUBU V2", price: 17500, department: "LIFESTYLE", category: "Labubu", tag: "Viral", image: "https://i.postimg.cc/654362/labubu.png", description: "Muñeco coleccionable original. Consultar modelos por privado." },
+  { id: 51, name: "TERMO STANLEY 1.2L", price: 85000, department: "LIFESTYLE", category: "Stanley", tag: "Original", image: "https://i.postimg.cc/placeholder/stanley.png", description: "Termo original con garantía de por vida. Consultar colores disponibles." },
+  { id: 52, name: "MIEL ENERGY MASCULINA", price: 15000, department: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_h.png", description: "Miel para rendimiento sexual masculino. 100% natural y de efecto comprobado." },
+  { id: 53, name: "MIEL ENERGY FEMENINA", price: 15000, department: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_m.png", description: "Miel para rendimiento sexual femenino. Efecto inmediato." }
 ];
 
-// --- CONTENIDO DE PÁGINAS LEGALES COMPLETO ---
 const PAGE_CONTENT = {
   terminos: {
     title: "Términos y Condiciones",
@@ -73,22 +76,18 @@ const PAGE_CONTENT = {
     body: (
       <div className="space-y-8 text-gray-600 leading-relaxed text-sm md:text-base">
         <p>El acceso y uso de la plataforma 028 IMPORT (en adelante, "la Tienda" o "Nosotros") se rige por los presentes Términos y Condiciones. Al utilizar nuestro sitio web, usted acepta íntegramente las políticas aquí detalladas.</p>
-        
         <div>
           <h3 className="text-black font-black uppercase tracking-widest text-sm mb-3">1. Naturaleza del Servicio</h3>
           <p>028 IMPORT opera como un catálogo virtual interactivo. Los productos añadidos a la "Bolsa de Compras" no constituyen una reserva legal de inventario ni una transacción comercial finalizada. La confirmación del pedido, fijación del precio final y reserva de stock se perfecciona de manera exclusiva a través de nuestro canal oficial de WhatsApp, mediado por un asesor de ventas.</p>
         </div>
-
         <div>
           <h3 className="text-black font-black uppercase tracking-widest text-sm mb-3">2. Precios y Disponibilidad</h3>
           <p>Nos esforzamos por mantener nuestro catálogo actualizado en tiempo real. No obstante, debido a fluctuaciones arancelarias y dinámicas del mercado de importación, los precios publicados tienen carácter referencial. 028 IMPORT se reserva el derecho de modificar los precios sin previo aviso antes de la confirmación formal del pago.</p>
         </div>
-
         <div>
           <h3 className="text-black font-black uppercase tracking-widest text-sm mb-3">3. Garantía de Originalidad</h3>
           <p>Garantizamos de manera absoluta la autenticidad y el origen legítimo de todos los artículos comercializados. Todo producto es entregado en su embalaje original y con los sellos de seguridad correspondientes emitidos por el fabricante.</p>
         </div>
-
         <div>
           <h3 className="text-black font-black uppercase tracking-widest text-sm mb-3">4. Política de Cambios y Garantías</h3>
           <p>Dado el carácter personal y consumible de gran parte de nuestro catálogo, no se aceptarán cambios ni devoluciones por motivos de "insatisfacción" o error en la elección del sabor/modelo una vez que el precinto de seguridad haya sido vulnerado. Solo se admitirán reclamos por defectos técnicos de fabricación, los cuales deberán ser notificados dentro de las 48 horas posteriores a la recepción, adjuntando evidencia visual.</p>
@@ -103,17 +102,14 @@ const PAGE_CONTENT = {
       <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
         <p className="text-lg font-medium text-black">En 028 IMPORT, la salvaguarda y confidencialidad de su información personal es una absoluta prioridad.</p>
         <p>La presente Política de Privacidad describe cómo recopilamos, utilizamos y protegemos los datos que usted nos proporciona, en estricto cumplimiento con la Ley de Protección de los Datos Personales (Nº 25.326) de la República Argentina.</p>
-        
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">Recopilación de Información</h3>
         <p>A través de nuestra plataforma, podemos solicitar datos básicos como su nombre y datos de domicilio/ubicación (para envíos). No procesamos ni almacenamos datos financieros, bancarios ni tarjetas de crédito en nuestros servidores.</p>
-        
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">Uso Exclusivo de los Datos</h3>
         <p>La información recolectada se utiliza con los siguientes fines exclusivos:</p>
         <ul className="list-disc pl-5 space-y-2 mt-2">
           <li>Gestión logística y coordinación efectiva de las entregas.</li>
           <li>Comunicación directa vía WhatsApp para confirmación de pedidos.</li>
         </ul>
-
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">No Divulgación a Terceros</h3>
         <p>028 IMPORT garantiza que bajo ninguna circunstancia comercializará, alquilará ni compartirá su base de datos de clientes con entidades externas, agencias de publicidad o terceros no involucrados en la cadena logística de su pedido.</p>
       </div>
@@ -125,13 +121,10 @@ const PAGE_CONTENT = {
     body: (
       <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
         <p>Para asegurar una navegación fluida y una experiencia de usuario de primer nivel, 028 IMPORT utiliza tecnologías de almacenamiento local y cookies estrictamente necesarias.</p>
-        
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">¿Qué utilizamos y para qué?</h3>
         <p>Implementamos soluciones de "Local Storage" (Almacenamiento Local del Navegador) con el único fin de conservar los productos que usted añade a su "Bolsa". Esto permite que, si usted recarga la página o cierra accidentalmente la ventana, su selección de productos se mantenga intacta al regresar.</p>
-
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">Cookies Analíticas y Publicitarias</h3>
         <p>Nuestra plataforma está diseñada desde una perspectiva de mínima invasión. No empleamos cookies de rastreo publicitario de terceros que sigan su actividad en otros sitios web ni realizamos practices de "retargeting" agresivo.</p>
-        
         <p className="mt-8">Al continuar utilizando este sitio, usted comprende y acepta el uso de estas herramientas tecnológicas esenciales para el funcionamiento del carrito de compras.</p>
       </div>
     )
@@ -142,39 +135,30 @@ const PAGE_CONTENT = {
     body: (
       <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
         <p>Con el objetivo de garantizar su seguridad y ofrecerle flexibilidad, en 028 IMPORT procesamos los pagos por fuera de la plataforma web, evitando que usted deba ingresar datos sensibles en línea.</p>
-        
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-4">Alternativas Disponibles:</h3>
-        
         <ul className="space-y-4">
           <li className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black">
-              <i className="fas fa-university"></i>
-            </div>
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black"><i className="fas fa-university"></i></div>
             <div>
               <p className="font-bold text-black">Transferencia Bancaria (ARS)</p>
               <p className="text-sm mt-1">Acreditación rápida mediante CBU/CVU o Alias. Ideal para operaciones a distancia.</p>
             </div>
           </li>
           <li className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black">
-              <i className="fab fa-bitcoin"></i>
-            </div>
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black"><i className="fab fa-bitcoin"></i></div>
             <div>
               <p className="font-bold text-black">Criptoactivos (USDT)</p>
               <p className="text-sm mt-1">Aceptamos pagos internacionales o descentralizados a través de redes estables como TRC20, BSC o Binance Pay.</p>
             </div>
           </li>
           <li className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black">
-              <i className="fas fa-money-bill-wave"></i>
-            </div>
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black"><i className="fas fa-money-bill-wave"></i></div>
             <div>
               <p className="font-bold text-black">Efectivo</p>
               <p className="text-sm mt-1">Exclusivo para la modalidad de Retiro Pick-up o envío mediante motomensajería propia (Pago contra entrega).</p>
             </div>
           </li>
         </ul>
-
         <div className="border-t border-gray-200 pt-6 mt-8">
           <p className="text-xs uppercase tracking-widest font-black text-gray-400 mb-2">Aviso de Seguridad</p>
           <p className="text-sm">Al confirmar su carrito, la web generará un mensaje automático de WhatsApp con el resumen de su pedido. Nuestro asesor le brindará por ese medio los datos oficiales para efectuar el pago correspondiente.</p>
@@ -188,10 +172,8 @@ const PAGE_CONTENT = {
     body: (
       <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
         <p>En cumplimiento con las disposiciones de la Dirección Nacional de Defensa del Consumidor, 028 IMPORT pone a su disposición las directrices para la revocación de compra.</p>
-        
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">Plazo Legal</h3>
         <p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de <strong>10 (diez) días corridos</strong> contados desde la fecha de recepción del producto en su domicilio o desde el retiro en sucursal.</p>
-
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">Condiciones Innegociables para Aceptación</h3>
         <p>Dada la naturaleza de los productos comercializados en nuestro catálogo (artículos de consumo personal e higiene), la devolución será aceptada pura y exclusivamente si se cumplen los siguientes requisitos de manera estricta:</p>
         <ul className="list-disc pl-5 space-y-2 mt-2">
@@ -199,11 +181,9 @@ const PAGE_CONTENT = {
           <li>Los sellos térmicos, precintos de fábrica y plásticos protectores deben estar <strong>intactos y sin alteraciones</strong>.</li>
           <li>El packaging o cajas no deben presentar roturas, marcas ni abolladuras.</li>
         </ul>
-
         <div className="bg-red-50 text-red-800 p-4 rounded-xl mt-6 border border-red-100 text-sm">
           <strong>IMPORTANTE:</strong> Por normativas sanitarias, si un dispositivo electrónico de consumo o esencia ha sido abierto, encendido o sus sellos han sido rotos, se perderá automáticamente el derecho a devolución por arrepentimiento.
         </div>
-
         <p className="mt-8">Para iniciar el trámite, le solicitamos contactarse inmediatamente a nuestra línea de WhatsApp informando su número de pedido y adjuntando fotografías del estado del producto.</p>
       </div>
     )
@@ -213,47 +193,43 @@ const PAGE_CONTENT = {
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState(initialProducts);
-  
   const [promos, setPromos] = useState([]);
 
-  // --- ESTADOS PARA EL NUEVO MENÚ TIPO NIKE ---
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [sidebarStep, setSidebarStep] = useState('root'); // Puede ser 'root' o el nombre del departamento ('VAPES', 'THC', etc.)
-  const [activeFilter, setActiveFilter] = useState({ dept: 'all', cat: 'all' });
-
+  // --- NUEVOS ESTADOS DE NAVEGACIÓN Y MENÚ ---
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [currentView, setCurrentView] = useState('home'); // 'home', 'catalog', 'legal'
+  const [activeDept, setActiveDept] = useState(null); // 'VAPES', 'TECNOLOGIA', etc.
+  
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState('retiro');
   
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
-
   const [address, setAddress] = useState('');
   const [zone, setZone] = useState('');
   const [user, setUser] = useState(null);
   const [isSending, setIsSending] = useState(false);
-
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  
-  const [currentView, setCurrentView] = useState('home');
+
+  // EXTRAER DEPARTAMENTOS Y CATEGORÍAS (Lógica de Menú)
+  const departments = useMemo(() => {
+    return [...new Set(products.map(p => p.department).filter(Boolean))];
+  }, [products]);
 
   const uniqueCategories = useMemo(() => {
+    if (activeDept) {
+        return [...new Set(products.filter(p => p.department === activeDept).map(p => p.category))];
+    }
     return [...new Set(products.map(p => p.category))];
-  }, [products]);
+  }, [products, activeDept]);
 
-  // Departamentos únicos para el menú lateral
-  const departments = useMemo(() => {
-    const depts = new Set(products.map(p => p.department).filter(Boolean));
-    return Array.from(depts);
-  }, [products]);
+  // PRODUCTOS DESTACADOS Y NUEVOS (Para la Vidriera del Inicio)
+  const featuredProducts = useMemo(() => products.filter(p => p.tag && (p.tag.toLowerCase().includes('destacado') || p.tag.toLowerCase().includes('best seller') || p.tag.toLowerCase().includes('viral'))), [products]);
+  const newProducts = useMemo(() => products.filter(p => p.tag && p.tag.toLowerCase().includes('nuevo')), [products]);
 
-  const slugify = (text) => text.toString().toLowerCase()
-    .replace(/\s+/g, '-')          
-    .replace(/[^\w\-]+/g, '')       
-    .replace(/\-\-+/g, '-')         
-    .replace(/^-+/, '')             
-    .replace(/-+$/, '');            
+  const slugify = (text) => text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');            
 
   const firebaseRefs = useMemo(() => {
     if (typeof window === "undefined") return { auth: null, db: null };
@@ -268,9 +244,7 @@ export default function Home() {
       };
       const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
       return { auth: getAuth(app), db: getFirestore(app) };
-    } catch (error) {
-      return { auth: null, db: null };
-    }
+    } catch (error) { return { auth: null, db: null }; }
   }, []);
 
   useEffect(() => {
@@ -285,7 +259,6 @@ export default function Home() {
       const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
-          
           setProducts(prev => {
              const combined = [...initialProducts];
              dbProducts.forEach(dbItem => {
@@ -303,11 +276,8 @@ export default function Home() {
       });
 
       const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (snapshot) => {
-        if (!snapshot.empty) {
-            setPromos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        } else {
-            setPromos([]);
-        }
+        if (!snapshot.empty) setPromos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        else setPromos([]);
       });
 
       return () => {
@@ -321,31 +291,22 @@ export default function Home() {
   }, [firebaseRefs]);
 
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
-  
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
-  
   const getUnitPromoPrice = (item) => {
     const promo = promos.find(p => p.category === item.category);
     if (promo) {
         const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0);
-        if (catCount >= promo.minQty) {
-            return promo.totalPrice / promo.minQty;
-        }
+        if (catCount >= promo.minQty) return promo.totalPrice / promo.minQty;
     }
     return item.price;
   };
-
   const calculateTotal = () => cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice(item)), 0);
+  const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
 
-  const showToast = (message) => {
-    setToastMessage(message);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 3000);
-  };
-
-  const navigateTo = (view) => {
+  const navigateTo = (view, dept = null) => {
     setCurrentView(view);
+    setActiveDept(dept);
+    setIsMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -371,33 +332,20 @@ export default function Home() {
   };
 
   const handleCheckout = async () => {
-    if (!clientName.trim() || !clientPhone.trim()) {
-      showToast("⚠️ Por favor completá tu Nombre y Teléfono.");
-      return;
-    }
-
-    if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) {
-      showToast("⚠️ Por favor completá tu dirección y localidad.");
-      return;
-    }
+    if (!clientName.trim() || !clientPhone.trim()) { showToast("⚠️ Por favor completá tu Nombre y Teléfono."); return; }
+    if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) { showToast("⚠️ Por favor completá tu dirección y localidad."); return; }
     
     setIsSending(true);
     const finalTotal = calculateTotal();
-    
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
     
     cart.forEach(item => {
       const unitPrice = getUnitPromoPrice(item);
       const currency = item.price < 2000 ? "USD" : "$"; 
-      
       let displayName = item.name;
       const catUpper = item.category.toUpperCase().trim();
       const categoriesToShow = ['ELFBAR ICE KING', 'IGNITE V400', 'LOST MARY 20000'];
-      
-      if (categoriesToShow.includes(catUpper)) {
-          displayName = `${item.category} - ${item.name}`;
-      }
-
+      if (categoriesToShow.includes(catUpper)) displayName = `${item.category} - ${item.name}`;
       msg += `- ${item.qty}x ${displayName} (${currency}${formatPrice(unitPrice)} c/u)\n`;
     });
     
@@ -409,142 +357,77 @@ export default function Home() {
     try {
       if (firebaseRefs.db) {
         await addDoc(collection(firebaseRefs.db, 'orders'), {
-          userId: user?.uid || "anon",
-          clientName: clientName.trim(),
-          clientPhone: clientPhone.trim(),
+          userId: user?.uid || "anon", clientName: clientName.trim(), clientPhone: clientPhone.trim(),
           items: cart.map(i => {
              let dbName = i.name;
              const cUp = i.category.toUpperCase().trim();
-             if(['ELFBAR ICE KING', 'IGNITE V400', 'LOST MARY 20000'].includes(cUp)) {
-                dbName = `${i.category} - ${i.name}`;
-             }
+             if(['ELFBAR ICE KING', 'IGNITE V400', 'LOST MARY 20000'].includes(cUp)) dbName = `${i.category} - ${i.name}`;
              return { name: dbName, qty: i.qty, price: getUnitPromoPrice(i) };
           }),
-          total: finalTotal,
-          delivery: deliveryMethod,
-          address: address || '',
-          zone: zone || '',
-          status: 'pending',
-          createdAt: serverTimestamp()
+          total: finalTotal, delivery: deliveryMethod, address: address || '', zone: zone || '', status: 'pending', createdAt: serverTimestamp()
         });
       }
       setTimeout(() => { window.location.href = whatsappUrl; }, 400);
-    } catch (e) {
-      window.location.href = whatsappUrl;
-    }
+    } catch (e) { window.location.href = whatsappUrl; }
   };
 
-  // --- LÓGICA DE FILTRADO PARA LA VISTA PRINCIPAL ---
-  const visibleCategories = uniqueCategories.filter(cat => {
-    // Si hay una categoría específica seleccionada desde el menú, mostramos solo esa
-    if (activeFilter.cat !== 'all') return cat === activeFilter.cat;
-    
-    // Si hay un departamento seleccionado, mostramos todas las categorías de ese departamento
-    if (activeFilter.dept !== 'all') {
-        const sampleProd = products.find(p => p.category === cat);
-        return sampleProd && sampleProd.department === activeFilter.dept;
-    }
-    
-    // Si no hay filtros, mostramos todo
-    return true;
-  });
+  // --- RENDERIZADO DE PRODUCTO INDIVIDUAL (TARJETA) ---
+  const renderProductCard = (p, index) => {
+    const inCart = cart.find(i => i.id === p.id);
+    const isOutOfStock = p.inStock === false;
+    return (
+      <div key={p.id} className={`bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm flex flex-col hover:shadow-lg transition-all duration-300 min-w-[160px] md:min-w-[200px] snap-start ${isOutOfStock ? 'opacity-70 grayscale' : ''}`} style={{ animationDelay: `${index * 50}ms` }}>
+        <div className="relative aspect-[4/5] overflow-hidden bg-gray-50 cursor-pointer" onClick={() => setSelectedProduct(p)}>
+          <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+          {isOutOfStock ? (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center"><span className="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-sm uppercase tracking-tighter">SIN STOCK</span></div>
+          ) : p.tag && (
+            <span className="absolute top-2 left-2 bg-black text-[#d4af37] text-[8px] font-black px-2 py-1 uppercase rounded-sm">{p.tag}</span>
+          )}
+        </div>
+        <div className="p-3 md:p-4 flex-grow flex flex-col">
+          <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-1">{p.category}</p>
+          <h3 className="font-bold text-[11px] md:text-sm uppercase mb-1 text-gray-800 line-clamp-1">{p.name}</h3>
+          <div className="mt-auto pt-2">
+            <p className="text-[#d4af37] font-black text-base md:text-lg mb-3 tracking-tighter">{CONFIG.currencySymbol}{formatPrice(p.price)}</p>
+            {isOutOfStock ? (
+                <button disabled className="w-full bg-gray-100 text-gray-400 py-3.5 text-[11px] font-black uppercase tracking-wider rounded-xl cursor-not-allowed">Agotado</button>
+            ) : inCart ? (
+              <div className="flex items-center justify-between bg-black text-white h-11 rounded-xl font-bold text-sm px-1 shadow-lg">
+                <button className="w-10 h-full flex items-center justify-center hover:text-[#d4af37] transition-colors" onClick={() => changeQty(p.id, -1)}><i className="fas fa-minus text-xs"></i></button>
+                <span className="font-black text-[#d4af37]">{inCart.qty}</span>
+                <button className="w-10 h-full flex items-center justify-center hover:text-[#d4af37] transition-colors" onClick={() => addToCart(p)}><i className="fas fa-plus text-xs"></i></button>
+              </div>
+            ) : (
+              <button onClick={() => addToCart(p)} className="w-full bg-black text-white hover:bg-[#d4af37] hover:text-black hover:shadow-lg hover:shadow-[#d4af37]/30 py-3.5 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center justify-center gap-2"><i className="fas fa-shopping-bag"></i> Añadir</button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
+  // --- RENDERIZADO DE SECCIONES (CATEGORÍAS) ---
   const renderProductSection = (category) => {
-    const sectionProducts = products.filter(p => {
-       const matchCategory = p.category === category;
-       const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           p.category.toLowerCase().includes(searchTerm.toLowerCase());
-       return matchCategory && matchSearch;
-    });
-
+    let sectionProducts = products.filter(p => p.category === category);
+    if (activeDept) sectionProducts = sectionProducts.filter(p => p.department === activeDept);
+    if (searchTerm) sectionProducts = sectionProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase()));
     if (sectionProducts.length === 0) return null;
     
     const promo = promos.find(p => p.category === category);
     let promoText = null;
-    if (promo) {
-       promoText = `${promo.minQty}+ un: $${formatPrice(promo.totalPrice / promo.minQty)} c/u`;
-    }
-
-    const sectionId = slugify(category);
+    if (promo) promoText = `${promo.minQty}+ un: $${formatPrice(promo.totalPrice / promo.minQty)} c/u`;
 
     return (
-      <section key={category} id={sectionId} className="mb-16 scroll-mt-40 animate-in fade-in slide-in-from-bottom-8 duration-700">
-        <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-3 border-b-2 border-gray-100 pb-3">
+      <section key={category} id={slugify(category)} className="mb-16 scroll-mt-40 animate-in fade-in slide-in-from-bottom-8 duration-700">
+        <div className="flex flex-col md:flex-row justify-between items-baseline mb-6 gap-3 border-b-2 border-gray-100 pb-3">
           <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight uppercase relative">
-            {category}
-            <span className="absolute -bottom-[15px] left-0 w-12 h-1 bg-[#d4af37] rounded-full"></span>
+            {category} <span className="absolute -bottom-[15px] left-0 w-12 h-1 bg-[#d4af37] rounded-full"></span>
           </h2>
-          {promoText && (
-            <div className="bg-[#d4af37]/10 text-[#b8952a] px-4 py-1.5 text-xs font-black rounded-full uppercase tracking-widest flex items-center gap-2">
-              <i className="fas fa-tag"></i> {promoText}
-            </div>
-          )}
+          {promoText && <div className="bg-[#d4af37]/10 text-[#b8952a] px-4 py-1.5 text-xs font-black rounded-full uppercase tracking-widest flex items-center gap-2"><i className="fas fa-tag"></i> {promoText}</div>}
         </div>
-
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {sectionProducts.map((p, index) => {
-            const inCart = cart.find(i => i.id === p.id);
-            const isOutOfStock = p.inStock === false;
-            
-            return (
-              <div 
-                key={p.id} 
-                className={`bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm flex flex-col hover:shadow-lg transition-all duration-300 ${isOutOfStock ? 'opacity-70 grayscale' : ''}`}
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                
-                <div 
-                    className="relative aspect-[4/5] overflow-hidden bg-gray-50 cursor-pointer"
-                    onClick={() => setSelectedProduct(p)}
-                >
-                  <img 
-                    src={p.image} 
-                    alt={p.name} 
-                    className="w-full h-full object-cover" 
-                  />
-                  {isOutOfStock ? (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                        <span className="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-sm uppercase tracking-tighter">SIN STOCK</span>
-                    </div>
-                  ) : p.tag && (
-                    <span className="absolute top-2 left-2 bg-black text-[#d4af37] text-[8px] font-black px-2 py-1 uppercase rounded-sm">{p.tag}</span>
-                  )}
-                </div>
-
-                <div className="p-3 md:p-4 flex-grow flex flex-col">
-                  <h3 className="font-bold text-[11px] md:text-sm uppercase mb-1 text-gray-800 line-clamp-1">
-                    {p.name}
-                  </h3>
-                  
-                  <div className="mt-auto pt-2">
-                    <p className="text-[#d4af37] font-black text-base md:text-lg mb-3 tracking-tighter">
-                      {CONFIG.currencySymbol}{formatPrice(p.price)}
-                    </p>
-                    
-                    {isOutOfStock ? (
-                        <button disabled className="w-full bg-gray-100 text-gray-400 py-3.5 text-[11px] font-black uppercase tracking-wider rounded-xl cursor-not-allowed">
-                          Agotado
-                        </button>
-                    ) : inCart ? (
-                      <div className="flex items-center justify-between bg-black text-white h-11 rounded-xl font-bold text-sm px-1 shadow-lg">
-                        <button className="w-10 h-full flex items-center justify-center hover:text-[#d4af37] transition-colors" onClick={() => changeQty(p.id, -1)}>
-                          <i className="fas fa-minus text-xs"></i>
-                        </button>
-                        <span className="font-black text-[#d4af37]">{inCart.qty}</span>
-                        <button className="w-10 h-full flex items-center justify-center hover:text-[#d4af37] transition-colors" onClick={() => addToCart(p)}>
-                          <i className="fas fa-plus text-xs"></i>
-                        </button>
-                      </div>
-                    ) : (
-                      <button onClick={() => addToCart(p)} className="w-full bg-black text-white hover:bg-[#d4af37] hover:text-black hover:shadow-lg hover:shadow-[#d4af37]/30 py-3.5 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
-                        <i className="fas fa-shopping-bag"></i> Añadir
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {sectionProducts.map((p, index) => renderProductCard(p, index))}
         </div>
       </section>
     );
@@ -553,36 +436,23 @@ export default function Home() {
   const renderLegalPage = () => {
     const pageData = PAGE_CONTENT[currentView];
     if (!pageData) return null;
-
     return (
       <div className="bg-[#fafafa] min-h-screen py-16 px-4 md:py-24">
         <div className="max-w-3xl mx-auto bg-white p-8 md:p-16 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-gray-100 animate-in fade-in slide-in-from-bottom-8 duration-700">
-          
-          <button onClick={() => navigateTo('home')} className="mb-10 text-gray-400 hover:text-[#d4af37] transition-colors flex items-center gap-2 font-bold text-xs uppercase tracking-widest">
-            <i className="fas fa-arrow-left"></i> Volver a la Tienda
-          </button>
-
+          <button onClick={() => navigateTo('home')} className="mb-10 text-gray-400 hover:text-[#d4af37] transition-colors flex items-center gap-2 font-bold text-xs uppercase tracking-widest"><i className="fas fa-arrow-left"></i> Volver a la Tienda</button>
           <div className="text-center mb-16">
-             <span className="text-[#d4af37] font-black uppercase tracking-[0.3em] text-[10px] md:text-xs mb-4 block">
-                {pageData.subtitle}
-             </span>
-             <h1 className="text-3xl md:text-5xl font-black text-black uppercase tracking-tighter">
-                {pageData.title}
-             </h1>
+             <span className="text-[#d4af37] font-black uppercase tracking-[0.3em] text-[10px] md:text-xs mb-4 block">{pageData.subtitle}</span>
+             <h1 className="text-3xl md:text-5xl font-black text-black uppercase tracking-tighter">{pageData.title}</h1>
              <div className="w-24 h-1 bg-[#d4af37] mx-auto mt-8"></div>
           </div>
-
-          <div className="prose prose-gray max-w-none">
-             {pageData.body}
-          </div>
-
+          <div className="prose prose-gray max-w-none">{pageData.body}</div>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="bg-[#fafafa] text-[#1a1a1a] font-sans flex flex-col relative min-h-screen">
+    <div className="bg-[#fafafa] text-[#1a1a1a] font-sans flex flex-col relative pb-16 md:pb-0 min-h-screen">
       
       {toastMessage && (
          <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-black text-white px-6 py-3 rounded-full shadow-[0_10px_40px_rgba(212,175,55,0.3)] border border-[#d4af37]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">
@@ -590,158 +460,162 @@ export default function Home() {
          </div>
       )}
 
-      {/* --- EL MENÚ LATERAL (ESTILO NIKE) --- */}
-      {isSidebarOpen && (
-        <div className="fixed inset-0 z-[100] flex">
-          {/* Fondo oscuro detrás del menú */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsSidebarOpen(false)}></div>
-          
-          {/* El Drawer blanco que sale de la izquierda */}
-          <div className="relative w-[85%] max-w-[350px] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
-              
-              <div className="p-6 bg-black flex justify-between items-center text-white">
-                 <span className="font-black text-xl tracking-tighter uppercase">028<span className="text-[#d4af37]">IMPORT</span></span>
-                 <button onClick={() => setIsSidebarOpen(false)}><i className="fas fa-times text-xl text-gray-400"></i></button>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto">
-                  {sidebarStep === 'root' ? (
+      {/* HEADER SUPERIOR (BARRA DE NAVEGACIÓN FIJA) */}
+      <header className="bg-black sticky top-0 z-50 h-16 flex items-center justify-between px-4 md:px-8 shadow-xl">
+         <div className="flex items-center gap-4">
+             <button onClick={() => setIsMenuOpen(true)} className="text-white text-2xl hover:text-[#d4af37] transition-colors">
+                 <i className="fas fa-bars"></i>
+             </button>
+             <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('home')}>
+                <img src={CONFIG.logoImage} alt="Logo" className="h-8 w-auto object-contain" />
+                <span className="text-white font-black uppercase tracking-widest text-sm md:text-base hidden sm:block">028<span className="text-[#d4af37]">IMPORT</span></span>
+             </div>
+         </div>
+         <div className="flex items-center gap-4">
+             <div className="relative hidden md:block">
+                 <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                 <input type="text" placeholder="Buscar..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="bg-[#1a1a1a] text-white pl-8 pr-4 py-2 rounded-full text-xs font-bold outline-none focus:border-[#d4af37] border border-transparent transition-all placeholder:text-gray-500 w-48" />
+             </div>
+             <button onClick={() => setIsCartOpen(true)} className="relative text-white hover:text-[#d4af37] transition-colors p-2">
+                 <i className="fas fa-shopping-bag text-2xl"></i>
+                 {getTotalItems() > 0 && <span className="absolute top-0 right-0 bg-[#d4af37] text-black text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-md">{getTotalItems()}</span>}
+             </button>
+         </div>
+      </header>
+
+      {/* MENÚ LATERAL (ESTILO NIKE) */}
+      {isMenuOpen && (
+          <div className="fixed inset-0 z-[90] flex">
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsMenuOpen(false)}></div>
+              <div className="w-[85%] max-w-[350px] bg-white h-full relative z-10 animate-in slide-in-from-left duration-300 flex flex-col shadow-2xl">
+                  <div className="p-6 bg-black flex justify-between items-center text-white">
+                     <span className="font-black text-xl tracking-tighter uppercase">028<span className="text-[#d4af37]">MENU</span></span>
+                     <button onClick={() => setIsMenuOpen(false)}><i className="fas fa-times text-xl text-gray-400"></i></button>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto">
                       <div className="flex flex-col">
-                          <button onClick={() => { setActiveFilter({dept:'all', cat:'all'}); setIsSidebarOpen(false); window.scrollTo(0,0); }} className="text-left p-6 border-b border-gray-100 font-black uppercase text-sm hover:bg-gray-50 flex justify-between items-center transition-colors">
-                              Todos los Productos <i className="fas fa-th-large text-gray-300"></i>
+                          <button onClick={() => navigateTo('home')} className="text-left p-6 border-b border-gray-100 font-black uppercase text-sm hover:bg-gray-50 flex items-center gap-3 transition-colors">
+                              <i className="fas fa-home text-gray-400 w-5"></i> Inicio
                           </button>
                           
                           <div className="bg-gray-50 py-3 px-6 border-b border-gray-100">
-                              <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Departamentos</p>
+                              <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Nuestros Departamentos</p>
                           </div>
                           
                           {departments.map(dept => (
-                              <button key={dept} onClick={() => setSidebarStep(dept)} className="text-left p-6 border-b border-gray-100 font-black uppercase text-sm hover:bg-gray-50 flex justify-between items-center transition-colors">
-                                  {dept} <i className="fas fa-chevron-right text-gray-300"></i>
+                              <button key={dept} onClick={() => navigateTo('catalog', dept)} className="text-left p-6 border-b border-gray-100 font-black uppercase text-sm hover:bg-gray-50 flex justify-between items-center transition-colors group">
+                                  {dept} <i className="fas fa-chevron-right text-gray-300 group-hover:text-[#d4af37] transition-colors"></i>
                               </button>
                           ))}
                           
                           <div className="p-6 mt-4 bg-gray-50 flex-1">
                               <p className="text-[10px] font-black uppercase text-gray-400 mb-4 tracking-widest">Centro de Ayuda</p>
-                              <button onClick={() => {setCurrentView('terminos'); setIsSidebarOpen(false); window.scrollTo(0,0);}} className="block w-full text-left py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors"><i className="fas fa-file-contract w-6 text-[#d4af37]"></i> Términos de Venta</button>
-                              <button onClick={() => {setCurrentView('pagos'); setIsSidebarOpen(false); window.scrollTo(0,0);}} className="block w-full text-left py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors"><i className="fas fa-credit-card w-6 text-[#d4af37]"></i> Medios de Pago</button>
-                              <button onClick={() => {setCurrentView('arrepentimiento'); setIsSidebarOpen(false); window.scrollTo(0,0);}} className="block w-full text-left py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors"><i className="fas fa-undo w-6 text-[#d4af37]"></i> Devoluciones</button>
+                              <button onClick={() => navigateTo('terminos')} className="block w-full text-left py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors"><i className="fas fa-file-contract w-6 text-[#d4af37]"></i> Términos de Venta</button>
+                              <button onClick={() => navigateTo('pagos')} className="block w-full text-left py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors"><i className="fas fa-credit-card w-6 text-[#d4af37]"></i> Medios de Pago</button>
+                              <button onClick={() => navigateTo('arrepentimiento')} className="block w-full text-left py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors"><i className="fas fa-undo w-6 text-[#d4af37]"></i> Devoluciones</button>
                           </div>
                       </div>
-                  ) : (
-                      <div className="flex flex-col animate-in slide-in-from-right-4 duration-300">
-                          <button onClick={() => setSidebarStep('root')} className="text-left p-5 border-b border-gray-200 font-black uppercase text-[10px] text-gray-500 bg-gray-100 flex items-center gap-3 hover:bg-gray-200 transition-colors">
-                              <i className="fas fa-chevron-left"></i> Volver al Menú Principal
-                          </button>
-                          
-                          <div className="p-6 bg-white">
-                              <h3 className="font-black text-3xl uppercase tracking-tighter mb-6">{sidebarStep}</h3>
-                              
-                              <button onClick={() => { setActiveFilter({dept: sidebarStep, cat:'all'}); setIsSidebarOpen(false); window.scrollTo(0,0); }} className="w-full text-left py-4 font-black uppercase text-sm border-b border-gray-100 hover:text-[#d4af37] transition-colors">
-                                  Ver todo en {sidebarStep}
-                              </button>
-                              
-                              {Array.from(new Set(products.filter(p => p.department === sidebarStep).map(p => p.category))).map(cat => (
-                                  <button key={cat} onClick={() => { setActiveFilter({dept: sidebarStep, cat: cat}); setIsSidebarOpen(false); window.scrollTo(0,0); }} className="w-full text-left py-4 font-bold text-sm border-b border-gray-100 text-gray-600 hover:text-black hover:pl-2 transition-all">
-                                      {cat}
-                                  </button>
-                              ))}
-                          </div>
-                      </div>
-                  )}
+                  </div>
               </div>
           </div>
-        </div>
       )}
-
-      {/* NAVBAR SUPERIOR FIJA PARA LLAMAR AL MENÚ */}
-      <nav className="bg-black text-white h-16 sticky top-0 z-40 flex items-center justify-between px-4 md:px-6 shadow-md">
-         <div className="flex items-center gap-4">
-             <button onClick={() => setIsSidebarOpen(true)} className="text-2xl hover:text-[#d4af37] transition-colors p-2">
-                 <i className="fas fa-bars"></i>
-             </button>
-             <span className="font-black text-lg md:text-xl uppercase tracking-widest cursor-pointer" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}>
-                 028<span className="text-[#d4af37]">IMPORT</span>
-             </span>
-         </div>
-         <button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#d4af37] transition-colors">
-             <i className="fas fa-shopping-bag text-2xl"></i>
-             {getTotalItems() > 0 && (
-                 <span className="absolute top-1 right-0 bg-[#d4af37] text-black text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-md">
-                     {getTotalItems()}
-                 </span>
-             )}
-         </button>
-      </nav>
 
       {currentView === 'home' ? (
         <>
-          <header className="relative h-[30vh] md:h-[40vh] flex items-center justify-center bg-black overflow-hidden animate-in fade-in duration-1000">
+          <header className="relative h-[40vh] md:h-[50vh] flex items-center justify-center bg-black overflow-hidden shadow-2xl animate-in fade-in duration-1000">
             <div className="absolute inset-0 bg-cover bg-center opacity-40 scale-105" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
             <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-black/50" />
-            
             <div className="relative z-10 text-center px-4 max-w-3xl flex flex-col items-center">
-              {activeFilter.dept !== 'all' ? (
-                 <h1 className="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter mb-2 drop-shadow-2xl text-white">
-                    {activeFilter.dept}
-                 </h1>
-              ) : (
-                 <h1 className="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter mb-2 drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-r from-[#d4af37] via-[#f2e196] to-[#d4af37]">
-                    028 IMPORT
-                 </h1>
-              )}
-              <p className="text-white text-xs md:text-sm font-bold tracking-widest uppercase bg-black/40 px-5 py-2 rounded-full backdrop-blur-md border border-[#d4af37]/30 shadow-xl mt-2">
-                {activeFilter.cat !== 'all' ? activeFilter.cat : CONFIG.shippingText}
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4 drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-r from-[#d4af37] via-[#f2e196] to-[#d4af37]">
+                028 IMPORT
+              </h1>
+              <p className="text-white text-xs md:text-sm font-bold tracking-widest uppercase bg-black/40 px-5 py-2 rounded-full backdrop-blur-md border border-[#d4af37]/30 shadow-xl">
+                {CONFIG.shippingText}
               </p>
             </div>
           </header>
 
-          <div className="sticky top-16 z-30 bg-[#fafafa]/90 backdrop-blur-xl border-b border-gray-200 shadow-sm transition-all">
-              <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row gap-4 items-center justify-between">
-                
-                <div className="flex gap-3 overflow-x-auto no-scrollbar w-full md:w-auto mask-image-gradient py-1">
-                    <span className="text-[10px] font-black uppercase text-gray-400 mr-2 tracking-widest flex items-center">
-                        <i className="fas fa-filter mr-2"></i> {activeFilter.dept !== 'all' ? 'Filtro Activo:' : 'Catálogo:'}
-                    </span>
-                    
-                    {activeFilter.dept !== 'all' ? (
-                        <>
-                           <span className="whitespace-nowrap bg-black text-[#d4af37] px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-md">
-                               {activeFilter.dept} {activeFilter.cat !== 'all' && `> ${activeFilter.cat}`}
-                           </span>
-                           <button onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); window.scrollTo(0,0);}} className="whitespace-nowrap bg-gray-200 text-gray-600 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all">
-                               <i className="fas fa-times"></i> Limpiar
-                           </button>
-                        </>
-                    ) : (
-                        <span className="whitespace-nowrap bg-white border border-gray-200 text-gray-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
-                            Mostrando todos los productos
-                        </span>
-                    )}
+          <main className="flex-grow px-4 py-8 max-w-7xl mx-auto min-h-[50vh] pb-24 w-full">
+             
+             {/* BÚSQUEDA RÁPIDA MOBILE */}
+             <div className="md:hidden relative mb-8">
+                 <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                 <input type="text" placeholder="Buscar productos..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white border border-gray-200 pl-10 pr-4 py-3 rounded-2xl text-sm font-bold outline-none focus:border-[#d4af37] shadow-sm placeholder:text-gray-400" />
+             </div>
+
+             {/* CATEGORÍAS RÁPIDAS (BURBUJAS) */}
+             <div className="mb-12">
+                 <h3 className="font-black text-sm uppercase tracking-widest text-gray-500 mb-4 pl-1">Explorar Categorías</h3>
+                 <div className="flex overflow-x-auto gap-4 no-scrollbar pb-4 snap-x">
+                     {departments.map(dept => (
+                         <div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-40 md:h-40 bg-white rounded-[2rem] shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 cursor-pointer hover:shadow-md hover:border-[#d4af37] transition-all">
+                             <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-[#d4af37] text-xl">
+                                 {dept === 'VAPES' && <i className="fas fa-wind"></i>}
+                                 {dept === 'THC' && <i className="fas fa-leaf"></i>}
+                                 {dept === 'TECNOLOGÍA' && <i className="fas fa-microchip"></i>}
+                                 {dept === 'LIFESTYLE' && <i className="fas fa-star"></i>}
+                                 {dept === 'BIENESTAR' && <i className="fas fa-fire"></i>}
+                                 {!['VAPES', 'THC', 'TECNOLOGÍA', 'LIFESTYLE', 'BIENESTAR'].includes(dept) && <i className="fas fa-box"></i>}
+                             </div>
+                             <span className="font-black text-[10px] md:text-xs uppercase tracking-widest text-center px-2">{dept}</span>
+                         </div>
+                     ))}
+                 </div>
+             </div>
+
+             {/* SECCIÓN DESTACADOS (CARRUSEL HORIZONTAL) */}
+             {featuredProducts.length > 0 && (
+                <div className="mb-12">
+                    <div className="flex justify-between items-end mb-4 pl-1 border-b-2 border-gray-100 pb-2">
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase"><i className="fas fa-fire text-red-500 mr-2"></i> Más Buscados</h2>
+                        <button onClick={() => navigateTo('catalog')} className="text-[10px] font-black uppercase text-gray-400 hover:text-black">Ver Todo</button>
+                    </div>
+                    <div className="flex overflow-x-auto gap-4 no-scrollbar pb-4 snap-x">
+                        {featuredProducts.map((p, index) => renderProductCard(p, index))}
+                    </div>
                 </div>
+             )}
 
-                <div className="hidden md:block w-px h-8 bg-gray-300 mx-1 flex-shrink-0"></div>
-
-                <div className="relative w-full md:w-64 flex-shrink-0">
-                   <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                   <input 
-                      type="text" 
-                      placeholder="Buscar producto o sabor..." 
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full bg-white border border-gray-200 pl-10 pr-4 py-2.5 rounded-full text-xs font-bold outline-none focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/20 transition-all shadow-inner placeholder:text-gray-300"
-                   />
-                   {searchTerm && (
-                      <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
-                          <i className="fas fa-times text-xs"></i>
-                      </button>
-                   )}
+             {/* SECCIÓN NUEVOS INGRESOS (CARRUSEL HORIZONTAL) */}
+             {newProducts.length > 0 && (
+                <div className="mb-12">
+                    <div className="flex justify-between items-end mb-4 pl-1 border-b-2 border-gray-100 pb-2">
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase"><i className="fas fa-bolt text-[#d4af37] mr-2"></i> Nuevos Ingresos</h2>
+                        <button onClick={() => navigateTo('catalog')} className="text-[10px] font-black uppercase text-gray-400 hover:text-black">Ver Todo</button>
+                    </div>
+                    <div className="flex overflow-x-auto gap-4 no-scrollbar pb-4 snap-x">
+                        {newProducts.map((p, index) => renderProductCard(p, index))}
+                    </div>
                 </div>
-
+             )}
+          </main>
+        </>
+      ) : currentView === 'catalog' ? (
+        <>
+          <div className="bg-white sticky top-16 z-30 border-b border-gray-200 shadow-sm transition-all pt-2 pb-2">
+              <div className="max-w-7xl mx-auto px-4">
+                  <div className="flex items-center gap-2 mb-2">
+                      <button onClick={() => navigateTo('home')} className="text-gray-400 hover:text-black text-[10px] font-black uppercase tracking-widest"><i className="fas fa-home"></i> Inicio</button>
+                      <span className="text-gray-300 text-[10px]"><i className="fas fa-chevron-right"></i></span>
+                      <span className="text-black font-black uppercase tracking-widest text-[10px]">{activeDept || 'TODOS LOS PRODUCTOS'}</span>
+                  </div>
+                  
+                  {uniqueCategories.length > 0 && (
+                      <div className="flex gap-2 overflow-x-auto no-scrollbar py-2 mask-image-gradient pr-8">
+                          <span className="text-[10px] font-black uppercase text-gray-400 mr-2 tracking-widest flex items-center"><i className="fas fa-filter mr-1"></i></span>
+                          <a href="#" className="whitespace-nowrap bg-black text-[#d4af37] border-black px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">Todos</a>
+                          {uniqueCategories.map(cat => (
+                              <a key={cat} href={`#${slugify(cat)}`} className="whitespace-nowrap bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all shadow-sm flex-shrink-0">
+                                  {cat}
+                              </a>
+                          ))}
+                      </div>
+                  )}
               </div>
           </div>
 
-          <main className="flex-grow px-4 py-8 max-w-7xl mx-auto min-h-[50vh] pb-24">
+          <main className="flex-grow px-4 py-8 max-w-7xl mx-auto min-h-[50vh] pb-24 w-full">
             {searchTerm && products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
                <div className="text-center py-20 text-gray-400 bg-white rounded-3xl border-2 border-dashed border-gray-200">
                  <i className="fas fa-ghost text-4xl mb-4 text-gray-300"></i>
@@ -749,8 +623,7 @@ export default function Home() {
                  <p className="text-xs uppercase tracking-widest mt-2">Intenta buscar otro sabor o marca.</p>
                </div>
             )}
-
-            {visibleCategories.map(cat => renderProductSection(cat))}
+            {uniqueCategories.map(cat => renderProductSection(cat))}
           </main>
         </>
       ) : (
@@ -759,35 +632,41 @@ export default function Home() {
         </main>
       )}
 
-      <footer className="bg-black text-white pt-16 pb-32 md:pb-16 border-t-4 border-[#d4af37] relative z-30">
-        <div className="max-w-7xl mx-auto px-6">
+      {/* --- NAVEGACIÓN INFERIOR (ESTILO APP PARA MOBILE) --- */}
+      <nav className="md:hidden fixed bottom-0 w-full bg-white/95 backdrop-blur-xl border-t border-gray-200 z-40 pb-safe flex justify-around items-center h-16 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+         <button onClick={() => navigateTo('home')} className={`flex flex-col items-center gap-1 w-full ${currentView==='home' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}>
+             <i className="fas fa-home text-xl"></i><span className="text-[8px] font-black uppercase tracking-widest">Inicio</span>
+         </button>
+         <button onClick={() => navigateTo('catalog')} className={`flex flex-col items-center gap-1 w-full ${currentView==='catalog' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}>
+             <i className="fas fa-th-large text-xl"></i><span className="text-[8px] font-black uppercase tracking-widest">Catálogo</span>
+         </button>
+         <button onClick={() => setIsCartOpen(true)} className="flex flex-col items-center gap-1 w-full text-black relative hover:scale-105 transition-transform">
+             <div className="relative">
+                 <i className="fas fa-shopping-bag text-xl"></i>
+                 {getTotalItems() > 0 && <span className="absolute -top-1.5 -right-2 bg-[#d4af37] text-black text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full shadow-sm">{getTotalItems()}</span>}
+             </div>
+             <span className="text-[8px] font-black uppercase tracking-widest">Bolsa</span>
+         </button>
+      </nav>
 
+      {/* FOOTER DESKTOP */}
+      <footer className="hidden md:block bg-black text-white pt-16 pb-8 border-t-4 border-[#d4af37] relative z-30">
+        <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-12 text-xs md:text-sm">
-            
             <div className="space-y-5">
               <div className="flex items-center gap-3">
                  <img src={CONFIG.logoImage} alt="028Import Logo" className="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(212,175,55,0.3)]" />
                  <span className="text-xl font-black uppercase tracking-widest text-white">028<span className="text-[#d4af37]">Import</span></span>
               </div>
-              <p className="text-gray-400 font-medium leading-relaxed pr-4">
-                 Redefinimos la experiencia de compra priorizando tu tiempo y confianza. Brindamos un servicio logístico ágil y seguro, respaldado por una atención personalizada de excelencia. Porque entendemos que en el mundo actual, la eficiencia es el verdadero lujo.
-              </p>
+              <p className="text-gray-400 font-medium leading-relaxed pr-4">Redefinimos la experiencia de compra priorizando tu tiempo y confianza. Brindamos un servicio logístico ágil y seguro.</p>
             </div>
-
             <div>
               <h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-5">Contacto</h4>
               <ul className="space-y-4 text-gray-400 font-medium">
-                 <li className="flex items-center gap-3">
-                    <i className="fab fa-whatsapp text-xl text-[#d4af37]"></i>
-                    <span className="text-sm font-bold tracking-wider">11 5341 2358</span>
-                 </li>
-                 <li className="flex items-start gap-3 mt-4">
-                    <i className="fas fa-location-dot text-lg text-[#d4af37] mt-0.5"></i>
-                    <span>Miñones y Juramento,<br/>Belgrano, CABA.</span>
-                 </li>
+                 <li className="flex items-center gap-3"><i className="fab fa-whatsapp text-xl text-[#d4af37]"></i><span className="text-sm font-bold tracking-wider">11 5341 2358</span></li>
+                 <li className="flex items-start gap-3 mt-4"><i className="fas fa-location-dot text-lg text-[#d4af37] mt-0.5"></i><span>Miñones y Juramento,<br/>Belgrano, CABA.</span></li>
               </ul>
             </div>
-
             <div>
               <h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-5">Información Legal</h4>
               <ul className="space-y-3 text-gray-400 font-medium">
@@ -796,65 +675,42 @@ export default function Home() {
                 <li><button onClick={() => navigateTo('privacidad')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-shield-alt text-gray-600 text-[10px]"></i> Política de Privacidad</button></li>
               </ul>
             </div>
-
             <div>
               <h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-5">Nuestras Redes</h4>
-              <p className="text-gray-400 font-medium mb-4">Seguinos para enterarte de los nuevos ingresos antes que nadie.</p>
               <div className="flex gap-3">
-                <a href="https://www.instagram.com/028.import?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-[#d4af37] hover:text-black transition-colors shadow-lg"><i className="fab fa-instagram text-xl"></i></a>
-                <a href="https://www.tiktok.com/@028.import?is_from_webapp=1&sender_device=pc" target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-[#d4af37] hover:text-black transition-colors shadow-lg"><i className="fab fa-tiktok text-xl"></i></a>
+                <a href="https://www.instagram.com/028.import" target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-[#d4af37] hover:text-black transition-colors shadow-lg"><i className="fab fa-instagram text-xl"></i></a>
                 <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-[#25D366] hover:text-white transition-colors shadow-lg"><i className="fab fa-whatsapp text-xl"></i></a>
               </div>
             </div>
-            
           </div>
-
           <div className="flex flex-col md:flex-row justify-between items-center border-t border-white/10 pt-8 text-[9px] md:text-[10px] text-gray-500 uppercase tracking-widest text-center md:text-left gap-4">
-            <p className="flex items-center gap-2 justify-center">
-               <i className="fas fa-map-marker-alt"></i> Argentina
-            </p>
+            <p className="flex items-center gap-2 justify-center"><i className="fas fa-map-marker-alt"></i> Argentina</p>
             <p>© {new Date().getFullYear()} 028IMPORT. Todos los derechos reservados.</p>
-            <div className="flex gap-4">
-              <button onClick={() => navigateTo('arrepentimiento')} className="hover:text-white transition-colors">Botón de Arrepentimiento</button>
-            </div>
+            <div className="flex gap-4"><button onClick={() => navigateTo('arrepentimiento')} className="hover:text-white transition-colors">Botón de Arrepentimiento</button></div>
           </div>
-
         </div>
       </footer>
 
+      {/* MODALES DE PRODUCTO Y CARRITO SE MANTIENEN IGUAL QUE SIEMPRE */}
       {selectedProduct && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6">
            <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setSelectedProduct(null)}></div>
-           
            <div className="relative bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col md:flex-row max-h-[90vh]">
-              <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/80 backdrop-blur-md text-black rounded-full flex items-center justify-center hover:bg-black hover:text-white transition-colors shadow-lg">
-                <i className="fas fa-times"></i>
-              </button>
-
+              <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/80 backdrop-blur-md text-black rounded-full flex items-center justify-center hover:bg-black hover:text-white transition-colors shadow-lg"><i className="fas fa-times"></i></button>
               <div className="w-full md:w-1/2 bg-gray-50 p-8 flex items-center justify-center relative min-h-[300px]">
                  {selectedProduct.tag && <span className="absolute top-6 left-6 bg-black text-[#d4af37] text-[10px] font-black px-4 py-2 uppercase tracking-widest rounded-full shadow-lg z-10">{selectedProduct.tag}</span>}
                  <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full max-h-[500px] object-contain drop-shadow-2xl animate-in scale-95 duration-500" />
               </div>
-
               <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center overflow-y-auto">
                  <p className="text-[#d4af37] font-black uppercase tracking-[0.2em] text-[10px] mb-2">{selectedProduct.category}</p>
                  <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-gray-900 leading-none mb-6">{selectedProduct.name}</h2>
-                 
-                 <p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed whitespace-pre-line">
-                   {selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium. El sabor y rendimiento que estabas buscando en un formato elegante y exclusivo."}
-                 </p>
-
+                 <p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed whitespace-pre-line">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p>
                  <div className="mt-auto border-t border-gray-100 pt-8">
-                    <p className="text-[#d4af37] font-black text-4xl tracking-tighter mb-6">
-                      {CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}
-                    </p>
-
+                    <p className="text-[#d4af37] font-black text-4xl tracking-tighter mb-6">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}</p>
                     {selectedProduct.inStock === false ? (
                         <button disabled className="w-full bg-gray-200 text-gray-500 py-4 text-xs font-black uppercase tracking-widest rounded-2xl cursor-not-allowed">Producto Agotado</button>
                     ) : (
-                        <button onClick={() => addToCart(selectedProduct)} className="w-full bg-black text-white hover:bg-[#d4af37] hover:text-black py-4 text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl hover:shadow-[#d4af37]/30 transition-all duration-300 flex justify-center items-center gap-3">
-                           <i className="fas fa-shopping-cart text-lg"></i> Agregar a mi pedido
-                        </button>
+                        <button onClick={() => addToCart(selectedProduct)} className="w-full bg-black text-white hover:bg-[#d4af37] hover:text-black py-4 text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl hover:shadow-[#d4af37]/30 transition-all duration-300 flex justify-center items-center gap-3"><i className="fas fa-shopping-cart text-lg"></i> Agregar a mi pedido</button>
                     )}
                  </div>
               </div>
@@ -865,117 +721,70 @@ export default function Home() {
       {isCartOpen && (
         <div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} />
-          
           <div className="relative bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[85vh] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-8 duration-300 flex flex-col">
-            
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
               <div>
                 <h2 className="text-2xl font-black uppercase tracking-tighter text-black">Tu Bolsa</h2>
                 <p className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">{getTotalItems()} artículos</p>
               </div>
-              <button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-gray-100 rounded-full text-gray-500 hover:bg-black hover:text-white transition-colors flex items-center justify-center">
-                <i className="fas fa-times text-lg"></i>
-              </button>
+              <button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-gray-100 rounded-full text-gray-500 hover:bg-black hover:text-white transition-colors flex items-center justify-center"><i className="fas fa-times text-lg"></i></button>
             </div>
-
             <div className="overflow-y-auto p-6 flex-grow no-scrollbar bg-gray-50/50">
               <div className="space-y-4 mb-8">
+                {cart.length === 0 && <p className="text-center text-gray-400 text-xs font-black uppercase tracking-widest py-10">Tu bolsa está vacía</p>}
                 {cart.map(item => (
                   <div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center p-1">
-                        <img src={item.image} className="w-full h-full object-contain" alt="" />
-                      </div>
+                      <div className="w-14 h-14 bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center p-1"><img src={item.image} className="w-full h-full object-contain" alt="" /></div>
                       <div className="flex flex-col">
                         <p className="font-bold text-xs uppercase tracking-tight max-w-[150px] sm:max-w-[200px] truncate">{item.name}</p>
                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{item.qty} unidades</p>
                       </div>
                     </div>
-                    <p className="font-black text-[#d4af37] text-sm tracking-tighter">
-                      {CONFIG.currencySymbol}{formatPrice(item.qty * getUnitPromoPrice(item))}
-                    </p>
+                    <p className="font-black text-[#d4af37] text-sm tracking-tighter">{CONFIG.currencySymbol}{formatPrice(item.qty * getUnitPromoPrice(item))}</p>
                   </div>
                 ))}
               </div>
-
-              <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm mb-4">
-                <p className="font-black text-[11px] mb-4 uppercase tracking-widest text-gray-800 flex items-center gap-2">
-                  <i className="fas fa-user text-[#d4af37]"></i> Tus Datos
-                </p>
-                <div className="flex flex-col gap-3">
-                  <input 
-                    type="text" 
-                    placeholder="Nombre completo" 
-                    value={clientName} 
-                    onChange={(e) => setClientName(e.target.value)} 
-                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" 
-                  />
-                  <input 
-                    type="tel" 
-                    placeholder="Número de WhatsApp (Ej: 1123456789)" 
-                    value={clientPhone} 
-                    onChange={(e) => setClientPhone(e.target.value)} 
-                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" 
-                  />
-                </div>
-              </div>
-
-              <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                <p className="font-black text-[11px] mb-4 uppercase tracking-widest text-gray-800 flex items-center gap-2">
-                  <i className="fas fa-truck text-[#d4af37]"></i> Entrega
-                </p>
-                <div className="flex gap-2 mb-5 bg-gray-100 p-1 rounded-xl">
-                  <button onClick={() => setDeliveryMethod('retiro')} className={`flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${deliveryMethod === 'retiro' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Retiro Local</button>
-                  <button onClick={() => setDeliveryMethod('envio')} className={`flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${deliveryMethod === 'envio' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Envío Domicilio</button>
-                </div>
-                
-                {deliveryMethod === 'envio' && (
-                  <div className="flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-300">
-                    <input 
-                       type="text" 
-                       placeholder="Dirección completa" 
-                       value={address} 
-                       onChange={(e) => setAddress(e.target.value)} 
-                       className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" 
-                    />
-                    <input 
-                       type="text" 
-                       placeholder="Barrio / Localidad" 
-                       value={zone} 
-                       onChange={(e) => setZone(e.target.value)} 
-                       className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" 
-                    />
-                  </div>
-                )}
-              </div>
+              {cart.length > 0 && (
+                  <>
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm mb-4">
+                      <p className="font-black text-[11px] mb-4 uppercase tracking-widest text-gray-800 flex items-center gap-2"><i className="fas fa-user text-[#d4af37]"></i> Tus Datos</p>
+                      <div className="flex flex-col gap-3">
+                        <input type="text" placeholder="Nombre completo" value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" />
+                        <input type="tel" placeholder="Número de WhatsApp" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" />
+                      </div>
+                    </div>
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                      <p className="font-black text-[11px] mb-4 uppercase tracking-widest text-gray-800 flex items-center gap-2"><i className="fas fa-truck text-[#d4af37]"></i> Entrega</p>
+                      <div className="flex gap-2 mb-5 bg-gray-100 p-1 rounded-xl">
+                        <button onClick={() => setDeliveryMethod('retiro')} className={`flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${deliveryMethod === 'retiro' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Retiro Local</button>
+                        <button onClick={() => setDeliveryMethod('envio')} className={`flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${deliveryMethod === 'envio' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Envío Domicilio</button>
+                      </div>
+                      {deliveryMethod === 'envio' && (
+                        <div className="flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-300">
+                          <input type="text" placeholder="Dirección completa" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" />
+                          <input type="text" placeholder="Barrio / Localidad" value={zone} onChange={(e) => setZone(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                  </>
+              )}
             </div>
-
-            <div className="p-6 bg-white border-t border-gray-100 sticky bottom-0">
-               <div className="flex justify-between items-end mb-6">
-                 <span className="font-black text-gray-400 text-xs uppercase tracking-widest">Total a Pagar</span>
-                 <span className="font-black text-3xl text-black tracking-tighter leading-none">
-                    <span className="text-[#d4af37] text-xl mr-1">{CONFIG.currencySymbol}</span>
-                    {formatPrice(calculateTotal())}
-                 </span>
-               </div>
-               
-               <button 
-                  onClick={handleCheckout} 
-                  disabled={isSending} 
-                  className={`w-full ${isSending ? 'bg-gray-200 text-gray-400 border-none' : 'bg-black text-white hover:bg-[#d4af37] hover:text-black shadow-xl hover:shadow-[#d4af37]/40'} font-black py-4 rounded-2xl uppercase tracking-widest text-xs flex justify-center items-center gap-3 transition-all duration-300`}
-                >
-                {isSending ? (
-                  <><i className="fas fa-circle-notch fa-spin"></i> Procesando...</>
-                ) : (
-                  <><i className="fab fa-whatsapp text-lg"></i> Confirmar Pedido</>
-                )}
-              </button>
-            </div>
-
+            {cart.length > 0 && (
+                <div className="p-6 bg-white border-t border-gray-100 sticky bottom-0">
+                   <div className="flex justify-between items-end mb-6">
+                     <span className="font-black text-gray-400 text-xs uppercase tracking-widest">Total a Pagar</span>
+                     <span className="font-black text-3xl text-black tracking-tighter leading-none"><span className="text-[#d4af37] text-xl mr-1">{CONFIG.currencySymbol}</span>{formatPrice(calculateTotal())}</span>
+                   </div>
+                   <button onClick={handleCheckout} disabled={isSending} className={`w-full ${isSending ? 'bg-gray-200 text-gray-400 border-none' : 'bg-black text-white hover:bg-[#d4af37] hover:text-black shadow-xl hover:shadow-[#d4af37]/40'} font-black py-4 rounded-2xl uppercase tracking-widest text-xs flex justify-center items-center gap-3 transition-all duration-300`}>
+                    {isSending ? <><i className="fas fa-circle-notch fa-spin"></i> Procesando...</> : <><i className="fab fa-whatsapp text-lg"></i> Confirmar Pedido</>}
+                  </button>
+                </div>
+            )}
           </div>
         </div>
       )}
-
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     </div>
   );
 }
