@@ -85,6 +85,10 @@ export default function AdminPage() {
   const [promos, setPromos] = useState([]);
   const [newPromo, setNewPromo] = useState({ category: '', minQty: 2, totalPrice: '' });
 
+  // --- NUEVOS ESTADOS PARA GESTIONAR EL INICIO (VIDRIERA) ---
+  const [homeSections, setHomeSections] = useState([]);
+  const [newSectionTitle, setNewSectionTitle] = useState('');
+
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false); 
 
@@ -97,10 +101,8 @@ export default function AdminPage() {
     return [...new Set(products.map(p => p.category))];
   }, [products]);
 
-  // Departamentos base
   const PREDEFINED_DEPARTMENTS = ["VAPES", "THC", "TECNOLOGÍA", "LIFESTYLE", "BIENESTAR"];
   
-  // Extraemos todos los departamentos únicos que existan en la base actual (por si se agregaron nuevos)
   const availableDepartments = useMemo(() => {
     return Array.from(new Set([...PREDEFINED_DEPARTMENTS, ...products.map(p => p.department).filter(Boolean)]));
   }, [products]);
@@ -172,7 +174,6 @@ export default function AdminPage() {
       const unsubscribeProducts = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
-          
           setProducts(prev => {
              const updatedInitial = initialProducts.map(p => {
                 const match = dbProducts.find(dbP => dbP.id === p.id);
@@ -180,21 +181,24 @@ export default function AdminPage() {
                   ? { ...p, ...match, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price, order: match.order !== undefined ? match.order : 99, description: match.description !== undefined ? match.description : p.description, isHidden: match.isHidden || match.isDeleted, department: match.department !== undefined ? match.department : p.department } 
                   : { ...p, inStock: true, order: 99, isHidden: false };
              }).filter(Boolean);
-             
-             const newFromDb = dbProducts.filter(dbP => 
-                !initialProducts.find(p => p.id === dbP.id)
-             ).map(dbP => ({...dbP, isHidden: dbP.isHidden || dbP.isDeleted})); 
-             
+             const newFromDb = dbProducts.filter(dbP => !initialProducts.find(p => p.id === dbP.id)).map(dbP => ({...dbP, isHidden: dbP.isHidden || dbP.isDeleted})); 
              return [...updatedInitial, ...newFromDb].sort((a, b) => (a.order || 99) - (b.order || 99));
           });
         }
       });
 
       const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (snapshot) => {
+        if (!snapshot.empty) setPromos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        else setPromos([]);
+      });
+
+      // --- SUSCRIPCIÓN A LAS SECCIONES DE LA VIDRIERA ---
+      const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (snapshot) => {
         if (!snapshot.empty) {
-            setPromos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            const sections = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
+            setHomeSections(sections.sort((a, b) => a.order - b.order));
         } else {
-            setPromos([]);
+            setHomeSections([]);
         }
       });
 
@@ -202,12 +206,65 @@ export default function AdminPage() {
         unsubscribeOrders();
         unsubscribeProducts();
         unsubscribePromos();
+        unsubscribeHomeSections();
       };
     });
 
     return () => unsubscribeAuth();
   }, [firebaseRefs]);
 
+  // --- FUNCIONES PARA LA VIDRIERA (INICIO) ---
+  const createHomeSection = async () => {
+    if(!newSectionTitle.trim()) return alert("Escribí un título para la sección");
+    try {
+        const newId = `sec_${Date.now()}`;
+        await setDoc(doc(firebaseRefs.db, 'home_sections', newId), {
+            id: newId,
+            title: newSectionTitle.toUpperCase(),
+            icon: 'fa-star', // Ícono por defecto
+            productIds: [],
+            order: homeSections.length + 1,
+            createdAt: serverTimestamp()
+        });
+        setNewSectionTitle('');
+    } catch(err) { alert("Error al crear sección: " + err.message); }
+  };
+
+  const deleteHomeSection = async (sectionId) => {
+    if(!confirm("¿Borrar esta sección de la vidriera? (Los productos NO se borran, solo desaparecen de esta fila).")) return;
+    try {
+        await deleteDoc(doc(firebaseRefs.db, 'home_sections', sectionId));
+    } catch(err) { alert("Error al borrar: " + err.message); }
+  };
+
+  const addProductToSection = async (sectionId, productId) => {
+    if(!productId) return;
+    try {
+        const section = homeSections.find(s => s.dbId === sectionId);
+        if(!section) return;
+        const currentProducts = section.productIds || [];
+        if(currentProducts.includes(productId)) return alert("El producto ya está en esta sección");
+        
+        await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), {
+            productIds: [...currentProducts, productId]
+        }, { merge: true });
+    } catch(err) { alert("Error al agregar producto."); }
+  };
+
+  const removeProductFromSection = async (sectionId, productId) => {
+    try {
+        const section = homeSections.find(s => s.dbId === sectionId);
+        if(!section) return;
+        const currentProducts = section.productIds || [];
+        
+        await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), {
+            productIds: currentProducts.filter(id => id !== productId)
+        }, { merge: true });
+    } catch(err) { alert("Error al quitar producto."); }
+  };
+
+
+  // --- FUNCIONES ORIGINALES DE ADMIN ---
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!newProduct.category) return alert("Por favor escribe o selecciona una categoría.");
@@ -233,35 +290,26 @@ export default function AdminPage() {
       });
       alert("¡Producto agregado con éxito!");
       setNewProduct({ name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '' });
-    } catch (error) {
-      alert("Error al crear: " + error.message);
-    }
+    } catch (error) { alert("Error al crear: " + error.message); }
     setIsAdding(false);
   };
 
   const handleAddPromo = async (e) => {
     e.preventDefault();
     if(!newPromo.category || !newPromo.minQty || !newPromo.totalPrice) return alert("Completa todos los campos");
-    
     try {
       const promoId = newPromo.category.toLowerCase().replace(/\s+/g, '-');
       await setDoc(doc(firebaseRefs.db, 'promos', promoId), {
-        category: newPromo.category,
-        minQty: Number(newPromo.minQty),
-        totalPrice: Number(newPromo.totalPrice),
-        createdAt: serverTimestamp()
+        category: newPromo.category, minQty: Number(newPromo.minQty), totalPrice: Number(newPromo.totalPrice), createdAt: serverTimestamp()
       });
       alert("¡Promoción guardada y activada con éxito!");
       setNewPromo({ category: '', minQty: 2, totalPrice: '' });
-    } catch(err) {
-      alert("Error al guardar promo: " + err.message);
-    }
+    } catch(err) { alert("Error al guardar promo: " + err.message); }
   };
 
   const handleDeletePromo = async (id) => {
     if(confirm("¿Seguro que quieres eliminar esta promoción? Los precios volverán a la normalidad.")) {
-       try { await deleteDoc(doc(firebaseRefs.db, 'promos', id)); }
-       catch(err) { alert("Error al eliminar promo: " + err.message); }
+       try { await deleteDoc(doc(firebaseRefs.db, 'promos', id)); } catch(err) { alert("Error al eliminar promo: " + err.message); }
     }
   };
 
@@ -269,117 +317,74 @@ export default function AdminPage() {
     try {
         const newHiddenStatus = !(product.isHidden);
         const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
-        await setDoc(productRef, {
-            id: product.id,
-            isHidden: newHiddenStatus,
-            isDeleted: false
-        }, { merge: true });
+        await setDoc(productRef, { id: product.id, isHidden: newHiddenStatus, isDeleted: false }, { merge: true });
     } catch (err) { alert("Error al cambiar la visibilidad."); }
   };
 
   const handleDeleteProduct = async (product) => {
     if(!confirm(`¿Seguro que quieres ELIMINAR DEFINITIVAMENTE "${product.name}" de la base de datos? Si solo quieres que los clientes no lo vean, usa el botón del Ojo para Pausarlo.`)) return;
-    try {
-        await deleteDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`));
-    } catch (err) {
-        alert("Error al eliminar: " + err.message);
-    }
+    try { await deleteDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`)); } catch (err) { alert("Error al eliminar: " + err.message); }
   };
 
   const handleDeleteCategory = async (categoryName) => {
     if(!confirm(`⚠️ ATENCIÓN: ¿Estás seguro de que querés ELIMINAR la categoría "${categoryName}" por completo?\n\nEsto borrará DEFINITIVAMENTE todos los productos que pertenezcan a esta categoría de la base de datos. Esta acción NO se puede deshacer.`)) return;
-
     try {
       const productsToDelete = products.filter(p => p.category === categoryName);
-      for (const p of productsToDelete) {
-         await deleteDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`));
-      }
-      try {
-         await deleteDoc(doc(firebaseRefs.db, 'promos', categoryName.toLowerCase().replace(/\s+/g, '-')));
-      } catch (e) {} 
+      for (const p of productsToDelete) { await deleteDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`)); }
+      try { await deleteDoc(doc(firebaseRefs.db, 'promos', categoryName.toLowerCase().replace(/\s+/g, '-'))); } catch (e) {} 
       alert(`Categoría "${categoryName}" eliminada correctamente.`);
-    } catch (err) {
-      alert("Error al eliminar la categoría: " + err.message);
-    }
+    } catch (err) { alert("Error al eliminar la categoría: " + err.message); }
   };
 
   const toggleStock = async (product) => {
     try {
       const newStockStatus = product.inStock === false ? true : false;
       const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
-      await setDoc(productRef, {
-        id: product.id,
-        name: product.name,
-        inStock: newStockStatus,
-        price: product.price 
-      }, { merge: true });
+      await setDoc(productRef, { id: product.id, name: product.name, inStock: newStockStatus, price: product.price }, { merge: true });
     } catch (err) { alert("Error de permisos o conexión."); }
   };
 
   const updatePrice = async (product, newPrice) => {
     const price = parseInt(newPrice);
     if(isNaN(price) || price < 0) return alert("Por favor ingresa un precio válido");
-    try {
-        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
-        await setDoc(productRef, { id: product.id, price: price }, { merge: true });
-    } catch(err) { alert("Error al actualizar precio."); }
+    try { const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`); await setDoc(productRef, { id: product.id, price: price }, { merge: true }); } catch(err) { alert("Error al actualizar precio."); }
   }
 
   const updateName = async (product, newName) => {
     const name = newName.trim().toUpperCase();
     if(!name) return alert("El nombre no puede estar vacío");
-    try {
-        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
-        await setDoc(productRef, { id: product.id, name: name }, { merge: true });
-    } catch(err) { alert("Error al actualizar nombre."); }
+    try { const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`); await setDoc(productRef, { id: product.id, name: name }, { merge: true }); } catch(err) { alert("Error al actualizar nombre."); }
   }
 
   const updateOrder = async (product, newOrder) => {
     const orderNum = parseInt(newOrder);
     if(isNaN(orderNum)) return;
-    try {
-        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
-        await setDoc(productRef, { id: product.id, order: orderNum }, { merge: true });
-    } catch(err) { alert("Error al actualizar posición."); }
+    try { const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`); await setDoc(productRef, { id: product.id, order: orderNum }, { merge: true }); } catch(err) { alert("Error al actualizar posición."); }
   }
 
   const updateDescription = async (product, newDesc) => {
     const desc = newDesc.trim();
-    try {
-        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
-        await setDoc(productRef, { id: product.id, description: desc }, { merge: true });
-    } catch(err) { alert("Error al actualizar descripción."); }
+    try { const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`); await setDoc(productRef, { id: product.id, description: desc }, { merge: true }); } catch(err) { alert("Error al actualizar descripción."); }
   }
 
-  // --- NUEVA FUNCIÓN: ACTUALIZAR DEPARTAMENTO PARA TODA LA CATEGORÍA ---
   const updateCategoryDepartment = async (categoryName, newDept) => {
     const dept = newDept.trim().toUpperCase();
     if (!dept) return;
-    
     try {
         const productsToUpdate = products.filter(p => p.category === categoryName);
         await Promise.all(productsToUpdate.map(p => {
             const productRef = doc(firebaseRefs.db, 'products', `prod_${p.id}`);
             return setDoc(productRef, { id: p.id, department: dept }, { merge: true });
         }));
-        // No alert needed, it updates live and is smooth.
-    } catch (err) {
-        alert("Error al actualizar el departamento de la categoría: " + err.message);
-    }
+    } catch (err) { alert("Error al actualizar el departamento de la categoría: " + err.message); }
   }
 
   const completeOrder = async (id) => {
-    if (confirm("¿Confirmas que el pedido fue entregado?")) {
-      try {
-        await updateDoc(doc(firebaseRefs.db, 'orders', id), { status: 'completed' });
-      } catch (err) { alert("Error al completar."); }
-    }
+    if (confirm("¿Confirmas que el pedido fue entregado?")) { try { await updateDoc(doc(firebaseRefs.db, 'orders', id), { status: 'completed' }); } catch (err) { alert("Error al completar."); } }
   };
 
   const deleteOrder = async (id) => {
-    if (confirm("¿Eliminar pedido permanentemente?")) {
-      try { await deleteDoc(doc(firebaseRefs.db, 'orders', id)); } catch (err) { alert("Error al eliminar."); }
-    }
+    if (confirm("¿Eliminar pedido permanentemente?")) { try { await deleteDoc(doc(firebaseRefs.db, 'orders', id)); } catch (err) { alert("Error al eliminar."); } }
   };
 
   const syncAllProducts = async () => {
@@ -388,14 +393,7 @@ export default function AdminPage() {
         try {
             for (const p of initialProducts) {
                 await setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), {
-                    id: p.id,
-                    name: p.name,
-                    department: p.department || "OTROS",
-                    category: p.category, 
-                    image: p.image,
-                    description: p.description || "",
-                    order: 99,
-                    isHidden: false
+                    id: p.id, name: p.name, department: p.department || "OTROS", category: p.category, image: p.image, description: p.description || "", order: 99, isHidden: false
                 }, { merge: true });
             }
             alert("Catálogo sincronizado perfectamente.");
@@ -423,8 +421,6 @@ export default function AdminPage() {
   const renderStockGroup = (categoryFilter) => {
     const group = products.filter(p => p.category === categoryFilter);
     if (group.length === 0) return null;
-
-    // Tomamos el departamento actual del primer producto de la categoría para mostrarlo
     const currentDept = group[0]?.department || "SIN DEPTO";
 
     return (
@@ -432,18 +428,12 @@ export default function AdminPage() {
             <div className={`flex flex-col md:flex-row md:justify-between md:items-center gap-3 border-b pb-3 mb-4 ${darkMode ? 'border-[#262626]' : 'border-gray-200'}`}>
                <div className="flex items-center gap-4">
                    <h3 className={`text-xl font-bold uppercase ${theme.subText}`}>{categoryFilter}</h3>
-                   
-                   {/* NUEVO SELECTOR DE DEPARTAMENTO A NIVEL CATEGORÍA */}
                    <div className="flex items-center gap-2 bg-[#d4af37]/10 px-3 py-1.5 rounded-lg border border-[#d4af37]/30">
                        <span className="text-[9px] font-black uppercase text-[#b8952a] tracking-widest">Depto:</span>
                        <input
                            list="dept-suggestions-stock"
                            defaultValue={currentDept}
-                           onBlur={(e) => {
-                               if(e.target.value.toUpperCase() !== currentDept.toUpperCase()) {
-                                   updateCategoryDepartment(categoryFilter, e.target.value);
-                               }
-                           }}
+                           onBlur={(e) => { if(e.target.value.toUpperCase() !== currentDept.toUpperCase()) updateCategoryDepartment(categoryFilter, e.target.value); }}
                            onKeyDown={(e) => { if(e.key === 'Enter') e.target.blur(); }}
                            className={`bg-transparent text-[10px] font-black uppercase outline-none w-28 md:w-32 border-b border-transparent hover:border-[#d4af37] focus:border-[#d4af37] transition-colors ${darkMode ? 'text-white' : 'text-black'}`}
                            placeholder="Escribí..."
@@ -454,12 +444,10 @@ export default function AdminPage() {
                        </datalist>
                    </div>
                </div>
-               
                <button onClick={() => handleDeleteCategory(categoryFilter)} className="w-fit text-red-500 hover:text-red-700 hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 text-[10px] font-black uppercase">
                   <i className="fas fa-trash"></i> Borrar Categoría
                </button>
             </div>
-            
             <div className="grid gap-4">
                 {group.map(p => (
                     <div key={p.id} className={`${theme.card} p-5 rounded-[1.5rem] flex justify-between items-start shadow-sm border ${theme.cardHover} transition-all ${p.isHidden ? 'opacity-60 bg-gray-50/50' : ''}`}>
@@ -475,17 +463,12 @@ export default function AdminPage() {
                                     defaultValue={p.name} 
                                     className={`font-black text-[11px] uppercase w-full bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#d4af37] outline-none transition-colors pb-0.5 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`} 
                                     onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }} 
-                                    onBlur={(e) => { 
-                                        if (e.target.value.toUpperCase() !== p.name.toUpperCase()) {
-                                            updateName(p, e.target.value); 
-                                        }
-                                    }} 
+                                    onBlur={(e) => { if (e.target.value.toUpperCase() !== p.name.toUpperCase()) updateName(p, e.target.value); }} 
                                     title="Haz clic para editar el nombre"
                                 />
                                 <div className="flex items-center gap-2">
                                      <span className="text-gray-400 text-[10px]">$</span>
                                      <input type="number" key={`price-${p.price}`} defaultValue={p.price} className={`w-20 rounded px-2 py-1 text-[10px] font-bold focus:border-[#d4af37] outline-none transition-colors ${theme.input}`} onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }} onBlur={(e) => { if (parseInt(e.target.value) !== p.price) updatePrice(p, e.target.value); }} />
-                                     
                                      <div className="flex items-center gap-1 ml-2 pl-2 border-l border-gray-200 dark:border-[#404040]">
                                         <span className="text-gray-400 text-[10px]">Pos:</span>
                                         <input 
@@ -503,31 +486,23 @@ export default function AdminPage() {
                                   <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.isHidden ? 'bg-amber-900/30 text-amber-500' : (p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400')}`}>
                                       {p.isHidden ? 'Oculto' : (p.inStock === false ? 'Agotado' : 'Disponible')}
                                   </span>
-                                  {/* El departamento se muestra como etiqueta de solo lectura porque se edita arriba en la categoría */}
                                   <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${darkMode ? 'border-gray-700 text-gray-400' : 'border-gray-300 text-gray-500'}`}>
                                       {p.department || 'SIN DEPTO'}
                                   </span>
                                 </div>
-
                                 <textarea
                                     defaultValue={p.description || ""}
                                     placeholder="Escribe la biografía o descripción del producto aquí..."
                                     className={`w-full mt-2 text-[10px] p-2 rounded-lg outline-none transition-colors border focus:border-[#d4af37] resize-none ${darkMode ? 'bg-[#262626] border-[#404040] text-gray-300 placeholder-gray-500' : 'bg-gray-50 border-gray-200 text-gray-600 placeholder-gray-400'}`}
                                     rows="2"
-                                    onBlur={(e) => {
-                                        if (e.target.value !== (p.description || "")) {
-                                            updateDescription(p, e.target.value);
-                                        }
-                                    }}
+                                    onBlur={(e) => { if (e.target.value !== (p.description || "")) updateDescription(p, e.target.value); }}
                                     title="Haz clic para editar la biografía"
                                 />
                             </div>
                         </div>
                         <div className="flex flex-col lg:flex-row items-center gap-2 flex-shrink-0 mt-1">
                              <button onClick={() => toggleStock(p)} className={`w-full lg:w-auto px-4 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-900/20 text-red-500 border border-red-900/30'}`}>{p.inStock === false ? 'Habilitar' : 'Agotar'}</button>
-                             <button onClick={() => toggleVisibility(p)} title={p.isHidden ? 'Mostrar en tienda' : 'Ocultar de la tienda'} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm ${p.isHidden ? 'bg-amber-100 text-amber-600 hover:bg-amber-500 hover:text-white' : 'bg-gray-200 text-gray-500 hover:bg-amber-500 hover:text-white'}`}>
-                                 <i className={`fas ${p.isHidden ? 'fa-eye-slash' : 'fa-eye'} text-xs`}></i>
-                             </button>
+                             <button onClick={() => toggleVisibility(p)} title={p.isHidden ? 'Mostrar en tienda' : 'Ocultar de la tienda'} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm ${p.isHidden ? 'bg-amber-100 text-amber-600 hover:bg-amber-500 hover:text-white' : 'bg-gray-200 text-gray-500 hover:bg-amber-500 hover:text-white'}`}><i className={`fas ${p.isHidden ? 'fa-eye-slash' : 'fa-eye'} text-xs`}></i></button>
                              <button onClick={() => handleDeleteProduct(p)} title="Eliminar definitivamente" className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-200 hover:bg-red-500 hover:text-white transition-all text-gray-500 shadow-sm"><i className="fas fa-trash text-xs"></i></button>
                         </div>
                     </div>
@@ -561,14 +536,90 @@ export default function AdminPage() {
         <div className="max-w-4xl mx-auto flex overflow-x-auto no-scrollbar">
           <button onClick={() => setActiveTab('pendientes')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'pendientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Pedidos</button>
           <button onClick={() => setActiveTab('stock')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'stock' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Stock</button>
+          
+          {/* NUEVA PESTAÑA VIDRIERA */}
+          <button onClick={() => setActiveTab('vidriera')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'vidriera' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Vidriera</button>
+          
           <button onClick={() => setActiveTab('crear')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'crear' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Crear +</button>
           <button onClick={() => setActiveTab('clientes')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'clientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Clientes</button>
-          <button onClick={() => setActiveTab('promos')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'promos' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Promos %</button>
+          <button onClick={() => setActiveTab('promos')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'promos' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Promos</button>
         </div>
       </div>
 
       <main className="max-w-4xl mx-auto p-4 md:p-8">
         
+        {/* --- NUEVA PESTAÑA: VIDRIERA --- */}
+        {activeTab === 'vidriera' && (
+          <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
+             <div className="flex justify-between items-end mb-8">
+                <div>
+                   <h2 className={`text-3xl font-black uppercase tracking-tighter leading-none ${theme.text}`}>Vidriera</h2>
+                   <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">Armá las secciones principales del Inicio</p>
+                </div>
+             </div>
+
+             <div className={`${theme.card} p-6 rounded-[2rem] mb-8 flex flex-col md:flex-row gap-4 items-end shadow-sm`}>
+                <div className="flex-1 w-full">
+                   <label className="text-[10px] font-black uppercase text-gray-400">Título de la nueva sección (Ej: Ofertas Relámpago)</label>
+                   <input type="text" value={newSectionTitle} onChange={e=>setNewSectionTitle(e.target.value)} placeholder="Escribí acá..." className={`w-full mt-2 p-4 rounded-xl outline-none font-bold text-sm ${theme.input}`}/>
+                </div>
+                <button onClick={createHomeSection} className="w-full md:w-auto bg-[#d4af37] text-black font-black uppercase px-8 py-4 rounded-xl hover:bg-white hover:shadow-xl transition-all">Crear Sección</button>
+             </div>
+
+             {homeSections.length === 0 && (
+                 <div className="text-center py-20 border-2 border-dashed border-gray-200 dark:border-[#262626] rounded-[2rem]">
+                     <i className="fas fa-magic text-4xl text-gray-300 mb-4"></i>
+                     <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">No hay secciones creadas.</p>
+                 </div>
+             )}
+
+             <div className="space-y-6">
+                {homeSections.map(sec => (
+                   <div key={sec.id} className={`${theme.card} p-6 rounded-[2rem] shadow-sm border`}>
+                       <div className="flex justify-between items-center mb-6 border-b border-gray-100 dark:border-[#262626] pb-4">
+                           <h3 className={`text-xl font-black uppercase tracking-tighter ${theme.text}`}><i className={`fas ${sec.icon || 'fa-star'} text-[#d4af37] mr-2`}></i> {sec.title}</h3>
+                           <button onClick={()=>deleteHomeSection(sec.id)} className="text-red-500 hover:text-white hover:bg-red-500 w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-red-50 dark:bg-red-900/20"><i className="fas fa-trash"></i></button>
+                       </div>
+                       
+                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                           {sec.productIds?.map(pid => {
+                               const prod = products.find(p => p.id === pid);
+                               if(!prod) return null;
+                               return (
+                                   <div key={pid} className={`relative rounded-xl p-3 flex items-center gap-3 border ${darkMode ? 'bg-[#121212] border-[#404040]' : 'bg-gray-50 border-gray-100'}`}>
+                                       <img src={prod.image} className="w-10 h-10 object-contain mix-blend-multiply" alt=""/>
+                                       <div className="flex-1 min-w-0">
+                                           <p className={`text-[10px] font-black uppercase truncate ${theme.text}`}>{prod.name}</p>
+                                           <p className="text-gray-400 text-[8px] font-bold uppercase tracking-widest truncate">{prod.category}</p>
+                                       </div>
+                                       <button onClick={()=>removeProductFromSection(sec.id, pid)} className="w-6 h-6 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center hover:bg-red-600 shadow-md"><i className="fas fa-times"></i></button>
+                                   </div>
+                               )
+                           })}
+                           {(!sec.productIds || sec.productIds.length === 0) && (
+                               <p className="text-[10px] font-bold uppercase text-gray-400 italic col-span-full">Aún no agregaste productos a esta sección.</p>
+                           )}
+                       </div>
+                       
+                       <div className="relative">
+                           <i className="fas fa-plus absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                           <select 
+                               onChange={(e) => { addProductToSection(sec.id, parseInt(e.target.value)); e.target.value = ''; }} 
+                               className={`w-full p-4 pl-10 rounded-xl outline-none font-bold text-xs uppercase cursor-pointer appearance-none ${theme.input}`}
+                           >
+                               <option value="">AGREGAR PRODUCTO A "{sec.title}"...</option>
+                               {products.filter(p => !sec.productIds?.includes(p.id)).map(p => (
+                                   <option key={p.id} value={p.id}>{p.category} - {p.name} (${p.price})</option>
+                               ))}
+                           </select>
+                       </div>
+                   </div>
+                ))}
+             </div>
+          </div>
+        )}
+
+        {/* LAS DEMÁS PESTAÑAS SE MANTIENEN IGUAL QUE SIEMPRE */}
         {activeTab === 'promos' && (
           <div className="animate-in fade-in duration-500 max-w-lg mx-auto">
             <div className="flex justify-between items-end mb-8">
@@ -581,17 +632,8 @@ export default function AdminPage() {
             <form onSubmit={handleAddPromo} className={`${theme.card} p-8 rounded-[2rem] shadow-xl border ${darkMode ? 'border-[#262626]' : 'border-gray-100'} flex flex-col gap-5 mb-8`}>
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Categoría a bonificar</label>
-                <input 
-                  list="promo-category-suggestions" 
-                  placeholder="Escribe o selecciona (Ej: Ignite v400)..." 
-                  value={newPromo.category} 
-                  onChange={e => setNewPromo({...newPromo, category: e.target.value})} 
-                  className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all uppercase ${theme.input}`} 
-                  required
-                />
-                <datalist id="promo-category-suggestions">
-                  {uniqueCategories.map(cat => <option key={cat} value={cat} />)}
-                </datalist>
+                <input list="promo-category-suggestions" placeholder="Escribe o selecciona (Ej: Ignite v400)..." value={newPromo.category} onChange={e => setNewPromo({...newPromo, category: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all uppercase ${theme.input}`} required />
+                <datalist id="promo-category-suggestions">{uniqueCategories.map(cat => <option key={cat} value={cat} />)}</datalist>
               </div>
 
               <div className="flex gap-4">
@@ -605,10 +647,7 @@ export default function AdminPage() {
                 </div>
               </div>
               <p className="text-[10px] text-gray-400 italic">Ejemplo: Si pones Cantidad "2" y Precio Total "49000", cuando el cliente lleve 2 o más unidades de esa categoría, cada una le quedará a $24.500 automáticamente.</p>
-
-              <button type="submit" className="bg-[#d4af37] text-black font-black uppercase py-4 rounded-xl mt-2 hover:bg-white hover:shadow-xl transition-all">
-                Crear / Actualizar Promoción
-              </button>
+              <button type="submit" className="bg-[#d4af37] text-black font-black uppercase py-4 rounded-xl mt-2 hover:bg-white hover:shadow-xl transition-all">Crear / Actualizar Promoción</button>
             </form>
 
             <div className="grid gap-4">
@@ -621,9 +660,7 @@ export default function AdminPage() {
                       <h4 className="font-black uppercase text-sm mb-1">{promo.category}</h4>
                       <p className="text-gray-400 text-[10px] font-bold tracking-widest uppercase">Llevando {promo.minQty} o más: ${(promo.totalPrice / promo.minQty).toLocaleString('es-AR')} c/u</p>
                     </div>
-                    <button onClick={() => handleDeletePromo(promo.id)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-200 hover:bg-red-500 hover:text-white transition-all text-gray-500 shadow-sm">
-                      <i className="fas fa-trash text-xs"></i>
-                    </button>
+                    <button onClick={() => handleDeletePromo(promo.id)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-200 hover:bg-red-500 hover:text-white transition-all text-gray-500 shadow-sm"><i className="fas fa-trash text-xs"></i></button>
                   </div>
                 ))
               )}
@@ -648,40 +685,15 @@ export default function AdminPage() {
                 </div>
                 <div className="flex-1">
                   <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Categoría / Marca</label>
-                  <input 
-                    list="category-suggestions" 
-                    placeholder="Ej: Ignite v400" 
-                    value={newProduct.category} 
-                    onChange={e => {
-                        const cat = e.target.value;
-                        // Autocompletar el departamento si la categoría ya existe
-                        const existingProd = products.find(p => p.category.toUpperCase() === cat.toUpperCase());
-                        setNewProduct(prev => ({
-                            ...prev, 
-                            category: cat,
-                            department: existingProd ? existingProd.department : prev.department
-                        }));
-                    }} 
-                    className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all uppercase ${theme.input}`} 
-                  />
-                  <datalist id="category-suggestions">
-                    {uniqueCategories.map(cat => <option key={cat} value={cat} />)}
-                  </datalist>
+                  <input list="category-suggestions" placeholder="Ej: Ignite v400" value={newProduct.category} onChange={e => { const cat = e.target.value; const existingProd = products.find(p => p.category.toUpperCase() === cat.toUpperCase()); setNewProduct(prev => ({ ...prev, category: cat, department: existingProd ? existingProd.department : prev.department })); }} className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all uppercase ${theme.input}`} />
+                  <datalist id="category-suggestions">{uniqueCategories.map(cat => <option key={cat} value={cat} />)}</datalist>
                 </div>
               </div>
 
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Departamento Principal</label>
-                <input 
-                    list="dept-suggestions"
-                    placeholder="Elegí o escribí uno nuevo..."
-                    value={newProduct.department} 
-                    onChange={e => setNewProduct({...newProduct, department: e.target.value})} 
-                    className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all uppercase ${theme.input}`}
-                />
-                <datalist id="dept-suggestions">
-                    {availableDepartments.map(d => <option key={d} value={d} />)}
-                </datalist>
+                <input list="dept-suggestions" placeholder="Elegí o escribí uno nuevo..." value={newProduct.department} onChange={e => setNewProduct({...newProduct, department: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all uppercase ${theme.input}`} />
+                <datalist id="dept-suggestions">{availableDepartments.map(d => <option key={d} value={d} />)}</datalist>
               </div>
 
               <div>
@@ -701,13 +713,7 @@ export default function AdminPage() {
 
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Descripción (Biografía)</label>
-                <textarea 
-                   rows="2" 
-                   placeholder="Ej: Disfruta de un sabor increíble con este nuevo vape..." 
-                   value={newProduct.description} 
-                   onChange={e => setNewProduct({...newProduct, description: e.target.value})} 
-                   className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-2 focus:border-[#d4af37] transition-all resize-none ${theme.input}`}
-                ></textarea>
+                <textarea rows="2" placeholder="Ej: Disfruta de un sabor increíble con este nuevo vape..." value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-2 focus:border-[#d4af37] transition-all resize-none ${theme.input}`}></textarea>
               </div>
 
               <button type="submit" disabled={isAdding} className="bg-[#d4af37] text-black font-black uppercase py-4 rounded-xl mt-2 hover:bg-white hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed">
