@@ -14,7 +14,7 @@ const CONFIG = {
   shippingText: "Pedime te llega en 30'⏰",
 };
 
-// Mantenemos la lista base original completa con la propiedad "department"
+// Mantenemos la lista base original, agregando la propiedad "department" para el Menú
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante. Batería de larga duración y la garantía de autenticidad de 028 IMPORT." },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto. Rendimiento superior en cada calada." },
@@ -138,20 +138,6 @@ const PAGE_CONTENT = {
       </div>
     )
   },
-  cookies: {
-    title: "Política de Cookies",
-    subtitle: "Transparencia Tecnológica",
-    body: (
-      <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
-        <p>Para asegurar una navegación fluida y una experiencia de usuario de primer nivel, 028 IMPORT utiliza tecnologías de almacenamiento local y cookies estrictamente necesarias.</p>
-        <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">¿Qué utilizamos y para qué?</h3>
-        <p>Implementamos soluciones de "Local Storage" (Almacenamiento Local del Navegador) con el único fin de conservar los productos que usted añade a su "Bolsa". Esto permite que, si usted recarga la página o cierra accidentalmente la ventana, su selección de productos se mantenga intacta al regresar.</p>
-        <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">Cookies Analíticas y Publicitarias</h3>
-        <p>Nuestra plataforma está diseñada desde una perspectiva de mínima invasión. No empleamos cookies de rastreo publicitario de terceros que sigan su actividad en otros sitios web ni realizamos practices de "retargeting" agresivo.</p>
-        <p className="mt-8">Al continuar utilizando este sitio, usted comprende y acepta el uso de estas herramientas tecnológicas esenciales para el funcionamiento del carrito de compras.</p>
-      </div>
-    )
-  },
   pagos: {
     title: "Medios de Pago",
     subtitle: "Transacciones Seguras",
@@ -218,10 +204,9 @@ export default function Home() {
   const [products, setProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
 
-  // --- NUEVOS ESTADOS DE NAVEGACIÓN Y MENÚ ---
+  // --- ESTADOS DE NAVEGACIÓN Y MENÚ ---
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentView, setCurrentView] = useState('home'); // 'home', 'catalog', 'legal', 'nosotros', 'envios'
-  const [activeDept, setActiveDept] = useState(null); // 'VAPES', 'TECNOLOGIA', etc.
   const [activeFilter, setActiveFilter] = useState({ dept: 'all', cat: 'all' });
   
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -399,7 +384,7 @@ export default function Home() {
     } catch (e) { window.location.href = whatsappUrl; }
   };
 
-  // --- LÓGICA DE FILTRADO PARA EL CATÁLOGO ---
+  // --- LÓGICA DE FILTRADO PARA LA VISTA PRINCIPAL ---
   const visibleCategories = uniqueCategories.filter(cat => {
     if (activeFilter.cat !== 'all') return cat === activeFilter.cat;
     if (activeFilter.dept !== 'all') {
@@ -496,17 +481,20 @@ export default function Home() {
          </div>
       )}
 
-      {/* --- BARRA SUPERIOR ÚNICA Y UNIFICADA --- */}
+      {/* --- BARRA SUPERIOR ÚNICA --- */}
       <header className="bg-black text-white h-16 sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 shadow-md">
-         <div className="flex items-center gap-4">
-             <button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#d4af37] transition-colors p-2">
-                 <i className="fas fa-bars"></i>
-             </button>
-             <span className="font-black text-lg md:text-xl uppercase tracking-widest cursor-pointer flex items-center gap-2" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}>
-                 <img src={CONFIG.logoImage} alt="Logo" className="h-8 w-auto object-contain" />
-                 028<span className="text-[#d4af37] hidden sm:inline">IMPORT</span>
-             </span>
+         {/* Lado Izquierdo: Menú */}
+         <button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#d4af37] transition-colors p-2">
+             <i className="fas fa-bars"></i>
+         </button>
+         
+         {/* Centro: Logo */}
+         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 cursor-pointer" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}>
+             <img src={CONFIG.logoImage} alt="Logo" className="h-8 w-auto object-contain" />
+             <span className="font-black text-lg md:text-xl uppercase tracking-widest hidden sm:block">028<span className="text-[#d4af37]">IMPORT</span></span>
          </div>
+         
+         {/* Lado Derecho: Bolsa */}
          <button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#d4af37] transition-colors">
              <i className="fas fa-shopping-bag text-2xl"></i>
              {getTotalItems() > 0 && (
@@ -517,7 +505,7 @@ export default function Home() {
          </button>
       </header>
 
-      {/* MENÚ LATERAL DESPLEGABLE (DRAWER) */}
+      {/* MENÚ LATERAL DESPLEGABLE (DRAWER NIKE STYLE) */}
       {isMenuOpen && (
           <div className="fixed inset-0 z-[90] flex">
               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsMenuOpen(false)}></div>
@@ -557,6 +545,7 @@ export default function Home() {
           </div>
       )}
 
+      {/* RENDERIZADO DE LA VISTA PRINCIPAL (Home, Catálogo o Legal) */}
       {currentView === 'home' ? (
         <>
           <header className="relative h-[30vh] md:h-[40vh] flex items-center justify-center bg-black overflow-hidden animate-in fade-in duration-1000">
@@ -579,6 +568,26 @@ export default function Home() {
              <div className="md:hidden relative mb-8">
                  <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                  <input type="text" placeholder="Buscar productos..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white border border-gray-200 pl-10 pr-4 py-3 rounded-2xl text-sm font-bold outline-none focus:border-[#d4af37] shadow-sm placeholder:text-gray-400" />
+             </div>
+
+             {/* CATEGORÍAS RÁPIDAS (BURBUJAS) DEPARTAMENTOS */}
+             <div className="mb-12">
+                 <h3 className="font-black text-sm uppercase tracking-widest text-gray-500 mb-4 pl-1">Explorar Categorías</h3>
+                 <div className="flex overflow-x-auto gap-4 no-scrollbar pb-4 snap-x">
+                     {departments.map(dept => (
+                         <div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-40 md:h-40 bg-white rounded-[2rem] shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 cursor-pointer hover:shadow-md hover:border-[#d4af37] transition-all">
+                             <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-[#d4af37] text-xl">
+                                 {dept === 'VAPES' && <i className="fas fa-wind"></i>}
+                                 {dept === 'THC' && <i className="fas fa-leaf"></i>}
+                                 {dept === 'TECNOLOGÍA' && <i className="fas fa-microchip"></i>}
+                                 {dept === 'LIFESTYLE' && <i className="fas fa-star"></i>}
+                                 {dept === 'BIENESTAR' && <i className="fas fa-fire"></i>}
+                                 {!['VAPES', 'THC', 'TECNOLOGÍA', 'LIFESTYLE', 'BIENESTAR'].includes(dept) && <i className="fas fa-box"></i>}
+                             </div>
+                             <span className="font-black text-[10px] md:text-xs uppercase tracking-widest text-center px-2">{dept}</span>
+                         </div>
+                     ))}
+                 </div>
              </div>
 
              {/* SECCIÓN DESTACADOS (CARRUSEL HORIZONTAL) */}
@@ -649,6 +658,23 @@ export default function Home() {
         </main>
       )}
 
+      {/* --- NAVEGACIÓN INFERIOR (MÓVIL) RESTAURADA --- */}
+      <nav className="md:hidden fixed bottom-0 w-full bg-white/95 backdrop-blur-xl border-t border-gray-200 z-40 pb-safe flex justify-around items-center h-16 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+         <button onClick={() => navigateTo('home')} className={`flex flex-col items-center gap-1 w-full ${currentView==='home' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}>
+             <i className="fas fa-home text-xl"></i><span className="text-[8px] font-black uppercase tracking-widest">Inicio</span>
+         </button>
+         <button onClick={() => navigateTo('catalog')} className={`flex flex-col items-center gap-1 w-full ${currentView==='catalog' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}>
+             <i className="fas fa-th-large text-xl"></i><span className="text-[8px] font-black uppercase tracking-widest">Catálogo</span>
+         </button>
+         <button onClick={() => setIsCartOpen(true)} className="flex flex-col items-center gap-1 w-full text-black relative hover:scale-105 transition-transform">
+             <div className="relative">
+                 <i className="fas fa-shopping-bag text-xl"></i>
+                 {getTotalItems() > 0 && <span className="absolute -top-1.5 -right-2 bg-[#d4af37] text-black text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full shadow-sm">{getTotalItems()}</span>}
+             </div>
+             <span className="text-[8px] font-black uppercase tracking-widest">Bolsa</span>
+         </button>
+      </nav>
+
       {/* FOOTER DESKTOP */}
       <footer className="hidden md:block bg-black text-white pt-16 pb-8 border-t-4 border-[#d4af37] relative z-30">
         <div className="max-w-7xl mx-auto px-6">
@@ -695,7 +721,7 @@ export default function Home() {
 
       {/* MODAL DETALLE DE PRODUCTO */}
       {selectedProduct && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6">
+        <div className="fixed inset-0 z-[80] flex items-end md:items-center justify-center p-4 sm:p-6">
            <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setSelectedProduct(null)}></div>
            <div className="relative bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col md:flex-row max-h-[90vh]">
               <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/80 backdrop-blur-md text-black rounded-full flex items-center justify-center hover:bg-black hover:text-white transition-colors shadow-lg"><i className="fas fa-times"></i></button>
