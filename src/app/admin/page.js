@@ -22,7 +22,7 @@ const CONFIG = {
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png",
 };
 
-// LISTA BASE COMPLETA (Sincronizada con el formato "department" de la App Cliente)
+// LISTA BASE COMPLETA
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante. Batería de larga duración y la garantía de autenticidad de 028 IMPORT." },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto. Rendimiento superior en cada calada." },
@@ -97,7 +97,7 @@ export default function AdminPage() {
     return [...new Set(products.map(p => p.category))];
   }, [products]);
 
-  // Departamentos Predeterminados (Se cambiaron de Sections a Departments para la conexión con el cliente)
+  // Departamentos Predeterminados
   const PREDEFINED_DEPARTMENTS = ["VAPES", "THC", "TECNOLOGÍA", "LIFESTYLE", "BIENESTAR"];
 
   const clientsList = useMemo(() => {
@@ -345,6 +345,15 @@ export default function AdminPage() {
     } catch(err) { alert("Error al actualizar descripción."); }
   }
 
+  // --- NUEVA FUNCIÓN: ACTUALIZAR DEPARTAMENTO DESDE EL STOCK ---
+  const updateDepartment = async (product, newDept) => {
+    if(!newDept) return;
+    try {
+        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
+        await setDoc(productRef, { id: product.id, department: newDept }, { merge: true });
+    } catch(err) { alert("Error al actualizar departamento."); }
+  }
+
   const completeOrder = async (id) => {
     if (confirm("¿Confirmas que el pedido fue entregado?")) {
       try {
@@ -359,7 +368,6 @@ export default function AdminPage() {
     }
   };
 
-  // --- FUNCIÓN CRÍTICA PARA ACTUALIZAR LA BASE DE DATOS VIEJA AL NUEVO FORMATO ---
   const syncAllProducts = async () => {
     if (confirm("¿Sincronizar y actualizar catálogo a la nueva estructura de Departamentos?")) {
         setLoading(true);
@@ -450,14 +458,23 @@ export default function AdminPage() {
                                         />
                                      </div>
                                 </div>
-                                <div className="flex gap-1 mt-1">
-                                  <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.isHidden ? 'bg-amber-900/30 text-amber-500' : (p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400')}`}>
+                                <div className="flex gap-2 mt-2 items-center">
+                                  <span className={`w-fit text-[8px] font-black uppercase px-2 py-1 rounded-full ${p.isHidden ? 'bg-amber-900/30 text-amber-500' : (p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400')}`}>
                                       {p.isHidden ? 'Oculto' : (p.inStock === false ? 'Agotado' : 'Disponible')}
                                   </span>
-                                  {/* Muestra el Departamento en el que está guardado */}
-                                  <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${darkMode ? 'border-gray-700 text-gray-400' : 'border-gray-300 text-gray-500'}`}>
-                                      {p.department || 'SIN DEPTO'}
-                                  </span>
+                                  
+                                  {/* --- ACÁ ESTÁ EL SELECT NUEVO PARA CAMBIAR DEPARTAMENTO EN VIVO --- */}
+                                  <select
+                                      defaultValue={p.department || ""}
+                                      onChange={(e) => updateDepartment(p, e.target.value)}
+                                      className={`w-fit text-[8px] font-black uppercase px-2 py-1 rounded-full border cursor-pointer outline-none focus:border-[#d4af37] ${darkMode ? 'bg-[#262626] border-[#404040] text-gray-300' : 'bg-white border-gray-300 text-gray-600'}`}
+                                      title="Cambiar Departamento"
+                                  >
+                                      <option value="" disabled>SIN DEPTO</option>
+                                      {PREDEFINED_DEPARTMENTS.map(d => (
+                                          <option key={d} value={d}>{d}</option>
+                                      ))}
+                                  </select>
                                 </div>
 
                                 <textarea
