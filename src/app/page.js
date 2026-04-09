@@ -14,7 +14,7 @@ const CONFIG = {
   shippingText: "Pedime te llega en 30'⏰",
 };
 
-// Mantenemos la lista base original completa con la propiedad "department"
+// Mantenemos la lista base original completa
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante. Batería de larga duración y la garantía de autenticidad de 028 IMPORT." },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto. Rendimiento superior en cada calada." },
@@ -203,13 +203,11 @@ export default function Home() {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
+  const [homeSections, setHomeSections] = useState([]); // ESTADO NUEVO PARA LA VIDRIERA
 
-  // --- ESTADOS DE NAVEGACIÓN Y MENÚ ---
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentView, setCurrentView] = useState('home'); 
   const [activeFilter, setActiveFilter] = useState({ dept: 'all', cat: 'all' });
-  
-  // ESTADO PARA EL MENÚ ACORDEÓN
   const [expandedDept, setExpandedDept] = useState(null);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -235,9 +233,6 @@ export default function Home() {
     }
     return [...new Set(products.map(p => p.category))];
   }, [products, activeFilter.dept]);
-
-  const featuredProducts = useMemo(() => products.filter(p => p.tag && (p.tag.toLowerCase().includes('destacado') || p.tag.toLowerCase().includes('best seller') || p.tag.toLowerCase().includes('viral'))), [products]);
-  const newProducts = useMemo(() => products.filter(p => p.tag && p.tag.toLowerCase().includes('nuevo')), [products]);
 
   const slugify = (text) => text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');            
 
@@ -290,10 +285,21 @@ export default function Home() {
         else setPromos([]);
       });
 
+      // --- ESCUCHAMOS LA VIDRIERA DINÁMICA DEL ADMIN ---
+      const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (snapshot) => {
+        if (!snapshot.empty) {
+            const sections = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
+            setHomeSections(sections.sort((a, b) => a.order - b.order));
+        } else {
+            setHomeSections([]);
+        }
+      });
+
       return () => {
         unsubscribeAuth();
         unsubscribeStock();
         unsubscribePromos();
+        unsubscribeHomeSections();
         window.removeEventListener('focus', handleFocus);
         window.removeEventListener('pageshow', handleFocus);
       };
@@ -498,7 +504,6 @@ export default function Home() {
          </button>
       </header>
 
-      {/* MENÚ LATERAL DESPLEGABLE (DRAWER NIKE STYLE CON ACORDEÓN) */}
       {isMenuOpen && (
           <div className="fixed inset-0 z-[90] flex">
               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsMenuOpen(false)}></div>
@@ -518,10 +523,8 @@ export default function Home() {
                               <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Departamentos</p>
                           </div>
                           
-                          {/* ACORDEÓN DE DEPARTAMENTOS Y MARCAS */}
                           {departments.map(dept => {
                               const isExpanded = expandedDept === dept;
-                              // Filtramos las marcas/categorías que corresponden a este departamento
                               const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category)));
                               
                               return (
@@ -578,36 +581,56 @@ export default function Home() {
 
           <main className="flex-grow px-4 py-8 max-w-7xl mx-auto min-h-[50vh] pb-24 w-full">
              
-             {/* BÚSQUEDA RÁPIDA MOBILE */}
              <div className="md:hidden relative mb-8">
                  <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                  <input type="text" placeholder="Buscar productos..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white border border-gray-200 pl-10 pr-4 py-3 rounded-2xl text-sm font-bold outline-none focus:border-[#d4af37] shadow-sm placeholder:text-gray-400" />
              </div>
 
-             {/* SECCIÓN DESTACADOS (CARRUSEL HORIZONTAL) */}
-             {featuredProducts.length > 0 && (
-                <div className="mb-12">
-                    <div className="flex justify-between items-end mb-4 pl-1 border-b-2 border-gray-100 pb-2">
-                        <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase"><i className="fas fa-fire text-red-500 mr-2"></i> Más Buscados</h2>
-                        <button onClick={() => navigateTo('catalog')} className="text-[10px] font-black uppercase text-gray-400 hover:text-black">Ver Todo</button>
-                    </div>
-                    <div className="flex overflow-x-auto gap-4 no-scrollbar pb-4 snap-x">
-                        {featuredProducts.map((p, index) => renderProductCard(p, index))}
-                    </div>
-                </div>
-             )}
+             <div className="mb-12">
+                 <h3 className="font-black text-sm uppercase tracking-widest text-gray-500 mb-4 pl-1">Explorar Categorías</h3>
+                 <div className="flex overflow-x-auto gap-4 no-scrollbar pb-4 snap-x">
+                     {departments.map(dept => (
+                         <div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-40 md:h-40 bg-white rounded-[2rem] shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 cursor-pointer hover:shadow-md hover:border-[#d4af37] transition-all">
+                             <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-[#d4af37] text-xl">
+                                 {dept === 'VAPES' && <i className="fas fa-wind"></i>}
+                                 {dept === 'THC' && <i className="fas fa-leaf"></i>}
+                                 {dept === 'TECNOLOGÍA' && <i className="fas fa-microchip"></i>}
+                                 {dept === 'LIFESTYLE' && <i className="fas fa-star"></i>}
+                                 {dept === 'BIENESTAR' && <i className="fas fa-fire"></i>}
+                                 {!['VAPES', 'THC', 'TECNOLOGÍA', 'LIFESTYLE', 'BIENESTAR'].includes(dept) && <i className="fas fa-box"></i>}
+                             </div>
+                             <span className="font-black text-[10px] md:text-xs uppercase tracking-widest text-center px-2">{dept}</span>
+                         </div>
+                     ))}
+                 </div>
+             </div>
 
-             {/* SECCIÓN NUEVOS INGRESOS (CARRUSEL HORIZONTAL) */}
-             {newProducts.length > 0 && (
-                <div className="mb-12">
-                    <div className="flex justify-between items-end mb-4 pl-1 border-b-2 border-gray-100 pb-2">
-                        <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase"><i className="fas fa-bolt text-[#d4af37] mr-2"></i> Nuevos Ingresos</h2>
-                        <button onClick={() => navigateTo('catalog')} className="text-[10px] font-black uppercase text-gray-400 hover:text-black">Ver Todo</button>
-                    </div>
-                    <div className="flex overflow-x-auto gap-4 no-scrollbar pb-4 snap-x">
-                        {newProducts.map((p, index) => renderProductCard(p, index))}
-                    </div>
-                </div>
+             {/* --- SECCIONES DINÁMICAS (VIDRIERA CONECTADA AL ADMIN) --- */}
+             {homeSections.length === 0 ? (
+                 <div className="text-center py-10">
+                     <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest opacity-50">Cargando vidriera...</p>
+                 </div>
+             ) : (
+                 homeSections.map(sec => {
+                     // Filtramos los productos que el admin seleccionó para esta sección
+                     const secProducts = sec.productIds?.map(pid => products.find(p => p.id === pid)).filter(Boolean) || [];
+                     
+                     if(secProducts.length === 0) return null; // Si el admin creó la sección pero no le metió productos, no la mostramos
+
+                     return (
+                        <div key={sec.id} className="mb-12">
+                            <div className="flex justify-between items-end mb-4 pl-1 border-b-2 border-gray-100 pb-2">
+                                <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase">
+                                  <i className={`fas ${sec.icon || 'fa-star'} text-[#d4af37] mr-2`}></i> {sec.title}
+                                </h2>
+                                <button onClick={() => navigateTo('catalog')} className="text-[10px] font-black uppercase text-gray-400 hover:text-black">Ver Catálogo</button>
+                            </div>
+                            <div className="flex overflow-x-auto gap-4 no-scrollbar pb-4 snap-x">
+                                {secProducts.map((p, index) => renderProductCard(p, index))}
+                            </div>
+                        </div>
+                     )
+                 })
              )}
           </main>
         </>
@@ -652,7 +675,6 @@ export default function Home() {
         </main>
       )}
 
-      {/* --- NAVEGACIÓN INFERIOR (MÓVIL) RESTAURADA --- */}
       <nav className="md:hidden fixed bottom-0 w-full bg-white/95 backdrop-blur-xl border-t border-gray-200 z-40 pb-safe flex justify-around items-center h-16 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
          <button onClick={() => navigateTo('home')} className={`flex flex-col items-center gap-1 w-full ${currentView==='home' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}>
              <i className="fas fa-home text-xl"></i><span className="text-[8px] font-black uppercase tracking-widest">Inicio</span>
