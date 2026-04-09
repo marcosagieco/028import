@@ -114,7 +114,7 @@ export default function AdminPage() {
   const [darkMode, setDarkMode] = useState(false); 
 
   const [newProduct, setNewProduct] = useState({
-    name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '', cardSize: 'normal'
+    name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: ''
   });
   const [isAdding, setIsAdding] = useState(false);
 
@@ -241,6 +241,7 @@ export default function AdminPage() {
     return () => unsubscribeAuth();
   }, [firebaseRefs]);
 
+  // --- FUNCIONES VIDRIERA ---
   const createHomeSection = async () => {
     if(!newSectionTitle.trim()) return alert("Escribí un título para la sección");
     try {
@@ -301,6 +302,19 @@ export default function AdminPage() {
     } catch(err) { alert("Error al cambiar formato."); }
   };
 
+  // --- ACÁ ESTÁ EL BOTÓN DE TAMAÑO (SOLO PARA LA VIDRIERA) ---
+  const toggleSize = async (product) => {
+    try {
+        const newSize = product.cardSize === 'large' ? 'normal' : 'large';
+        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
+        await setDoc(productRef, {
+            id: product.id,
+            cardSize: newSize
+        }, { merge: true });
+    } catch (err) { alert("Error al cambiar el tamaño del producto."); }
+  };
+
+  // --- FUNCIONES DE PRODUCTOS ---
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!newProduct.category) return alert("Por favor escribe o selecciona una categoría.");
@@ -318,7 +332,7 @@ export default function AdminPage() {
         image: newProduct.image,
         tag: newProduct.tag,
         description: newProduct.description,
-        cardSize: newProduct.cardSize, 
+        cardSize: 'normal', 
         inStock: true,
         order: 99,
         createdAt: serverTimestamp(),
@@ -326,7 +340,7 @@ export default function AdminPage() {
         isDeleted: false
       });
       alert("¡Producto agregado con éxito!");
-      setNewProduct({ name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '', cardSize: 'normal' });
+      setNewProduct({ name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '' });
     } catch (error) {
       alert("Error al crear: " + error.message);
     }
@@ -369,17 +383,6 @@ export default function AdminPage() {
             isDeleted: false
         }, { merge: true });
     } catch (err) { alert("Error al cambiar la visibilidad."); }
-  };
-
-  const toggleSize = async (product) => {
-    try {
-        const newSize = product.cardSize === 'large' ? 'normal' : 'large';
-        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
-        await setDoc(productRef, {
-            id: product.id,
-            cardSize: newSize
-        }, { merge: true });
-    } catch (err) { alert("Error al cambiar el tamaño del producto."); }
   };
 
   const handleDeleteProduct = async (product) => {
@@ -632,12 +635,8 @@ export default function AdminPage() {
                                 />
                             </div>
                         </div>
+                        
                         <div className="flex flex-col lg:flex-row items-center gap-2 flex-shrink-0 mt-1">
-                             {/* BOTÓN DE TAMAÑO GRANDE/NORMAL RESTAURADO */}
-                             <button onClick={() => toggleSize(p)} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm ${p.cardSize === 'large' ? 'bg-[#d4af37] text-black border border-[#b8952a]' : 'bg-gray-200 text-gray-500 hover:bg-[#d4af37] hover:text-black'}`} title={p.cardSize === 'large' ? 'Volver a tamaño normal' : 'Hacer tamaño GRANDE en la vidriera'}>
-                                 <i className={`fas ${p.cardSize === 'large' ? 'fa-compress' : 'fa-expand'} text-xs`}></i>
-                             </button>
-
                              <button onClick={() => toggleStock(p)} className={`w-full lg:w-auto px-4 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-900/20 text-red-500 border border-red-900/30'}`}>{p.inStock === false ? 'Habilitar' : 'Agotar'}</button>
                              <button onClick={() => toggleVisibility(p)} title={p.isHidden ? 'Mostrar en tienda' : 'Ocultar de la tienda'} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm ${p.isHidden ? 'bg-amber-100 text-amber-600 hover:bg-amber-500 hover:text-white' : 'bg-gray-200 text-gray-500 hover:bg-amber-500 hover:text-white'}`}>
                                  <i className={`fas ${p.isHidden ? 'fa-eye-slash' : 'fa-eye'} text-xs`}></i>
@@ -684,7 +683,7 @@ export default function AdminPage() {
 
       <main className="max-w-4xl mx-auto p-4 md:p-8">
         
-        {/* --- PESTAÑA: VIDRIERA --- */}
+        {/* --- PESTAÑA: VIDRIERA CON CONTROL DE TAMAÑO DENTRO --- */}
         {activeTab === 'vidriera' && (
           <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
              <div className="flex justify-between items-end mb-8">
@@ -703,6 +702,7 @@ export default function AdminPage() {
                     <button onClick={createHomeSection} className="w-full md:w-auto bg-[#d4af37] text-black font-black uppercase px-8 py-4 rounded-xl hover:bg-white hover:shadow-xl transition-all">Crear Sección</button>
                 </div>
                 
+                {/* SELECTOR DE ÍCONOS */}
                 <div className="mt-2">
                    <label className="text-[10px] font-black uppercase text-gray-400 mb-3 block">Elegí un ícono para esta sección</label>
                    <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
@@ -718,6 +718,7 @@ export default function AdminPage() {
                    </div>
                 </div>
 
+                {/* SELECTOR DE FORMATO (CARRUSEL O GRILLA) */}
                 <div className="mt-2 border-t border-gray-100 dark:border-[#262626] pt-4">
                    <label className="text-[10px] font-black uppercase text-gray-400 mb-3 block">Formato de visualización</label>
                    <div className="flex gap-2">
@@ -768,7 +769,17 @@ export default function AdminPage() {
                                               {prod.cardSize === 'large' && <span className="bg-[#d4af37] text-black text-[7px] font-black px-1.5 py-0.5 rounded uppercase">Grande</span>}
                                            </div>
                                        </div>
-                                       <button onClick={()=>removeProductFromSection(sec.dbId, pid)} className="w-6 h-6 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center hover:bg-red-600 shadow-md"><i className="fas fa-times"></i></button>
+                                       
+                                       {/* ACÁ ESTÁ EL BOTÓN DE TAMAÑO ADENTRO DE LA VIDRIERA */}
+                                       <button 
+                                          onClick={() => toggleSize(prod)} 
+                                          className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] transition-all shadow-sm ${prod.cardSize === 'large' ? 'bg-[#d4af37] text-black' : 'bg-gray-200 text-gray-500 hover:bg-[#d4af37] hover:text-black'}`} 
+                                          title={prod.cardSize === 'large' ? 'Volver a tamaño normal' : 'Hacer GRANDE en la vidriera'}
+                                       >
+                                          <i className={`fas ${prod.cardSize === 'large' ? 'fa-compress' : 'fa-expand'}`}></i>
+                                       </button>
+
+                                       <button onClick={()=>removeProductFromSection(sec.dbId, pid)} className="w-8 h-8 bg-red-500 text-white rounded-lg text-[10px] flex items-center justify-center hover:bg-red-600 shadow-md"><i className="fas fa-times"></i></button>
                                    </div>
                                )
                            })}
@@ -921,15 +932,8 @@ export default function AdminPage() {
               </div>
 
               <div>
-                {/* ACÁ VOLVIÓ EL SELECTOR DE TAMAÑO */}
-                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Etiqueta y Tamaño (Opcional)</label>
-                <div className="flex gap-4">
-                    <input type="text" placeholder="Ej: Nuevo, Destacado..." value={newProduct.tag} onChange={e => setNewProduct({...newProduct, tag: e.target.value})} className={`flex-1 p-4 rounded-xl outline-none font-bold text-sm border-2 focus:border-[#d4af37] transition-all ${theme.input}`} />
-                    <select value={newProduct.cardSize} onChange={e => setNewProduct({...newProduct, cardSize: e.target.value})} className={`flex-1 p-4 rounded-xl outline-none font-bold text-xs uppercase border-2 focus:border-[#d4af37] transition-all cursor-pointer ${theme.input}`}>
-                        <option value="normal">Tamaño Normal</option>
-                        <option value="large">Tamaño Grande</option>
-                    </select>
-                </div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Etiqueta (Opcional)</label>
+                <input type="text" placeholder="Ej: Nuevo, Destacado..." value={newProduct.tag} onChange={e => setNewProduct({...newProduct, tag: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-2 focus:border-[#d4af37] transition-all ${theme.input}`} />
               </div>
 
               <div>
