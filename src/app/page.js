@@ -14,7 +14,6 @@ const CONFIG = {
   shippingText: "Pedime te llega en 30'⏰",
 };
 
-// Mantenemos la lista base original completa con la propiedad "department"
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante. Batería de larga duración y la garantía de autenticidad de 028 IMPORT." },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto. Rendimiento superior en cada calada." },
@@ -70,6 +69,33 @@ const initialProducts = [
 ];
 
 const PAGE_CONTENT = {
+  nosotros: {
+    title: "Quiénes Somos",
+    subtitle: "Nuestra Historia",
+    body: (
+      <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
+        <p>Somos <strong>028 IMPORT</strong>, una empresa dedicada a redefinir la experiencia de compra de productos premium importados.</p>
+        <p>Nuestro objetivo principal es priorizar tu tiempo y confianza. Sabemos que en el mundo actual la eficiencia es el verdadero lujo, por eso nos enfocamos en brindar un servicio personalizado, ágil y 100% seguro.</p>
+        <p>Garantizamos la autenticidad absoluta de todos nuestros artículos y trabajamos día a día para que recibas lo último en tendencias tecnológicas, lifestyle y vapes sin moverte de tu casa.</p>
+      </div>
+    )
+  },
+  envios: {
+    title: "Logística de Envío",
+    subtitle: "Entregas Rápidas y Seguras",
+    body: (
+      <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
+        <p>Ofrecemos un sistema de logística optimizado para que recibas tus productos en tiempo récord y en perfectas condiciones.</p>
+        <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">Zonas de Cobertura</h3>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li><strong>CABA y GBA:</strong> Envíos en el día mediante motomensajería de absoluta confianza. {CONFIG.shippingText}</li>
+          <li><strong>Interior del País:</strong> Despachos por correo certificado con código de seguimiento para que sepas dónde está tu paquete en todo momento.</li>
+          <li><strong>Retiro Local:</strong> Si preferís pasar a buscarlo, podés coordinar el retiro por nuestra zona (Miñones y Juramento, Belgrano, CABA).</li>
+        </ul>
+        <p className="mt-4">Todos nuestros envíos son empaquetados con máxima discreción y seguridad para proteger la integridad de los productos.</p>
+      </div>
+    )
+  },
   terminos: {
     title: "Términos y Condiciones",
     subtitle: "Legal & Políticas Comerciales",
@@ -115,20 +141,6 @@ const PAGE_CONTENT = {
       </div>
     )
   },
-  cookies: {
-    title: "Política de Cookies",
-    subtitle: "Transparencia Tecnológica",
-    body: (
-      <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
-        <p>Para asegurar una navegación fluida y una experiencia de usuario de primer nivel, 028 IMPORT utiliza tecnologías de almacenamiento local y cookies estrictamente necesarias.</p>
-        <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">¿Qué utilizamos y para qué?</h3>
-        <p>Implementamos soluciones de "Local Storage" (Almacenamiento Local del Navegador) con el único fin de conservar los productos que usted añade a su "Bolsa". Esto permite que, si usted recarga la página o cierra accidentalmente la ventana, su selección de productos se mantenga intacta al regresar.</p>
-        <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">Cookies Analíticas y Publicitarias</h3>
-        <p>Nuestra plataforma está diseñada desde una perspectiva de mínima invasión. No empleamos cookies de rastreo publicitario de terceros que sigan su actividad en otros sitios web ni realizamos practices de "retargeting" agresivo.</p>
-        <p className="mt-8">Al continuar utilizando este sitio, usted comprende y acepta el uso de estas herramientas tecnológicas esenciales para el funcionamiento del carrito de compras.</p>
-      </div>
-    )
-  },
   pagos: {
     title: "Medios de Pago",
     subtitle: "Transacciones Seguras",
@@ -138,21 +150,27 @@ const PAGE_CONTENT = {
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-4">Alternativas Disponibles:</h3>
         <ul className="space-y-4">
           <li className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black"><i className="fas fa-university"></i></div>
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black">
+              <i className="fas fa-university"></i>
+            </div>
             <div>
               <p className="font-bold text-black">Transferencia Bancaria (ARS)</p>
               <p className="text-sm mt-1">Acreditación rápida mediante CBU/CVU o Alias. Ideal para operaciones a distancia.</p>
             </div>
           </li>
           <li className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black"><i className="fab fa-bitcoin"></i></div>
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black">
+              <i className="fab fa-bitcoin"></i>
+            </div>
             <div>
               <p className="font-bold text-black">Criptoactivos (USDT)</p>
               <p className="text-sm mt-1">Aceptamos pagos internacionales o descentralizados a través de redes estables como TRC20, BSC o Binance Pay.</p>
             </div>
           </li>
           <li className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black"><i className="fas fa-money-bill-wave"></i></div>
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black">
+              <i className="fas fa-money-bill-wave"></i>
+            </div>
             <div>
               <p className="font-bold text-black">Efectivo</p>
               <p className="text-sm mt-1">Exclusivo para la modalidad de Retiro Pick-up o envío mediante motomensajería propia (Pago contra entrega).</p>
@@ -195,39 +213,37 @@ export default function Home() {
   const [products, setProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
 
-  // --- NUEVOS ESTADOS DE NAVEGACIÓN Y MENÚ ---
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [currentView, setCurrentView] = useState('home'); // 'home', 'catalog', 'legal'
-  const [activeDept, setActiveDept] = useState(null); // 'VAPES', 'TECNOLOGIA', etc.
-  
+  // --- ESTADOS PARA EL NUEVO MENÚ ---
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [sidebarStep, setSidebarStep] = useState('root'); 
+  const [activeFilter, setActiveFilter] = useState({ dept: 'all', cat: 'all' });
+
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [deliveryMethod, setDeliveryMethod] = useState('retiro');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   
+  const [deliveryMethod, setDeliveryMethod] = useState('retiro');
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [address, setAddress] = useState('');
   const [zone, setZone] = useState('');
   const [user, setUser] = useState(null);
   const [isSending, setIsSending] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
-
-  // EXTRAER DEPARTAMENTOS Y CATEGORÍAS (Lógica de Menú)
-  const departments = useMemo(() => {
-    return [...new Set(products.map(p => p.department).filter(Boolean))];
-  }, [products]);
+  
+  const [currentView, setCurrentView] = useState('home');
 
   const uniqueCategories = useMemo(() => {
-    if (activeDept) {
-        return [...new Set(products.filter(p => p.department === activeDept).map(p => p.category))];
-    }
     return [...new Set(products.map(p => p.category))];
-  }, [products, activeDept]);
+  }, [products]);
 
-  // PRODUCTOS DESTACADOS Y NUEVOS (Para la Vidriera del Inicio)
-  const featuredProducts = useMemo(() => products.filter(p => p.tag && (p.tag.toLowerCase().includes('destacado') || p.tag.toLowerCase().includes('best seller') || p.tag.toLowerCase().includes('viral'))), [products]);
-  const newProducts = useMemo(() => products.filter(p => p.tag && p.tag.toLowerCase().includes('nuevo')), [products]);
+  // Departamentos únicos para el menú lateral
+  const departments = useMemo(() => {
+    const depts = new Set(products.map(p => p.department).filter(Boolean));
+    return Array.from(depts);
+  }, [products]);
 
   const slugify = (text) => text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');            
 
@@ -244,7 +260,9 @@ export default function Home() {
       };
       const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
       return { auth: getAuth(app), db: getFirestore(app) };
-    } catch (error) { return { auth: null, db: null }; }
+    } catch (error) {
+      return { auth: null, db: null };
+    }
   }, []);
 
   useEffect(() => {
@@ -259,6 +277,7 @@ export default function Home() {
       const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
+          
           setProducts(prev => {
              const combined = [...initialProducts];
              dbProducts.forEach(dbItem => {
@@ -276,8 +295,11 @@ export default function Home() {
       });
 
       const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (snapshot) => {
-        if (!snapshot.empty) setPromos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        else setPromos([]);
+        if (!snapshot.empty) {
+            setPromos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        } else {
+            setPromos([]);
+        }
       });
 
       return () => {
@@ -291,22 +313,29 @@ export default function Home() {
   }, [firebaseRefs]);
 
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
+  
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
+  
   const getUnitPromoPrice = (item) => {
     const promo = promos.find(p => p.category === item.category);
     if (promo) {
         const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0);
-        if (catCount >= promo.minQty) return promo.totalPrice / promo.minQty;
+        if (catCount >= promo.minQty) {
+            return promo.totalPrice / promo.minQty;
+        }
     }
     return item.price;
   };
-  const calculateTotal = () => cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice(item)), 0);
-  const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
 
-  const navigateTo = (view, dept = null) => {
+  const calculateTotal = () => cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice(item)), 0);
+
+  const showToast = (message) => {
+    setToastMessage(message);
+    setTimeout(() => { setToastMessage(null); }, 3000);
+  };
+
+  const navigateTo = (view) => {
     setCurrentView(view);
-    setActiveDept(dept);
-    setIsMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -337,15 +366,21 @@ export default function Home() {
     
     setIsSending(true);
     const finalTotal = calculateTotal();
+    
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
     
     cart.forEach(item => {
       const unitPrice = getUnitPromoPrice(item);
       const currency = item.price < 2000 ? "USD" : "$"; 
+      
       let displayName = item.name;
       const catUpper = item.category.toUpperCase().trim();
       const categoriesToShow = ['ELFBAR ICE KING', 'IGNITE V400', 'LOST MARY 20000'];
-      if (categoriesToShow.includes(catUpper)) displayName = `${item.category} - ${item.name}`;
+      
+      if (categoriesToShow.includes(catUpper)) {
+          displayName = `${item.category} - ${item.name}`;
+      }
+
       msg += `- ${item.qty}x ${displayName} (${currency}${formatPrice(unitPrice)} c/u)\n`;
     });
     
@@ -357,77 +392,137 @@ export default function Home() {
     try {
       if (firebaseRefs.db) {
         await addDoc(collection(firebaseRefs.db, 'orders'), {
-          userId: user?.uid || "anon", clientName: clientName.trim(), clientPhone: clientPhone.trim(),
+          userId: user?.uid || "anon",
+          clientName: clientName.trim(),
+          clientPhone: clientPhone.trim(),
           items: cart.map(i => {
              let dbName = i.name;
              const cUp = i.category.toUpperCase().trim();
-             if(['ELFBAR ICE KING', 'IGNITE V400', 'LOST MARY 20000'].includes(cUp)) dbName = `${i.category} - ${i.name}`;
+             if(['ELFBAR ICE KING', 'IGNITE V400', 'LOST MARY 20000'].includes(cUp)) {
+                dbName = `${i.category} - ${i.name}`;
+             }
              return { name: dbName, qty: i.qty, price: getUnitPromoPrice(i) };
           }),
-          total: finalTotal, delivery: deliveryMethod, address: address || '', zone: zone || '', status: 'pending', createdAt: serverTimestamp()
+          total: finalTotal,
+          delivery: deliveryMethod,
+          address: address || '',
+          zone: zone || '',
+          status: 'pending',
+          createdAt: serverTimestamp()
         });
       }
       setTimeout(() => { window.location.href = whatsappUrl; }, 400);
-    } catch (e) { window.location.href = whatsappUrl; }
+    } catch (e) {
+      window.location.href = whatsappUrl;
+    }
   };
 
-  // --- RENDERIZADO DE PRODUCTO INDIVIDUAL (TARJETA) ---
-  const renderProductCard = (p, index) => {
-    const inCart = cart.find(i => i.id === p.id);
-    const isOutOfStock = p.inStock === false;
-    return (
-      <div key={p.id} className={`bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm flex flex-col hover:shadow-lg transition-all duration-300 min-w-[160px] md:min-w-[200px] snap-start ${isOutOfStock ? 'opacity-70 grayscale' : ''}`} style={{ animationDelay: `${index * 50}ms` }}>
-        <div className="relative aspect-[4/5] overflow-hidden bg-gray-50 cursor-pointer" onClick={() => setSelectedProduct(p)}>
-          <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
-          {isOutOfStock ? (
-            <div className="absolute inset-0 bg-black/60 flex items-center justify-center"><span className="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-sm uppercase tracking-tighter">SIN STOCK</span></div>
-          ) : p.tag && (
-            <span className="absolute top-2 left-2 bg-black text-[#d4af37] text-[8px] font-black px-2 py-1 uppercase rounded-sm">{p.tag}</span>
-          )}
-        </div>
-        <div className="p-3 md:p-4 flex-grow flex flex-col">
-          <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-1">{p.category}</p>
-          <h3 className="font-bold text-[11px] md:text-sm uppercase mb-1 text-gray-800 line-clamp-1">{p.name}</h3>
-          <div className="mt-auto pt-2">
-            <p className="text-[#d4af37] font-black text-base md:text-lg mb-3 tracking-tighter">{CONFIG.currencySymbol}{formatPrice(p.price)}</p>
-            {isOutOfStock ? (
-                <button disabled className="w-full bg-gray-100 text-gray-400 py-3.5 text-[11px] font-black uppercase tracking-wider rounded-xl cursor-not-allowed">Agotado</button>
-            ) : inCart ? (
-              <div className="flex items-center justify-between bg-black text-white h-11 rounded-xl font-bold text-sm px-1 shadow-lg">
-                <button className="w-10 h-full flex items-center justify-center hover:text-[#d4af37] transition-colors" onClick={() => changeQty(p.id, -1)}><i className="fas fa-minus text-xs"></i></button>
-                <span className="font-black text-[#d4af37]">{inCart.qty}</span>
-                <button className="w-10 h-full flex items-center justify-center hover:text-[#d4af37] transition-colors" onClick={() => addToCart(p)}><i className="fas fa-plus text-xs"></i></button>
-              </div>
-            ) : (
-              <button onClick={() => addToCart(p)} className="w-full bg-black text-white hover:bg-[#d4af37] hover:text-black hover:shadow-lg hover:shadow-[#d4af37]/30 py-3.5 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center justify-center gap-2"><i className="fas fa-shopping-bag"></i> Añadir</button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // --- LÓGICA DE FILTRADO PARA LA VISTA PRINCIPAL ---
+  const visibleCategories = uniqueCategories.filter(cat => {
+    if (activeFilter.cat !== 'all') return cat === activeFilter.cat;
+    if (activeFilter.dept !== 'all') {
+        const sampleProd = products.find(p => p.category === cat);
+        return sampleProd && sampleProd.department === activeFilter.dept;
+    }
+    return true;
+  });
 
-  // --- RENDERIZADO DE SECCIONES (CATEGORÍAS) ---
   const renderProductSection = (category) => {
-    let sectionProducts = products.filter(p => p.category === category);
-    if (activeDept) sectionProducts = sectionProducts.filter(p => p.department === activeDept);
-    if (searchTerm) sectionProducts = sectionProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase()));
+    const sectionProducts = products.filter(p => {
+       const matchCategory = p.category === category;
+       const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           p.category.toLowerCase().includes(searchTerm.toLowerCase());
+       return matchCategory && matchSearch;
+    });
+
     if (sectionProducts.length === 0) return null;
     
     const promo = promos.find(p => p.category === category);
     let promoText = null;
-    if (promo) promoText = `${promo.minQty}+ un: $${formatPrice(promo.totalPrice / promo.minQty)} c/u`;
+    if (promo) {
+       promoText = `${promo.minQty}+ un: $${formatPrice(promo.totalPrice / promo.minQty)} c/u`;
+    }
+
+    const sectionId = slugify(category);
 
     return (
-      <section key={category} id={slugify(category)} className="mb-16 scroll-mt-40 animate-in fade-in slide-in-from-bottom-8 duration-700">
-        <div className="flex flex-col md:flex-row justify-between items-baseline mb-6 gap-3 border-b-2 border-gray-100 pb-3">
+      <section key={category} id={sectionId} className="mb-16 scroll-mt-40 animate-in fade-in slide-in-from-bottom-8 duration-700">
+        <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-3 border-b-2 border-gray-100 pb-3">
           <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight uppercase relative">
-            {category} <span className="absolute -bottom-[15px] left-0 w-12 h-1 bg-[#d4af37] rounded-full"></span>
+            {category}
+            <span className="absolute -bottom-[15px] left-0 w-12 h-1 bg-[#d4af37] rounded-full"></span>
           </h2>
-          {promoText && <div className="bg-[#d4af37]/10 text-[#b8952a] px-4 py-1.5 text-xs font-black rounded-full uppercase tracking-widest flex items-center gap-2"><i className="fas fa-tag"></i> {promoText}</div>}
+          {promoText && (
+            <div className="bg-[#d4af37]/10 text-[#b8952a] px-4 py-1.5 text-xs font-black rounded-full uppercase tracking-widest flex items-center gap-2">
+              <i className="fas fa-tag"></i> {promoText}
+            </div>
+          )}
         </div>
+
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {sectionProducts.map((p, index) => renderProductCard(p, index))}
+          {sectionProducts.map((p, index) => {
+            const inCart = cart.find(i => i.id === p.id);
+            const isOutOfStock = p.inStock === false;
+            
+            return (
+              <div 
+                key={p.id} 
+                className={`bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm flex flex-col hover:shadow-lg transition-all duration-300 ${isOutOfStock ? 'opacity-70 grayscale' : ''}`}
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                
+                <div 
+                    className="relative aspect-[4/5] overflow-hidden bg-gray-50 cursor-pointer"
+                    onClick={() => setSelectedProduct(p)}
+                >
+                  <img 
+                    src={p.image} 
+                    alt={p.name} 
+                    className="w-full h-full object-cover" 
+                  />
+                  {isOutOfStock ? (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <span className="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-sm uppercase tracking-tighter">SIN STOCK</span>
+                    </div>
+                  ) : p.tag && (
+                    <span className="absolute top-2 left-2 bg-black text-[#d4af37] text-[8px] font-black px-2 py-1 uppercase rounded-sm">{p.tag}</span>
+                  )}
+                </div>
+
+                <div className="p-3 md:p-4 flex-grow flex flex-col">
+                  <h3 className="font-bold text-[11px] md:text-sm uppercase mb-1 text-gray-800 line-clamp-1">
+                    {p.name}
+                  </h3>
+                  
+                  <div className="mt-auto pt-2">
+                    <p className="text-[#d4af37] font-black text-base md:text-lg mb-3 tracking-tighter">
+                      {CONFIG.currencySymbol}{formatPrice(p.price)}
+                    </p>
+                    
+                    {isOutOfStock ? (
+                        <button disabled className="w-full bg-gray-100 text-gray-400 py-3.5 text-[11px] font-black uppercase tracking-wider rounded-xl cursor-not-allowed">
+                          Agotado
+                        </button>
+                    ) : inCart ? (
+                      <div className="flex items-center justify-between bg-black text-white h-11 rounded-xl font-bold text-sm px-1 shadow-lg">
+                        <button className="w-10 h-full flex items-center justify-center hover:text-[#d4af37] transition-colors" onClick={() => changeQty(p.id, -1)}>
+                          <i className="fas fa-minus text-xs"></i>
+                        </button>
+                        <span className="font-black text-[#d4af37]">{inCart.qty}</span>
+                        <button className="w-10 h-full flex items-center justify-center hover:text-[#d4af37] transition-colors" onClick={() => addToCart(p)}>
+                          <i className="fas fa-plus text-xs"></i>
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => addToCart(p)} className="w-full bg-black text-white hover:bg-[#d4af37] hover:text-black hover:shadow-lg hover:shadow-[#d4af37]/30 py-3.5 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
+                        <i className="fas fa-shopping-bag"></i> Añadir
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
     );
@@ -436,23 +531,36 @@ export default function Home() {
   const renderLegalPage = () => {
     const pageData = PAGE_CONTENT[currentView];
     if (!pageData) return null;
+
     return (
       <div className="bg-[#fafafa] min-h-screen py-16 px-4 md:py-24">
         <div className="max-w-3xl mx-auto bg-white p-8 md:p-16 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-gray-100 animate-in fade-in slide-in-from-bottom-8 duration-700">
-          <button onClick={() => navigateTo('home')} className="mb-10 text-gray-400 hover:text-[#d4af37] transition-colors flex items-center gap-2 font-bold text-xs uppercase tracking-widest"><i className="fas fa-arrow-left"></i> Volver a la Tienda</button>
+          
+          <button onClick={() => navigateTo('home')} className="mb-10 text-gray-400 hover:text-[#d4af37] transition-colors flex items-center gap-2 font-bold text-xs uppercase tracking-widest">
+            <i className="fas fa-arrow-left"></i> Volver a la Tienda
+          </button>
+
           <div className="text-center mb-16">
-             <span className="text-[#d4af37] font-black uppercase tracking-[0.3em] text-[10px] md:text-xs mb-4 block">{pageData.subtitle}</span>
-             <h1 className="text-3xl md:text-5xl font-black text-black uppercase tracking-tighter">{pageData.title}</h1>
+             <span className="text-[#d4af37] font-black uppercase tracking-[0.3em] text-[10px] md:text-xs mb-4 block">
+                {pageData.subtitle}
+             </span>
+             <h1 className="text-3xl md:text-5xl font-black text-black uppercase tracking-tighter">
+                {pageData.title}
+             </h1>
              <div className="w-24 h-1 bg-[#d4af37] mx-auto mt-8"></div>
           </div>
-          <div className="prose prose-gray max-w-none">{pageData.body}</div>
+
+          <div className="prose prose-gray max-w-none">
+             {pageData.body}
+          </div>
+
         </div>
       </div>
     );
   };
 
   return (
-    <div className="bg-[#fafafa] text-[#1a1a1a] font-sans flex flex-col relative pb-16 md:pb-0 min-h-screen">
+    <div className="bg-[#fafafa] text-[#1a1a1a] font-sans flex flex-col relative min-h-screen">
       
       {toastMessage && (
          <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-black text-white px-6 py-3 rounded-full shadow-[0_10px_40px_rgba(212,175,55,0.3)] border border-[#d4af37]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">
@@ -460,162 +568,140 @@ export default function Home() {
          </div>
       )}
 
-      {/* HEADER SUPERIOR (BARRA DE NAVEGACIÓN FIJA) */}
-      <header className="bg-black sticky top-0 z-50 h-16 flex items-center justify-between px-4 md:px-8 shadow-xl">
+      {/* --- EL ÚNICO HEADER SUPERIOR (BARRA UNIFICADA) --- */}
+      <header className="bg-black sticky top-0 z-50 h-16 flex items-center justify-between px-4 md:px-6 shadow-md">
          <div className="flex items-center gap-4">
-             <button onClick={() => setIsMenuOpen(true)} className="text-white text-2xl hover:text-[#d4af37] transition-colors">
+             <button onClick={() => setIsSidebarOpen(true)} className="text-white text-2xl hover:text-[#d4af37] transition-colors p-2">
                  <i className="fas fa-bars"></i>
              </button>
-             <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('home')}>
-                <img src={CONFIG.logoImage} alt="Logo" className="h-8 w-auto object-contain" />
+             <div className="flex items-center gap-3 cursor-pointer" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}>
+                <img src={CONFIG.logoImage} alt="Logo" className="h-8 w-auto object-contain drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
                 <span className="text-white font-black uppercase tracking-widest text-sm md:text-base hidden sm:block">028<span className="text-[#d4af37]">IMPORT</span></span>
              </div>
          </div>
          <div className="flex items-center gap-4">
-             <div className="relative hidden md:block">
-                 <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                 <input type="text" placeholder="Buscar..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="bg-[#1a1a1a] text-white pl-8 pr-4 py-2 rounded-full text-xs font-bold outline-none focus:border-[#d4af37] border border-transparent transition-all placeholder:text-gray-500 w-48" />
-             </div>
-             <button onClick={() => setIsCartOpen(true)} className="relative text-white hover:text-[#d4af37] transition-colors p-2">
-                 <i className="fas fa-shopping-bag text-2xl"></i>
-                 {getTotalItems() > 0 && <span className="absolute top-0 right-0 bg-[#d4af37] text-black text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-md">{getTotalItems()}</span>}
-             </button>
+            <button onClick={() => setIsSearchOpen(true)} className="text-white text-lg p-2 hover:text-[#d4af37] transition-colors"><i className="fas fa-search"></i></button>
+            <button onClick={() => setIsCartOpen(true)} className="relative text-white hover:text-[#d4af37] transition-colors p-2">
+               <i className="fas fa-shopping-bag text-2xl"></i>
+               {getTotalItems() > 0 && <span className="absolute top-1 right-0 bg-[#d4af37] text-black text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-md">{getTotalItems()}</span>}
+            </button>
          </div>
       </header>
 
-      {/* MENÚ LATERAL (ESTILO NIKE) */}
-      {isMenuOpen && (
-          <div className="fixed inset-0 z-[90] flex">
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsMenuOpen(false)}></div>
-              <div className="w-[85%] max-w-[350px] bg-white h-full relative z-10 animate-in slide-in-from-left duration-300 flex flex-col shadow-2xl">
-                  <div className="p-6 bg-black flex justify-between items-center text-white">
-                     <span className="font-black text-xl tracking-tighter uppercase">028<span className="text-[#d4af37]">MENU</span></span>
-                     <button onClick={() => setIsMenuOpen(false)}><i className="fas fa-times text-xl text-gray-400"></i></button>
-                  </div>
-                  
-                  <div className="flex-1 overflow-y-auto">
+      {/* --- EL MENÚ LATERAL UNIFICADO (DRAWER) --- */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-[100] flex">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsSidebarOpen(false)}></div>
+          
+          <div className="relative w-[85%] max-w-[350px] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
+              
+              <div className="p-6 bg-black flex justify-between items-center text-white">
+                 <span className="font-black text-xl tracking-tighter uppercase">028<span className="text-[#d4af37]">MENU</span></span>
+                 <button onClick={() => setIsSidebarOpen(false)}><i className="fas fa-times text-xl text-gray-400"></i></button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto">
+                  {sidebarStep === 'root' ? (
                       <div className="flex flex-col">
-                          <button onClick={() => navigateTo('home')} className="text-left p-6 border-b border-gray-100 font-black uppercase text-sm hover:bg-gray-50 flex items-center gap-3 transition-colors">
+                          <button onClick={() => { setActiveFilter({dept:'all', cat:'all'}); setIsSidebarOpen(false); setCurrentView('home'); window.scrollTo(0,0); }} className="text-left p-6 border-b border-gray-100 font-black uppercase text-sm hover:bg-gray-50 flex items-center gap-3 transition-colors">
                               <i className="fas fa-home text-gray-400 w-5"></i> Inicio
                           </button>
                           
                           <div className="bg-gray-50 py-3 px-6 border-b border-gray-100">
-                              <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Nuestros Departamentos</p>
+                              <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Catálogo</p>
                           </div>
                           
                           {departments.map(dept => (
-                              <button key={dept} onClick={() => navigateTo('catalog', dept)} className="text-left p-6 border-b border-gray-100 font-black uppercase text-sm hover:bg-gray-50 flex justify-between items-center transition-colors group">
-                                  {dept} <i className="fas fa-chevron-right text-gray-300 group-hover:text-[#d4af37] transition-colors"></i>
+                              <button key={dept} onClick={() => setSidebarStep(dept)} className="text-left p-6 border-b border-gray-100 font-black uppercase text-sm hover:bg-gray-50 flex justify-between items-center transition-colors">
+                                  {dept} <i className="fas fa-chevron-right text-gray-300"></i>
                               </button>
                           ))}
                           
                           <div className="p-6 mt-4 bg-gray-50 flex-1">
                               <p className="text-[10px] font-black uppercase text-gray-400 mb-4 tracking-widest">Centro de Ayuda</p>
-                              <button onClick={() => navigateTo('terminos')} className="block w-full text-left py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors"><i className="fas fa-file-contract w-6 text-[#d4af37]"></i> Términos de Venta</button>
-                              <button onClick={() => navigateTo('pagos')} className="block w-full text-left py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors"><i className="fas fa-credit-card w-6 text-[#d4af37]"></i> Medios de Pago</button>
-                              <button onClick={() => navigateTo('arrepentimiento')} className="block w-full text-left py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors"><i className="fas fa-undo w-6 text-[#d4af37]"></i> Devoluciones</button>
+                              <button onClick={() => {setCurrentView('nosotros'); setIsSidebarOpen(false); window.scrollTo(0,0);}} className="block w-full text-left py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors"><i className="fas fa-users w-6 text-[#d4af37]"></i> Quiénes Somos</button>
+                              <button onClick={() => {setCurrentView('envios'); setIsSidebarOpen(false); window.scrollTo(0,0);}} className="block w-full text-left py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors"><i className="fas fa-truck w-6 text-[#d4af37]"></i> Logística de Envío</button>
+                              <button onClick={() => {setCurrentView('terminos'); setIsSidebarOpen(false); window.scrollTo(0,0);}} className="block w-full text-left py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors"><i className="fas fa-file-contract w-6 text-[#d4af37]"></i> Términos de Venta</button>
+                              <button onClick={() => {setCurrentView('pagos'); setIsSidebarOpen(false); window.scrollTo(0,0);}} className="block w-full text-left py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors"><i className="fas fa-credit-card w-6 text-[#d4af37]"></i> Medios de Pago</button>
+                              <button onClick={() => {setCurrentView('arrepentimiento'); setIsSidebarOpen(false); window.scrollTo(0,0);}} className="block w-full text-left py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors"><i className="fas fa-undo w-6 text-[#d4af37]"></i> Devoluciones</button>
                           </div>
                       </div>
-                  </div>
-              </div>
-          </div>
-      )}
-
-      {currentView === 'home' ? (
-        <>
-          <header className="relative h-[40vh] md:h-[50vh] flex items-center justify-center bg-black overflow-hidden shadow-2xl animate-in fade-in duration-1000">
-            <div className="absolute inset-0 bg-cover bg-center opacity-40 scale-105" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-black/50" />
-            <div className="relative z-10 text-center px-4 max-w-3xl flex flex-col items-center">
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4 drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-r from-[#d4af37] via-[#f2e196] to-[#d4af37]">
-                028 IMPORT
-              </h1>
-              <p className="text-white text-xs md:text-sm font-bold tracking-widest uppercase bg-black/40 px-5 py-2 rounded-full backdrop-blur-md border border-[#d4af37]/30 shadow-xl">
-                {CONFIG.shippingText}
-              </p>
-            </div>
-          </header>
-
-          <main className="flex-grow px-4 py-8 max-w-7xl mx-auto min-h-[50vh] pb-24 w-full">
-             
-             {/* BÚSQUEDA RÁPIDA MOBILE */}
-             <div className="md:hidden relative mb-8">
-                 <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                 <input type="text" placeholder="Buscar productos..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white border border-gray-200 pl-10 pr-4 py-3 rounded-2xl text-sm font-bold outline-none focus:border-[#d4af37] shadow-sm placeholder:text-gray-400" />
-             </div>
-
-             {/* CATEGORÍAS RÁPIDAS (BURBUJAS) */}
-             <div className="mb-12">
-                 <h3 className="font-black text-sm uppercase tracking-widest text-gray-500 mb-4 pl-1">Explorar Categorías</h3>
-                 <div className="flex overflow-x-auto gap-4 no-scrollbar pb-4 snap-x">
-                     {departments.map(dept => (
-                         <div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-40 md:h-40 bg-white rounded-[2rem] shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 cursor-pointer hover:shadow-md hover:border-[#d4af37] transition-all">
-                             <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-[#d4af37] text-xl">
-                                 {dept === 'VAPES' && <i className="fas fa-wind"></i>}
-                                 {dept === 'THC' && <i className="fas fa-leaf"></i>}
-                                 {dept === 'TECNOLOGÍA' && <i className="fas fa-microchip"></i>}
-                                 {dept === 'LIFESTYLE' && <i className="fas fa-star"></i>}
-                                 {dept === 'BIENESTAR' && <i className="fas fa-fire"></i>}
-                                 {!['VAPES', 'THC', 'TECNOLOGÍA', 'LIFESTYLE', 'BIENESTAR'].includes(dept) && <i className="fas fa-box"></i>}
-                             </div>
-                             <span className="font-black text-[10px] md:text-xs uppercase tracking-widest text-center px-2">{dept}</span>
-                         </div>
-                     ))}
-                 </div>
-             </div>
-
-             {/* SECCIÓN DESTACADOS (CARRUSEL HORIZONTAL) */}
-             {featuredProducts.length > 0 && (
-                <div className="mb-12">
-                    <div className="flex justify-between items-end mb-4 pl-1 border-b-2 border-gray-100 pb-2">
-                        <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase"><i className="fas fa-fire text-red-500 mr-2"></i> Más Buscados</h2>
-                        <button onClick={() => navigateTo('catalog')} className="text-[10px] font-black uppercase text-gray-400 hover:text-black">Ver Todo</button>
-                    </div>
-                    <div className="flex overflow-x-auto gap-4 no-scrollbar pb-4 snap-x">
-                        {featuredProducts.map((p, index) => renderProductCard(p, index))}
-                    </div>
-                </div>
-             )}
-
-             {/* SECCIÓN NUEVOS INGRESOS (CARRUSEL HORIZONTAL) */}
-             {newProducts.length > 0 && (
-                <div className="mb-12">
-                    <div className="flex justify-between items-end mb-4 pl-1 border-b-2 border-gray-100 pb-2">
-                        <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase"><i className="fas fa-bolt text-[#d4af37] mr-2"></i> Nuevos Ingresos</h2>
-                        <button onClick={() => navigateTo('catalog')} className="text-[10px] font-black uppercase text-gray-400 hover:text-black">Ver Todo</button>
-                    </div>
-                    <div className="flex overflow-x-auto gap-4 no-scrollbar pb-4 snap-x">
-                        {newProducts.map((p, index) => renderProductCard(p, index))}
-                    </div>
-                </div>
-             )}
-          </main>
-        </>
-      ) : currentView === 'catalog' ? (
-        <>
-          <div className="bg-white sticky top-16 z-30 border-b border-gray-200 shadow-sm transition-all pt-2 pb-2">
-              <div className="max-w-7xl mx-auto px-4">
-                  <div className="flex items-center gap-2 mb-2">
-                      <button onClick={() => navigateTo('home')} className="text-gray-400 hover:text-black text-[10px] font-black uppercase tracking-widest"><i className="fas fa-home"></i> Inicio</button>
-                      <span className="text-gray-300 text-[10px]"><i className="fas fa-chevron-right"></i></span>
-                      <span className="text-black font-black uppercase tracking-widest text-[10px]">{activeDept || 'TODOS LOS PRODUCTOS'}</span>
-                  </div>
-                  
-                  {uniqueCategories.length > 0 && (
-                      <div className="flex gap-2 overflow-x-auto no-scrollbar py-2 mask-image-gradient pr-8">
-                          <span className="text-[10px] font-black uppercase text-gray-400 mr-2 tracking-widest flex items-center"><i className="fas fa-filter mr-1"></i></span>
-                          <a href="#" className="whitespace-nowrap bg-black text-[#d4af37] border-black px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">Todos</a>
-                          {uniqueCategories.map(cat => (
-                              <a key={cat} href={`#${slugify(cat)}`} className="whitespace-nowrap bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all shadow-sm flex-shrink-0">
-                                  {cat}
-                              </a>
-                          ))}
+                  ) : (
+                      <div className="flex flex-col animate-in slide-in-from-right-4 duration-300">
+                          <button onClick={() => setSidebarStep('root')} className="text-left p-5 border-b border-gray-200 font-black uppercase text-[10px] text-gray-500 bg-gray-100 flex items-center gap-3 hover:bg-gray-200 transition-colors">
+                              <i className="fas fa-chevron-left"></i> Volver al Menú Principal
+                          </button>
+                          
+                          <div className="p-6 bg-white">
+                              <h3 className="font-black text-3xl uppercase tracking-tighter mb-6">{sidebarStep}</h3>
+                              
+                              <button onClick={() => { setActiveFilter({dept: sidebarStep, cat:'all'}); setCurrentView('home'); setIsSidebarOpen(false); window.scrollTo(0,0); }} className="w-full text-left py-4 font-black uppercase text-sm border-b border-gray-100 hover:text-[#d4af37] transition-colors">
+                                  Ver todo en {sidebarStep}
+                              </button>
+                              
+                              {Array.from(new Set(products.filter(p => p.department === sidebarStep).map(p => p.category))).map(cat => (
+                                  <button key={cat} onClick={() => { setActiveFilter({dept: sidebarStep, cat: cat}); setCurrentView('home'); setIsSidebarOpen(false); window.scrollTo(0,0); }} className="w-full text-left py-4 font-bold text-sm border-b border-gray-100 text-gray-600 hover:text-black hover:pl-2 transition-all">
+                                      {cat}
+                                  </button>
+                              ))}
+                          </div>
                       </div>
                   )}
               </div>
           </div>
+        </div>
+      )}
 
-          <main className="flex-grow px-4 py-8 max-w-7xl mx-auto min-h-[50vh] pb-24 w-full">
+      {currentView === 'home' ? (
+        <>
+          <header className="relative h-[30vh] md:h-[40vh] flex items-center justify-center bg-black overflow-hidden animate-in fade-in duration-1000">
+            <div className="absolute inset-0 bg-cover bg-center opacity-40 scale-105" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-black/50" />
+            
+            <div className="relative z-10 text-center px-4 max-w-3xl flex flex-col items-center">
+              {activeFilter.dept !== 'all' ? (
+                 <h1 className="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter mb-2 drop-shadow-2xl text-white">
+                    {activeFilter.dept}
+                 </h1>
+              ) : (
+                 <h1 className="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter mb-2 drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-r from-[#d4af37] via-[#f2e196] to-[#d4af37]">
+                    028 IMPORT
+                 </h1>
+              )}
+              <p className="text-white text-xs md:text-sm font-bold tracking-widest uppercase bg-black/40 px-5 py-2 rounded-full backdrop-blur-md border border-[#d4af37]/30 shadow-xl mt-2">
+                {activeFilter.cat !== 'all' ? activeFilter.cat : CONFIG.shippingText}
+              </p>
+            </div>
+          </header>
+
+          <div className="sticky top-16 z-30 bg-[#fafafa]/90 backdrop-blur-xl border-b border-gray-200 shadow-sm transition-all">
+              <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row gap-4 items-center justify-between">
+                
+                <div className="flex gap-3 overflow-x-auto no-scrollbar w-full md:w-auto mask-image-gradient py-1">
+                    <span className="text-[10px] font-black uppercase text-gray-400 mr-2 tracking-widest flex items-center">
+                        <i className="fas fa-filter mr-2"></i> {activeFilter.dept !== 'all' ? 'Filtro Activo:' : 'Catálogo:'}
+                    </span>
+                    
+                    {activeFilter.dept !== 'all' ? (
+                        <>
+                           <span className="whitespace-nowrap bg-black text-[#d4af37] px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-md">
+                               {activeFilter.dept} {activeFilter.cat !== 'all' && `> ${activeFilter.cat}`}
+                           </span>
+                           <button onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); window.scrollTo(0,0);}} className="whitespace-nowrap bg-gray-200 text-gray-600 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all">
+                               <i className="fas fa-times"></i> Limpiar
+                           </button>
+                        </>
+                    ) : (
+                        <span className="whitespace-nowrap bg-white border border-gray-200 text-gray-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
+                            Mostrando todos los productos
+                        </span>
+                    )}
+                </div>
+
+              </div>
+          </div>
+
+          <main className="flex-grow px-4 py-8 max-w-7xl mx-auto min-h-[50vh] pb-24">
             {searchTerm && products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
                <div className="text-center py-20 text-gray-400 bg-white rounded-3xl border-2 border-dashed border-gray-200">
                  <i className="fas fa-ghost text-4xl mb-4 text-gray-300"></i>
@@ -623,7 +709,8 @@ export default function Home() {
                  <p className="text-xs uppercase tracking-widest mt-2">Intenta buscar otro sabor o marca.</p>
                </div>
             )}
-            {uniqueCategories.map(cat => renderProductSection(cat))}
+
+            {visibleCategories.map(cat => renderProductSection(cat))}
           </main>
         </>
       ) : (
@@ -632,13 +719,13 @@ export default function Home() {
         </main>
       )}
 
-      {/* --- NAVEGACIÓN INFERIOR (ESTILO APP PARA MOBILE) --- */}
+      {/* --- NAVEGACIÓN INFERIOR MOBILE (Mantenida por si acaso, aunque unificamos arriba) --- */}
       <nav className="md:hidden fixed bottom-0 w-full bg-white/95 backdrop-blur-xl border-t border-gray-200 z-40 pb-safe flex justify-around items-center h-16 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-         <button onClick={() => navigateTo('home')} className={`flex flex-col items-center gap-1 w-full ${currentView==='home' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}>
+         <button onClick={() => {setCurrentView('home'); window.scrollTo(0,0);}} className={`flex flex-col items-center gap-1 w-full ${currentView==='home' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}>
              <i className="fas fa-home text-xl"></i><span className="text-[8px] font-black uppercase tracking-widest">Inicio</span>
          </button>
-         <button onClick={() => navigateTo('catalog')} className={`flex flex-col items-center gap-1 w-full ${currentView==='catalog' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}>
-             <i className="fas fa-th-large text-xl"></i><span className="text-[8px] font-black uppercase tracking-widest">Catálogo</span>
+         <button onClick={() => setIsSearchOpen(true)} className="flex flex-col items-center gap-1 w-full text-gray-400 hover:text-gray-600">
+             <i className="fas fa-search text-xl"></i><span className="text-[8px] font-black uppercase tracking-widest">Buscar</span>
          </button>
          <button onClick={() => setIsCartOpen(true)} className="flex flex-col items-center gap-1 w-full text-black relative hover:scale-105 transition-transform">
              <div className="relative">
@@ -650,67 +737,73 @@ export default function Home() {
       </nav>
 
       {/* FOOTER DESKTOP */}
-      <footer className="hidden md:block bg-black text-white pt-16 pb-8 border-t-4 border-[#d4af37] relative z-30">
+      <footer className="hidden md:block bg-black text-white pt-16 pb-8 border-t-4 border-[#d4af37] mt-auto relative z-30">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-12 text-xs md:text-sm">
             <div className="space-y-5">
               <div className="flex items-center gap-3">
-                 <img src={CONFIG.logoImage} alt="028Import Logo" className="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(212,175,55,0.3)]" />
+                 <img src={CONFIG.logoImage} alt="028Import Logo" className="h-10 mb-4 drop-shadow-[0_0_8px_rgba(212,175,55,0.3)]" />
                  <span className="text-xl font-black uppercase tracking-widest text-white">028<span className="text-[#d4af37]">Import</span></span>
               </div>
               <p className="text-gray-400 font-medium leading-relaxed pr-4">Redefinimos la experiencia de compra priorizando tu tiempo y confianza. Brindamos un servicio logístico ágil y seguro.</p>
             </div>
             <div>
-              <h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-5">Contacto</h4>
-              <ul className="space-y-4 text-gray-400 font-medium">
-                 <li className="flex items-center gap-3"><i className="fab fa-whatsapp text-xl text-[#d4af37]"></i><span className="text-sm font-bold tracking-wider">11 5341 2358</span></li>
-                 <li className="flex items-start gap-3 mt-4"><i className="fas fa-location-dot text-lg text-[#d4af37] mt-0.5"></i><span>Miñones y Juramento,<br/>Belgrano, CABA.</span></li>
+              <h4 className="font-black text-[#d4af37] text-[10px] uppercase tracking-widest mb-4">Legal & Ayuda</h4>
+              <ul className="space-y-3 text-gray-400 text-xs font-bold">
+                 <li><button onClick={() => {setCurrentView('nosotros'); window.scrollTo(0,0);}} className="hover:text-white transition-colors uppercase">Quiénes Somos</button></li>
+                 <li><button onClick={() => {setCurrentView('envios'); window.scrollTo(0,0);}} className="hover:text-white transition-colors uppercase">Logística de Envío</button></li>
+                 <li><button onClick={() => {setCurrentView('terminos'); window.scrollTo(0,0);}} className="hover:text-white transition-colors uppercase mt-4 pt-2 border-t border-white/10">Términos de Venta</button></li>
+                 <li><button onClick={() => {setCurrentView('pagos'); window.scrollTo(0,0);}} className="hover:text-white transition-colors uppercase">Medios de Pago</button></li>
+                 <li><button onClick={() => {setCurrentView('arrepentimiento'); window.scrollTo(0,0);}} className="hover:text-white transition-colors uppercase">Devoluciones</button></li>
+                 <li><button onClick={() => {setCurrentView('privacidad'); window.scrollTo(0,0);}} className="hover:text-white transition-colors uppercase">Privacidad</button></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-5">Información Legal</h4>
-              <ul className="space-y-3 text-gray-400 font-medium">
-                <li><button onClick={() => navigateTo('pagos')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#d4af37] text-[10px]"></i> Medios de Pago</button></li>
-                <li><button onClick={() => navigateTo('terminos')} className="hover:text-white transition-colors flex items-center gap-2 mt-4 pt-2 border-t border-white/10"><i className="fas fa-file-contract text-gray-600 text-[10px]"></i> Términos y Condiciones</button></li>
-                <li><button onClick={() => navigateTo('privacidad')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-shield-alt text-gray-600 text-[10px]"></i> Política de Privacidad</button></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-5">Nuestras Redes</h4>
-              <div className="flex gap-3">
-                <a href="https://www.instagram.com/028.import" target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-[#d4af37] hover:text-black transition-colors shadow-lg"><i className="fab fa-instagram text-xl"></i></a>
-                <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-[#25D366] hover:text-white transition-colors shadow-lg"><i className="fab fa-whatsapp text-xl"></i></a>
-              </div>
+              <h4 className="font-black text-[#d4af37] text-[10px] uppercase tracking-widest mb-4">Contacto Directo</h4>
+              <p className="text-gray-400 text-xs font-bold mb-4 uppercase"><i className="fab fa-whatsapp text-[#d4af37] mr-2 text-lg"></i>11 5341 2358</p>
+              <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="inline-block bg-[#d4af37] text-black text-[10px] font-black px-6 py-3 rounded-full uppercase tracking-widest hover:bg-white transition-colors shadow-lg">Escribinos</a>
             </div>
           </div>
-          <div className="flex flex-col md:flex-row justify-between items-center border-t border-white/10 pt-8 text-[9px] md:text-[10px] text-gray-500 uppercase tracking-widest text-center md:text-left gap-4">
-            <p className="flex items-center gap-2 justify-center"><i className="fas fa-map-marker-alt"></i> Argentina</p>
-            <p>© {new Date().getFullYear()} 028IMPORT. Todos los derechos reservados.</p>
-            <div className="flex gap-4"><button onClick={() => navigateTo('arrepentimiento')} className="hover:text-white transition-colors">Botón de Arrepentimiento</button></div>
+          <div className="border-t border-white/10 pt-6 text-[9px] text-gray-600 uppercase tracking-widest text-center flex justify-between">
+            <span>© {new Date().getFullYear()} 028IMPORT. Todos los derechos reservados.</span>
+            <span>Argentina <i className="fas fa-map-marker-alt ml-1"></i></span>
           </div>
         </div>
       </footer>
 
-      {/* MODALES DE PRODUCTO Y CARRITO SE MANTIENEN IGUAL QUE SIEMPRE */}
       {selectedProduct && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6">
            <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setSelectedProduct(null)}></div>
+           
            <div className="relative bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col md:flex-row max-h-[90vh]">
-              <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/80 backdrop-blur-md text-black rounded-full flex items-center justify-center hover:bg-black hover:text-white transition-colors shadow-lg"><i className="fas fa-times"></i></button>
+              <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/80 backdrop-blur-md text-black rounded-full flex items-center justify-center hover:bg-black hover:text-white transition-colors shadow-lg">
+                <i className="fas fa-times"></i>
+              </button>
+
               <div className="w-full md:w-1/2 bg-gray-50 p-8 flex items-center justify-center relative min-h-[300px]">
                  {selectedProduct.tag && <span className="absolute top-6 left-6 bg-black text-[#d4af37] text-[10px] font-black px-4 py-2 uppercase tracking-widest rounded-full shadow-lg z-10">{selectedProduct.tag}</span>}
-                 <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full max-h-[500px] object-contain drop-shadow-2xl animate-in scale-95 duration-500" />
+                 <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full max-h-[500px] object-contain drop-shadow-2xl animate-in scale-95 duration-500 mix-blend-multiply" />
               </div>
+
               <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center overflow-y-auto">
                  <p className="text-[#d4af37] font-black uppercase tracking-[0.2em] text-[10px] mb-2">{selectedProduct.category}</p>
                  <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-gray-900 leading-none mb-6">{selectedProduct.name}</h2>
-                 <p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed whitespace-pre-line">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p>
+                 
+                 <p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed whitespace-pre-line">
+                   {selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium. El sabor y rendimiento que estabas buscando en un formato elegante y exclusivo."}
+                 </p>
+
                  <div className="mt-auto border-t border-gray-100 pt-8">
-                    <p className="text-[#d4af37] font-black text-4xl tracking-tighter mb-6">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}</p>
+                    <p className="text-[#d4af37] font-black text-4xl tracking-tighter mb-6">
+                      {CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}
+                    </p>
+
                     {selectedProduct.inStock === false ? (
                         <button disabled className="w-full bg-gray-200 text-gray-500 py-4 text-xs font-black uppercase tracking-widest rounded-2xl cursor-not-allowed">Producto Agotado</button>
                     ) : (
-                        <button onClick={() => addToCart(selectedProduct)} className="w-full bg-black text-white hover:bg-[#d4af37] hover:text-black py-4 text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl hover:shadow-[#d4af37]/30 transition-all duration-300 flex justify-center items-center gap-3"><i className="fas fa-shopping-cart text-lg"></i> Agregar a mi pedido</button>
+                        <button onClick={() => addToCart(selectedProduct)} className="w-full bg-black text-white hover:bg-[#d4af37] hover:text-black py-4 text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl hover:shadow-[#d4af37]/30 transition-all duration-300 flex justify-center items-center gap-3">
+                           <i className="fas fa-shopping-cart text-lg"></i> Agregar a mi pedido
+                        </button>
                     )}
                  </div>
               </div>
@@ -721,70 +814,152 @@ export default function Home() {
       {isCartOpen && (
         <div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} />
+          
           <div className="relative bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[85vh] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-8 duration-300 flex flex-col">
+            
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
               <div>
                 <h2 className="text-2xl font-black uppercase tracking-tighter text-black">Tu Bolsa</h2>
                 <p className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">{getTotalItems()} artículos</p>
               </div>
-              <button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-gray-100 rounded-full text-gray-500 hover:bg-black hover:text-white transition-colors flex items-center justify-center"><i className="fas fa-times text-lg"></i></button>
+              <button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-gray-100 rounded-full text-gray-500 hover:bg-black hover:text-white transition-colors flex items-center justify-center">
+                <i className="fas fa-times text-lg"></i>
+              </button>
             </div>
+
             <div className="overflow-y-auto p-6 flex-grow no-scrollbar bg-gray-50/50">
               <div className="space-y-4 mb-8">
                 {cart.length === 0 && <p className="text-center text-gray-400 text-xs font-black uppercase tracking-widest py-10">Tu bolsa está vacía</p>}
                 {cart.map(item => (
                   <div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center p-1"><img src={item.image} className="w-full h-full object-contain" alt="" /></div>
+                      <div className="w-14 h-14 bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center p-1">
+                        <img src={item.image} className="w-full h-full object-contain" alt="" />
+                      </div>
                       <div className="flex flex-col">
                         <p className="font-bold text-xs uppercase tracking-tight max-w-[150px] sm:max-w-[200px] truncate">{item.name}</p>
                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{item.qty} unidades</p>
                       </div>
                     </div>
-                    <p className="font-black text-[#d4af37] text-sm tracking-tighter">{CONFIG.currencySymbol}{formatPrice(item.qty * getUnitPromoPrice(item))}</p>
+                    <p className="font-black text-[#d4af37] text-sm tracking-tighter">
+                      {CONFIG.currencySymbol}{formatPrice(item.qty * getUnitPromoPrice(item))}
+                    </p>
                   </div>
                 ))}
               </div>
+
               {cart.length > 0 && (
                   <>
                     <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm mb-4">
-                      <p className="font-black text-[11px] mb-4 uppercase tracking-widest text-gray-800 flex items-center gap-2"><i className="fas fa-user text-[#d4af37]"></i> Tus Datos</p>
+                      <p className="font-black text-[11px] mb-4 uppercase tracking-widest text-gray-800 flex items-center gap-2">
+                        <i className="fas fa-user text-[#d4af37]"></i> Tus Datos
+                      </p>
                       <div className="flex flex-col gap-3">
-                        <input type="text" placeholder="Nombre completo" value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" />
-                        <input type="tel" placeholder="Número de WhatsApp" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" />
+                        <input 
+                          type="text" 
+                          placeholder="Nombre completo" 
+                          value={clientName} 
+                          onChange={(e) => setClientName(e.target.value)} 
+                          className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" 
+                        />
+                        <input 
+                          type="tel" 
+                          placeholder="Número de WhatsApp (Ej: 1123456789)" 
+                          value={clientPhone} 
+                          onChange={(e) => setClientPhone(e.target.value)} 
+                          className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" 
+                        />
                       </div>
                     </div>
+
                     <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                      <p className="font-black text-[11px] mb-4 uppercase tracking-widest text-gray-800 flex items-center gap-2"><i className="fas fa-truck text-[#d4af37]"></i> Entrega</p>
+                      <p className="font-black text-[11px] mb-4 uppercase tracking-widest text-gray-800 flex items-center gap-2">
+                        <i className="fas fa-truck text-[#d4af37]"></i> Entrega
+                      </p>
                       <div className="flex gap-2 mb-5 bg-gray-100 p-1 rounded-xl">
                         <button onClick={() => setDeliveryMethod('retiro')} className={`flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${deliveryMethod === 'retiro' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Retiro Local</button>
                         <button onClick={() => setDeliveryMethod('envio')} className={`flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${deliveryMethod === 'envio' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Envío Domicilio</button>
                       </div>
+                      
                       {deliveryMethod === 'envio' && (
                         <div className="flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-300">
-                          <input type="text" placeholder="Dirección completa" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" />
-                          <input type="text" placeholder="Barrio / Localidad" value={zone} onChange={(e) => setZone(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" />
+                          <input 
+                             type="text" 
+                             placeholder="Dirección completa" 
+                             value={address} 
+                             onChange={(e) => setAddress(e.target.value)} 
+                             className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" 
+                          />
+                          <input 
+                             type="text" 
+                             placeholder="Barrio / Localidad" 
+                             value={zone} 
+                             onChange={(e) => setZone(e.target.value)} 
+                             className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-black focus:bg-white transition-all placeholder:text-gray-400" 
+                          />
                         </div>
                       )}
                     </div>
                   </>
               )}
             </div>
+
             {cart.length > 0 && (
                 <div className="p-6 bg-white border-t border-gray-100 sticky bottom-0">
                    <div className="flex justify-between items-end mb-6">
                      <span className="font-black text-gray-400 text-xs uppercase tracking-widest">Total a Pagar</span>
-                     <span className="font-black text-3xl text-black tracking-tighter leading-none"><span className="text-[#d4af37] text-xl mr-1">{CONFIG.currencySymbol}</span>{formatPrice(calculateTotal())}</span>
+                     <span className="font-black text-3xl text-black tracking-tighter leading-none">
+                        <span className="text-[#d4af37] text-xl mr-1">{CONFIG.currencySymbol}</span>
+                        {formatPrice(calculateTotal())}
+                     </span>
                    </div>
-                   <button onClick={handleCheckout} disabled={isSending} className={`w-full ${isSending ? 'bg-gray-200 text-gray-400 border-none' : 'bg-black text-white hover:bg-[#d4af37] hover:text-black shadow-xl hover:shadow-[#d4af37]/40'} font-black py-4 rounded-2xl uppercase tracking-widest text-xs flex justify-center items-center gap-3 transition-all duration-300`}>
-                    {isSending ? <><i className="fas fa-circle-notch fa-spin"></i> Procesando...</> : <><i className="fab fa-whatsapp text-lg"></i> Confirmar Pedido</>}
+                   
+                   <button 
+                      onClick={handleCheckout} 
+                      disabled={isSending} 
+                      className={`w-full ${isSending ? 'bg-gray-200 text-gray-400 border-none' : 'bg-black text-white hover:bg-[#d4af37] hover:text-black shadow-xl hover:shadow-[#d4af37]/40'} font-black py-4 rounded-2xl uppercase tracking-widest text-xs flex justify-center items-center gap-3 transition-all duration-300`}
+                    >
+                    {isSending ? (
+                      <><i className="fas fa-circle-notch fa-spin"></i> Procesando...</>
+                    ) : (
+                      <><i className="fab fa-whatsapp text-lg"></i> Confirmar Pedido</>
+                    )}
                   </button>
                 </div>
             )}
+
           </div>
         </div>
       )}
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+      {/* --- MODAL BUSCADOR A PANTALLA COMPLETA --- */}
+      {isSearchOpen && (
+         <div className="fixed inset-0 z-[100] bg-white animate-in slide-in-from-bottom duration-200 flex flex-col">
+            <div className="flex items-center gap-3 p-4 border-b border-gray-100 pt-safe shadow-sm">
+               <button onClick={() => {setIsSearchOpen(false); setSearchTerm('');}} className="text-lg text-gray-400 w-10 h-10 flex items-center justify-center hover:bg-gray-50 rounded-full"><i className="fas fa-arrow-left"></i></button>
+               <input autoFocus type="text" placeholder="Buscá por producto, marca o categoría..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="flex-1 bg-[#f8f9fa] p-3.5 rounded-xl outline-none font-bold text-sm border border-transparent focus:border-[#d4af37]/50 transition-colors placeholder:text-gray-400 placeholder:font-medium" />
+               {searchTerm && <button onClick={() => setSearchTerm('')} className="text-gray-400 w-10 h-10 flex items-center justify-center hover:bg-gray-50 rounded-full"><i className="fas fa-times"></i></button>}
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 bg-[#f8f9fa]">
+               {searchTerm ? products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).map(p => (
+                  <div key={p.id} onClick={() => {setSelectedProduct(p); setIsSearchOpen(false);}} className="flex items-center gap-4 bg-white p-3 rounded-2xl mb-3 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 active:scale-95 transition-all cursor-pointer">
+                     <div className="w-16 h-16 bg-[#f8f9fa] rounded-xl p-2 flex-shrink-0"><img src={p.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div>
+                     <div className="flex-1">
+                        <h4 className="font-bold text-[11px] uppercase tracking-tight line-clamp-1">{p.name}</h4>
+                        <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest mt-0.5">{p.category}</p>
+                     </div>
+                     <span className="font-black text-sm text-[#d4af37] pr-2">${formatPrice(p.price)}</span>
+                  </div>
+               )) : (
+                  <div className="h-full flex flex-col items-center justify-center text-gray-300 space-y-4">
+                     <i className="fas fa-search text-5xl opacity-20"></i>
+                     <p className="text-[10px] font-black uppercase tracking-widest text-center text-gray-400">Escribí para buscar en el catálogo</p>
+                  </div>
+               )}
+            </div>
+         </div>
+      )}
+
     </div>
   );
 }
