@@ -9,7 +9,7 @@ const CONFIG = {
   brandName: "028", 
   whatsappNumber: "5491153412358", 
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png", 
-  bannerImage: "https://i.postimg.cc/ydp4s30f/image.png", // ACÁ ESTÁ TU IMAGEN NUEVA
+  bannerImage: "https://i.postimg.cc/ydp4s30f/image.png", 
   currencySymbol: "$",
   shippingText: "Pedime te llega en 30'⏰",
 };
@@ -212,7 +212,7 @@ export default function Home() {
     try { if (firebaseRefs.db) { await addDoc(collection(firebaseRefs.db, 'orders'), { userId: user?.uid || "anon", clientName: clientName.trim(), clientPhone: clientPhone.trim(), items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPromoPrice(i) })), total: finalTotal, delivery: deliveryMethod, address: address || '', zone: zone || '', status: 'pending', createdAt: serverTimestamp() }); } setTimeout(() => { window.location.href = whatsappUrl; }, 400); } catch (e) { window.location.href = whatsappUrl; }
   };
 
-  // --- LÓGICA DE TARJETAS (ESTILO URBAN BRANDBOOK + SMOOTH APPLE) ---
+  // --- LÓGICA DE TARJETAS ---
   const renderProductCard = (p, index, isVidriera = false, layout = 'horizontal') => {
     const inCart = cart.find(i => i.id === p.id);
     const isOutOfStock = p.inStock === false;
@@ -221,7 +221,7 @@ export default function Home() {
     let cardStyle = {};
     let sizeClasses = '';
     let aspectClass = 'aspect-[4/5]';
-    let titleClass = 'text-[13px] md:text-[16px] leading-tight'; // Títulos un poco más grandes para Bebas
+    let titleClass = 'text-[13px] md:text-[16px] leading-tight'; 
     let priceClass = 'text-xl md:text-2xl';
 
     if (layout === 'vertical') {
@@ -344,7 +344,6 @@ export default function Home() {
 
   return (
     <div className="bg-[#f2f2f2] text-[#282723] font-poppins flex flex-col relative pb-20 md:pb-0 min-h-screen selection:bg-[#fcdb00] selection:text-[#282723]">
-      {/* INCORPORACIÓN DE TUS TIPOGRAFÍAS OFICIALES */}
       <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;700;900&display=swap');
         .font-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
@@ -365,8 +364,19 @@ export default function Home() {
 
       {currentView === 'home' ? (
         <>
-          <div className="px-4 md:px-8 pt-4 pb-8"><header className="relative h-[30vh] md:h-[50vh] rounded-[2rem] flex items-center justify-center bg-[#282723] overflow-hidden animate-in fade-in zoom-in-95 duration-1000 shadow-xl border border-gray-800"><div className="absolute inset-0 bg-cover bg-center opacity-60 scale-105" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} /><div className="absolute inset-0 bg-gradient-to-t from-[#282723] via-[#282723]/40 to-transparent" /><div className="relative z-10 text-center px-4 max-w-4xl flex flex-col items-center"><span className="text-[#fcdb00] text-[10px] md:text-sm font-bold tracking-[0.3em] uppercase mb-2 block font-poppins">Bienvenido a la élite</span><h1 className="text-6xl sm:text-7xl md:text-9xl font-bebas uppercase tracking-wide mb-6 drop-shadow-2xl text-white">028 IMPORT</h1><p className="text-[#282723] font-poppins text-[10px] md:text-xs font-black tracking-widest uppercase bg-[#fcdb00] px-6 py-3 rounded-md shadow-xl"><i className="fas fa-bolt text-[#282723] mr-2"></i> {CONFIG.shippingText}</p></div></header></div>
-          <main className="flex-grow px-4 md:px-8 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full"><div className="md:hidden relative mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700"><i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" placeholder="Buscar productos, marcas..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] pl-12 pr-6 py-4 rounded-2xl text-sm font-bold outline-none focus:border-[#fcdb00] focus:bg-white transition-all placeholder:text-gray-400 font-poppins" /></div><div className="mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100"><h3 className="font-bebas text-2xl text-[#282723] mb-4 pl-2">Explorar la tienda</h3><div className="flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">{departments.map(dept => (<div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-white/70 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-[#fcdb00] transition-all duration-500 group"><div className="w-14 h-14 md:w-16 md:h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center text-[#282723] text-2xl md:text-3xl group-hover:bg-[#fcdb00] transition-colors">{dept === 'VAPES' && <i className="fas fa-wind"></i>}{dept === 'THC' && <i className="fas fa-leaf"></i>}{dept === 'TECNOLOGÍA' && <i className="fas fa-microchip"></i>}{dept === 'LIFESTYLE' && <i className="fas fa-star"></i>}{dept === 'BIENESTAR' && <i className="fas fa-fire"></i>}{!['VAPES', 'THC', 'TECNOLOGÍA', 'LIFESTYLE', 'BIENESTAR'].includes(dept) && <i className="fas fa-box"></i>}</div><span className="font-bold text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-[#282723] group-hover:text-black transition-colors font-poppins">{dept}</span></div>))}</div></div>
+          <header className="relative w-full h-[35vh] md:h-[55vh] flex items-center justify-center bg-[#282723] overflow-hidden animate-in fade-in duration-1000 border-b border-gray-300 shadow-sm">
+            <div className="absolute inset-0 bg-cover bg-center opacity-60" style={{backgroundImage: `url('${CONFIG.bannerImage}')`}} />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#f2f2f2] via-transparent to-black/50" />
+            <div className="relative z-10 text-center px-4 max-w-4xl flex flex-col items-center mt-6">
+              <span className="text-[#fcdb00] text-[10px] md:text-sm font-bold tracking-[0.3em] uppercase mb-2 block font-poppins drop-shadow-md">Bienvenido a la élite</span>
+              <h1 className="text-6xl sm:text-7xl md:text-9xl font-bebas uppercase tracking-wide mb-6 drop-shadow-2xl text-white">028 IMPORT</h1>
+              <p className="text-[#282723] font-poppins text-[10px] md:text-xs font-black tracking-widest uppercase bg-[#fcdb00] px-6 py-3 rounded-md shadow-xl">
+                <i className="fas fa-bolt text-[#282723] mr-2"></i> {CONFIG.shippingText}
+              </p>
+            </div>
+          </header>
+          
+          <main className="flex-grow px-4 md:px-8 pt-10 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full"><div className="md:hidden relative mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700"><i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" placeholder="Buscar productos, marcas..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] pl-12 pr-6 py-4 rounded-2xl text-sm font-bold outline-none focus:border-[#fcdb00] focus:bg-white transition-all placeholder:text-gray-400 font-poppins" /></div><div className="mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100"><h3 className="font-bebas text-2xl text-[#282723] mb-4 pl-2">Explorar la tienda</h3><div className="flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">{departments.map(dept => (<div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-white/70 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-[#fcdb00] transition-all duration-500 group"><div className="w-14 h-14 md:w-16 md:h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center text-[#282723] text-2xl md:text-3xl group-hover:bg-[#fcdb00] transition-colors">{dept === 'VAPES' && <i className="fas fa-wind"></i>}{dept === 'THC' && <i className="fas fa-leaf"></i>}{dept === 'TECNOLOGÍA' && <i className="fas fa-microchip"></i>}{dept === 'LIFESTYLE' && <i className="fas fa-star"></i>}{dept === 'BIENESTAR' && <i className="fas fa-fire"></i>}{!['VAPES', 'THC', 'TECNOLOGÍA', 'LIFESTYLE', 'BIENESTAR'].includes(dept) && <i className="fas fa-box"></i>}</div><span className="font-bold text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-[#282723] group-hover:text-black transition-colors font-poppins">{dept}</span></div>))}</div></div>
              {homeSections.length === 0 ? (<div className="text-center py-20"><div className="w-12 h-12 border-4 border-[#f2f2f2] border-t-[#fcdb00] rounded-full animate-spin mx-auto mb-4"></div><p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest font-poppins">Preparando vidriera...</p></div>) : (
                  homeSections.map((sec, sectionIndex) => {
                      const secProducts = sec.productIds?.map(pid => products.find(p => p.id === pid)).filter(Boolean) || [];
