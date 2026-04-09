@@ -83,12 +83,10 @@ export default function Home() {
   const [products, setProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
   const [homeSections, setHomeSections] = useState([]); 
-
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentView, setCurrentView] = useState('home'); 
   const [activeFilter, setActiveFilter] = useState({ dept: 'all', cat: 'all' });
   const [expandedDept, setExpandedDept] = useState(null);
-
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState('retiro');
   const [clientName, setClientName] = useState('');
@@ -133,14 +131,7 @@ export default function Home() {
   const firebaseRefs = useMemo(() => {
     if (typeof window === "undefined") return { auth: null, db: null };
     try {
-      const firebaseConfig = {
-        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-      };
+      const firebaseConfig = { apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY, authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID, storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET, messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID, appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID };
       const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
       return { auth: getAuth(app), db: getFirestore(app) };
     } catch (error) { return { auth: null, db: null }; }
@@ -150,11 +141,9 @@ export default function Home() {
     const handleFocus = () => setIsSending(false);
     window.addEventListener('focus', handleFocus);
     window.addEventListener('pageshow', handleFocus);
-
     if (firebaseRefs.auth && firebaseRefs.db) {
       signInAnonymously(firebaseRefs.auth).catch(console.error);
       const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (u) => setUser(u));
-
       const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
@@ -162,9 +151,8 @@ export default function Home() {
              const combined = [...initialProducts];
              dbProducts.forEach(dbItem => {
                 const index = combined.findIndex(p => p.id == dbItem.id);
-                if (dbItem.isHidden || dbItem.isDeleted) {
-                    if (index > -1) combined.splice(index, 1);
-                } else {
+                if (dbItem.isHidden || dbItem.isDeleted) { if (index > -1) combined.splice(index, 1); }
+                else {
                     if (index > -1) combined[index] = { ...combined[index], ...dbItem, cardSize: dbItem.cardSize || combined[index].cardSize };
                     else combined.push(dbItem);
                 }
@@ -173,120 +161,35 @@ export default function Home() {
           });
         }
       });
-
-      const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (snapshot) => {
-        if (!snapshot.empty) setPromos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        else setPromos([]);
-      });
-
-      const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (snapshot) => {
-        if (!snapshot.empty) {
-            const sections = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
-            setHomeSections(sections.sort((a, b) => a.order - b.order));
-        } else {
-            setHomeSections([]);
-        }
-      });
-
-      return () => {
-        unsubscribeAuth();
-        unsubscribeStock();
-        unsubscribePromos();
-        unsubscribeHomeSections();
-        window.removeEventListener('focus', handleFocus);
-        window.removeEventListener('pageshow', handleFocus);
-      };
+      const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (snapshot) => { setPromos(!snapshot.empty ? snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) : []); });
+      const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (snapshot) => { setHomeSections(!snapshot.empty ? snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() })).sort((a, b) => a.order - b.order) : []); });
+      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
     }
   }, [firebaseRefs]);
 
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
-  
-  const getUnitPromoPrice = (item) => {
-    const promo = promos.find(p => p.category === item.category);
-    if (promo) {
-        const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0);
-        if (catCount >= promo.minQty) return promo.totalPrice / promo.minQty;
-    }
-    return item.price;
-  };
-  
+  const getUnitPromoPrice = (item) => { const promo = promos.find(p => p.category === item.category); if (promo) { const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0); if (catCount >= promo.minQty) return promo.totalPrice / promo.minQty; } return item.price; };
   const calculateTotal = () => cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice(item)), 0);
-  
-  const showToast = (message) => { 
-      setToastMessage(message); 
-      setTimeout(() => { setToastMessage(null); }, 3000); 
-  };
-
-  const navigateTo = (view, dept = null) => {
-    setCurrentView(view);
-    if(dept) setActiveFilter({dept: dept, cat: 'all'});
-    setIsMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const addToCart = (product, e) => {
-    if(e) e.stopPropagation();
-    if (product.inStock === false) return;
-    setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
-      return [...prev, { ...product, qty: 1 }];
-    });
-    showToast(`✅ Añadido: ${product.name}`);
-    if(selectedProduct) setSelectedProduct(null); 
-  };
-
-  const changeQty = (id, delta) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === id) {
-        const newQty = item.qty + delta;
-        return newQty > 0 ? { ...item, qty: newQty } : null;
-      }
-      return item;
-    }).filter(Boolean));
-  };
+  const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
+  const navigateTo = (view, dept = null) => { setCurrentView(view); if(dept) setActiveFilter({dept: dept, cat: 'all'}); setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const addToCart = (product, e) => { if(e) e.stopPropagation(); if (product.inStock === false) return; setCart(prev => { const existing = prev.find(item => item.id === product.id); if (existing) return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item); return [...prev, { ...product, qty: 1 }]; }); showToast(`✅ Añadido: ${product.name}`); if(selectedProduct) setSelectedProduct(null); };
+  const changeQty = (id, delta) => { setCart(prev => prev.map(item => { if (item.id === id) { const newQty = item.qty + delta; return newQty > 0 ? { ...item, qty: newQty } : null; } return item; }).filter(Boolean)); };
 
   const handleCheckout = async () => {
     if (!clientName.trim() || !clientPhone.trim()) { showToast("⚠️ Por favor completá tu Nombre y Teléfono."); return; }
     if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) { showToast("⚠️ Por favor completá tu dirección y localidad."); return; }
-    
     setIsSending(true);
     const finalTotal = calculateTotal();
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
-    
-    cart.forEach(item => {
-      const unitPrice = getUnitPromoPrice(item);
-      const currency = item.price < 2000 ? "USD" : "$"; 
-      let displayName = item.name;
-      const catUpper = item.category.toUpperCase().trim();
-      const categoriesToShow = ['ELFBAR ICE KING', 'IGNITE V400', 'LOST MARY 20000'];
-      if (categoriesToShow.includes(catUpper)) displayName = `${item.category} - ${item.name}`;
-      msg += `- ${item.qty}x ${displayName} (${currency}${formatPrice(unitPrice)} c/u)\n`;
-    });
-    
+    cart.forEach(item => { const unitPrice = getUnitPromoPrice(item); msg += `- ${item.qty}x ${item.name} ($${formatPrice(unitPrice)} c/u)\n`; });
     msg += `\n*TOTAL ESTIMADO: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
     msg += deliveryMethod === 'envio' ? `*ENVIO:* ${address}, ${zone}\n` : `*RETIRO EN LOCAL*\n`;
-
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
-
-    try {
-      if (firebaseRefs.db) {
-        await addDoc(collection(firebaseRefs.db, 'orders'), {
-          userId: user?.uid || "anon", clientName: clientName.trim(), clientPhone: clientPhone.trim(),
-          items: cart.map(i => {
-             let dbName = i.name;
-             const cUp = i.category.toUpperCase().trim();
-             if(['ELFBAR ICE KING', 'IGNITE V400', 'LOST MARY 20000'].includes(cUp)) dbName = `${i.category} - ${i.name}`;
-             return { name: dbName, qty: i.qty, price: getUnitPromoPrice(i) };
-          }),
-          total: finalTotal, delivery: deliveryMethod, address: address || '', zone: zone || '', status: 'pending', createdAt: serverTimestamp()
-        });
-      }
-      setTimeout(() => { window.location.href = whatsappUrl; }, 400);
-    } catch (e) { window.location.href = whatsappUrl; }
+    try { if (firebaseRefs.db) { await addDoc(collection(firebaseRefs.db, 'orders'), { userId: user?.uid || "anon", clientName: clientName.trim(), clientPhone: clientPhone.trim(), items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPromoPrice(i) })), total: finalTotal, delivery: deliveryMethod, address: address || '', zone: zone || '', status: 'pending', createdAt: serverTimestamp() }); } setTimeout(() => { window.location.href = whatsappUrl; }, 400); } catch (e) { window.location.href = whatsappUrl; }
   };
 
+  // --- LÓGICA DE TARJETAS CORREGIDA ---
   const renderProductCard = (p, index, isVidriera = false, layout = 'horizontal') => {
     const inCart = cart.find(i => i.id === p.id);
     const isOutOfStock = p.inStock === false;
@@ -303,14 +206,14 @@ export default function Home() {
             aspectClass = 'aspect-[4/5]'; 
         }
         if (effectiveSize === 'medium') { 
-            sizeClasses = 'col-span-2 md:col-span-1'; 
-            aspectClass = 'aspect-[4/3] md:aspect-[4/5]'; 
-            titleClass = 'text-sm md:text-base'; 
+            sizeClasses = 'col-span-1 md:col-span-1'; // <-- CORREGIDO: Permite 2 por fila en el celular
+            aspectClass = 'aspect-[4/5]'; 
+            titleClass = 'text-[12px] md:text-base'; 
             priceClass = 'text-lg md:text-xl'; 
         }
         if (effectiveSize === 'large') { 
             sizeClasses = 'col-span-2 md:col-span-2 row-span-2'; 
-            aspectClass = 'aspect-[16/9] md:aspect-square'; 
+            aspectClass = 'aspect-[16/9] md:aspect-[21/9]'; 
             titleClass = 'text-lg md:text-2xl'; 
             priceClass = 'text-xl md:text-3xl'; 
         }
@@ -334,41 +237,23 @@ export default function Home() {
     }
 
     return (
-      <div 
-        key={p.id} 
-        className={`bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[2rem] overflow-hidden flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] transition-all duration-500 snap-start group animate-in fade-in slide-in-from-bottom-8 ${isOutOfStock ? 'opacity-70 grayscale' : ''} ${sizeClasses}`} 
-        style={{ animationDelay: `${index * 100}ms` }}
-      >
+      <div key={p.id} className={`bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[2rem] overflow-hidden flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] transition-all duration-500 snap-start group animate-in fade-in slide-in-from-bottom-8 ${isOutOfStock ? 'opacity-70 grayscale' : ''} ${sizeClasses}`} style={{ animationDelay: `${index * 100}ms` }}>
         <div className={`relative ${aspectClass} overflow-hidden bg-gray-50/50 cursor-pointer rounded-t-[2rem]`} onClick={() => setSelectedProduct(p)}>
           <img src={p.image} alt={p.name} className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-out" />
-          
-          {isOutOfStock ? (
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center"><span className="bg-red-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg">SIN STOCK</span></div>
-          ) : p.tag && (
-            <span className="absolute top-3 left-3 bg-black/80 backdrop-blur-md text-[#d4af37] text-[9px] font-black px-3 py-1.5 uppercase rounded-full shadow-lg">{p.tag}</span>
-          )}
+          {isOutOfStock ? ( <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center"><span className="bg-red-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg">SIN STOCK</span></div> ) : p.tag && ( <span className="absolute top-3 left-3 bg-black/80 backdrop-blur-md text-[#d4af37] text-[9px] font-black px-3 py-1.5 uppercase rounded-full shadow-lg">{p.tag}</span> )}
         </div>
-        
         <div className="p-4 flex-grow flex flex-col">
           <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-1.5">{p.category}</p>
           <h3 className={`font-bold ${titleClass} uppercase mb-1 text-gray-800 line-clamp-1 tracking-tight`}>{p.name}</h3>
-          
           <div className="mt-auto pt-3">
             <p className={`text-[#d4af37] font-black ${priceClass} mb-4 tracking-tighter drop-shadow-sm`}>{CONFIG.currencySymbol}{formatPrice(p.price)}</p>
-            
-            {isOutOfStock ? (
-                <button disabled className="w-full bg-gray-100/50 text-gray-400 py-3.5 text-[11px] font-black uppercase tracking-wider rounded-2xl cursor-not-allowed">Agotado</button>
-            ) : inCart ? (
+            {isOutOfStock ? ( <button disabled className="w-full bg-gray-100/50 text-gray-400 py-3.5 text-[11px] font-black uppercase tracking-wider rounded-2xl cursor-not-allowed">Agotado</button> ) : inCart ? (
               <div className="flex items-center justify-between bg-black text-white h-12 rounded-2xl font-bold text-sm px-1.5 shadow-lg">
                 <button className="w-12 h-full flex items-center justify-center hover:text-[#d4af37] transition-colors" onClick={() => changeQty(p.id, -1)}><i className="fas fa-minus text-xs"></i></button>
                 <span className="font-black text-[#d4af37]">{inCart.qty}</span>
                 <button className="w-12 h-full flex items-center justify-center hover:text-[#d4af37] transition-colors" onClick={() => addToCart(p)}><i className="fas fa-plus text-xs"></i></button>
               </div>
-            ) : (
-              <button onClick={() => addToCart(p)} className="w-full bg-black text-white hover:bg-[#d4af37] hover:text-black hover:shadow-lg hover:shadow-[#d4af37]/30 py-3.5 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all duration-300 flex items-center justify-center gap-2">
-                 <i className="fas fa-shopping-bag"></i> Añadir
-              </button>
-            )}
+            ) : ( <button onClick={() => addToCart(p)} className="w-full bg-black text-white hover:bg-[#d4af37] hover:text-black hover:shadow-lg hover:shadow-[#d4af37]/30 py-3.5 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all duration-300 flex items-center justify-center gap-2"><i className="fas fa-shopping-bag"></i> Añadir</button> )}
           </div>
         </div>
       </div>
@@ -380,20 +265,15 @@ export default function Home() {
     if (activeFilter.dept !== 'all') sectionProducts = sectionProducts.filter(p => p.department === activeFilter.dept);
     if (searchTerm) sectionProducts = sectionProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase()));
     if (sectionProducts.length === 0) return null;
-    
     const promo = promos.find(p => p.category === category);
     let promoText = null;
     if (promo) promoText = `${promo.minQty}+ un: $${formatPrice(promo.totalPrice / promo.minQty)} c/u`;
-
     return (
       <section key={category} id={slugify(category)} className="mb-20 scroll-mt-40">
         <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-3 border-b-2 border-gray-200/50 pb-4">
-          <h2 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tighter uppercase relative">
-            {category} <span className="absolute -bottom-[18px] left-0 w-16 h-1.5 bg-[#d4af37] rounded-full"></span>
-          </h2>
+          <h2 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tighter uppercase relative">{category} <span className="absolute -bottom-[18px] left-0 w-16 h-1.5 bg-[#d4af37] rounded-full"></span></h2>
           {promoText && <div className="bg-[#d4af37]/10 text-[#b8952a] px-4 py-2 text-xs font-black rounded-full uppercase tracking-widest flex items-center gap-2"><i className="fas fa-tag"></i> {promoText}</div>}
         </div>
-        
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 grid-flow-row-dense">
           {sectionProducts.map((p, index) => renderProductCard(p, index, false, 'vertical'))}
         </div>
@@ -404,40 +284,16 @@ export default function Home() {
   const renderLegalPage = () => {
     const pageData = PAGE_CONTENT[currentView];
     if (!pageData) return null;
-    return (
-      <div className="min-h-screen py-16 px-4 md:py-24">
-        <div className="max-w-3xl mx-auto bg-white/70 backdrop-blur-2xl p-8 md:p-16 rounded-[3rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-white animate-in fade-in slide-in-from-bottom-8 duration-700">
-          <button onClick={() => navigateTo('home')} className="mb-10 text-gray-400 hover:text-[#d4af37] transition-colors flex items-center gap-2 font-bold text-xs uppercase tracking-widest"><i className="fas fa-arrow-left"></i> Volver a la Tienda</button>
-          <div className="text-center mb-16">
-             <span className="text-[#d4af37] font-black uppercase tracking-[0.3em] text-[10px] md:text-xs mb-4 block">{pageData.subtitle}</span>
-             <h1 className="text-3xl md:text-5xl font-black text-black uppercase tracking-tighter">{pageData.title}</h1>
-             <div className="w-24 h-1.5 bg-[#d4af37] mx-auto mt-8 rounded-full"></div>
-          </div>
-          <div className="prose prose-gray max-w-none">{pageData.body}</div>
-        </div>
-      </div>
-    );
+    return (<div className="min-h-screen py-16 px-4 md:py-24"><div className="max-w-3xl mx-auto bg-white/70 backdrop-blur-2xl p-8 md:p-16 rounded-[3rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-white animate-in fade-in slide-in-from-bottom-8 duration-700"><button onClick={() => navigateTo('home')} className="mb-10 text-gray-400 hover:text-[#d4af37] transition-colors flex items-center gap-2 font-bold text-xs uppercase tracking-widest"><i className="fas fa-arrow-left"></i> Volver a la Tienda</button><div className="text-center mb-16"><span className="text-[#d4af37] font-black uppercase tracking-[0.3em] text-[10px] md:text-xs mb-4 block">{pageData.subtitle}</span><h1 className="text-3xl md:text-5xl font-black text-black uppercase tracking-tighter">{pageData.title}</h1><div className="w-24 h-1.5 bg-[#d4af37] mx-auto mt-8 rounded-full"></div></div><div className="prose prose-gray max-w-none">{pageData.body}</div></div></div>);
   };
 
-  const visibleCategories = uniqueCategories.filter(cat => {
-    if (activeFilter.cat !== 'all') return cat === activeFilter.cat;
-    if (activeFilter.dept !== 'all') {
-        const sampleProd = products.find(p => p.category === cat);
-        return sampleProd && sampleProd.department === activeFilter.dept;
-    }
-    return true;
-  });
-
-  // --- RENDER DE MANTENIMIENTO ---
   if (checkingMaintenance) return null;
 
   if (MAINTENANCE_MODE && !isBypassed) {
     return (
       <div className="min-h-screen bg-[#f5f5f7] flex flex-col items-center justify-center p-6 selection:bg-[#d4af37] selection:text-black">
         <div className="max-w-md w-full bg-white/70 backdrop-blur-2xl p-10 rounded-[3rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-white text-center animate-in fade-in zoom-in-95 duration-700">
-          <div className="w-20 h-20 bg-black rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-xl">
-             <i className="fas fa-hammer text-[#d4af37] text-3xl"></i>
-          </div>
+          <div className="w-20 h-20 bg-black rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-xl"><i className="fas fa-hammer text-[#d4af37] text-3xl"></i></div>
           <span className="text-[#d4af37] font-black uppercase tracking-[0.3em] text-[10px] mb-4 block">028 IMPORT</span>
           <h1 className="text-3xl font-black text-black uppercase tracking-tighter mb-4">En Mantenimiento</h1>
           <p className="text-gray-500 text-sm font-medium leading-relaxed mb-8">Estamos mejorando nuestra plataforma para ofrecerte una experiencia de compra de élite. Volvemos en breve.</p>
@@ -450,382 +306,37 @@ export default function Home() {
 
   return (
     <div className="bg-[#f5f5f7] text-[#1a1a1a] font-sans flex flex-col relative pb-20 md:pb-0 min-h-screen selection:bg-[#d4af37] selection:text-black">
-      
-      {toastMessage && (
-         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-black/90 backdrop-blur-xl text-white px-6 py-4 rounded-full shadow-[0_20px_40px_rgba(212,175,55,0.2)] border border-[#d4af37]/30 font-black text-[10px] uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">
-            {toastMessage}
-         </div>
-      )}
-
-      <header className="bg-black/80 backdrop-blur-2xl text-white h-[72px] sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 shadow-sm border-b border-white/10 transition-all duration-300">
-         <button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#d4af37] transition-colors p-2">
-             <i className="fas fa-bars"></i>
-         </button>
-         
-         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3 cursor-pointer group" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}>
-             <img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" />
-             <span className="font-black text-xl uppercase tracking-[0.2em] hidden sm:block drop-shadow-md">028<span className="text-[#d4af37]">IMPORT</span></span>
-         </div>
-         
-         <button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#d4af37] transition-colors">
-             <i className="fas fa-shopping-bag text-2xl"></i>
-             {getTotalItems() > 0 && (
-                 <span className="absolute top-1.5 -right-1 bg-[#d4af37] text-black text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-black">
-                     {getTotalItems()}
-                 </span>
-             )}
-         </button>
-      </header>
-
-      {isMenuOpen && (
-          <div className="fixed inset-0 z-[90] flex">
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div>
-              <div className="w-[85%] max-w-[380px] bg-[#f5f5f7] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden">
-                  
-                  <div className="p-8 bg-black flex justify-between items-center text-white border-b border-white/10">
-                     <span className="font-black text-2xl tracking-tighter uppercase">028<span className="text-[#d4af37]">MENU</span></span>
-                     <button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#d4af37] hover:text-black transition-colors"><i className="fas fa-times text-lg"></i></button>
-                  </div>
-                  
-                  <div className="flex-1 overflow-y-auto pb-8">
-                      <div className="flex flex-col p-4 space-y-2">
-                          <button onClick={() => { setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); }} className="text-left p-5 bg-white rounded-2xl shadow-sm border border-gray-100 font-black uppercase text-sm hover:border-[#d4af37] hover:shadow-md flex justify-between items-center transition-all">
-                              Catálogo Completo <i className="fas fa-arrow-right text-[#d4af37]"></i>
-                          </button>
-                          
-                          <div className="pt-6 pb-2 px-2">
-                              <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Departamentos</p>
-                          </div>
-                          
-                          {departments.map(dept => {
-                              const isExpanded = expandedDept === dept;
-                              const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category)));
-                              
-                              return (
-                                  <div key={dept} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all">
-                                      <button onClick={() => setExpandedDept(isExpanded ? null : dept)} className="w-full text-left p-5 font-black uppercase text-sm flex justify-between items-center transition-colors group">
-                                          {dept} 
-                                          <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-gray-300 group-hover:text-[#d4af37] transition-colors`}></i>
-                                      </button>
-                                      <div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                                          <div className="bg-gray-50 flex flex-col pb-4 pt-2 border-t border-gray-100">
-                                              <button onClick={() => { setActiveFilter({dept, cat: 'all'}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-black text-xs text-black uppercase hover:text-[#d4af37] transition-colors flex items-center gap-2">
-                                                  <i className="fas fa-layer-group text-gray-400"></i> Ver todo en {dept}
-                                              </button>
-                                              {deptCats.map(cat => (
-                                                  <button key={cat} onClick={() => { setActiveFilter({dept, cat}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors pl-12 relative before:content-[''] before:w-1.5 before:h-1.5 before:bg-gray-300 before:rounded-full before:absolute before:left-7 before:top-1/2 before:-translate-y-1/2 hover:before:bg-[#d4af37]">
-                                                      {cat}
-                                                  </button>
-                                              ))}
-                                          </div>
-                                      </div>
-                                  </div>
-                              );
-                          })}
-                          
-                          <div className="pt-8 pb-2 px-2">
-                              <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Información Útil</p>
-                          </div>
-                          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 space-y-1">
-                              <button onClick={() => {setCurrentView('nosotros'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[#d4af37]"><i className="fas fa-users"></i></div> Quiénes Somos</button>
-                              <button onClick={() => {setCurrentView('envios'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[#d4af37]"><i className="fas fa-truck"></i></div> Envíos y Logística</button>
-                              <button onClick={() => {setCurrentView('pagos'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[#d4af37]"><i className="fas fa-credit-card"></i></div> Medios de Pago</button>
-                              <button onClick={() => {setCurrentView('terminos'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><i className="fas fa-file-contract"></i></div> Legales y Términos</button>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      )}
+      {toastMessage && (<div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-black/90 backdrop-blur-xl text-white px-6 py-4 rounded-full shadow-[0_20px_40px_rgba(212,175,55,0.2)] border border-[#d4af37]/30 font-black text-[10px] uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">{toastMessage}</div>)}
+      <header className="bg-black/80 backdrop-blur-2xl text-white h-[72px] sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 shadow-sm border-b border-white/10 transition-all duration-300"><button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#d4af37] transition-colors p-2"><i className="fas fa-bars"></i></button><div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3 cursor-pointer group" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}><img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" /><span className="font-black text-xl uppercase tracking-[0.2em] hidden sm:block drop-shadow-md">028<span className="text-[#d4af37]">IMPORT</span></span></div><button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#d4af37] transition-colors"><i className="fas fa-shopping-bag text-2xl"></i>{getTotalItems() > 0 && (<span className="absolute top-1.5 -right-1 bg-[#d4af37] text-black text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-black">{getTotalItems()}</span>)}</button></header>
+      {isMenuOpen && (<div className="fixed inset-0 z-[90] flex"><div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div><div className="w-[85%] max-w-[380px] bg-[#f5f5f7] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden"><div className="p-8 bg-black flex justify-between items-center text-white border-b border-white/10"><span className="font-black text-2xl tracking-tighter uppercase">028<span className="text-[#d4af37]">MENU</span></span><button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#d4af37] hover:text-black transition-colors"><i className="fas fa-times text-lg"></i></button></div><div className="flex-1 overflow-y-auto pb-8"><div className="flex flex-col p-4 space-y-2"><button onClick={() => { setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); }} className="text-left p-5 bg-white rounded-2xl shadow-sm border border-gray-100 font-black uppercase text-sm hover:border-[#d4af37] hover:shadow-md flex justify-between items-center transition-all">Catálogo Completo <i className="fas fa-arrow-right text-[#d4af37]"></i></button><div className="pt-6 pb-2 px-2"><p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Departamentos</p></div>{departments.map(dept => { const isExpanded = expandedDept === dept; const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category))); return (<div key={dept} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all"><button onClick={() => setExpandedDept(isExpanded ? null : dept)} className="w-full text-left p-5 font-black uppercase text-sm flex justify-between items-center transition-colors group">{dept} <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-gray-300 group-hover:text-[#d4af37] transition-colors`}></i></button><div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="bg-gray-50 flex flex-col pb-4 pt-2 border-t border-gray-100"><button onClick={() => { setActiveFilter({dept, cat: 'all'}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-black text-xs text-black uppercase hover:text-[#d4af37] transition-colors flex items-center gap-2"><i className="fas fa-layer-group text-gray-400"></i> Ver todo en {dept}</button>{deptCats.map(cat => (<button key={cat} onClick={() => { setActiveFilter({dept, cat}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-bold text-xs text-gray-500 uppercase hover:text-black transition-colors pl-12 relative before:content-[''] before:w-1.5 before:h-1.5 before:bg-gray-300 before:rounded-full before:absolute before:left-7 before:top-1/2 before:-translate-y-1/2 hover:before:bg-[#d4af37]">{cat}</button>))}</div></div></div>); })}<div className="pt-8 pb-2 px-2"><p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Información Útil</p></div><div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 space-y-1"><button onClick={() => {setCurrentView('nosotros'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[#d4af37]"><i className="fas fa-users"></i></div> Quiénes Somos</button><button onClick={() => {setCurrentView('envios'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[#d4af37]"><i className="fas fa-truck"></i></div> Envíos y Logística</button><button onClick={() => {setCurrentView('pagos'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[#d4af37]"><i className="fas fa-credit-card"></i></div> Medios de Pago</button><button onClick={() => {setCurrentView('terminos'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><i className="fas fa-file-contract"></i></div> Legales y Términos</button></div></div></div></div></div>)}
 
       {currentView === 'home' ? (
         <>
-          <div className="px-4 md:px-8 pt-4 pb-8">
-              <header className="relative h-[30vh] md:h-[50vh] rounded-[3rem] flex items-center justify-center bg-black overflow-hidden animate-in fade-in zoom-in-95 duration-1000 shadow-2xl">
-                <div className="absolute inset-0 bg-cover bg-center opacity-50 scale-105" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-                
-                <div className="relative z-10 text-center px-4 max-w-4xl flex flex-col items-center">
-                  <span className="text-[#d4af37] text-[10px] md:text-xs font-black tracking-[0.3em] uppercase mb-4 block drop-shadow-md">Bienvenido a la élite</span>
-                  <h1 className="text-4xl sm:text-6xl md:text-8xl font-black uppercase tracking-tighter mb-6 drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400">
-                     028 IMPORT
-                  </h1>
-                  <p className="text-white text-[10px] md:text-xs font-black tracking-[0.2em] uppercase bg-white/10 px-6 py-3 rounded-full backdrop-blur-xl border border-white/20 shadow-xl">
-                    <i className="fas fa-bolt text-[#d4af37] mr-2"></i> {CONFIG.shippingText}
-                  </p>
-                </div>
-              </header>
-          </div>
-
-          <main className="flex-grow px-4 md:px-8 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full">
-             
-             <div className="md:hidden relative mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                 <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                 <input type="text" placeholder="Buscar productos, marcas..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] pl-12 pr-6 py-4 rounded-3xl text-sm font-bold outline-none focus:border-[#d4af37] focus:bg-white transition-all placeholder:text-gray-400" />
-             </div>
-
-             <div className="mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-                 <h3 className="font-black text-sm uppercase tracking-[0.2em] text-gray-400 mb-6 pl-2">Explorar la tienda</h3>
-                 <div className="flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">
-                     {departments.map(dept => (
-                         <div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500 group">
-                             <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full flex items-center justify-center text-gray-800 text-2xl md:text-3xl shadow-inner group-hover:text-[#d4af37] transition-colors">
-                                 {dept === 'VAPES' && <i className="fas fa-wind"></i>}
-                                 {dept === 'THC' && <i className="fas fa-leaf"></i>}
-                                 {dept === 'TECNOLOGÍA' && <i className="fas fa-microchip"></i>}
-                                 {dept === 'LIFESTYLE' && <i className="fas fa-star"></i>}
-                                 {dept === 'BIENESTAR' && <i className="fas fa-fire"></i>}
-                                 {!['VAPES', 'THC', 'TECNOLOGÍA', 'LIFESTYLE', 'BIENESTAR'].includes(dept) && <i className="fas fa-box"></i>}
-                             </div>
-                             <span className="font-black text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-gray-600 group-hover:text-black transition-colors">{dept}</span>
-                         </div>
-                     ))}
-                 </div>
-             </div>
-
-             {homeSections.length === 0 ? (
-                 <div className="text-center py-20">
-                     <div className="w-12 h-12 border-4 border-gray-200 border-t-[#d4af37] rounded-full animate-spin mx-auto mb-4"></div>
-                     <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Preparando vidriera...</p>
-                 </div>
-             ) : (
+          <div className="px-4 md:px-8 pt-4 pb-8"><header className="relative h-[30vh] md:h-[50vh] rounded-[3rem] flex items-center justify-center bg-black overflow-hidden animate-in fade-in zoom-in-95 duration-1000 shadow-2xl"><div className="absolute inset-0 bg-cover bg-center opacity-50 scale-105" style={{backgroundImage: `url(${CONFIG.bannerImage})`}} /><div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" /><div className="relative z-10 text-center px-4 max-w-4xl flex flex-col items-center"><span className="text-[#d4af37] text-[10px] md:text-xs font-black tracking-[0.3em] uppercase mb-4 block drop-shadow-md">Bienvenido a la élite</span><h1 className="text-4xl sm:text-6xl md:text-8xl font-black uppercase tracking-tighter mb-6 drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400">028 IMPORT</h1><p className="text-white text-[10px] md:text-xs font-black tracking-[0.2em] uppercase bg-white/10 px-6 py-3 rounded-full backdrop-blur-xl border border-white/20 shadow-xl"><i className="fas fa-bolt text-[#d4af37] mr-2"></i> {CONFIG.shippingText}</p></div></header></div>
+          <main className="flex-grow px-4 md:px-8 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full"><div className="md:hidden relative mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700"><i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" placeholder="Buscar productos, marcas..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] pl-12 pr-6 py-4 rounded-3xl text-sm font-bold outline-none focus:border-[#d4af37] focus:bg-white transition-all placeholder:text-gray-400" /></div><div className="mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100"><h3 className="font-black text-sm uppercase tracking-[0.2em] text-gray-400 mb-6 pl-2">Explorar la tienda</h3><div className="flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">{departments.map(dept => (<div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500 group"><div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full flex items-center justify-center text-gray-800 text-2xl md:text-3xl shadow-inner group-hover:text-[#d4af37] transition-colors">{dept === 'VAPES' && <i className="fas fa-wind"></i>}{dept === 'THC' && <i className="fas fa-leaf"></i>}{dept === 'TECNOLOGÍA' && <i className="fas fa-microchip"></i>}{dept === 'LIFESTYLE' && <i className="fas fa-star"></i>}{dept === 'BIENESTAR' && <i className="fas fa-fire"></i>}{!['VAPES', 'THC', 'TECNOLOGÍA', 'LIFESTYLE', 'BIENESTAR'].includes(dept) && <i className="fas fa-box"></i>}</div><span className="font-black text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-gray-600 group-hover:text-black transition-colors">{dept}</span></div>))}</div></div>
+             {homeSections.length === 0 ? (<div className="text-center py-20"><div className="w-12 h-12 border-4 border-gray-200 border-t-[#d4af37] rounded-full animate-spin mx-auto mb-4"></div><p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Preparando vidriera...</p></div>) : (
                  homeSections.map((sec, sectionIndex) => {
                      const secProducts = sec.productIds?.map(pid => products.find(p => p.id === pid)).filter(Boolean) || [];
                      if(secProducts.length === 0) return null;
-
-                     return (
-                        <div key={sec.id} className="mb-20 animate-in fade-in slide-in-from-bottom-10 duration-1000" style={{animationDelay: `${sectionIndex * 200}ms`}}>
-                            <div className="flex justify-between items-end mb-8 pl-2">
-                                <h2 className="text-3xl md:text-5xl font-black text-black tracking-tighter uppercase">
-                                  <i className={`fas ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#d4af37]'} mr-3 drop-shadow-md`}></i>{sec.title}
-                                </h2>
-                                <button onClick={() => navigateTo('catalog')} className="hidden md:flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-black transition-colors bg-white/50 px-5 py-2.5 rounded-full border border-white hover:border-gray-200">
-                                   Ver Catálogo <i className="fas fa-arrow-right"></i>
-                                </button>
-                            </div>
-                            
-                            <div className={sec.layout === 'vertical' ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 grid-flow-row-dense" : "flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-8 snap-x mask-image-gradient pr-8"}>
-                                {secProducts.map((p, index) => renderProductCard(p, index, true, sec.layout))}
-                            </div>
-
-                            <button onClick={() => navigateTo('catalog')} className="md:hidden w-full mt-2 bg-white/70 backdrop-blur-xl border border-white shadow-sm text-black py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform">
-                               Explorar más <i className="fas fa-arrow-right text-[#d4af37]"></i>
-                            </button>
-                        </div>
-                     )
+                     return (<div key={sec.id} className="mb-20 animate-in fade-in slide-in-from-bottom-10 duration-1000" style={{animationDelay: `${sectionIndex * 200}ms`}}><div className="flex justify-between items-end mb-8 pl-2"><h2 className="text-3xl md:text-5xl font-black text-black tracking-tighter uppercase"><i className={`fas ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#d4af37]'} mr-3 drop-shadow-md`}></i>{sec.title}</h2><button onClick={() => navigateTo('catalog')} className="hidden md:flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-black transition-colors bg-white/50 px-5 py-2.5 rounded-full border border-white hover:border-gray-200">Ver Catálogo <i className="fas fa-arrow-right"></i></button></div><div className={sec.layout === 'vertical' ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 grid-flow-row-dense" : "flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-8 snap-x mask-image-gradient pr-8"}>{secProducts.map((p, index) => renderProductCard(p, index, true, sec.layout))}</div><button onClick={() => navigateTo('catalog')} className="md:hidden w-full mt-2 bg-white/70 backdrop-blur-xl border border-white shadow-sm text-black py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform">Explorar más <i className="fas fa-arrow-right text-[#d4af37]"></i></button></div>)
                  })
              )}
           </main>
         </>
       ) : currentView === 'catalog' ? (
         <>
-          <div className="bg-white/80 backdrop-blur-2xl sticky top-[72px] z-40 border-b border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] pt-3 pb-3 transition-all duration-300">
-              <div className="max-w-7xl mx-auto px-4 md:px-8">
-                  <div className="flex items-center gap-3 mb-3">
-                      <button onClick={() => navigateTo('home')} className="text-gray-400 hover:text-black text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-1.5"><i className="fas fa-home"></i> Inicio</button>
-                      <span className="text-gray-300 text-[10px]"><i className="fas fa-chevron-right"></i></span>
-                      <span className="text-black font-black uppercase tracking-widest text-[10px]">{activeFilter.dept !== 'all' ? activeFilter.dept : 'CATÁLOGO COMPLETO'}</span>
-                  </div>
-                  
-                  {uniqueCategories.length > 0 && (
-                      <div className="flex gap-2.5 overflow-x-auto no-scrollbar py-2 mask-image-gradient pr-8">
-                          <button onClick={() => {setActiveFilter({...activeFilter, cat: 'all'}); window.scrollTo(0,0);}} className={`whitespace-nowrap px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeFilter.cat === 'all' ? 'bg-black text-[#d4af37] shadow-lg' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}>Todos</button>
-                          {uniqueCategories.map(cat => (
-                              <button key={cat} onClick={() => {setActiveFilter({...activeFilter, cat: cat}); window.scrollTo(0,0);}} className={`whitespace-nowrap px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex-shrink-0 ${activeFilter.cat === cat ? 'bg-black text-[#d4af37] shadow-lg' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
-                                  {cat}
-                              </button>
-                          ))}
-                      </div>
-                  )}
-              </div>
-          </div>
-
-          <main className="flex-grow px-4 md:px-8 py-10 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full">
-            {searchTerm && products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
-               <div className="text-center py-24 bg-white/70 backdrop-blur-xl rounded-[3rem] border border-white shadow-sm">
-                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"><i className="fas fa-ghost text-3xl text-gray-400"></i></div>
-                 <h3 className="text-2xl font-black uppercase tracking-tighter text-gray-900 mb-2">No encontramos nada</h3>
-                 <p className="text-xs uppercase tracking-widest text-gray-500">Intenta buscar otro sabor o marca.</p>
-               </div>
-            )}
-            {visibleCategories.map(cat => renderProductSection(cat))}
-          </main>
+          <div className="bg-white/80 backdrop-blur-2xl sticky top-[72px] z-40 border-b border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] pt-3 pb-3 transition-all duration-300"><div className="max-w-7xl mx-auto px-4 md:px-8"><div className="flex items-center gap-3 mb-3"><button onClick={() => navigateTo('home')} className="text-gray-400 hover:text-black text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-1.5"><i className="fas fa-home"></i> Inicio</button><span className="text-gray-300 text-[10px]"><i className="fas fa-chevron-right"></i></span><span className="text-black font-black uppercase tracking-widest text-[10px]">{activeFilter.dept !== 'all' ? activeFilter.dept : 'CATÁLOGO COMPLETO'}</span></div>{uniqueCategories.length > 0 && (<div className="flex gap-2.5 overflow-x-auto no-scrollbar py-2 mask-image-gradient pr-8"><button onClick={() => {setActiveFilter({...activeFilter, cat: 'all'}); window.scrollTo(0,0);}} className={`whitespace-nowrap px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeFilter.cat === 'all' ? 'bg-black text-[#d4af37] shadow-lg' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}>Todos</button>{uniqueCategories.map(cat => (<button key={cat} onClick={() => {setActiveFilter({...activeFilter, cat: cat}); window.scrollTo(0,0);}} className={`whitespace-nowrap px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex-shrink-0 ${activeFilter.cat === cat ? 'bg-black text-[#d4af37] shadow-lg' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}>{cat}</button>))}</div>)}</div></div>
+          <main className="flex-grow px-4 md:px-8 py-10 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full">{searchTerm && products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (<div className="text-center py-24 bg-white/70 backdrop-blur-xl rounded-[3rem] border border-white shadow-sm"><div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"><i className="fas fa-ghost text-3xl text-gray-400"></i></div><h3 className="text-2xl font-black uppercase tracking-tighter text-gray-900 mb-2">No encontramos nada</h3><p className="text-xs uppercase tracking-widest text-gray-500">Intenta buscar otro sabor o marca.</p></div>)}{visibleCategories.map(cat => renderProductSection(cat))}</main>
         </>
-      ) : (
-        <main className="flex-grow">
-           {renderLegalPage()}
-        </main>
-      )}
+      ) : ( <main className="flex-grow">{renderLegalPage()}</main> )}
 
-      <nav className="md:hidden fixed bottom-0 w-full bg-[#f5f5f7]/80 backdrop-blur-3xl border-t border-white shadow-[0_-20px_40px_rgba(0,0,0,0.06)] z-40 pb-safe pt-2 px-2">
-         <div className="flex justify-around items-center h-16 max-w-md mx-auto">
-             <button onClick={() => navigateTo('home')} className={`flex flex-col items-center justify-center gap-1.5 w-full h-full rounded-2xl transition-all ${currentView==='home' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}>
-                 <i className="fas fa-home text-xl mb-0.5"></i><span className="text-[8px] font-black uppercase tracking-widest">Inicio</span>
-             </button>
-             <button onClick={() => navigateTo('catalog')} className={`flex flex-col items-center justify-center gap-1.5 w-full h-full rounded-2xl transition-all ${currentView==='catalog' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}>
-                 <i className="fas fa-th-large text-xl mb-0.5"></i><span className="text-[8px] font-black uppercase tracking-widest">Catálogo</span>
-             </button>
-             <button onClick={() => setIsCartOpen(true)} className="flex flex-col items-center justify-center gap-1.5 w-full h-full text-black relative active:scale-95 transition-transform">
-                 <div className="relative bg-black w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg">
-                     <i className="fas fa-shopping-bag text-lg text-white"></i>
-                     {getTotalItems() > 0 && <span className="absolute -top-1.5 -right-1.5 bg-[#d4af37] text-black text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-sm border-2 border-black">{getTotalItems()}</span>}
-                 </div>
-                 <span className="text-[8px] font-black uppercase tracking-widest mt-0.5">Bolsa</span>
-             </button>
-         </div>
-      </nav>
+      <nav className="md:hidden fixed bottom-0 w-full bg-[#f5f5f7]/80 backdrop-blur-3xl border-t border-white shadow-[0_-20px_40px_rgba(0,0,0,0.06)] z-40 pb-safe pt-2 px-2"><div className="flex justify-around items-center h-16 max-w-md mx-auto"><button onClick={() => navigateTo('home')} className={`flex flex-col items-center justify-center gap-1.5 w-full h-full rounded-2xl transition-all ${currentView==='home' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-home text-xl mb-0.5"></i><span className="text-[8px] font-black uppercase tracking-widest">Inicio</span></button><button onClick={() => navigateTo('catalog')} className={`flex flex-col items-center justify-center gap-1.5 w-full h-full rounded-2xl transition-all ${currentView==='catalog' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-th-large text-xl mb-0.5"></i><span className="text-[8px] font-black uppercase tracking-widest">Catálogo</span></button><button onClick={() => setIsCartOpen(true)} className="flex flex-col items-center justify-center gap-1.5 w-full h-full text-black relative active:scale-95 transition-transform"><div className="relative bg-black w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"><i className="fas fa-shopping-bag text-lg text-white"></i>{getTotalItems() > 0 && <span className="absolute -top-1.5 -right-1.5 bg-[#d4af37] text-black text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-sm border-2 border-black">{getTotalItems()}</span>}</div><span className="text-[8px] font-black uppercase tracking-widest mt-0.5">Bolsa</span></button></div></nav>
 
-      <footer className="hidden md:block bg-black text-white pt-20 pb-10 mt-auto relative z-30 rounded-t-[4rem] overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent opacity-50"></div>
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-16 text-xs md:text-sm">
-            <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                 <img src={CONFIG.logoImage} alt="028Import Logo" className="h-12 w-auto object-contain drop-shadow-[0_0_15px_rgba(212,175,55,0.4)]" />
-                 <span className="text-2xl font-black uppercase tracking-[0.2em] text-white">028<span className="text-[#d4af37]">Import</span></span>
-              </div>
-              <p className="text-gray-400 font-medium leading-relaxed pr-4">Redefinimos la experiencia de compra priorizando tu tiempo y confianza. Brindamos un servicio logístico ágil y seguro.</p>
-            </div>
-            <div>
-              <h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-6">Contacto</h4>
-              <ul className="space-y-5 text-gray-300 font-medium">
-                 <li className="flex items-center gap-4"><div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-[#d4af37]"><i className="fab fa-whatsapp text-lg"></i></div><span className="text-base font-bold tracking-wider">11 5341 2358</span></li>
-                 <li className="flex items-start gap-4 mt-2"><div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-[#d4af37] flex-shrink-0"><i className="fas fa-location-dot text-lg"></i></div><span className="pt-1">Miñones y Juramento,<br/>Belgrano, CABA.</span></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-6">Información Legal</h4>
-              <ul className="space-y-4 text-gray-400 font-medium">
-                <li><button onClick={() => navigateTo('nosotros')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#d4af37] text-[10px]"></i> Quiénes Somos</button></li>
-                <li><button onClick={() => navigateTo('envios')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#d4af37] text-[10px]"></i> Logística de Envío</button></li>
-                <li><button onClick={() => navigateTo('pagos')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#d4af37] text-[10px]"></i> Medios de Pago</button></li>
-                <li><button onClick={() => navigateTo('terminos')} className="hover:text-white transition-colors flex items-center gap-2 mt-4 pt-4 border-t border-white/10"><i className="fas fa-file-contract text-gray-600 text-[10px]"></i> Términos y Condiciones</button></li>
-                <li><button onClick={() => navigateTo('privacidad')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-shield-alt text-gray-600 text-[10px]"></i> Política de Privacidad</button></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-6">Nuestras Redes</h4>
-              <div className="flex gap-4">
-                <a href="https://www.instagram.com/028.import" target="_blank" rel="noreferrer" className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-white hover:bg-[#d4af37] hover:text-black transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(212,175,55,0.3)]"><i className="fab fa-instagram text-2xl"></i></a>
-                <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-white hover:bg-[#25D366] hover:text-white transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(37,211,102,0.3)]"><i className="fab fa-whatsapp text-2xl"></i></a>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col md:flex-row justify-between items-center border-t border-white/10 pt-8 text-[9px] md:text-[10px] text-gray-500 uppercase tracking-widest text-center md:text-left gap-4">
-            <p className="flex items-center gap-2 justify-center bg-white/5 px-4 py-2 rounded-full"><i className="fas fa-map-marker-alt text-white"></i> Argentina</p>
-            <p>© {new Date().getFullYear()} 028IMPORT. Todos los derechos reservados.</p>
-            <div className="flex gap-4"><button onClick={() => navigateTo('arrepentimiento')} className="hover:text-white transition-colors underline underline-offset-4">Botón de Arrepentimiento</button></div>
-          </div>
-        </div>
-      </footer>
+      <footer className="hidden md:block bg-black text-white pt-20 pb-10 mt-auto relative z-30 rounded-t-[4rem] overflow-hidden"><div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent opacity-50"></div><div className="max-w-7xl mx-auto px-8"><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-16 text-xs md:text-sm"><div className="space-y-6"><div className="flex items-center gap-3"><img src={CONFIG.logoImage} alt="028Import Logo" className="h-12 w-auto object-contain drop-shadow-[0_0_15px_rgba(212,175,55,0.4)]" /><span className="text-2xl font-black uppercase tracking-[0.2em] text-white">028<span className="text-[#d4af37]">Import</span></span></div><p className="text-gray-400 font-medium leading-relaxed pr-4">Redefinimos la experiencia de compra priorizando tu tiempo y confianza. Brindamos un servicio logístico ágil y seguro.</p></div><div><h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-6">Contacto</h4><ul className="space-y-5 text-gray-300 font-medium"><li className="flex items-center gap-4"><div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-[#d4af37]"><i className="fab fa-whatsapp text-lg"></i></div><span className="text-base font-bold tracking-wider">11 5341 2358</span></li><li className="flex items-start gap-4 mt-2"><div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-[#d4af37] flex-shrink-0"><i className="fas fa-location-dot text-lg"></i></div><span className="pt-1">Miñones y Juramento,<br/>Belgrano, CABA.</span></li></ul></div><div><h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-6">Información Legal</h4><ul className="space-y-4 text-gray-400 font-medium"><li><button onClick={() => navigateTo('nosotros')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#d4af37] text-[10px]"></i> Quiénes Somos</button></li><li><button onClick={() => navigateTo('envios')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#d4af37] text-[10px]"></i> Logística de Envío</button></li><li><button onClick={() => navigateTo('pagos')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#d4af37] text-[10px]"></i> Medios de Pago</button></li><li><button onClick={() => navigateTo('terminos')} className="hover:text-white transition-colors flex items-center gap-2 mt-4 pt-4 border-t border-white/10"><i className="fas fa-file-contract text-gray-600 text-[10px]"></i> Términos y Condiciones</button></li><li><button onClick={() => navigateTo('privacidad')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-shield-alt text-gray-600 text-[10px]"></i> Política de Privacidad</button></li></ul></div><div><h4 className="font-black text-[#d4af37] uppercase tracking-widest mb-6">Nuestras Redes</h4><div className="flex gap-4"><a href="https://www.instagram.com/028.import" target="_blank" rel="noreferrer" className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-white hover:bg-[#d4af37] hover:text-black transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(212,175,55,0.3)]"><i className="fab fa-instagram text-2xl"></i></a><a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-white hover:bg-[#25D366] hover:text-white transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(37,211,102,0.3)]"><i className="fab fa-whatsapp text-2xl"></i></a></div></div></div><div className="flex flex-col md:flex-row justify-between items-center border-t border-white/10 pt-8 text-[9px] md:text-[10px] text-gray-500 uppercase tracking-widest text-center md:text-left gap-4"><p className="flex items-center gap-2 justify-center bg-white/5 px-4 py-2 rounded-full"><i className="fas fa-map-marker-alt text-white"></i> Argentina</p><p>© {new Date().getFullYear()} 028IMPORT. Todos los derechos reservados.</p><div className="flex gap-4"><button onClick={() => navigateTo('arrepentimiento')} className="hover:text-white transition-colors underline underline-offset-4">Botón de Arrepentimiento</button></div></div></div></footer>
 
-      {selectedProduct && (
-        <div className="fixed inset-0 z-[80] flex items-end md:items-center justify-center p-4 sm:p-6">
-           <div className="absolute inset-0 bg-black/60 backdrop-blur-xl transition-opacity" onClick={() => setSelectedProduct(null)}></div>
-           <div className="relative bg-[#f5f5f7] w-full max-w-4xl rounded-[3rem] shadow-[0_20px_60px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 duration-500 flex flex-col md:flex-row max-h-[90vh] border border-white/20">
-              <button onClick={() => setSelectedProduct(null)} className="absolute top-6 right-6 z-10 w-12 h-12 bg-white/50 backdrop-blur-2xl border border-white text-black rounded-full flex items-center justify-center hover:bg-black hover:text-white transition-colors shadow-lg"><i className="fas fa-times text-lg"></i></button>
-              <div className="w-full md:w-1/2 bg-white p-8 flex items-center justify-center relative min-h-[350px]">
-                 {selectedProduct.tag && <span className="absolute top-8 left-8 bg-black text-[#d4af37] text-[10px] font-black px-5 py-2.5 uppercase tracking-widest rounded-full shadow-lg z-10">{selectedProduct.tag}</span>}
-                 <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full max-h-[500px] object-contain drop-shadow-2xl animate-in scale-95 duration-700 ease-out mix-blend-multiply" />
-              </div>
-              <div className="w-full md:w-1/2 p-8 md:p-14 flex flex-col justify-center overflow-y-auto">
-                 <p className="text-[#d4af37] font-black uppercase tracking-[0.2em] text-[10px] mb-3">{selectedProduct.category}</p>
-                 <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-gray-900 leading-none mb-6">{selectedProduct.name}</h2>
-                 <p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed whitespace-pre-line">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p>
-                 <div className="mt-auto border-t border-gray-200/50 pt-8">
-                    <p className="text-[#d4af37] font-black text-4xl md:text-5xl tracking-tighter mb-8 drop-shadow-sm">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}</p>
-                    {selectedProduct.inStock === false ? (
-                        <button disabled className="w-full bg-gray-200 text-gray-500 py-5 text-xs font-black uppercase tracking-widest rounded-3xl cursor-not-allowed border border-gray-300">Producto Agotado</button>
-                    ) : (
-                        <button onClick={() => addToCart(selectedProduct)} className="w-full bg-black text-white hover:bg-[#d4af37] hover:text-black py-5 text-xs font-black uppercase tracking-widest rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(212,175,55,0.4)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95"><i className="fas fa-shopping-cart text-lg"></i> Agregar a la bolsa</button>
-                    )}
-                 </div>
-              </div>
-           </div>
-        </div>
-      )}
+      {selectedProduct && (<div className="fixed inset-0 z-[80] flex items-end md:items-center justify-center p-4 sm:p-6"><div className="absolute inset-0 bg-black/60 backdrop-blur-xl transition-opacity" onClick={() => setSelectedProduct(null)}></div><div className="relative bg-[#f5f5f7] w-full max-w-4xl rounded-[3rem] shadow-[0_20px_60px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 duration-500 flex flex-col md:flex-row max-h-[90vh] border border-white/20"><button onClick={() => setSelectedProduct(null)} className="absolute top-6 right-6 z-10 w-12 h-12 bg-white/50 backdrop-blur-2xl border border-white text-black rounded-full flex items-center justify-center hover:bg-black hover:text-white transition-colors shadow-lg"><i className="fas fa-times text-lg"></i></button><div className="w-full md:w-1/2 bg-white p-8 flex items-center justify-center relative min-h-[350px]">{selectedProduct.tag && <span className="absolute top-8 left-8 bg-black text-[#d4af37] text-[10px] font-black px-5 py-2.5 uppercase tracking-widest rounded-full shadow-lg z-10">{selectedProduct.tag}</span>}<img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full max-h-[500px] object-contain drop-shadow-2xl animate-in scale-95 duration-700 ease-out mix-blend-multiply" /></div><div className="w-full md:w-1/2 p-8 md:p-14 flex flex-col justify-center overflow-y-auto"><p className="text-[#d4af37] font-black uppercase tracking-[0.2em] text-[10px] mb-3">{selectedProduct.category}</p><h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-gray-900 leading-none mb-6">{selectedProduct.name}</h2><p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed whitespace-pre-line">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p><div className="mt-auto border-t border-gray-200/50 pt-8"><p className="text-[#d4af37] font-black text-4xl md:text-5xl tracking-tighter mb-8 drop-shadow-sm">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}</p>{selectedProduct.inStock === false ? ( <button disabled className="w-full bg-gray-200 text-gray-500 py-5 text-xs font-black uppercase tracking-widest rounded-3xl cursor-not-allowed border border-gray-300">Producto Agotado</button> ) : ( <button onClick={() => addToCart(selectedProduct)} className="w-full bg-black text-white hover:bg-[#d4af37] hover:text-black py-5 text-xs font-black uppercase tracking-widest rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(212,175,55,0.4)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95"><i className="fas fa-shopping-cart text-lg"></i> Agregar a la bolsa</button> )}</div></div></div></div>)}
 
-      {isCartOpen && (
-        <div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} />
-          <div className="relative bg-[#f5f5f7]/95 backdrop-blur-3xl w-full max-w-lg md:mx-auto rounded-t-[3rem] md:rounded-[3rem] h-[90vh] md:max-h-[85vh] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.3)] border border-white/50 animate-in slide-in-from-bottom duration-500 flex flex-col pb-safe">
-            <div className="p-8 border-b border-gray-200/50 flex justify-between items-center bg-white/50 sticky top-0 z-10">
-              <div>
-                <h2 className="text-3xl font-black uppercase tracking-tighter text-black leading-none mb-1">Tu Bolsa</h2>
-                <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">{getTotalItems()} artículos seleccionados</p>
-              </div>
-              <button onClick={() => setIsCartOpen(false)} className="w-12 h-12 bg-white rounded-full text-black hover:bg-black hover:text-white transition-colors flex items-center justify-center shadow-sm border border-gray-100"><i className="fas fa-times text-lg"></i></button>
-            </div>
-            
-            <div className="overflow-y-auto p-4 md:p-6 flex-grow no-scrollbar">
-              <div className="space-y-3 mb-10">
-                {cart.length === 0 && (
-                   <div className="text-center py-20 bg-white/50 rounded-3xl border border-dashed border-gray-300">
-                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><i className="fas fa-shopping-bag text-2xl text-gray-300"></i></div>
-                      <p className="text-gray-400 font-black text-xs uppercase tracking-widest">Tu bolsa está vacía</p>
-                   </div>
-                )}
-                {cart.map(item => (
-                  <div key={item.id} className="flex justify-between items-center bg-white/80 backdrop-blur-xl p-3 rounded-3xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-white">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-[#f5f5f7] rounded-2xl overflow-hidden flex items-center justify-center p-1"><img src={item.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div>
-                      <div className="flex flex-col">
-                        <p className="font-bold text-[11px] md:text-xs uppercase tracking-tight max-w-[130px] md:max-w-[180px] line-clamp-1 text-black">{item.name}</p>
-                        <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest mt-1 bg-gray-100 w-fit px-2 py-0.5 rounded-md">{item.qty} un.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 pr-2">
-                        <p className="font-black text-[#d4af37] text-sm md:text-base tracking-tighter">${formatPrice(item.qty * getUnitPromoPrice(item))}</p>
-                        <div className="flex flex-col items-center gap-1.5 bg-gray-100 rounded-full p-1.5 border border-gray-200">
-                            <button onClick={() => changeQty(item.id, 1)} className="w-7 h-7 flex items-center justify-center text-gray-600 bg-white rounded-full shadow-sm hover:text-black hover:scale-110 transition-transform"><i className="fas fa-plus text-[10px]"></i></button>
-                            <button onClick={() => changeQty(item.id, -1)} className="w-7 h-7 flex items-center justify-center text-gray-600 bg-white rounded-full shadow-sm hover:text-black hover:scale-110 transition-transform"><i className="fas fa-minus text-[10px]"></i></button>
-                        </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              {cart.length > 0 && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-                    <div className="bg-white/80 backdrop-blur-xl p-6 rounded-[2rem] border border-white shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
-                      <p className="font-black text-[11px] mb-4 uppercase tracking-[0.2em] text-gray-800 flex items-center gap-2"><i className="fas fa-user-circle text-[#d4af37] text-lg"></i> Tus Datos</p>
-                      <div className="flex flex-col gap-3">
-                        <input type="text" placeholder="Nombre completo" value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full p-4 bg-[#f5f5f7] border-none rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#d4af37] transition-all placeholder:text-gray-400" />
-                        <input type="tel" placeholder="Número de WhatsApp" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className="w-full p-4 bg-[#f5f5f7] border-none rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#d4af37] transition-all placeholder:text-gray-400" />
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white/80 backdrop-blur-xl p-6 rounded-[2rem] border border-white shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
-                      <p className="font-black text-[11px] mb-4 uppercase tracking-[0.2em] text-gray-800 flex items-center gap-2"><i className="fas fa-map-marked-alt text-[#d4af37] text-lg"></i> Entrega</p>
-                      <div className="flex gap-2 mb-5 bg-[#f5f5f7] p-1.5 rounded-2xl border border-gray-100">
-                        <button onClick={() => setDeliveryMethod('retiro')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${deliveryMethod === 'retiro' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Retiro Local</button>
-                        <button onClick={() => setDeliveryMethod('envio')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${deliveryMethod === 'envio' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Envío Domicilio</button>
-                      </div>
-                      {deliveryMethod === 'envio' && (
-                        <div className="flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-300">
-                          <input type="text" placeholder="Dirección completa" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full p-4 bg-[#f5f5f7] border-none rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#d4af37] transition-all placeholder:text-gray-400" />
-                          <input type="text" placeholder="Barrio / Localidad / CP" value={zone} onChange={(e) => setZone(e.target.value)} className="w-full p-4 bg-[#f5f5f7] border-none rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#d4af37] transition-all placeholder:text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-              )}
-            </div>
-            
-            {cart.length > 0 && (
-                <div className="p-8 bg-white border-t border-gray-100 sticky bottom-0 z-20">
-                   <div className="flex justify-between items-end mb-6">
-                     <span className="font-black text-gray-400 text-xs uppercase tracking-widest">Total a Pagar</span>
-                     <span className="font-black text-4xl text-black tracking-tighter leading-none drop-shadow-sm"><span className="text-[#d4af37] text-2xl mr-1.5">{CONFIG.currencySymbol}</span>{formatPrice(calculateTotal())}</span>
-                   </div>
-                   <button onClick={handleCheckout} disabled={isSending} className={`w-full ${isSending ? 'bg-gray-200 text-gray-400 border-none' : 'bg-black text-white hover:bg-[#d4af37] hover:text-black shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(212,175,55,0.4)] active:scale-95'} font-black py-5 rounded-[2rem] uppercase tracking-widest text-xs flex justify-center items-center gap-3 transition-all duration-300`}>
-                    {isSending ? <><i className="fas fa-circle-notch fa-spin text-lg"></i> Procesando...</> : <><i className="fab fa-whatsapp text-xl"></i> Confirmar Pedido</>}
-                  </button>
-                </div>
-            )}
-          </div>
-        </div>
-      )}
+      {isCartOpen && (<div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4"><div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} /><div className="relative bg-[#f5f5f7]/95 backdrop-blur-3xl w-full max-w-lg md:mx-auto rounded-t-[3rem] md:rounded-[3rem] h-[90vh] md:max-h-[85vh] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.3)] border border-white/50 animate-in slide-in-from-bottom duration-500 flex flex-col pb-safe"><div className="p-8 border-b border-gray-200/50 flex justify-between items-center bg-white/50 sticky top-0 z-10"><div><h2 className="text-3xl font-black uppercase tracking-tighter text-black leading-none mb-1">Tu Bolsa</h2><p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">{getTotalItems()} artículos seleccionados</p></div><button onClick={() => setIsCartOpen(false)} className="w-12 h-12 bg-white rounded-full text-black hover:bg-black hover:text-white transition-colors flex items-center justify-center shadow-sm border border-gray-100"><i className="fas fa-times text-lg"></i></button></div><div className="overflow-y-auto p-4 md:p-6 flex-grow no-scrollbar"><div className="space-y-3 mb-10">{cart.length === 0 && (<div className="text-center py-20 bg-white/50 rounded-3xl border border-dashed border-gray-300"><div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><i className="fas fa-shopping-bag text-2xl text-gray-300"></i></div><p className="text-gray-400 font-black text-xs uppercase tracking-widest">Tu bolsa está vacía</p></div>)}{cart.map(item => (<div key={item.id} className="flex justify-between items-center bg-white/80 backdrop-blur-xl p-3 rounded-3xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-white"><div className="flex items-center gap-4"><div className="w-16 h-16 bg-[#f5f5f7] rounded-2xl overflow-hidden flex items-center justify-center p-1"><img src={item.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex flex-col"><p className="font-bold text-[11px] md:text-xs uppercase tracking-tight max-w-[130px] md:max-w-[180px] line-clamp-1 text-black">{item.name}</p><p className="text-[9px] text-gray-400 font-black uppercase tracking-widest mt-1 bg-gray-100 w-fit px-2 py-0.5 rounded-md">{item.qty} un.</p></div></div><div className="flex items-center gap-4 pr-2"><p className="font-black text-[#d4af37] text-sm md:text-base tracking-tighter">${formatPrice(item.qty * getUnitPromoPrice(item))}</p><div className="flex flex-col items-center gap-1.5 bg-gray-100 rounded-full p-1.5 border border-gray-200"><button onClick={() => changeQty(item.id, 1)} className="w-7 h-7 flex items-center justify-center text-gray-600 bg-white rounded-full shadow-sm hover:text-black hover:scale-110 transition-transform"><i className="fas fa-plus text-[10px]"></i></button><button onClick={() => changeQty(item.id, -1)} className="w-7 h-7 flex items-center justify-center text-gray-600 bg-white rounded-full shadow-sm hover:text-black hover:scale-110 transition-transform"><i className="fas fa-minus text-[10px]"></i></button></div></div></div>))}</div>{cart.length > 0 && (<div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100"><div className="bg-white/80 backdrop-blur-xl p-6 rounded-[2rem] border border-white shadow-[0_4px_15px_rgba(0,0,0,0.02)]"><p className="font-black text-[11px] mb-4 uppercase tracking-[0.2em] text-gray-800 flex items-center gap-2"><i className="fas fa-user-circle text-[#d4af37] text-lg"></i> Tus Datos</p><div className="flex flex-col gap-3"><input type="text" placeholder="Nombre completo" value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full p-4 bg-[#f5f5f7] border-none rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#d4af37] transition-all placeholder:text-gray-400" /><input type="tel" placeholder="Número de WhatsApp" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className="w-full p-4 bg-[#f5f5f7] border-none rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#d4af37] transition-all placeholder:text-gray-400" /></div></div><div className="bg-white/80 backdrop-blur-xl p-6 rounded-[2rem] border border-white shadow-[0_4px_15px_rgba(0,0,0,0.02)]"><p className="font-black text-[11px] mb-4 uppercase tracking-[0.2em] text-gray-800 flex items-center gap-2"><i className="fas fa-map-marked-alt text-[#d4af37] text-lg"></i> Entrega</p><div className="flex gap-2 mb-5 bg-[#f5f5f7] p-1.5 rounded-2xl border border-gray-100"><button onClick={() => setDeliveryMethod('retiro')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${deliveryMethod === 'retiro' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Retiro Local</button><button onClick={() => setDeliveryMethod('envio')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${deliveryMethod === 'envio' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Envío Domicilio</button></div>{deliveryMethod === 'envio' && (<div className="flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-300"><input type="text" placeholder="Dirección completa" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full p-4 bg-[#f5f5f7] border-none rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#d4af37] transition-all placeholder:text-gray-400" /><input type="text" placeholder="Barrio / Localidad / CP" value={zone} onChange={(e) => setZone(e.target.value)} className="w-full p-4 bg-[#f5f5f7] border-none rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#d4af37] transition-all placeholder:text-gray-400" /></div>)}</div></div>)}</div>{cart.length > 0 && (<div className="p-8 bg-white border-t border-gray-100 sticky bottom-0 z-20"><div className="flex justify-between items-end mb-6"><span className="font-black text-gray-400 text-xs uppercase tracking-widest">Total a Pagar</span><span className="font-black text-4xl text-black tracking-tighter leading-none drop-shadow-sm"><span className="text-[#d4af37] text-2xl mr-1.5">{CONFIG.currencySymbol}</span>{formatPrice(calculateTotal())}</span></div><button onClick={handleCheckout} disabled={isSending} className={`w-full ${isSending ? 'bg-gray-200 text-gray-400 border-none' : 'bg-black text-white hover:bg-[#d4af37] hover:text-black shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(212,175,55,0.4)] active:scale-95'} font-black py-5 rounded-[2rem] uppercase tracking-widest text-xs flex justify-center items-center gap-3 transition-all duration-300`}>{isSending ? <><i className="fas fa-circle-notch fa-spin text-lg"></i> Procesando...</> : <><i className="fab fa-whatsapp text-xl"></i> Confirmar Pedido</>}</button></div>)}</div></div>)}
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     </div>
   );
