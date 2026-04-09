@@ -97,8 +97,13 @@ export default function AdminPage() {
     return [...new Set(products.map(p => p.category))];
   }, [products]);
 
-  // Departamentos Predeterminados
+  // Departamentos base
   const PREDEFINED_DEPARTMENTS = ["VAPES", "THC", "TECNOLOGÍA", "LIFESTYLE", "BIENESTAR"];
+  
+  // Extraemos todos los departamentos únicos que existan en la base actual (por si se agregaron nuevos)
+  const availableDepartments = useMemo(() => {
+    return Array.from(new Set([...PREDEFINED_DEPARTMENTS, ...products.map(p => p.department).filter(Boolean)]));
+  }, [products]);
 
   const clientsList = useMemo(() => {
     const clientsMap = new Map();
@@ -206,6 +211,7 @@ export default function AdminPage() {
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!newProduct.category) return alert("Por favor escribe o selecciona una categoría.");
+    if (!newProduct.department) return alert("Por favor asigna un departamento.");
 
     setIsAdding(true);
     try {
@@ -345,13 +351,21 @@ export default function AdminPage() {
     } catch(err) { alert("Error al actualizar descripción."); }
   }
 
-  // --- NUEVA FUNCIÓN: ACTUALIZAR DEPARTAMENTO DESDE EL STOCK ---
-  const updateDepartment = async (product, newDept) => {
-    if(!newDept) return;
+  // --- NUEVA FUNCIÓN: ACTUALIZAR DEPARTAMENTO PARA TODA LA CATEGORÍA ---
+  const updateCategoryDepartment = async (categoryName, newDept) => {
+    const dept = newDept.trim().toUpperCase();
+    if (!dept) return;
+    
     try {
-        const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`);
-        await setDoc(productRef, { id: product.id, department: newDept }, { merge: true });
-    } catch(err) { alert("Error al actualizar departamento."); }
+        const productsToUpdate = products.filter(p => p.category === categoryName);
+        await Promise.all(productsToUpdate.map(p => {
+            const productRef = doc(firebaseRefs.db, 'products', `prod_${p.id}`);
+            return setDoc(productRef, { id: p.id, department: dept }, { merge: true });
+        }));
+        // No alert needed, it updates live and is smooth.
+    } catch (err) {
+        alert("Error al actualizar el departamento de la categoría: " + err.message);
+    }
   }
 
   const completeOrder = async (id) => {
@@ -410,11 +424,38 @@ export default function AdminPage() {
     const group = products.filter(p => p.category === categoryFilter);
     if (group.length === 0) return null;
 
+    // Tomamos el departamento actual del primer producto de la categoría para mostrarlo
+    const currentDept = group[0]?.department || "SIN DEPTO";
+
     return (
         <div className="mb-8" key={categoryFilter}>
-            <div className={`flex justify-between items-center border-b pb-2 mb-4 ${darkMode ? 'border-[#262626]' : 'border-gray-200'}`}>
-               <h3 className={`text-xl font-bold uppercase ${theme.subText}`}>{categoryFilter}</h3>
-               <button onClick={() => handleDeleteCategory(categoryFilter)} className="text-red-500 hover:text-red-700 hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 text-[10px] font-black uppercase">
+            <div className={`flex flex-col md:flex-row md:justify-between md:items-center gap-3 border-b pb-3 mb-4 ${darkMode ? 'border-[#262626]' : 'border-gray-200'}`}>
+               <div className="flex items-center gap-4">
+                   <h3 className={`text-xl font-bold uppercase ${theme.subText}`}>{categoryFilter}</h3>
+                   
+                   {/* NUEVO SELECTOR DE DEPARTAMENTO A NIVEL CATEGORÍA */}
+                   <div className="flex items-center gap-2 bg-[#d4af37]/10 px-3 py-1.5 rounded-lg border border-[#d4af37]/30">
+                       <span className="text-[9px] font-black uppercase text-[#b8952a] tracking-widest">Depto:</span>
+                       <input
+                           list="dept-suggestions-stock"
+                           defaultValue={currentDept}
+                           onBlur={(e) => {
+                               if(e.target.value.toUpperCase() !== currentDept.toUpperCase()) {
+                                   updateCategoryDepartment(categoryFilter, e.target.value);
+                               }
+                           }}
+                           onKeyDown={(e) => { if(e.key === 'Enter') e.target.blur(); }}
+                           className={`bg-transparent text-[10px] font-black uppercase outline-none w-28 md:w-32 border-b border-transparent hover:border-[#d4af37] focus:border-[#d4af37] transition-colors ${darkMode ? 'text-white' : 'text-black'}`}
+                           placeholder="Escribí..."
+                           title="Cambiá el departamento de toda esta categoría"
+                       />
+                       <datalist id="dept-suggestions-stock">
+                           {availableDepartments.map(d => <option key={d} value={d} />)}
+                       </datalist>
+                   </div>
+               </div>
+               
+               <button onClick={() => handleDeleteCategory(categoryFilter)} className="w-fit text-red-500 hover:text-red-700 hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 text-[10px] font-black uppercase">
                   <i className="fas fa-trash"></i> Borrar Categoría
                </button>
             </div>
@@ -458,23 +499,14 @@ export default function AdminPage() {
                                         />
                                      </div>
                                 </div>
-                                <div className="flex gap-2 mt-2 items-center">
-                                  <span className={`w-fit text-[8px] font-black uppercase px-2 py-1 rounded-full ${p.isHidden ? 'bg-amber-900/30 text-amber-500' : (p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400')}`}>
+                                <div className="flex gap-1 mt-1">
+                                  <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.isHidden ? 'bg-amber-900/30 text-amber-500' : (p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400')}`}>
                                       {p.isHidden ? 'Oculto' : (p.inStock === false ? 'Agotado' : 'Disponible')}
                                   </span>
-                                  
-                                  {/* --- ACÁ ESTÁ EL SELECT NUEVO PARA CAMBIAR DEPARTAMENTO EN VIVO --- */}
-                                  <select
-                                      defaultValue={p.department || ""}
-                                      onChange={(e) => updateDepartment(p, e.target.value)}
-                                      className={`w-fit text-[8px] font-black uppercase px-2 py-1 rounded-full border cursor-pointer outline-none focus:border-[#d4af37] ${darkMode ? 'bg-[#262626] border-[#404040] text-gray-300' : 'bg-white border-gray-300 text-gray-600'}`}
-                                      title="Cambiar Departamento"
-                                  >
-                                      <option value="" disabled>SIN DEPTO</option>
-                                      {PREDEFINED_DEPARTMENTS.map(d => (
-                                          <option key={d} value={d}>{d}</option>
-                                      ))}
-                                  </select>
+                                  {/* El departamento se muestra como etiqueta de solo lectura porque se edita arriba en la categoría */}
+                                  <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${darkMode ? 'border-gray-700 text-gray-400' : 'border-gray-300 text-gray-500'}`}>
+                                      {p.department || 'SIN DEPTO'}
+                                  </span>
                                 </div>
 
                                 <textarea
@@ -620,7 +652,16 @@ export default function AdminPage() {
                     list="category-suggestions" 
                     placeholder="Ej: Ignite v400" 
                     value={newProduct.category} 
-                    onChange={e => setNewProduct({...newProduct, category: e.target.value})} 
+                    onChange={e => {
+                        const cat = e.target.value;
+                        // Autocompletar el departamento si la categoría ya existe
+                        const existingProd = products.find(p => p.category.toUpperCase() === cat.toUpperCase());
+                        setNewProduct(prev => ({
+                            ...prev, 
+                            category: cat,
+                            department: existingProd ? existingProd.department : prev.department
+                        }));
+                    }} 
                     className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all uppercase ${theme.input}`} 
                   />
                   <datalist id="category-suggestions">
@@ -631,13 +672,16 @@ export default function AdminPage() {
 
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Departamento Principal</label>
-                <select 
+                <input 
+                    list="dept-suggestions"
+                    placeholder="Elegí o escribí uno nuevo..."
                     value={newProduct.department} 
                     onChange={e => setNewProduct({...newProduct, department: e.target.value})} 
                     className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all uppercase ${theme.input}`}
-                >
-                    {PREDEFINED_DEPARTMENTS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+                />
+                <datalist id="dept-suggestions">
+                    {availableDepartments.map(d => <option key={d} value={d} />)}
+                </datalist>
               </div>
 
               <div>
