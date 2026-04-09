@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -22,59 +23,55 @@ const CONFIG = {
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png",
 };
 
-// LISTA BASE COMPLETA (CON SECCIONES)
+// Mantenemos la lista base para la primera carga
 const initialProducts = [
-  { id: 1, name: "BAJA SPLASH", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante. Batería de larga duración y la garantía de autenticidad de 028 IMPORT." },
-  { id: 2, name: "BLUE RAZZ ICE", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto. Rendimiento superior en cada calada." },
-  { id: 3, name: "CHERRY FUSE", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png", description: "Fusión explosiva de cerezas dulces y jugosas. Diseño ergonómico, flujo de aire suave y calidad garantizada en caja sellada." },
-  { id: 4, name: "CHERRY STRAZZ", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "Destacado", image: "https://i.postimg.cc/7PFVsTG2/CHERRY-STRAZZ.jpg", description: "Una deliciosa combinación de cereza y fresa con sutiles notas cítricas. Ideal para quienes buscan un perfil dulce y balanceado." },
-  { id: 5, name: "DOUBLE APPLE ICE", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QN9mJqtk/DOUBLE-APPLE-ICE.webp", description: "Intenso sabor a doble manzana, dulce y ácida, coronado con un final súper refrescante. La experiencia definitiva para tu paladar." },
-  { id: 6, name: "DRAGON STRAWNANA", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/9X6p8qRB/DRAGON-STRAWNANA.png", description: "Exótico mix de pitahaya (dragon fruit), fresa y plátano. Un viaje de sabores suaves y tropicales con la mejor tecnología de vaporización." },
-  { id: 7, name: "GRAPE ICE", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/hPV0HPTw/GRAPE-ICE.webp", description: "Auténtico sabor a uva dulce acompañado de una frescura helada inigualable. Golpe de garganta satisfactorio y prolongado." },
-  { id: 8, name: "MANGO MAGIC", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "Best Seller", image: "https://i.postimg.cc/tCFzLCFC/MANGO-MAGIC.png", description: "La magia del mango maduro y jugoso capturada en un dispositivo premium. Sabor tropical intenso que no cansa." },
-  { id: 9, name: "PEACH", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/4xZ1Zk1f/PEACH.webp", description: "Puro sabor a durazno aterciopelado y dulce. Un clásico perfectamente logrado con el rendimiento excepcional de Elfbar." },
-  { id: 10, name: "SCARY BERRY", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/K8F5FS5D/SCARY-BERRY.png", description: "Misteriosa y atrapante mezcla de bayas silvestres oscuras. Perfil dulce con notas sutilmente ácidas de máxima calidad." },
-  { id: 11, name: "SOUR LUSH GUMMY", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/P54Q536R/SOUR-LUSH-GUMMY.png", description: "El divertido sabor de las gomitas dulces con un toque ácido irresistible. Rendimiento impecable hasta la última gota." },
-  { id: 12, name: "STRAWBERRY DRAGON FRUIT", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QMdk9QwW/STRAWBERRY-DRAGON-FRUIT.png", description: "Combinación vibrante de fresas maduras y exótica fruta del dragón. Vapor denso, sabor constante y fiabilidad extrema." },
-  { id: 13, name: "STRAWBERRY ICE", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/7Lt1gCrC/STRAWBERRY-ICE.png", description: "Fresas recién recolectadas bañadas en una brisa helada. Un vapeo limpio, refrescante y sumamente agradable." },
-  { id: 14, name: "STRAWBERRY WATERMELON", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/MG30ycJD/STRAWBERRY-WATERMELON.webp", description: "La clásica e infalible mezcla de fresa y sandía. Sabor dulce, afrutado y suave, respaldado por la garantía de 028 IMPORT." },
-  { id: 15, name: "SUMMER SPLASH", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png", description: "Un cóctel frutal que captura la esencia del verano en cada calada. Dispositivo elegante con tecnología de malla avanzada." },
-  { id: 16, name: "TIGERS BLOOD", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg", description: "Famosa mezcla de sandía y fresa con un exótico y suave toque de coco. Un perfil de sabor complejo y altamente demandado." },
-  { id: 17, name: "WATERMELON ICE", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp", description: "Todo el jugo y la dulzura de la sandía con un impacto extra helado. Máximo poder refrescante en un formato premium." },
-  { id: 25, name: "SOUR APPLE ICE", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg", description: "Manzana verde crujiente y ácida envuelta en una ráfaga de frío. Ideal para cortar con la rutina mediante sabores vibrantes." },
-  { id: 26, name: "MIAMI MINT", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg", description: "Menta sofisticada estilo Miami: fresca, dulce pero con presencia. Limpia el paladar y brinda un golpe de garganta excepcional." },
-  { id: 30, name: "BLUE RAZZ LEMON", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Jh48hT4x/ignite-v400-BLUE-RAZZ-LEMON.jpg", description: "Dispositivo ultracompacto y premium de Ignite. Intensa frambuesa azul equilibrada con notas cítricas de limón." },
-  { id: 31, name: "CHERRY WATERMELON", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/nLRJ9vCd/ignite-v400-cherry-watermelon.jpg", description: "Diseño elegante característico de Ignite con un mix insuperable de cereza y sandía. Portabilidad extrema y sabor consistente." },
-  { id: 32, name: "GRAPE", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/0QzqYbSv/ignite-v400-GRAPE.jpg", description: "Sabor a uva puro y directo. Ignite v400 te garantiza la mejor tecnología en un vaporizador minimalista de alta gama." },
-  { id: 33, name: "MIAMI MINT", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/gJ1bNmyJ/ignite-v400-miami-mint.jpg", description: "Menta premium y refrescante en el formato más cómodo del mercado. Componentes de máxima pureza y fiabilidad total." },
-  { id: 34, name: "PASSION FRUIT", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/vT9FKkXt/Ignite-v400-PASSION-FRUIT.jpg", description: "El toque ácido y exótico del maracuyá en cada calada. Calidad Ignite asegurada por el servicio logístico de 028 IMPORT." },
-  { id: 35, name: "STRAWBERRY WATERMELON", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/FFJ41kmG/Ignite-v400-STRAWBERR-WATERMELON.jpg", description: "Dulce, frutal y perfectamente balanceado. Fresa y sandía en un dispositivo discreto que nunca compromete la potencia." },
-  { id: 36, name: "STRAWBERRY KIWI", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Hsw19GrJ/ignite-v400-STRAWBERRY-KIWI.jpg", description: "Fresa dulce combinada con el toque tropical del kiwi. Ignite te ofrece elegancia, rendimiento y una experiencia sin fallas." },
-  { id: 37, name: "STRAWBERRY", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/cLdyDD35/ignite-v400-strawberry.jpg", description: "Auténtico sabor a fresa de principio a fin. Fabricado bajo los estrictos controles de calidad de la marca Ignite." },
-  { id: 38, name: "TUTTI FRUTI", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/mgVxKQ3v/ignite-v400-TUTI-FRUTI.jpg", description: "Explosión de golosinas frutales en un vaporizador compacto. Diseñado para un consumo discreto, rápido y lleno de sabor." },
-  { id: 39, name: "BLUE RAZZ ICE", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yYk7mpF9/Lost-mary-20000-BLUE-RAZZ-ICE.jpg", description: "El dispositivo Lost Mary con 20000 caladas de duración." },
-  { id: 40, name: "GRAPE ICE", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05VC/Lost-mary-20000-GRAPE-ICE.jpg", description: "El dispositivo Lost Mary con 20000 caladas de duración." },
-  { id: 41, name: "ICE MINT", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05V5/lost-mary-20000-ICE-MINT.jpg", description: "El dispositivo Lost Mary con 20000 caladas de duración." },
-  { id: 42, name: "LIME GRAPE FRUIT", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/7LqcVbpW/Lost-mary-20000-LIME-GRAPE-FRUIT.jpg", description: "El dispositivo Lost Mary con 20000 caladas de duración." },
-  { id: 43, name: "MANGO MAGIC", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/8CwYnNGc/Lost-mary-20000-MANGO-TWIST.jpg", description: "El dispositivo Lost Mary con 20000 caladas de duración." },
-  { id: 44, name: "MEXICAN MANGO", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/bvL5FpPx/Lost-mary-20000-MEXICAN-MANGO.jpg", description: "El dispositivo Lost Mary con 20000 caladas de duración." },
-  { id: 45, name: "MIAMI MINT", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yWqpSNmv/Lost-mary-20000-MIAMI-MINT.jpg", description: "El dispositivo Lost Mary con 20000 caladas de duración." },
-  { id: 46, name: "STRAWBERRY ICE", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/zDLJWPw3/Lost-mary-20000-STRAWBERRY-ICE.jpg", description: "El dispositivo Lost Mary con 20000 caladas de duración." },
-  { id: 47, name: "STRAWBERRY KIWI", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/59Hxvk5q/Lost-mary-20000-STRAWBERRY-KIWI.jpg", description: "El dispositivo Lost Mary con 20000 caladas de duración." },
-  { id: 18, name: "BLOW THC", price: 55000, section: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp", description: "Dispositivo de alta pureza con extracciones premium. Diseño discreto, golpe suave y un efecto prolongado garantizado." },
-  { id: 19, name: "TORCH 7.5G", price: 53000, section: "THC", category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png", description: "Capacidad extrema de 7.5G de extracto premium. Pantalla digital, función de precalentamiento y la mejor potencia del mercado." },
-  { id: 29, name: "TORCH 4.5G", price: 52500, section: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/vmFK42hC/TORCH-4-5G.jpg", description: "4.5G de puro rendimiento. Diseño ergonómico, tecnología avanzada anti-obstrucciones y un efecto potente e inmediato." },
-  { id: 20, name: "PHENOM 6G", price: 56000, section: "THC", category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg", description: "Dispositivo de grado premium cargado con 6G. Extracción de máxima pureza para una experiencia intensa y de altísimo nivel." },
-  { id: 27, name: "PLAYSTATION 5", price: 550, section: "TECNOLOGÍA", category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg", description: "PlayStation 5 original en caja sellada. Máximo rendimiento gaming de nueva generación. Calidad garantizada con la logística y atención exclusiva de 028 IMPORT." },
-  { id: 28, name: "AIRPODS PRO", price: 35000, section: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg", description: "Auriculares inalámbricos 100% originales con cancelación activa de ruido y audio espacial. Máxima fidelidad de sonido y ecología Apple." },
-  { id: 21, name: "CARGADOR 20W", price: 16500, section: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg", description: "Adaptador de corriente USB-C de 20W original Apple. Carga rápida, segura y eficiente en caja sellada de fábrica." },
-  { id: 22, name: "CARGADOR 35W", price: 20500, section: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg", description: "Adaptador de corriente dual USB-C de 35W original Apple. Potencia de sobra para cargar múltiples dispositivos al mismo tiempo." },
-  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, section: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg", description: "Cable original Apple de USB-C a USB-C. Sincronización impecable y soporte de alta potencia. Material resistente y duradero." },
-  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, section: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg", description: "Cable original Apple USB-C a Lightning de 2 metros de longitud. Extrema comodidad y compatibilidad garantizada para carga rápida." },
-  { id: 50, name: "LABUBU V2", price: 17500, section: "LIFESTYLE", category: "Labubu", tag: "Viral", image: "https://i.postimg.cc/654362/labubu.png", description: "Muñeco coleccionable original. Consultar modelos por privado." },
-  { id: 51, name: "TERMO STANLEY 1.2L", price: 85000, section: "LIFESTYLE", category: "Stanley", tag: "Original", image: "https://i.postimg.cc/placeholder/stanley.png", description: "Termo original con garantía de por vida. Consultar colores disponibles." },
-  { id: 52, name: "MIEL ENERGY MASCULINA", price: 15000, section: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_h.png", description: "Miel para rendimiento sexual masculino. 100% natural y de efecto comprobado." },
-  { id: 53, name: "MIEL ENERGY FEMENINA", price: 15000, section: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_m.png", description: "Miel para rendimiento sexual femenino. Efecto inmediato." }
+  { id: 1, name: "BAJA SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png" },
+  { id: 2, name: "BLUE RAZZ ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp" },
+  { id: 3, name: "CHERRY FUSE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png" },
+  { id: 4, name: "CHERRY STRAZZ", price: 26000, category: "Elfbar Ice King", tag: "Destacado", image: "https://i.postimg.cc/7PFVsTG2/CHERRY-STRAZZ.jpg" },
+  { id: 5, name: "DOUBLE APPLE ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QN9mJqtk/DOUBLE-APPLE-ICE.webp" },
+  { id: 6, name: "DRAGON STRAWNANA", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/9X6p8qRB/DRAGON-STRAWNANA.png" },
+  { id: 7, name: "GRAPE ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/hPV0HPTw/GRAPE-ICE.webp" },
+  { id: 8, name: "MANGO MAGIC", price: 26000, category: "Elfbar Ice King", tag: "Best Seller", image: "https://i.postimg.cc/tCFzLCFC/MANGO-MAGIC.png" },
+  { id: 9, name: "PEACH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/4xZ1Zk1f/PEACH.webp" },
+  { id: 10, name: "SCARY BERRY", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/K8F5FS5D/SCARY-BERRY.png" },
+  { id: 11, name: "SOUR LUSH GUMMY", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/P54Q536R/SOUR-LUSH-GUMMY.png" },
+  { id: 12, name: "STRAWBERRY DRAGON FRUIT", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QMdk9QwW/STRAWBERRY-DRAGON-FRUIT.png" },
+  { id: 13, name: "STRAWBERRY ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/7Lt1gCrC/STRAWBERRY-ICE.png" },
+  { id: 14, name: "STRAWBERRY WATERMELON", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/MG30ycJD/STRAWBERRY-WATERMELON.webp" },
+  { id: 15, name: "SUMMER SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png" },
+  { id: 16, name: "TIGERS BLOOD", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg" },
+  { id: 17, name: "WATERMELON ICE", price: 26000, category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp" },
+  { id: 25, name: "SOUR APPLE ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg" },
+  { id: 26, name: "MIAMI MINT", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg" },
+  { id: 30, name: "BLUE RAZZ LEMON", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Jh48hT4x/ignite-v400-BLUE-RAZZ-LEMON.jpg" },
+  { id: 31, name: "CHERRY WATERMELON", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/nLRJ9vCd/ignite-v400-cherry-watermelon.jpg" },
+  { id: 32, name: "GRAPE", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/0QzqYbSv/ignite-v400-GRAPE.jpg" },
+  { id: 33, name: "MIAMI MINT", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/gJ1bNmyJ/ignite-v400-miami-mint.jpg" },
+  { id: 34, name: "PASSION FRUIT", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/vT9FKkXt/Ignite-v400-PASSION-FRUIT.jpg" },
+  { id: 35, name: "STRAWBERRY WATERMELON", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/FFJ41kmG/Ignite-v400-STRAWBERR-WATERMELON.jpg" },
+  { id: 36, name: "STRAWBERRY KIWI", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Hsw19GrJ/ignite-v400-STRAWBERRY-KIWI.jpg" },
+  { id: 37, name: "STRAWBERRY", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/cLdyDD35/ignite-v400-strawberry.jpg" },
+  { id: 38, name: "TUTTI FRUTI", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/mgVxKQ3v/ignite-v400-TUTI-FRUTI.jpg" },
+  { id: 39, name: "BLUE RAZZ ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yYk7mpF9/Lost-mary-20000-BLUE-RAZZ-ICE.jpg" },
+  { id: 40, name: "GRAPE ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05VC/Lost-mary-20000-GRAPE-ICE.jpg" },
+  { id: 41, name: "ICE MINT", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05V5/lost-mary-20000-ICE-MINT.jpg" },
+  { id: 42, name: "LIME GRAPE FRUIT", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/7LqcVbpW/Lost-mary-20000-LIME-GRAPE-FRUIT.jpg" },
+  { id: 43, name: "MANGO MAGIC", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/8CwYnNGc/Lost-mary-20000-MANGO-TWIST.jpg" },
+  { id: 44, name: "MEXICAN MANGO", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/bvL5FpPx/Lost-mary-20000-MEXICAN-MANGO.jpg" },
+  { id: 45, name: "MIAMI MINT", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yWqpSNmv/Lost-mary-20000-MIAMI-MINT.jpg" },
+  { id: 46, name: "STRAWBERRY ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/zDLJWPw3/Lost-mary-20000-STRAWBERRY-ICE.jpg" },
+  { id: 47, name: "STRAWBERRY KIWI", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/59Hxvk5q/Lost-mary-20000-STRAWBERRY-KIWI.jpg" },
+  { id: 18, name: "BLOW THC", price: 55000, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp" },
+  { id: 19, name: "TORCH 7.5G", price: 53000, category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png" },
+  { id: 29, name: "TORCH 4.5G", price: 52500, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/vmFK42hC/TORCH-4-5G.jpg" },
+  { id: 20, name: "PHENOM 6G", price: 56000, category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg" },
+  { id: 27, name: "PLAYSTATION 5", price: 550, category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg" },
+  { id: 28, name: "AIRPODS PRO", price: 35000, category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg" },
+  { id: 21, name: "CARGADOR 20W", price: 16500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg" },
+  { id: 22, name: "CARGADOR 35W", price: 20500, category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg" },
+  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg" },
+  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg" }
 ];
 
 export default function AdminPage() {
@@ -82,6 +79,7 @@ export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState(initialProducts);
   
+  // ESTADO NUEVO: PROMOS
   const [promos, setPromos] = useState([]);
   const [newPromo, setNewPromo] = useState({ category: '', minQty: 2, totalPrice: '' });
 
@@ -89,16 +87,13 @@ export default function AdminPage() {
   const [darkMode, setDarkMode] = useState(false); 
 
   const [newProduct, setNewProduct] = useState({
-    name: '', price: '', section: 'VAPES', category: '', image: '', tag: '', description: ''
+    name: '', price: '', category: '', image: '', tag: '', description: ''
   });
   const [isAdding, setIsAdding] = useState(false);
 
   const uniqueCategories = useMemo(() => {
     return [...new Set(products.map(p => p.category))];
   }, [products]);
-
-  // Secciones Predeterminadas
-  const PREDEFINED_SECTIONS = ["VAPES", "THC", "TECNOLOGÍA", "LIFESTYLE", "BIENESTAR"];
 
   const clientsList = useMemo(() => {
     const clientsMap = new Map();
@@ -172,7 +167,7 @@ export default function AdminPage() {
              const updatedInitial = initialProducts.map(p => {
                 const match = dbProducts.find(dbP => dbP.id === p.id);
                 return match 
-                  ? { ...p, ...match, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price, order: match.order !== undefined ? match.order : 99, description: match.description !== undefined ? match.description : p.description, isHidden: match.isHidden || match.isDeleted, section: match.section !== undefined ? match.section : p.section } 
+                  ? { ...p, ...match, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price, order: match.order !== undefined ? match.order : 99, description: match.description !== undefined ? match.description : p.description, isHidden: match.isHidden || match.isDeleted } 
                   : { ...p, inStock: true, order: 99, isHidden: false };
              }).filter(Boolean);
              
@@ -185,6 +180,7 @@ export default function AdminPage() {
         }
       });
 
+      // NUEVO: ESCUCHAR LAS PROMOS
       const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (snapshot) => {
         if (!snapshot.empty) {
             setPromos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -214,7 +210,6 @@ export default function AdminPage() {
         id: newId,
         name: newProduct.name.toUpperCase(),
         price: Number(newProduct.price),
-        section: newProduct.section.toUpperCase(),
         category: newProduct.category,
         image: newProduct.image,
         tag: newProduct.tag,
@@ -226,18 +221,20 @@ export default function AdminPage() {
         isDeleted: false
       });
       alert("¡Producto agregado con éxito!");
-      setNewProduct({ name: '', price: '', section: 'VAPES', category: '', image: '', tag: '', description: '' });
+      setNewProduct({ name: '', price: '', category: '', image: '', tag: '', description: '' });
     } catch (error) {
       alert("Error al crear: " + error.message);
     }
     setIsAdding(false);
   };
 
+  // NUEVA FUNCIÓN: CREAR PROMO
   const handleAddPromo = async (e) => {
     e.preventDefault();
     if(!newPromo.category || !newPromo.minQty || !newPromo.totalPrice) return alert("Completa todos los campos");
     
     try {
+      // Usamos el nombre de la categoría en minúsculas y sin espacios como ID único para sobreescribir promos si ya existe
       const promoId = newPromo.category.toLowerCase().replace(/\s+/g, '-');
       await setDoc(doc(firebaseRefs.db, 'promos', promoId), {
         category: newPromo.category,
@@ -252,6 +249,7 @@ export default function AdminPage() {
     }
   };
 
+  // NUEVA FUNCIÓN: ELIMINAR PROMO
   const handleDeletePromo = async (id) => {
     if(confirm("¿Seguro que quieres eliminar esta promoción? Los precios volverán a la normalidad.")) {
        try { await deleteDoc(doc(firebaseRefs.db, 'promos', id)); }
@@ -277,23 +275,6 @@ export default function AdminPage() {
         await deleteDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`));
     } catch (err) {
         alert("Error al eliminar: " + err.message);
-    }
-  };
-
-  const handleDeleteCategory = async (categoryName) => {
-    if(!confirm(`⚠️ ATENCIÓN: ¿Estás seguro de que querés ELIMINAR la categoría "${categoryName}" por completo?\n\nEsto borrará DEFINITIVAMENTE todos los productos que pertenezcan a esta categoría de la base de datos. Esta acción NO se puede deshacer.`)) return;
-
-    try {
-      const productsToDelete = products.filter(p => p.category === categoryName);
-      for (const p of productsToDelete) {
-         await deleteDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`));
-      }
-      try {
-         await deleteDoc(doc(firebaseRefs.db, 'promos', categoryName.toLowerCase().replace(/\s+/g, '-')));
-      } catch (e) {} 
-      alert(`Categoría "${categoryName}" eliminada correctamente.`);
-    } catch (err) {
-      alert("Error al eliminar la categoría: " + err.message);
     }
   };
 
@@ -367,10 +348,8 @@ export default function AdminPage() {
                 await setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), {
                     id: p.id,
                     name: p.name,
-                    section: p.section || "OTROS",
                     category: p.category, 
                     image: p.image,
-                    description: p.description || "",
                     order: 99,
                     isHidden: false
                 }, { merge: true });
@@ -403,13 +382,7 @@ export default function AdminPage() {
 
     return (
         <div className="mb-8" key={categoryFilter}>
-            <div className={`flex justify-between items-center border-b pb-2 mb-4 ${darkMode ? 'border-[#262626]' : 'border-gray-200'}`}>
-               <h3 className={`text-xl font-bold uppercase ${theme.subText}`}>{categoryFilter}</h3>
-               <button onClick={() => handleDeleteCategory(categoryFilter)} className="text-red-500 hover:text-red-700 hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 text-[10px] font-black uppercase">
-                  <i className="fas fa-trash"></i> Borrar Categoría
-               </button>
-            </div>
-            
+            <h3 className={`text-xl font-bold mb-4 uppercase ${theme.subText} border-b ${darkMode ? 'border-[#262626]' : 'border-gray-200'} pb-2`}>{categoryFilter}</h3>
             <div className="grid gap-4">
                 {group.map(p => (
                     <div key={p.id} className={`${theme.card} p-5 rounded-[1.5rem] flex justify-between items-start shadow-sm border ${theme.cardHover} transition-all ${p.isHidden ? 'opacity-60 bg-gray-50/50' : ''}`}>
@@ -449,19 +422,14 @@ export default function AdminPage() {
                                         />
                                      </div>
                                 </div>
-                                <div className="flex gap-1 mt-1">
-                                  <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${p.isHidden ? 'bg-amber-900/30 text-amber-500' : (p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400')}`}>
-                                      {p.isHidden ? 'Oculto' : (p.inStock === false ? 'Agotado' : 'Disponible')}
-                                  </span>
-                                  <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${darkMode ? 'border-gray-700 text-gray-400' : 'border-gray-300 text-gray-500'}`}>
-                                      {p.section}
-                                  </span>
-                                </div>
+                                <span className={`w-fit text-[8px] font-black uppercase px-2 py-0.5 mb-1 rounded-full ${p.isHidden ? 'bg-amber-900/30 text-amber-500' : (p.inStock === false ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400')}`}>
+                                    {p.isHidden ? 'Oculto' : (p.inStock === false ? 'Agotado' : 'Disponible')}
+                                </span>
 
                                 <textarea
                                     defaultValue={p.description || ""}
                                     placeholder="Escribe la biografía o descripción del producto aquí..."
-                                    className={`w-full mt-2 text-[10px] p-2 rounded-lg outline-none transition-colors border focus:border-[#d4af37] resize-none ${darkMode ? 'bg-[#262626] border-[#404040] text-gray-300 placeholder-gray-500' : 'bg-gray-50 border-gray-200 text-gray-600 placeholder-gray-400'}`}
+                                    className={`w-full mt-1 text-[10px] p-2 rounded-lg outline-none transition-colors border focus:border-[#d4af37] resize-none ${darkMode ? 'bg-[#262626] border-[#404040] text-gray-300 placeholder-gray-500' : 'bg-gray-50 border-gray-200 text-gray-600 placeholder-gray-400'}`}
                                     rows="2"
                                     onBlur={(e) => {
                                         if (e.target.value !== (p.description || "")) {
@@ -511,6 +479,7 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('pendientes')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'pendientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Pedidos</button>
           <button onClick={() => setActiveTab('stock')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'stock' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Stock</button>
           <button onClick={() => setActiveTab('crear')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'crear' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Crear +</button>
+          {/* PESTAÑA CLIENTES Y NUEVA PESTAÑA PROMOS */}
           <button onClick={() => setActiveTab('clientes')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'clientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Clientes</button>
           <button onClick={() => setActiveTab('promos')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 ${activeTab === 'promos' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Promos %</button>
         </div>
@@ -518,6 +487,7 @@ export default function AdminPage() {
 
       <main className="max-w-4xl mx-auto p-4 md:p-8">
         
+        {/* PESTAÑA NUEVA: PROMOS */}
         {activeTab === 'promos' && (
           <div className="animate-in fade-in duration-500 max-w-lg mx-auto">
             <div className="flex justify-between items-end mb-8">
@@ -596,10 +566,11 @@ export default function AdminPage() {
                   <input type="number" required placeholder="26000" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-2 focus:border-[#d4af37] transition-all ${theme.input}`} />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Categoría / Marca</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Categoría</label>
+                  
                   <input 
                     list="category-suggestions" 
-                    placeholder="Ej: Ignite v400" 
+                    placeholder="Escribe o selecciona..." 
                     value={newProduct.category} 
                     onChange={e => setNewProduct({...newProduct, category: e.target.value})} 
                     className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all uppercase ${theme.input}`} 
@@ -607,19 +578,8 @@ export default function AdminPage() {
                   <datalist id="category-suggestions">
                     {uniqueCategories.map(cat => <option key={cat} value={cat} />)}
                   </datalist>
-                </div>
-              </div>
 
-              {/* NUEVO CAMPO: SECCIÓN PRINCIPAL */}
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Sección (Departamento Principal)</label>
-                <select 
-                    value={newProduct.section} 
-                    onChange={e => setNewProduct({...newProduct, section: e.target.value})} 
-                    className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-2 focus:border-[#d4af37] transition-all uppercase ${theme.input}`}
-                >
-                    {PREDEFINED_SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+                </div>
               </div>
 
               <div>

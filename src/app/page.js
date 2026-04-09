@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -11,62 +12,58 @@ const CONFIG = {
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png", 
   bannerImage: "https://i.postimg.cc/zXYm0TQn/image.png", 
   currencySymbol: "$",
-  shippingText: "Pedime, te llega en 30' ⏰",
+  shippingText: "Pedime te llega en 30'⏰",
 };
 
-// ACA ESTAN TODAS TUS VARIACIONES CON SU SECCIÓN CORRESPONDIENTE
+// Mantenemos la lista base para la primera carga
 const initialProducts = [
-  { id: 1, name: "BAJA SPLASH", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante. Batería de larga duración y la garantía de autenticidad de 028 IMPORT." },
-  { id: 2, name: "BLUE RAZZ ICE", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto. Rendimiento superior en cada calada." },
-  { id: 3, name: "CHERRY FUSE", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png", description: "Fusión explosiva de cerezas dulces y jugosas. Diseño ergonómico, flujo de aire suave y calidad garantizada en caja sellada." },
-  { id: 4, name: "CHERRY STRAZZ", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "Destacado", image: "https://i.postimg.cc/7PFVsTG2/CHERRY-STRAZZ.jpg", description: "Una deliciosa combinación de cereza y fresa con sutiles notas cítricas. Ideal para quienes buscan un perfil dulce y balanceado." },
-  { id: 5, name: "DOUBLE APPLE ICE", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QN9mJqtk/DOUBLE-APPLE-ICE.webp", description: "Intenso sabor a doble manzana, dulce y ácida, coronado con un final súper refrescante. La experiencia definitiva para tu paladar." },
-  { id: 6, name: "DRAGON STRAWNANA", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/9X6p8qRB/DRAGON-STRAWNANA.png", description: "Exótico mix de pitahaya (dragon fruit), fresa y plátano. Un viaje de sabores suaves y tropicales con la mejor tecnología de vaporización." },
-  { id: 7, name: "GRAPE ICE", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/hPV0HPTw/GRAPE-ICE.webp", description: "Auténtico sabor a uva dulce acompañado de una frescura helada inigualable. Golpe de garganta satisfactorio y prolongado." },
-  { id: 8, name: "MANGO MAGIC", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "Best Seller", image: "https://i.postimg.cc/tCFzLCFC/MANGO-MAGIC.png", description: "La magia del mango maduro y jugoso capturada en un dispositivo premium. Sabor tropical intenso que no cansa." },
-  { id: 9, name: "PEACH", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/4xZ1Zk1f/PEACH.webp", description: "Puro sabor a durazno aterciopelado y dulce. Un clásico perfectamente logrado con el rendimiento excepcional de Elfbar." },
-  { id: 10, name: "SCARY BERRY", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/K8F5FS5D/SCARY-BERRY.png", description: "Misteriosa y atrapante mezcla de bayas silvestres oscuras. Perfil dulce con notas sutilmente ácidas de máxima calidad." },
-  { id: 11, name: "SOUR LUSH GUMMY", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/P54Q536R/SOUR-LUSH-GUMMY.png", description: "El divertido sabor de las gomitas dulces con un toque ácido irresistible. Rendimiento impecable hasta la última gota." },
-  { id: 12, name: "STRAWBERRY DRAGON FRUIT", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QMdk9QwW/STRAWBERRY-DRAGON-FRUIT.png", description: "Combinación vibrante de fresas maduras y exótica fruta del dragón. Vapor denso, sabor constante y fiabilidad extrema." },
-  { id: 13, name: "STRAWBERRY ICE", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/7Lt1gCrC/STRAWBERRY-ICE.png", description: "Fresas recién recolectadas bañadas en una brisa helada. Un vapeo limpio, refrescante y sumamente agradable." },
-  { id: 14, name: "STRAWBERRY WATERMELON", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/MG30ycJD/STRAWBERRY-WATERMELON.webp", description: "La clásica e infalible mezcla de fresa y sandía. Sabor dulce, afrutado y suave, respaldado por la garantía de 028 IMPORT." },
-  { id: 15, name: "SUMMER SPLASH", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png", description: "Un cóctel frutal que captura la esencia del verano en cada calada. Dispositivo elegante con tecnología de malla avanzada." },
-  { id: 16, name: "TIGERS BLOOD", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg", description: "Famosa mezcla de sandía y fresa con un exótico y suave toque de coco. Un perfil de sabor complejo y altamente demandado." },
-  { id: 17, name: "WATERMELON ICE", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp", description: "Todo el jugo y la dulzura de la sandía con un impacto extra helado. Máximo poder refrescante en un formato premium." },
-  { id: 25, name: "SOUR APPLE ICE", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg", description: "Manzana verde crujiente y ácida envuelta en una ráfaga de frío. Ideal para cortar con la rutina mediante sabores vibrantes." },
-  { id: 26, name: "MIAMI MINT", price: 26000, section: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg", description: "Menta sofisticada estilo Miami: fresca, dulce pero con presencia. Limpia el paladar y brinda un golpe de garganta excepcional." },
-  { id: 30, name: "BLUE RAZZ LEMON", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Jh48hT4x/ignite-v400-BLUE-RAZZ-LEMON.jpg", description: "Dispositivo ultracompacto y premium de Ignite. Intensa frambuesa azul equilibrada con notas cítricas de limón." },
-  { id: 31, name: "CHERRY WATERMELON", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/nLRJ9vCd/ignite-v400-cherry-watermelon.jpg", description: "Diseño elegante característico de Ignite con un mix insuperable de cereza y sandía. Portabilidad extrema y sabor consistente." },
-  { id: 32, name: "GRAPE", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/0QzqYbSv/ignite-v400-GRAPE.jpg", description: "Sabor a uva puro y directo. Ignite v400 te garantiza la mejor tecnología en un vaporizador minimalista de alta gama." },
-  { id: 33, name: "MIAMI MINT", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/gJ1bNmyJ/ignite-v400-miami-mint.jpg", description: "Menta premium y refrescante en el formato más cómodo del mercado. Componentes de máxima pureza y fiabilidad total." },
-  { id: 34, name: "PASSION FRUIT", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/vT9FKkXt/Ignite-v400-PASSION-FRUIT.jpg", description: "El toque ácido y exótico del maracuyá en cada calada. Calidad Ignite asegurada por el servicio logístico de 028 IMPORT." },
-  { id: 35, name: "STRAWBERRY WATERMELON", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/FFJ41kmG/Ignite-v400-STRAWBERR-WATERMELON.jpg", description: "Dulce, frutal y perfectamente balanceado. Fresa y sandía en un dispositivo discreto que nunca compromete la potencia." },
-  { id: 36, name: "STRAWBERRY KIWI", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Hsw19GrJ/ignite-v400-STRAWBERRY-KIWI.jpg", description: "Fresa dulce combinada con el toque tropical del kiwi. Ignite te ofrece elegancia, rendimiento y una experiencia sin fallas." },
-  { id: 37, name: "STRAWBERRY", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/cLdyDD35/ignite-v400-strawberry.jpg", description: "Auténtico sabor a fresa de principio a fin. Fabricado bajo los estrictos controles de calidad de la marca Ignite." },
-  { id: 38, name: "TUTTI FRUTI", price: 28000, section: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/mgVxKQ3v/ignite-v400-TUTI-FRUTI.jpg", description: "Explosión de golosinas frutales en un vaporizador compacto. Diseñado para un consumo discreto, rápido y lleno de sabor." },
-  { id: 39, name: "BLUE RAZZ ICE", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yYk7mpF9/Lost-mary-20000-BLUE-RAZZ-ICE.jpg" },
-  { id: 40, name: "GRAPE ICE", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05VC/Lost-mary-20000-GRAPE-ICE.jpg" },
-  { id: 41, name: "ICE MINT", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05V5/lost-mary-20000-ICE-MINT.jpg" },
-  { id: 42, name: "LIME GRAPE FRUIT", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/7LqcVbpW/Lost-mary-20000-LIME-GRAPE-FRUIT.jpg" },
-  { id: 43, name: "MANGO MAGIC", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/8CwYnNGc/Lost-mary-20000-MANGO-TWIST.jpg" },
-  { id: 44, name: "MEXICAN MANGO", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/bvL5FpPx/Lost-mary-20000-MEXICAN-MANGO.jpg" },
-  { id: 45, name: "MIAMI MINT", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yWqpSNmv/Lost-mary-20000-MIAMI-MINT.jpg" },
-  { id: 46, name: "STRAWBERRY ICE", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/zDLJWPw3/Lost-mary-20000-STRAWBERRY-ICE.jpg" },
-  { id: 47, name: "STRAWBERRY KIWI", price: 23000, section: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/59Hxvk5q/Lost-mary-20000-STRAWBERRY-KIWI.jpg" },
-  { id: 18, name: "BLOW THC", price: 55000, section: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp", description: "Dispositivo de alta pureza con extracciones premium. Diseño discreto, golpe suave y un efecto prolongado garantizado." },
-  { id: 19, name: "TORCH 7.5G", price: 53000, section: "THC", category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png", description: "Capacidad extrema de 7.5G de extracto premium. Pantalla digital, función de precalentamiento y la mejor potencia del mercado." },
-  { id: 29, name: "TORCH 4.5G", price: 52500, section: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/vmFK42hC/TORCH-4-5G.jpg", description: "4.5G de puro rendimiento. Diseño ergonómico, tecnología avanzada anti-obstrucciones y un efecto potente e inmediato." },
-  { id: 20, name: "PHENOM 6G", price: 56000, section: "THC", category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg", description: "Dispositivo de grado premium cargado con 6G. Extracción de máxima pureza para una experiencia intensa y de altísimo nivel." },
-  { id: 27, name: "PLAYSTATION 5", price: 550, section: "TECNOLOGÍA", category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg", description: "PlayStation 5 original en caja sellada. Máximo rendimiento gaming de nueva generación. Calidad garantizada con la logística y atención exclusiva de 028 IMPORT." },
-  { id: 28, name: "AIRPODS PRO", price: 35000, section: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg", description: "Auriculares inalámbricos 100% originales con cancelación activa de ruido y audio espacial. Máxima fidelidad de sonido y ecología Apple." },
-  { id: 21, name: "CARGADOR 20W", price: 16500, section: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg", description: "Adaptador de corriente USB-C de 20W original Apple. Carga rápida, segura y eficiente en caja sellada de fábrica." },
-  { id: 22, name: "CARGADOR 35W", price: 20500, section: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg", description: "Adaptador de corriente dual USB-C de 35W original Apple. Potencia de sobra para cargar múltiples dispositivos al mismo tiempo." },
-  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, section: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg", description: "Cable original Apple de USB-C a USB-C. Sincronización impecable y soporte de alta potencia. Material resistente y duradero." },
-  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, section: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg", description: "Cable original Apple USB-C a Lightning de 2 metros de longitud. Extrema comodidad y compatibilidad garantizada para carga rápida." },
-  { id: 50, name: "LABUBU V2", price: 17500, section: "LIFESTYLE", category: "Labubu", tag: "Viral", image: "https://i.postimg.cc/654362/labubu.png", description: "Muñeco coleccionable original. Consultar modelos por privado." },
-  { id: 51, name: "TERMO STANLEY 1.2L", price: 85000, section: "LIFESTYLE", category: "Stanley", tag: "Original", image: "https://i.postimg.cc/placeholder/stanley.png", description: "Termo original con garantía de por vida. Consultar colores disponibles." },
-  { id: 52, name: "MIEL ENERGY MASCULINA", price: 15000, section: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_h.png", description: "Miel para rendimiento sexual masculino. 100% natural y de efecto comprobado." },
-  { id: 53, name: "MIEL ENERGY FEMENINA", price: 15000, section: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_m.png", description: "Miel para rendimiento sexual femenino. Efecto inmediato." }
+  { id: 1, name: "BAJA SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante. Batería de larga duración y la garantía de autenticidad de 028 IMPORT." },
+  { id: 2, name: "BLUE RAZZ ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto. Rendimiento superior en cada calada." },
+  { id: 3, name: "CHERRY FUSE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png", description: "Fusión explosiva de cerezas dulces y jugosas. Diseño ergonómico, flujo de aire suave y calidad garantizada en caja sellada." },
+  { id: 4, name: "CHERRY STRAZZ", price: 26000, category: "Elfbar Ice King", tag: "Destacado", image: "https://i.postimg.cc/7PFVsTG2/CHERRY-STRAZZ.jpg", description: "Una deliciosa combinación de cereza y fresa con sutiles notas cítricas. Ideal para quienes buscan un perfil dulce y balanceado." },
+  { id: 5, name: "DOUBLE APPLE ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QN9mJqtk/DOUBLE-APPLE-ICE.webp", description: "Intenso sabor a doble manzana, dulce y ácida, coronado con un final súper refrescante. La experiencia definitiva para tu paladar." },
+  { id: 6, name: "DRAGON STRAWNANA", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/9X6p8qRB/DRAGON-STRAWNANA.png", description: "Exótico mix de pitahaya (dragon fruit), fresa y plátano. Un viaje de sabores suaves y tropicales con la mejor tecnología de vaporización." },
+  { id: 7, name: "GRAPE ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/hPV0HPTw/GRAPE-ICE.webp", description: "Auténtico sabor a uva dulce acompañado de una frescura helada inigualable. Golpe de garganta satisfactorio y prolongado." },
+  { id: 8, name: "MANGO MAGIC", price: 26000, category: "Elfbar Ice King", tag: "Best Seller", image: "https://i.postimg.cc/tCFzLCFC/MANGO-MAGIC.png", description: "La magia del mango maduro y jugoso capturada en un dispositivo premium. Sabor tropical intenso que no cansa." },
+  { id: 9, name: "PEACH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/4xZ1Zk1f/PEACH.webp", description: "Puro sabor a durazno aterciopelado y dulce. Un clásico perfectamente logrado con el rendimiento excepcional de Elfbar." },
+  { id: 10, name: "SCARY BERRY", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/K8F5FS5D/SCARY-BERRY.png", description: "Misteriosa y atrapante mezcla de bayas silvestres oscuras. Perfil dulce con notas sutilmente ácidas de máxima calidad." },
+  { id: 11, name: "SOUR LUSH GUMMY", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/P54Q536R/SOUR-LUSH-GUMMY.png", description: "El divertido sabor de las gomitas dulces con un toque ácido irresistible. Rendimiento impecable hasta la última gota." },
+  { id: 12, name: "STRAWBERRY DRAGON FRUIT", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QMdk9QwW/STRAWBERRY-DRAGON-FRUIT.png", description: "Combinación vibrante de fresas maduras y exótica fruta del dragón. Vapor denso, sabor constante y fiabilidad extrema." },
+  { id: 13, name: "STRAWBERRY ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/7Lt1gCrC/STRAWBERRY-ICE.png", description: "Fresas recién recolectadas bañadas en una brisa helada. Un vapeo limpio, refrescante y sumamente agradable." },
+  { id: 14, name: "STRAWBERRY WATERMELON", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/MG30ycJD/STRAWBERRY-WATERMELON.webp", description: "La clásica e infalible mezcla de fresa y sandía. Sabor dulce, afrutado y suave, respaldado por la garantía de 028 IMPORT." },
+  { id: 15, name: "SUMMER SPLASH", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png", description: "Un cóctel frutal que captura la esencia del verano en cada calada. Dispositivo elegante con tecnología de malla avanzada." },
+  { id: 16, name: "TIGERS BLOOD", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg", description: "Famosa mezcla de sandía y fresa con un exótico y suave toque de coco. Un perfil de sabor complejo y altamente demandado." },
+  { id: 17, name: "WATERMELON ICE", price: 26000, category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp", description: "Todo el jugo y la dulzura de la sandía con un impacto extra helado. Máximo poder refrescante en un formato premium." },
+  { id: 25, name: "SOUR APPLE ICE", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg", description: "Manzana verde crujiente y ácida envuelta en una ráfaga de frío. Ideal para cortar con la rutina mediante sabores vibrantes." },
+  { id: 26, name: "MIAMI MINT", price: 26000, category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg", description: "Menta sofisticada estilo Miami: fresca, dulce pero con presencia. Limpia el paladar y brinda un golpe de garganta excepcional." },
+  { id: 30, name: "BLUE RAZZ LEMON", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Jh48hT4x/ignite-v400-BLUE-RAZZ-LEMON.jpg", description: "Dispositivo ultracompacto y premium de Ignite. Intensa frambuesa azul equilibrada con notas cítricas de limón." },
+  { id: 31, name: "CHERRY WATERMELON", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/nLRJ9vCd/ignite-v400-cherry-watermelon.jpg", description: "Diseño elegante característico de Ignite con un mix insuperable de cereza y sandía. Portabilidad extrema y sabor consistente." },
+  { id: 32, name: "GRAPE", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/0QzqYbSv/ignite-v400-GRAPE.jpg", description: "Sabor a uva puro y directo. Ignite v400 te garantiza la mejor tecnología en un vaporizador minimalista de alta gama." },
+  { id: 33, name: "MIAMI MINT", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/gJ1bNmyJ/ignite-v400-miami-mint.jpg", description: "Menta premium y refrescante en el formato más cómodo del mercado. Componentes de máxima pureza y fiabilidad total." },
+  { id: 34, name: "PASSION FRUIT", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/vT9FKkXt/Ignite-v400-PASSION-FRUIT.jpg", description: "El toque ácido y exótico del maracuyá en cada calada. Calidad Ignite asegurada por el servicio logístico de 028 IMPORT." },
+  { id: 35, name: "STRAWBERRY WATERMELON", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/FFJ41kmG/Ignite-v400-STRAWBERR-WATERMELON.jpg", description: "Dulce, frutal y perfectamente balanceado. Fresa y sandía en un dispositivo discreto que nunca compromete la potencia." },
+  { id: 36, name: "STRAWBERRY KIWI", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Hsw19GrJ/ignite-v400-STRAWBERRY-KIWI.jpg", description: "Fresa dulce combinada con el toque tropical del kiwi. Ignite te ofrece elegancia, rendimiento y una experiencia sin fallas." },
+  { id: 37, name: "STRAWBERRY", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/cLdyDD35/ignite-v400-strawberry.jpg", description: "Auténtico sabor a fresa de principio a fin. Fabricado bajo los estrictos controles de calidad de la marca Ignite." },
+  { id: 38, name: "TUTTI FRUTI", price: 28000, category: "Ignite v400", tag: "", image: "https://i.postimg.cc/mgVxKQ3v/ignite-v400-TUTI-FRUTI.jpg", description: "Explosión de golosinas frutales en un vaporizador compacto. Diseñado para un consumo discreto, rápido y lleno de sabor." },
+  { id: 39, name: "BLUE RAZZ ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yYk7mpF9/Lost-mary-20000-BLUE-RAZZ-ICE.jpg" },
+  { id: 40, name: "GRAPE ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05VC/Lost-mary-20000-GRAPE-ICE.jpg" },
+  { id: 41, name: "ICE MINT", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05V5/lost-mary-20000-ICE-MINT.jpg" },
+  { id: 42, name: "LIME GRAPE FRUIT", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/7LqcVbpW/Lost-mary-20000-LIME-GRAPE-FRUIT.jpg" },
+  { id: 43, name: "MANGO MAGIC", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/8CwYnNGc/Lost-mary-20000-MANGO-TWIST.jpg" },
+  { id: 44, name: "MEXICAN MANGO", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/bvL5FpPx/Lost-mary-20000-MEXICAN-MANGO.jpg" },
+  { id: 45, name: "MIAMI MINT", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yWqpSNmv/Lost-mary-20000-MIAMI-MINT.jpg" },
+  { id: 46, name: "STRAWBERRY ICE", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/zDLJWPw3/Lost-mary-20000-STRAWBERRY-ICE.jpg" },
+  { id: 47, name: "STRAWBERRY KIWI", price: 23000, category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/59Hxvk5q/Lost-mary-20000-STRAWBERRY-KIWI.jpg" },
+  { id: 18, name: "BLOW THC", price: 55000, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp", description: "Dispositivo de alta pureza con extracciones premium. Diseño discreto, golpe suave y un efecto prolongado garantizado." },
+  { id: 19, name: "TORCH 7.5G", price: 53000, category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png", description: "Capacidad extrema de 7.5G de extracto premium. Pantalla digital, función de precalentamiento y la mejor potencia del mercado." },
+  { id: 29, name: "TORCH 4.5G", price: 52500, category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/vmFK42hC/TORCH-4-5G.jpg", description: "4.5G de puro rendimiento. Diseño ergonómico, tecnología avanzada anti-obstrucciones y un efecto potente e inmediato." },
+  { id: 20, name: "PHENOM 6G", price: 56000, category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg", description: "Dispositivo de grado premium cargado con 6G. Extracción de máxima pureza para una experiencia intensa y de altísimo nivel." },
+  { id: 27, name: "PLAYSTATION 5", price: 550, category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg", description: "PlayStation 5 original en caja sellada. Máximo rendimiento gaming de nueva generación. Calidad garantizada con la logística y atención exclusiva de 028 IMPORT." },
+  { id: 28, name: "AIRPODS PRO", price: 35000, category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg", description: "Auriculares inalámbricos 100% originales con cancelación activa de ruido y audio espacial. Máxima fidelidad de sonido y ecología Apple." },
+  { id: 21, name: "CARGADOR 20W", price: 16500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg", description: "Adaptador de corriente USB-C de 20W original Apple. Carga rápida, segura y eficiente en caja sellada de fábrica." },
+  { id: 22, name: "CARGADOR 35W", price: 20500, category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg", description: "Adaptador de corriente dual USB-C de 35W original Apple. Potencia de sobra para cargar múltiples dispositivos al mismo tiempo." },
+  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg", description: "Cable original Apple de USB-C a USB-C. Sincronización impecable y soporte de alta potencia. Material resistente y duradero." },
+  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg", description: "Cable original Apple USB-C a Lightning de 2 metros de longitud. Extrema comodidad y compatibilidad garantizada para carga rápida." }
 ];
 
 // --- CONTENIDO DE PÁGINAS LEGALES COMPLETO ---
@@ -77,18 +74,22 @@ const PAGE_CONTENT = {
     body: (
       <div className="space-y-8 text-gray-600 leading-relaxed text-sm md:text-base">
         <p>El acceso y uso de la plataforma 028 IMPORT (en adelante, "la Tienda" o "Nosotros") se rige por los presentes Términos y Condiciones. Al utilizar nuestro sitio web, usted acepta íntegramente las políticas aquí detalladas.</p>
+        
         <div>
           <h3 className="text-black font-black uppercase tracking-widest text-sm mb-3">1. Naturaleza del Servicio</h3>
           <p>028 IMPORT opera como un catálogo virtual interactivo. Los productos añadidos a la "Bolsa de Compras" no constituyen una reserva legal de inventario ni una transacción comercial finalizada. La confirmación del pedido, fijación del precio final y reserva de stock se perfecciona de manera exclusiva a través de nuestro canal oficial de WhatsApp, mediado por un asesor de ventas.</p>
         </div>
+
         <div>
           <h3 className="text-black font-black uppercase tracking-widest text-sm mb-3">2. Precios y Disponibilidad</h3>
           <p>Nos esforzamos por mantener nuestro catálogo actualizado en tiempo real. No obstante, debido a fluctuaciones arancelarias y dinámicas del mercado de importación, los precios publicados tienen carácter referencial. 028 IMPORT se reserva el derecho de modificar los precios sin previo aviso antes de la confirmación formal del pago.</p>
         </div>
+
         <div>
           <h3 className="text-black font-black uppercase tracking-widest text-sm mb-3">3. Garantía de Originalidad</h3>
           <p>Garantizamos de manera absoluta la autenticidad y el origen legítimo de todos los artículos comercializados. Todo producto es entregado en su embalaje original y con los sellos de seguridad correspondientes emitidos por el fabricante.</p>
         </div>
+
         <div>
           <h3 className="text-black font-black uppercase tracking-widest text-sm mb-3">4. Política de Cambios y Garantías</h3>
           <p>Dado el carácter personal y consumible de gran parte de nuestro catálogo, no se aceptarán cambios ni devoluciones por motivos de "insatisfacción" o error en la elección del sabor/modelo una vez que el precinto de seguridad haya sido vulnerado. Solo se admitirán reclamos por defectos técnicos de fabricación, los cuales deberán ser notificados dentro de las 48 horas posteriores a la recepción, adjuntando evidencia visual.</p>
@@ -103,14 +104,17 @@ const PAGE_CONTENT = {
       <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
         <p className="text-lg font-medium text-black">En 028 IMPORT, la salvaguarda y confidencialidad de su información personal es una absoluta prioridad.</p>
         <p>La presente Política de Privacidad describe cómo recopilamos, utilizamos y protegemos los datos que usted nos proporciona, en estricto cumplimiento con la Ley de Protección de los Datos Personales (Nº 25.326) de la República Argentina.</p>
+        
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">Recopilación de Información</h3>
         <p>A través de nuestra plataforma, podemos solicitar datos básicos como su nombre y datos de domicilio/ubicación (para envíos). No procesamos ni almacenamos datos financieros, bancarios ni tarjetas de crédito en nuestros servidores.</p>
+        
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">Uso Exclusivo de los Datos</h3>
         <p>La información recolectada se utiliza con los siguientes fines exclusivos:</p>
         <ul className="list-disc pl-5 space-y-2 mt-2">
           <li>Gestión logística y coordinación efectiva de las entregas.</li>
           <li>Comunicación directa vía WhatsApp para confirmación de pedidos.</li>
         </ul>
+
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">No Divulgación a Terceros</h3>
         <p>028 IMPORT garantiza que bajo ninguna circunstancia comercializará, alquilará ni compartirá su base de datos de clientes con entidades externas, agencias de publicidad o terceros no involucrados en la cadena logística de su pedido.</p>
       </div>
@@ -122,10 +126,13 @@ const PAGE_CONTENT = {
     body: (
       <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
         <p>Para asegurar una navegación fluida y una experiencia de usuario de primer nivel, 028 IMPORT utiliza tecnologías de almacenamiento local y cookies estrictamente necesarias.</p>
+        
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">¿Qué utilizamos y para qué?</h3>
         <p>Implementamos soluciones de "Local Storage" (Almacenamiento Local del Navegador) con el único fin de conservar los productos que usted añade a su "Bolsa". Esto permite que, si usted recarga la página o cierra accidentalmente la ventana, su selección de productos se mantenga intacta al regresar.</p>
+
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">Cookies Analíticas y Publicitarias</h3>
-        <p>Nuestra plataforma está diseñada desde una perspectiva de mínima invasión. No empleamos cookies de rastreo publicitario de terceros que sigan su actividad en otros sitios web ni realizamos prácticas de "retargeting" agresivo.</p>
+        <p>Nuestra plataforma está diseñada desde una perspectiva de mínima invasión. No empleamos cookies de rastreo publicitario de terceros que sigan su actividad en otros sitios web ni realizamos practices de "retargeting" agresivo.</p>
+        
         <p className="mt-8">Al continuar utilizando este sitio, usted comprende y acepta el uso de estas herramientas tecnológicas esenciales para el funcionamiento del carrito de compras.</p>
       </div>
     )
@@ -136,7 +143,9 @@ const PAGE_CONTENT = {
     body: (
       <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
         <p>Con el objetivo de garantizar su seguridad y ofrecerle flexibilidad, en 028 IMPORT procesamos los pagos por fuera de la plataforma web, evitando que usted deba ingresar datos sensibles en línea.</p>
+        
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-4">Alternativas Disponibles:</h3>
+        
         <ul className="space-y-4">
           <li className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-black">
@@ -166,6 +175,7 @@ const PAGE_CONTENT = {
             </div>
           </li>
         </ul>
+
         <div className="border-t border-gray-200 pt-6 mt-8">
           <p className="text-xs uppercase tracking-widest font-black text-gray-400 mb-2">Aviso de Seguridad</p>
           <p className="text-sm">Al confirmar su carrito, la web generará un mensaje automático de WhatsApp con el resumen de su pedido. Nuestro asesor le brindará por ese medio los datos oficiales para efectuar el pago correspondiente.</p>
@@ -179,8 +189,10 @@ const PAGE_CONTENT = {
     body: (
       <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
         <p>En cumplimiento con las disposiciones de la Dirección Nacional de Defensa del Consumidor, 028 IMPORT pone a su disposición las directrices para la revocación de compra.</p>
+        
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">Plazo Legal</h3>
         <p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de <strong>10 (diez) días corridos</strong> contados desde la fecha de recepción del producto en su domicilio o desde el retiro en sucursal.</p>
+
         <h3 className="text-black font-black uppercase tracking-widest text-sm mt-8 mb-2">Condiciones Innegociables para Aceptación</h3>
         <p>Dada la naturaleza de los productos comercializados en nuestro catálogo (artículos de consumo personal e higiene), la devolución será aceptada pura y exclusivamente si se cumplen los siguientes requisitos de manera estricta:</p>
         <ul className="list-disc pl-5 space-y-2 mt-2">
@@ -188,9 +200,11 @@ const PAGE_CONTENT = {
           <li>Los sellos térmicos, precintos de fábrica y plásticos protectores deben estar <strong>intactos y sin alteraciones</strong>.</li>
           <li>El packaging o cajas no deben presentar roturas, marcas ni abolladuras.</li>
         </ul>
+
         <div className="bg-red-50 text-red-800 p-4 rounded-xl mt-6 border border-red-100 text-sm">
           <strong>IMPORTANTE:</strong> Por normativas sanitarias, si un dispositivo electrónico de consumo o esencia ha sido abierto, encendido o sus sellos han sido rotos, se perderá automáticamente el derecho a devolución por arrepentimiento.
         </div>
+
         <p className="mt-8">Para iniciar el trámite, le solicitamos contactarse inmediatamente a nuestra línea de WhatsApp informando su número de pedido y adjuntando fotografías del estado del producto.</p>
       </div>
     )
@@ -200,8 +214,10 @@ const PAGE_CONTENT = {
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState(initialProducts);
-  const [promos, setPromos] = useState([]);
   
+  // NUEVO ESTADO PARA PROMOS DINÁMICAS
+  const [promos, setPromos] = useState([]);
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState('retiro');
   
@@ -218,22 +234,6 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   
   const [currentView, setCurrentView] = useState('home');
-
-  // LÓGICA DE SECCIONES (El doble filtro)
-  const uniqueSections = useMemo(() => {
-    const sections = new Set(products.map(p => p.section || 'OTROS'));
-    return ['TODOS', ...Array.from(sections)];
-  }, [products]);
-  
-  const [selectedSection, setSelectedSection] = useState('TODOS');
-  
-  const categoriesBySection = useMemo(() => {
-    if (selectedSection === 'TODOS') return [];
-    const cats = new Set(products.filter(p => (p.section || 'OTROS') === selectedSection).map(p => p.category));
-    return [...Array.from(cats)];
-  }, [products, selectedSection]);
-
-  const [selectedCategory, setSelectedCategory] = useState('all');
 
   const uniqueCategories = useMemo(() => {
     return [...new Set(products.map(p => p.category))];
@@ -293,6 +293,7 @@ export default function Home() {
         }
       });
 
+      // NUEVO: ESCUCHAR LAS PROMOS DESDE FIREBASE
       const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (snapshot) => {
         if (!snapshot.empty) {
             setPromos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -315,6 +316,7 @@ export default function Home() {
   
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
   
+  // NUEVA LÓGICA DE PRECIOS PROMOCIONALES DINÁMICOS
   const getUnitPromoPrice = (item) => {
     const promo = promos.find(p => p.category === item.category);
     if (promo) {
@@ -426,17 +428,16 @@ export default function Home() {
   };
 
   const renderProductSection = (category) => {
-    // FILTRO PRINCIPAL
-    if (selectedSection !== 'TODOS' && selectedCategory !== 'all' && selectedCategory !== category) return null;
-
-    let sectionProducts = products.filter(p => p.category === category);
-    
-    if (searchTerm) {
-        sectionProducts = sectionProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase()));
-    }
+    const sectionProducts = products.filter(p => {
+       const matchCategory = p.category === category;
+       const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           p.category.toLowerCase().includes(searchTerm.toLowerCase());
+       return matchCategory && matchSearch;
+    });
 
     if (sectionProducts.length === 0) return null;
     
+    // NUEVA LÓGICA DE TEXTO DE PROMOS DINÁMICAS
     const promo = promos.find(p => p.category === category);
     let promoText = null;
     if (promo) {
@@ -587,13 +588,13 @@ export default function Home() {
           <div className="sticky top-[72px] md:top-[80px] z-30 bg-[#fafafa]/90 backdrop-blur-xl border-b border-gray-200 shadow-sm transition-all">
               <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row gap-4 items-center justify-between">
                 
-                {/* NIVEL 1: SECCIONES */}
-                <div className="flex overflow-x-auto no-scrollbar py-3 gap-3 items-center mask-image-gradient pr-8">
-                   {uniqueSections.map(sec => (
-                      <button key={sec} onClick={() => { setSelectedSection(sec); setSelectedCategory('all'); window.scrollTo(0,0); }} className={`flex-shrink-0 px-5 py-2 rounded-full text-[11px] font-black uppercase tracking-widest transition-all border shadow-sm ${selectedSection === sec ? 'bg-black text-[#d4af37] border-black' : 'bg-white text-gray-500 border-gray-200 hover:border-black hover:text-black'}`}>
-                         {sec}
-                      </button>
-                   ))}
+                <div className="flex gap-3 overflow-x-auto no-scrollbar w-full md:w-auto mask-image-gradient py-1">
+                    <span className="text-[10px] font-black uppercase text-gray-400 mr-2 tracking-widest hidden md:flex items-center">Filtrar:</span>
+                    {uniqueCategories.map(cat => (
+                        <a key={cat} href={`#${slugify(cat)}`} className="whitespace-nowrap bg-white border border-gray-200 text-gray-600 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-[#d4af37] hover:border-black transition-all shadow-sm flex-shrink-0">
+                            {cat}
+                        </a>
+                    ))}
                 </div>
 
                 <div className="hidden md:block w-px h-8 bg-gray-300 mx-1 flex-shrink-0"></div>
@@ -615,22 +616,6 @@ export default function Home() {
                 </div>
 
               </div>
-              
-              {/* NIVEL 2: CATEGORÍAS */}
-              {selectedSection !== 'TODOS' && categoriesBySection.length > 0 && (
-                 <div className="max-w-7xl mx-auto px-4 border-t border-gray-200/50">
-                    <div className="flex overflow-x-auto no-scrollbar py-3 gap-2 items-center mask-image-gradient pr-8">
-                       <button onClick={() => { setSelectedCategory('all'); window.scrollTo(0,0); }} className={`flex-shrink-0 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${selectedCategory === 'all' ? 'bg-[#d4af37]/20 text-[#b8952a]' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-                          Todas las marcas
-                       </button>
-                       {categoriesBySection.map(cat => (
-                          <button key={cat} onClick={() => { setSelectedCategory(cat); window.scrollTo(0,0); }} className={`flex-shrink-0 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${selectedCategory === cat ? 'bg-[#d4af37]/20 text-[#b8952a]' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-                             {cat}
-                          </button>
-                       ))}
-                    </div>
-                 </div>
-              )}
           </div>
 
           <main className="flex-grow px-4 py-8 max-w-7xl mx-auto min-h-[50vh] pb-24">
@@ -642,11 +627,7 @@ export default function Home() {
                </div>
             )}
 
-            {uniqueCategories.filter(cat => {
-               const prodInCat = products.find(p => p.category === cat);
-               if (selectedSection !== 'TODOS' && prodInCat?.section !== selectedSection) return false;
-               return true;
-            }).map(cat => renderProductSection(cat))}
+            {uniqueCategories.map(cat => renderProductSection(cat))}
           </main>
         </>
       ) : (
