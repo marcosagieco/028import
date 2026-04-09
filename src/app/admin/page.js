@@ -91,6 +91,7 @@ const initialProducts = [
   { id: 53, name: "MIEL ENERGY FEMENINA", price: 15000, department: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_m.png", description: "Miel para rendimiento sexual femenino. Efecto inmediato.", cardSize: "normal" }
 ];
 
+// SECCIONES INICIALES DE LA VIDRIERA
 const initialHomeSections = [
   { id: 'sec_mas_buscados', title: "MÁS BUSCADOS", icon: 'fa-fire', iconColor: 'text-red-500', productIds: [4, 8, 20], order: 1, layout: 'horizontal' },
   { id: 'sec_nuevos_ingresos', title: "NUEVOS INGRESOS", icon: 'fa-bolt', iconColor: 'text-yellow-400', productIds: [18, 28, 29], order: 2, layout: 'horizontal' }
@@ -302,7 +303,6 @@ export default function AdminPage() {
     } catch(err) { alert("Error al cambiar formato."); }
   };
 
-  // --- ACÁ ESTÁ EL BOTÓN DE TAMAÑO (SOLO PARA LA VIDRIERA) ---
   const toggleSize = async (product) => {
     try {
         const newSize = product.cardSize === 'large' ? 'normal' : 'large';
@@ -635,7 +635,6 @@ export default function AdminPage() {
                                 />
                             </div>
                         </div>
-                        
                         <div className="flex flex-col lg:flex-row items-center gap-2 flex-shrink-0 mt-1">
                              <button onClick={() => toggleStock(p)} className={`w-full lg:w-auto px-4 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all shadow-sm ${p.inStock === false ? 'bg-green-600 text-white' : 'bg-red-900/20 text-red-500 border border-red-900/30'}`}>{p.inStock === false ? 'Habilitar' : 'Agotar'}</button>
                              <button onClick={() => toggleVisibility(p)} title={p.isHidden ? 'Mostrar en tienda' : 'Ocultar de la tienda'} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm ${p.isHidden ? 'bg-amber-100 text-amber-600 hover:bg-amber-500 hover:text-white' : 'bg-gray-200 text-gray-500 hover:bg-amber-500 hover:text-white'}`}>
@@ -683,6 +682,17 @@ export default function AdminPage() {
 
       <main className="max-w-4xl mx-auto p-4 md:p-8">
         
+        {/* --- PESTAÑA: STOCK --- */}
+        {activeTab === 'stock' && (
+          <div className="animate-in fade-in duration-500">
+             <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-black uppercase tracking-tighter">Gestión de Stock</h2>
+                <button onClick={syncAllProducts} className="text-[9px] bg-black text-white px-4 py-2 rounded-lg font-black uppercase tracking-widest shadow-lg hover:bg-[#d4af37] transition-all">Sincronizar DB</button>
+             </div>
+             {uniqueCategories.map(cat => renderStockGroup(cat))}
+          </div>
+        )}
+
         {/* --- PESTAÑA: VIDRIERA CON CONTROL DE TAMAÑO DENTRO --- */}
         {activeTab === 'vidriera' && (
           <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
@@ -702,7 +712,6 @@ export default function AdminPage() {
                     <button onClick={createHomeSection} className="w-full md:w-auto bg-[#d4af37] text-black font-black uppercase px-8 py-4 rounded-xl hover:bg-white hover:shadow-xl transition-all">Crear Sección</button>
                 </div>
                 
-                {/* SELECTOR DE ÍCONOS */}
                 <div className="mt-2">
                    <label className="text-[10px] font-black uppercase text-gray-400 mb-3 block">Elegí un ícono para esta sección</label>
                    <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
@@ -718,7 +727,6 @@ export default function AdminPage() {
                    </div>
                 </div>
 
-                {/* SELECTOR DE FORMATO (CARRUSEL O GRILLA) */}
                 <div className="mt-2 border-t border-gray-100 dark:border-[#262626] pt-4">
                    <label className="text-[10px] font-black uppercase text-gray-400 mb-3 block">Formato de visualización</label>
                    <div className="flex gap-2">
@@ -766,7 +774,6 @@ export default function AdminPage() {
                                            <p className={`text-[10px] font-black uppercase truncate ${theme.text}`}>{prod.name}</p>
                                            <div className="flex items-center gap-1 mt-0.5">
                                               <p className="text-gray-400 text-[8px] font-bold uppercase tracking-widest truncate">{prod.category}</p>
-                                              {prod.cardSize === 'large' && <span className="bg-[#d4af37] text-black text-[7px] font-black px-1.5 py-0.5 rounded uppercase">Grande</span>}
                                            </div>
                                        </div>
                                        
@@ -806,7 +813,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* --- RESTO DE PESTAÑAS INTACTAS --- */}
+        {/* --- PESTAÑA: PROMOS --- */}
         {activeTab === 'promos' && (
           <div className="animate-in fade-in duration-500 max-w-lg mx-auto">
             <div className="flex justify-between items-end mb-8">
@@ -869,6 +876,7 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* --- PESTAÑA: CREAR --- */}
         {activeTab === 'crear' && (
           <div className="animate-in fade-in duration-500 max-w-lg mx-auto">
             <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 text-center">Nuevo Producto</h2>
@@ -954,6 +962,7 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* --- PESTAÑA: CLIENTES --- */}
         {activeTab === 'clientes' && (
           <div className="animate-in fade-in duration-500">
             <div className="flex justify-between items-end mb-8">
@@ -995,6 +1004,7 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* --- PESTAÑA: PENDIENTES --- */}
         {activeTab === 'pendientes' && (
           <div className="animate-in fade-in duration-500">
             <div className="flex justify-between items-end mb-8">
