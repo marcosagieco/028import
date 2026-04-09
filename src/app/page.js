@@ -14,7 +14,7 @@ const CONFIG = {
   shippingText: "Pedime te llega en 30'⏰",
 };
 
-// Mantenemos la lista base original, agregando la propiedad "department" para el Menú
+// Mantenemos la lista base original completa con la propiedad "department"
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante. Batería de larga duración y la garantía de autenticidad de 028 IMPORT." },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto. Rendimiento superior en cada calada." },
@@ -206,12 +206,14 @@ export default function Home() {
 
   // --- ESTADOS DE NAVEGACIÓN Y MENÚ ---
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [currentView, setCurrentView] = useState('home'); // 'home', 'catalog', 'legal', 'nosotros', 'envios'
+  const [currentView, setCurrentView] = useState('home'); 
   const [activeFilter, setActiveFilter] = useState({ dept: 'all', cat: 'all' });
   
+  // ESTADO PARA EL MENÚ ACORDEÓN
+  const [expandedDept, setExpandedDept] = useState(null);
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState('retiro');
-  
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -223,7 +225,6 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // EXTRAER DEPARTAMENTOS Y CATEGORÍAS (Lógica de Menú)
   const departments = useMemo(() => {
     return [...new Set(products.map(p => p.department).filter(Boolean))];
   }, [products]);
@@ -235,7 +236,6 @@ export default function Home() {
     return [...new Set(products.map(p => p.category))];
   }, [products, activeFilter.dept]);
 
-  // PRODUCTOS DESTACADOS Y NUEVOS (Para la Vidriera del Inicio)
   const featuredProducts = useMemo(() => products.filter(p => p.tag && (p.tag.toLowerCase().includes('destacado') || p.tag.toLowerCase().includes('best seller') || p.tag.toLowerCase().includes('viral'))), [products]);
   const newProducts = useMemo(() => products.filter(p => p.tag && p.tag.toLowerCase().includes('nuevo')), [products]);
 
@@ -315,9 +315,7 @@ export default function Home() {
 
   const navigateTo = (view, dept = null) => {
     setCurrentView(view);
-    if(dept) {
-        setActiveFilter({dept: dept, cat: 'all'});
-    }
+    if(dept) setActiveFilter({dept: dept, cat: 'all'});
     setIsMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -384,7 +382,6 @@ export default function Home() {
     } catch (e) { window.location.href = whatsappUrl; }
   };
 
-  // --- LÓGICA DE FILTRADO PARA LA VISTA PRINCIPAL ---
   const visibleCategories = uniqueCategories.filter(cat => {
     if (activeFilter.cat !== 'all') return cat === activeFilter.cat;
     if (activeFilter.dept !== 'all') {
@@ -481,20 +478,16 @@ export default function Home() {
          </div>
       )}
 
-      {/* --- BARRA SUPERIOR ÚNICA --- */}
       <header className="bg-black text-white h-16 sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 shadow-md">
-         {/* Lado Izquierdo: Menú */}
          <button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#d4af37] transition-colors p-2">
              <i className="fas fa-bars"></i>
          </button>
          
-         {/* Centro: Logo */}
          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 cursor-pointer" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}>
              <img src={CONFIG.logoImage} alt="Logo" className="h-8 w-auto object-contain" />
              <span className="font-black text-lg md:text-xl uppercase tracking-widest hidden sm:block">028<span className="text-[#d4af37]">IMPORT</span></span>
          </div>
          
-         {/* Lado Derecho: Bolsa */}
          <button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#d4af37] transition-colors">
              <i className="fas fa-shopping-bag text-2xl"></i>
              {getTotalItems() > 0 && (
@@ -505,7 +498,7 @@ export default function Home() {
          </button>
       </header>
 
-      {/* MENÚ LATERAL DESPLEGABLE (DRAWER NIKE STYLE) */}
+      {/* MENÚ LATERAL DESPLEGABLE (DRAWER NIKE STYLE CON ACORDEÓN) */}
       {isMenuOpen && (
           <div className="fixed inset-0 z-[90] flex">
               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsMenuOpen(false)}></div>
@@ -525,11 +518,33 @@ export default function Home() {
                               <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Departamentos</p>
                           </div>
                           
-                          {departments.map(dept => (
-                              <button key={dept} onClick={() => navigateTo('catalog', dept)} className="text-left p-6 border-b border-gray-100 font-black uppercase text-sm hover:bg-gray-50 flex justify-between items-center transition-colors group">
-                                  {dept} <i className="fas fa-chevron-right text-gray-300 group-hover:text-[#d4af37] transition-colors"></i>
-                              </button>
-                          ))}
+                          {/* ACORDEÓN DE DEPARTAMENTOS Y MARCAS */}
+                          {departments.map(dept => {
+                              const isExpanded = expandedDept === dept;
+                              // Filtramos las marcas/categorías que corresponden a este departamento
+                              const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category)));
+                              
+                              return (
+                                  <div key={dept} className="border-b border-gray-100">
+                                      <button onClick={() => setExpandedDept(isExpanded ? null : dept)} className="w-full text-left p-6 font-black uppercase text-sm hover:bg-gray-50 flex justify-between items-center transition-colors group">
+                                          {dept} 
+                                          <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-gray-300 group-hover:text-[#d4af37] transition-colors`}></i>
+                                      </button>
+                                      <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-[500px]' : 'max-h-0'}`}>
+                                          <div className="bg-gray-50 flex flex-col pb-3 pt-1">
+                                              <button onClick={() => { setActiveFilter({dept, cat: 'all'}); navigateTo('catalog'); }} className="text-left px-8 py-3 font-bold text-xs text-gray-800 hover:text-black hover:translate-x-1 transition-all uppercase border-l-4 border-transparent hover:border-[#d4af37]">
+                                                  Ver Todo en {dept}
+                                              </button>
+                                              {deptCats.map(cat => (
+                                                  <button key={cat} onClick={() => { setActiveFilter({dept, cat}); navigateTo('catalog'); }} className="text-left px-8 py-3 font-bold text-xs text-gray-500 hover:text-black hover:translate-x-1 transition-all uppercase border-l-4 border-transparent hover:border-[#d4af37]">
+                                                      {cat}
+                                                  </button>
+                                              ))}
+                                          </div>
+                                      </div>
+                                  </div>
+                              );
+                          })}
                           
                           <div className="p-6 mt-4 bg-gray-50 flex-1">
                               <p className="text-[10px] font-black uppercase text-gray-400 mb-4 tracking-widest">Información & Ayuda</p>
@@ -545,7 +560,6 @@ export default function Home() {
           </div>
       )}
 
-      {/* RENDERIZADO DE LA VISTA PRINCIPAL (Home, Catálogo o Legal) */}
       {currentView === 'home' ? (
         <>
           <header className="relative h-[30vh] md:h-[40vh] flex items-center justify-center bg-black overflow-hidden animate-in fade-in duration-1000">
@@ -568,26 +582,6 @@ export default function Home() {
              <div className="md:hidden relative mb-8">
                  <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                  <input type="text" placeholder="Buscar productos..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white border border-gray-200 pl-10 pr-4 py-3 rounded-2xl text-sm font-bold outline-none focus:border-[#d4af37] shadow-sm placeholder:text-gray-400" />
-             </div>
-
-             {/* CATEGORÍAS RÁPIDAS (BURBUJAS) DEPARTAMENTOS */}
-             <div className="mb-12">
-                 <h3 className="font-black text-sm uppercase tracking-widest text-gray-500 mb-4 pl-1">Explorar Categorías</h3>
-                 <div className="flex overflow-x-auto gap-4 no-scrollbar pb-4 snap-x">
-                     {departments.map(dept => (
-                         <div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-40 md:h-40 bg-white rounded-[2rem] shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 cursor-pointer hover:shadow-md hover:border-[#d4af37] transition-all">
-                             <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-[#d4af37] text-xl">
-                                 {dept === 'VAPES' && <i className="fas fa-wind"></i>}
-                                 {dept === 'THC' && <i className="fas fa-leaf"></i>}
-                                 {dept === 'TECNOLOGÍA' && <i className="fas fa-microchip"></i>}
-                                 {dept === 'LIFESTYLE' && <i className="fas fa-star"></i>}
-                                 {dept === 'BIENESTAR' && <i className="fas fa-fire"></i>}
-                                 {!['VAPES', 'THC', 'TECNOLOGÍA', 'LIFESTYLE', 'BIENESTAR'].includes(dept) && <i className="fas fa-box"></i>}
-                             </div>
-                             <span className="font-black text-[10px] md:text-xs uppercase tracking-widest text-center px-2">{dept}</span>
-                         </div>
-                     ))}
-                 </div>
              </div>
 
              {/* SECCIÓN DESTACADOS (CARRUSEL HORIZONTAL) */}
@@ -630,11 +624,11 @@ export default function Home() {
                   {uniqueCategories.length > 0 && (
                       <div className="flex gap-2 overflow-x-auto no-scrollbar py-2 mask-image-gradient pr-8">
                           <span className="text-[10px] font-black uppercase text-gray-400 mr-2 tracking-widest flex items-center"><i className="fas fa-filter mr-1"></i></span>
-                          <a href="#" className="whitespace-nowrap bg-black text-[#d4af37] border-black px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">Todos</a>
+                          <button onClick={() => {setActiveFilter({...activeFilter, cat: 'all'}); window.scrollTo(0,0);}} className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${activeFilter.cat === 'all' ? 'bg-black text-[#d4af37] border-black' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}>Todos</button>
                           {uniqueCategories.map(cat => (
-                              <a key={cat} href={`#${slugify(cat)}`} className="whitespace-nowrap bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all shadow-sm flex-shrink-0">
+                              <button key={cat} onClick={() => {setActiveFilter({...activeFilter, cat: cat}); window.scrollTo(0,0);}} className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-sm flex-shrink-0 ${activeFilter.cat === cat ? 'bg-black text-[#d4af37] border-black' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}>
                                   {cat}
-                              </a>
+                              </button>
                           ))}
                       </div>
                   )}
@@ -675,8 +669,7 @@ export default function Home() {
          </button>
       </nav>
 
-      {/* FOOTER DESKTOP */}
-      <footer className="hidden md:block bg-black text-white pt-16 pb-8 border-t-4 border-[#d4af37] relative z-30">
+      <footer className="hidden md:block bg-black text-white pt-16 pb-8 border-t-4 border-[#d4af37] mt-auto relative z-30">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-12 text-xs md:text-sm">
             <div className="space-y-5">
@@ -719,7 +712,6 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* MODAL DETALLE DE PRODUCTO */}
       {selectedProduct && (
         <div className="fixed inset-0 z-[80] flex items-end md:items-center justify-center p-4 sm:p-6">
            <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setSelectedProduct(null)}></div>
@@ -746,7 +738,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* MODAL BOLSA DE COMPRAS (CARRITO) */}
       {isCartOpen && (
         <div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} />
