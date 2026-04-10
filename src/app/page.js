@@ -9,12 +9,11 @@ const CONFIG = {
   brandName: "028", 
   whatsappNumber: "5491153412358", 
   logoImage: "https://i.postimg.cc/jS33XBZm/028logo-convertido-de-jpeg-removebg-preview.png", 
-  bannerImage: "https://i.postimg.cc/ydp4s30f/image.png", 
+  bannerImage: "https://i.postimg.cc/D03SqcfV/Diseno-sin-titulo-(2).png", // TU NUEVO LINK
   currencySymbol: "$",
   shippingText: "Pedime te llega en 30'⏰",
 };
 
-// LISTA BASE COMPLETA
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante.", cardSize: "normal" },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto.", cardSize: "normal" },
@@ -33,49 +32,19 @@ const initialProducts = [
   { id: 15, name: "SUMMER SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png", description: "Un cóctel frutal que captura la esencia del verano en cada calada.", cardSize: "normal" },
   { id: 16, name: "TIGERS BLOOD", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg", description: "Famosa mezcla de sandía y fresa con un exótico y suave toque de coco.", cardSize: "normal" },
   { id: 17, name: "WATERMELON ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp", description: "Todo el jugo y la dulzura de la sandía con un impacto extra helado.", cardSize: "normal" },
-  { id: 25, name: "SOUR APPLE ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg", description: "Manzana verde crujiente y ácida envuelta en una ráfaga de frío.", cardSize: "normal" },
-  { id: 26, name: "MIAMI MINT", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg", description: "Menta sofisticada estilo Miami: fresca, dulce pero con presencia.", cardSize: "normal" },
-  { id: 30, name: "BLUE RAZZ LEMON", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Jh48hT4x/ignite-v400-BLUE-RAZZ-LEMON.jpg", description: "Dispositivo ultracompacto y premium de Ignite.", cardSize: "normal" },
-  { id: 31, name: "CHERRY WATERMELON", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/nLRJ9vCd/ignite-v400-cherry-watermelon.jpg", description: "Diseño elegante característico de Ignite.", cardSize: "normal" },
-  { id: 32, name: "GRAPE", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/0QzqYbSv/ignite-v400-GRAPE.jpg", description: "Sabor a uva puro y directo.", cardSize: "normal" },
-  { id: 33, name: "MIAMI MINT", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/gJ1bNmyJ/ignite-v400-miami-mint.jpg", description: "Menta premium y refrescante en el formato más cómodo.", cardSize: "normal" },
-  { id: 34, name: "PASSION FRUIT", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/vT9FKkXt/Ignite-v400-PASSION-FRUIT.jpg", description: "El toque ácido y exótico del maracuyá en cada calada.", cardSize: "normal" },
-  { id: 35, name: "STRAWBERRY WATERMELON", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/FFJ41kmG/Ignite-v400-STRAWBERR-WATERMELON.jpg", description: "Dulce, frutal y perfectamente balanceado.", cardSize: "normal" },
-  { id: 36, name: "STRAWBERRY KIWI", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Hsw19GrJ/ignite-v400-STRAWBERRY-KIWI.jpg", description: "Fresa dulce combinada con el toque tropical del kiwi.", cardSize: "normal" },
-  { id: 37, name: "STRAWBERRY", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/cLdyDD35/ignite-v400-strawberry.jpg", description: "Auténtico sabor a fresa de principio a fin.", cardSize: "normal" },
-  { id: 38, name: "TUTTI FRUTI", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/mgVxKQ3v/ignite-v400-TUTI-FRUTI.jpg", description: "Explosión de golosinas frutales en un vaporizador compacto.", cardSize: "normal" },
-  { id: 39, name: "BLUE RAZZ ICE", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yYk7mpF9/Lost-mary-20000-BLUE-RAZZ-ICE.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 40, name: "GRAPE ICE", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05VC/Lost-mary-20000-GRAPE-ICE.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 41, name: "ICE MINT", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05V5/lost-mary-20000-ICE-MINT.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 42, name: "LIME GRAPE FRUIT", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/7LqcVbpW/Lost-mary-20000-LIME-GRAPE-FRUIT.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 43, name: "MANGO TWIST", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/8CwYnNGc/Lost-mary-20000-MANGO-TWIST.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 44, name: "MEXICAN MANGO", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/bvL5FpPx/Lost-mary-20000-MEXICAN-MANGO.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 45, name: "MIAMI MINT", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yWqpSNmv/Lost-mary-20000-MIAMI-MINT.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 46, name: "STRAWBERRY ICE", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/zDLJWPw3/Lost-mary-20000-STRAWBERRY-ICE.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 47, name: "STRAWBERRY KIWI", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/59Hxvk5q/Lost-mary-20000-STRAWBERRY-KIWI.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 18, name: "BLOW THC", price: 55000, department: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp", description: "Dispositivo de alta pureza con extracciones premium.", cardSize: "medium" },
-  { id: 19, name: "TORCH 7.5G", price: 53000, department: "THC", category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png", description: "Capacidad extrema de 7.5G de extracto premium.", cardSize: "normal" },
-  { id: 29, name: "TORCH 4.5G", price: 52500, department: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/vmFK42hC/TORCH-4-5G.jpg", description: "4.5G de puro rendimiento.", cardSize: "normal" },
-  { id: 20, name: "PHENOM 6G", price: 56000, department: "THC", category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg", description: "Dispositivo de grado premium cargado con 6G.", cardSize: "large" },
-  { id: 27, name: "PLAYSTATION 5", price: 550, department: "TECNOLOGÍA", category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg", description: "PlayStation 5 original en caja sellada.", cardSize: "large" },
-  { id: 28, name: "AIRPODS PRO", price: 35000, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg", description: "Auriculares inalámbricos 100% originales con cancelación activa.", cardSize: "normal" },
-  { id: 21, name: "CARGADOR 20W", price: 16500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg", description: "Adaptador de corriente USB-C de 20W original Apple.", cardSize: "normal" },
-  { id: 22, name: "CARGADOR 35W", price: 20500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg", description: "Adaptador de corriente dual USB-C de 35W original Apple.", cardSize: "normal" },
-  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg", description: "Cable original Apple de USB-C a USB-C.", cardSize: "normal" },
-  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg", description: "Cable original Apple USB-C a Lightning de 2 metros.", cardSize: "normal" },
-  { id: 50, name: "LABUBU V2", price: 17500, department: "LIFESTYLE", category: "Labubu", tag: "Viral", image: "https://i.postimg.cc/654362/labubu.png", description: "Muñeco coleccionable original. Consultar modelos por privado.", cardSize: "normal" },
-  { id: 51, name: "TERMO STANLEY 1.2L", price: 85000, department: "LIFESTYLE", category: "Stanley", tag: "Original", image: "https://i.postimg.cc/placeholder/stanley.png", description: "Termo original con garantía de por vida.", cardSize: "medium" },
-  { id: 52, name: "MIEL ENERGY MASCULINA", price: 15000, department: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_h.png", description: "Miel para rendimiento sexual masculino.", cardSize: "normal" },
-  { id: 53, name: "MIEL ENERGY FEMENINA", price: 15000, department: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_m.png", description: "Miel para rendimiento sexual femenino.", cardSize: "normal" }
+  { id: 18, name: "BLOW THC", price: 55000, department: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp", description: "Dispositivo de alta pureza.", cardSize: "medium" },
+  { id: 19, name: "TORCH 7.5G", price: 53000, department: "THC", category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png", description: "Extracto premium.", cardSize: "normal" },
+  { id: 20, name: "PHENOM 6G", price: 56000, department: "THC", category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg", description: "Dispositivo premium.", cardSize: "large" },
+  { id: 27, name: "PLAYSTATION 5", price: 550, department: "TECNOLOGÍA", category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg", description: "PS5 Sellada.", cardSize: "large" }
 ];
 
 const PAGE_CONTENT = {
-  nosotros: { title: "Quiénes Somos", subtitle: "Nuestra Historia", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base"><p>En 028 IMPORT redefinimos la experiencia de compra priorizando tu tiempo y confianza. Somos especialistas en la importación y comercialización de productos premium.</p></div>) },
-  envios: { title: "Logística de Envío", subtitle: "Envíos y Retiros", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base"><p>Contamos con un sistema de logística optimizado para que recibas tus productos de la manera más rápida y segura posible.</p></div>) },
-  terminos: { title: "Términos y Condiciones", subtitle: "Legal & Políticas", body: (<div className="space-y-8 leading-relaxed text-sm md:text-base"><p>El acceso y uso de la plataforma 028 IMPORT se rige por los presentes Términos y Condiciones.</p></div>) },
-  privacidad: { title: "Política de Privacidad", subtitle: "Protección de Datos", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base"><p>En 028 IMPORT, la salvaguarda y confidencialidad de su información personal es una absoluta prioridad.</p></div>) },
-  pagos: { title: "Medios de Pago", subtitle: "Transacciones Seguras", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base"><p>Procesamos los pagos por fuera de la plataforma web, evitando que usted deba ingresar datos sensibles en línea.</p></div>) },
-  arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base"><p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de 10 días corridos.</p></div>) }
+  nosotros: { title: "Quiénes Somos", subtitle: "Nuestra Historia", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>En 028 IMPORT redefinimos la experiencia de compra priorizando tu tiempo y confianza.</p></div>) },
+  envios: { title: "Logística de Envío", subtitle: "Envíos y Retiros", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Contamos con un sistema de logística optimizado.</p></div>) },
+  terminos: { title: "Términos y Condiciones", subtitle: "Legal & Políticas", body: (<div className="space-y-8 leading-relaxed text-sm md:text-base font-poppins"><p>El uso de la plataforma se rige por los presentes términos.</p></div>) },
+  privacidad: { title: "Política de Privacidad", subtitle: "Protección de Datos", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>La confidencialidad es nuestra prioridad.</p></div>) },
+  pagos: { title: "Medios de Pago", subtitle: "Transacciones Seguras", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Procesamos los pagos por fuera de la web por seguridad.</p></div>) },
+  arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Plazo de 10 días para revocación.</p></div>) }
 };
 
 export default function Home() {
@@ -99,30 +68,20 @@ export default function Home() {
   const [toastMessage, setToastMessage] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  // --- MODO MANTENIMIENTO ---
-  const MAINTENANCE_MODE = true; // CAMBIAR A FALSE PARA ABRIR LA TIENDA
+  const MAINTENANCE_MODE = true; 
   const [isBypassed, setIsBypassed] = useState(false);
   const [checkingMaintenance, setCheckingMaintenance] = useState(true);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('admin') === 'true') {
-      localStorage.setItem('adminBypass', 'true');
-    }
-    if (localStorage.getItem('adminBypass') === 'true') {
-      setIsBypassed(true);
-    }
+    if (urlParams.get('admin') === 'true') { localStorage.setItem('adminBypass', 'true'); }
+    if (localStorage.getItem('adminBypass') === 'true') { setIsBypassed(true); }
     setCheckingMaintenance(false);
   }, []);
 
-  const departments = useMemo(() => {
-    return [...new Set(products.map(p => p.department).filter(Boolean))];
-  }, [products]);
-
+  const departments = useMemo(() => [...new Set(products.map(p => p.department).filter(Boolean))], [products]);
   const uniqueCategories = useMemo(() => {
-    if (activeFilter.dept !== 'all') {
-        return [...new Set(products.filter(p => p.department === activeFilter.dept).map(p => p.category))];
-    }
+    if (activeFilter.dept !== 'all') return [...new Set(products.filter(p => p.department === activeFilter.dept).map(p => p.category))];
     return [...new Set(products.map(p => p.category))];
   }, [products, activeFilter.dept]);
 
@@ -141,52 +100,25 @@ export default function Home() {
     const handleFocus = () => setIsSending(false);
     window.addEventListener('focus', handleFocus);
     window.addEventListener('pageshow', handleFocus);
-
     if (firebaseRefs.auth && firebaseRefs.db) {
       signInAnonymously(firebaseRefs.auth).catch(console.error);
-      const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (u) => setUser(u));
-
-      const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
+      onAuthStateChanged(firebaseRefs.auth, (u) => setUser(u));
+      onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
           setProducts(prev => {
              const combined = [...initialProducts];
              dbProducts.forEach(dbItem => {
                 const index = combined.findIndex(p => p.id == dbItem.id);
-                if (dbItem.isHidden || dbItem.isDeleted) {
-                    if (index > -1) combined.splice(index, 1);
-                } else {
-                    if (index > -1) combined[index] = { ...combined[index], ...dbItem, cardSize: dbItem.cardSize || combined[index].cardSize };
-                    else combined.push(dbItem);
-                }
+                if (dbItem.isHidden || dbItem.isDeleted) { if (index > -1) combined.splice(index, 1); }
+                else { if (index > -1) combined[index] = { ...combined[index], ...dbItem }; else combined.push(dbItem); }
              });
              return combined.sort((a, b) => (a.order || 99) - (b.order || 99));
           });
         }
       });
-
-      const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (snapshot) => {
-        if (!snapshot.empty) setPromos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        else setPromos([]);
-      });
-
-      const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (snapshot) => {
-        if (!snapshot.empty) {
-            const sections = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
-            setHomeSections(sections.sort((a, b) => a.order - b.order));
-        } else {
-            setHomeSections([]);
-        }
-      });
-
-      return () => {
-        unsubscribeAuth();
-        unsubscribeStock();
-        unsubscribePromos();
-        unsubscribeHomeSections();
-        window.removeEventListener('focus', handleFocus);
-        window.removeEventListener('pageshow', handleFocus);
-      };
+      onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
+      onSnapshot(collection(firebaseRefs.db, 'home_sections'), (s) => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
     }
   }, [firebaseRefs]);
 
@@ -195,132 +127,69 @@ export default function Home() {
   const getUnitPromoPrice = (item) => { const promo = promos.find(p => p.category === item.category); if (promo) { const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0); if (catCount >= promo.minQty) return promo.totalPrice / promo.minQty; } return item.price; };
   const calculateTotal = () => cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice(item)), 0);
   const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
-  const navigateTo = (view, dept = null) => { setCurrentView(view); if(dept) setActiveFilter({dept: dept, cat: 'all'}); setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
-  const addToCart = (product, e) => { if(e) e.stopPropagation(); if (product.inStock === false) return; setCart(prev => { const existing = prev.find(item => item.id === product.id); if (existing) return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item); return [...prev, { ...product, qty: 1 }]; }); showToast(`✅ Añadido: ${product.name}`); if(selectedProduct) setSelectedProduct(null); };
-  const changeQty = (id, delta) => { setCart(prev => prev.map(item => { if (item.id === id) { const newQty = item.qty + delta; return newQty > 0 ? { ...item, qty: newQty } : null; } return item; }).filter(Boolean)); };
+  const navigateTo = (view, dept = null) => { setCurrentView(view); if(dept) setActiveFilter({dept, cat: 'all'}); setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const addToCart = (product, e) => { if(e) e.stopPropagation(); if (product.inStock === false) return; setCart(prev => { const ex = prev.find(i => i.id === product.id); if (ex) return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i); return [...prev, { ...product, qty: 1 }]; }); showToast(`✅ Añadido: ${product.name}`); if(selectedProduct) setSelectedProduct(null); };
+  const changeQty = (id, delta) => { setCart(prev => prev.map(i => i.id === id ? { ...i, qty: i.qty + delta } : i).filter(i => i.qty > 0)); };
 
   const handleCheckout = async () => {
-    if (!clientName.trim() || !clientPhone.trim()) { showToast("⚠️ Por favor completá tu Nombre y Teléfono."); return; }
-    if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) { showToast("⚠️ Por favor completá tu dirección y localidad."); return; }
+    if (!clientName.trim() || !clientPhone.trim()) { showToast("⚠️ Completá tu Nombre y Teléfono."); return; }
+    if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) { showToast("⚠️ Completá dirección y localidad."); return; }
     setIsSending(true);
     const finalTotal = calculateTotal();
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
-    cart.forEach(item => { const unitPrice = getUnitPromoPrice(item); msg += `- ${item.qty}x ${item.name} ($${formatPrice(unitPrice)} c/u)\n`; });
-    msg += `\n*TOTAL ESTIMADO: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
-    msg += deliveryMethod === 'envio' ? `*ENVIO:* ${address}, ${zone}\n` : `*RETIRO EN LOCAL*\n`;
+    cart.forEach(i => { msg += `- ${i.qty}x ${i.name} ($${formatPrice(getUnitPromoPrice(i))} c/u)\n`; });
+    msg += `\n*TOTAL: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n${deliveryMethod === 'envio' ? `*ENVIO:* ${address}, ${zone}` : `*RETIRO LOCAL*`}`;
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
-    try { if (firebaseRefs.db) { await addDoc(collection(firebaseRefs.db, 'orders'), { userId: user?.uid || "anon", clientName: clientName.trim(), clientPhone: clientPhone.trim(), items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPromoPrice(i) })), total: finalTotal, delivery: deliveryMethod, address: address || '', zone: zone || '', status: 'pending', createdAt: serverTimestamp() }); } setTimeout(() => { window.location.href = whatsappUrl; }, 400); } catch (e) { window.location.href = whatsappUrl; }
+    try { if (firebaseRefs.db) { await addDoc(collection(firebaseRefs.db, 'orders'), { userId: user?.uid || "anon", clientName, clientPhone, items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPromoPrice(i) })), total: finalTotal, delivery: deliveryMethod, address, zone, status: 'pending', createdAt: serverTimestamp() }); } setTimeout(() => { window.location.href = whatsappUrl; }, 400); } catch (e) { window.location.href = whatsappUrl; }
   };
-
-  // --- LÓGICA DE TARJETAS (ESTILO URBAN BRANDBOOK + SMOOTH APPLE) ---
   const renderProductCard = (p, index, isVidriera = false, layout = 'horizontal') => {
     const inCart = cart.find(i => i.id === p.id);
     const isOutOfStock = p.inStock === false;
     const effectiveSize = isVidriera ? (p.cardSize || 'normal') : 'normal';
-
-    let cardStyle = {};
-    let sizeClasses = '';
-    let aspectClass = 'aspect-[4/5]';
-    let titleClass = 'text-[13px] md:text-[16px] leading-tight'; 
-    let priceClass = 'text-xl md:text-2xl';
-
+    let cardStyle = {}; let sizeClasses = ''; let aspectClass = 'aspect-[4/5]'; let titleClass = 'text-[13px] md:text-[16px] leading-tight'; let priceClass = 'text-xl md:text-2xl';
     if (layout === 'vertical') {
-        if (effectiveSize === 'normal') { 
-            sizeClasses = 'flex-grow max-w-full';
-            cardStyle = { flexBasis: '38%' }; 
-        } else if (effectiveSize === 'medium') { 
-            sizeClasses = 'flex-grow max-w-full'; 
-            cardStyle = { flexBasis: '58%' }; 
-            titleClass = 'text-[15px] md:text-lg leading-tight'; 
-            priceClass = 'text-2xl md:text-3xl'; 
-        } else if (effectiveSize === 'large') { 
-            sizeClasses = 'w-full'; 
-            cardStyle = { flexBasis: '100%' };
-            aspectClass = 'aspect-[16/9] md:aspect-[21/9]'; 
-            titleClass = 'text-xl md:text-3xl leading-tight'; 
-            priceClass = 'text-3xl md:text-4xl'; 
-        }
+        if (effectiveSize === 'normal') { sizeClasses = 'flex-grow max-w-full'; cardStyle = { flexBasis: '38%' }; } 
+        else if (effectiveSize === 'medium') { sizeClasses = 'flex-grow max-w-full'; cardStyle = { flexBasis: '58%' }; titleClass = 'text-[15px] md:text-lg leading-tight'; priceClass = 'text-2xl md:text-3xl'; } 
+        else if (effectiveSize === 'large') { sizeClasses = 'w-full'; cardStyle = { flexBasis: '100%' }; aspectClass = 'aspect-[16/9] md:aspect-[21/9]'; titleClass = 'text-xl md:text-3xl leading-tight'; priceClass = 'text-3xl md:text-4xl'; }
     } else {
-        if (effectiveSize === 'normal') { 
-            sizeClasses = 'w-[160px] md:w-[200px] flex-shrink-0'; 
-        } else if (effectiveSize === 'medium') { 
-            sizeClasses = 'w-[230px] md:w-[280px] flex-shrink-0'; 
-            titleClass = 'text-[15px] md:text-lg leading-tight'; 
-            priceClass = 'text-2xl md:text-3xl'; 
-        } else if (effectiveSize === 'large') { 
-            sizeClasses = 'w-[320px] md:w-[480px] flex-shrink-0'; 
-            aspectClass = 'aspect-[16/9]'; 
-            titleClass = 'text-xl md:text-3xl leading-tight'; 
-            priceClass = 'text-3xl md:text-4xl'; 
-        }
+        if (effectiveSize === 'normal') { sizeClasses = 'w-[160px] md:w-[200px] flex-shrink-0'; } 
+        else if (effectiveSize === 'medium') { sizeClasses = 'w-[230px] md:w-[280px] flex-shrink-0'; titleClass = 'text-[15px] md:text-lg leading-tight'; priceClass = 'text-2xl md:text-3xl'; } 
+        else if (effectiveSize === 'large') { sizeClasses = 'w-[320px] md:w-[480px] flex-shrink-0'; aspectClass = 'aspect-[16/9]'; titleClass = 'text-xl md:text-3xl leading-tight'; priceClass = 'text-3xl md:text-4xl'; }
     }
-
     return (
-      <div 
-        key={p.id} 
-        style={{ animationDelay: `${index * 100}ms`, ...cardStyle }}
-        className={`bg-white border border-[#f2f2f2] shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] overflow-hidden flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] transition-all duration-500 snap-start group animate-in fade-in slide-in-from-bottom-8 ${isOutOfStock ? 'opacity-70 grayscale' : ''} ${sizeClasses}`} 
-      >
+      <div key={p.id} style={{ animationDelay: `${index * 100}ms`, ...cardStyle }} className={`bg-white border border-[#f2f2f2] shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] overflow-hidden flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] transition-all duration-500 snap-start group animate-in fade-in slide-in-from-bottom-8 ${isOutOfStock ? 'opacity-70 grayscale' : ''} ${sizeClasses}`}>
         <div className={`relative ${aspectClass} overflow-hidden bg-[#f2f2f2]/50 cursor-pointer rounded-t-[1.5rem]`} onClick={() => setSelectedProduct(p)}>
           <img src={p.image} alt={p.name} className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-out" />
-          
-          {isOutOfStock ? (
-            <div className="absolute inset-0 bg-[#282723]/60 backdrop-blur-sm flex items-center justify-center"><span className="bg-red-600 text-white font-bebas text-sm px-4 py-1.5 rounded-sm uppercase tracking-wider shadow-lg">SIN STOCK</span></div>
-          ) : p.tag && (
-            <span className="absolute top-3 left-3 bg-[#282723] text-[#fcdb00] font-bebas text-[11px] px-3 py-1 uppercase rounded-sm shadow-md tracking-wider">{p.tag}</span>
-          )}
+          {isOutOfStock ? ( <div className="absolute inset-0 bg-[#282723]/60 backdrop-blur-sm flex items-center justify-center"><span className="bg-red-600 text-white font-bebas text-sm px-4 py-1.5 rounded-sm uppercase tracking-wider shadow-lg">SIN STOCK</span></div> ) : p.tag && ( <span className="absolute top-3 left-3 bg-[#282723] text-[#fcdb00] font-bebas text-[11px] px-3 py-1 uppercase rounded-sm shadow-md tracking-wider">{p.tag}</span> )}
         </div>
-        
-        <div className="p-4 flex-grow flex flex-col">
-          <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-1.5 font-poppins">{p.category}</p>
-          <h3 className={`font-bebas ${titleClass} uppercase mb-1 text-[#282723] line-clamp-2 tracking-wide`}>{p.name}</h3>
-          
-          <div className="mt-auto pt-3">
-            <p className={`text-[#fcdb00] font-bebas ${priceClass} mb-4 tracking-wide drop-shadow-sm`}>{CONFIG.currencySymbol}{formatPrice(p.price)}</p>
-            
-            {isOutOfStock ? (
-                <button disabled className="w-full bg-[#f2f2f2] text-gray-400 py-3 font-bebas text-[14px] uppercase tracking-wider rounded-xl cursor-not-allowed">Agotado</button>
-            ) : inCart ? (
-              <div className="flex items-center justify-between bg-[#fcdb00] text-[#282723] h-11 rounded-xl font-bold px-1.5 shadow-md">
-                <button className="w-12 h-full flex items-center justify-center hover:text-black transition-colors" onClick={() => changeQty(p.id, -1)}><i className="fas fa-minus text-xs"></i></button>
-                <span className="font-bebas text-lg pt-1">{inCart.qty}</span>
-                <button className="w-12 h-full flex items-center justify-center hover:text-black transition-colors" onClick={() => addToCart(p)}><i className="fas fa-plus text-xs"></i></button>
-              </div>
-            ) : (
-              <button onClick={() => addToCart(p)} className="w-full bg-[#282723] text-white hover:bg-[#fcdb00] hover:text-[#282723] hover:shadow-lg hover:shadow-[#fcdb00]/30 py-3 font-bebas text-[16px] uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
-                 <i className="fas fa-shopping-bag text-xs mb-0.5"></i> Añadir
-              </button>
-            )}
+        <div className="p-4 flex-grow flex flex-col"><p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-1.5 font-poppins">{p.category}</p><h3 className={`font-bebas ${titleClass} uppercase mb-1 text-[#282723] line-clamp-2 tracking-wide`}>{p.name}</h3>
+          <div className="mt-auto pt-3"><p className={`text-[#fcdb00] font-bebas ${priceClass} mb-4 tracking-wide drop-shadow-sm`}>{CONFIG.currencySymbol}{formatPrice(p.price)}</p>
+            {isOutOfStock ? ( <button disabled className="w-full bg-[#f2f2f2] text-gray-400 py-3 font-bebas text-[14px] uppercase tracking-wider rounded-xl cursor-not-allowed">Agotado</button> ) : inCart ? (
+              <div className="flex items-center justify-between bg-[#fcdb00] text-[#282723] h-11 rounded-xl font-bold px-1.5 shadow-md"><button className="w-12 h-full flex items-center justify-center hover:text-black transition-colors" onClick={() => changeQty(p.id, -1)}><i className="fas fa-minus text-xs"></i></button><span className="font-bebas text-lg pt-1">{inCart.qty}</span><button className="w-12 h-full flex items-center justify-center hover:text-black transition-colors" onClick={() => addToCart(p)}><i className="fas fa-plus text-xs"></i></button></div>
+            ) : ( <button onClick={() => addToCart(p)} className="w-full bg-[#282723] text-white hover:bg-[#fcdb00] hover:text-[#282723] hover:shadow-lg hover:shadow-[#fcdb00]/30 py-3 font-bebas text-[16px] uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center justify-center gap-2"><i className="fas fa-shopping-bag text-xs mb-0.5"></i> Añadir</button> )}
           </div>
         </div>
       </div>
     );
-  }
+  };
 
   const renderProductSection = (category) => {
     let sectionProducts = products.filter(p => p.category === category);
     if (activeFilter.dept !== 'all') sectionProducts = sectionProducts.filter(p => p.department === activeFilter.dept);
     if (searchTerm) sectionProducts = sectionProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase()));
     if (sectionProducts.length === 0) return null;
-    const promo = promos.find(p => p.category === category);
-    let promoText = null;
+    const promo = promos.find(p => p.category === category); let promoText = null;
     if (promo) promoText = `${promo.minQty}+ un: $${formatPrice(promo.totalPrice / promo.minQty)} c/u`;
     return (
       <section key={category} id={slugify(category)} className="mb-20 scroll-mt-40">
-        <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-3 border-b-2 border-[#f2f2f2] pb-4">
-          <h2 className="text-3xl md:text-5xl font-bebas text-[#282723] tracking-wide uppercase relative">{category} <span className="absolute -bottom-[18px] left-0 w-16 h-1 bg-[#fcdb00] rounded-full"></span></h2>
-          {promoText && <div className="bg-[#fcdb00]/20 text-[#282723] px-4 py-2 font-bebas text-lg rounded-full uppercase tracking-wider flex items-center gap-2"><i className="fas fa-tag text-[#fcdb00] mb-0.5"></i> {promoText}</div>}
-        </div>
-        <div className="flex flex-wrap gap-3 md:gap-5">
-          {sectionProducts.map((p, index) => renderProductCard(p, index, false, 'vertical'))}
-        </div>
+        <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-3 border-b-2 border-[#f2f2f2] pb-4"><h2 className="text-3xl md:text-5xl font-bebas text-[#282723] tracking-wide uppercase relative">{category} <span className="absolute -bottom-[18px] left-0 w-16 h-1 bg-[#fcdb00] rounded-full"></span></h2>{promoText && <div className="bg-[#fcdb00]/20 text-[#282723] px-4 py-2 font-bebas text-lg rounded-full uppercase tracking-wider flex items-center gap-2"><i className="fas fa-tag text-[#fcdb00] mb-0.5"></i> {promoText}</div>}</div>
+        <div className="flex flex-wrap gap-3 md:gap-5">{sectionProducts.map((p, index) => renderProductCard(p, index, false, 'vertical'))}</div>
       </section>
     );
   };
 
   const renderLegalPage = () => {
-    const pageData = PAGE_CONTENT[currentView];
-    if (!pageData) return null;
+    const pageData = PAGE_CONTENT[currentView]; if (!pageData) return null;
     return (<div className="min-h-screen py-16 px-4 md:py-24"><div className="max-w-3xl mx-auto bg-white/70 backdrop-blur-2xl p-8 md:p-16 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-white animate-in fade-in slide-in-from-bottom-8 duration-700"><button onClick={() => navigateTo('home')} className="mb-10 text-[#282723] hover:text-[#fcdb00] transition-colors flex items-center gap-2 font-bold text-xs uppercase tracking-widest font-poppins"><i className="fas fa-arrow-left"></i> Volver a la Tienda</button><div className="text-center mb-16"><span className="text-[#fcdb00] font-bebas uppercase tracking-widest text-lg mb-2 block drop-shadow-sm">{pageData.subtitle}</span><h1 className="text-5xl md:text-6xl font-bebas text-[#282723] uppercase tracking-wide">{pageData.title}</h1><div className="w-24 h-1.5 bg-[#fcdb00] mx-auto mt-6 rounded-full"></div></div><div className="prose prose-gray max-w-none font-poppins">{pageData.body}</div></div></div>);
   };
 
@@ -335,14 +204,10 @@ export default function Home() {
           <span className="text-[#fcdb00] font-bebas uppercase tracking-widest text-lg mb-2 block drop-shadow-sm">028 IMPORT</span>
           <h1 className="text-4xl font-bebas text-[#282723] uppercase tracking-wide mb-4">En Mantenimiento</h1>
           <p className="text-gray-500 text-sm font-medium leading-relaxed mb-8 font-poppins">Estamos mejorando nuestra plataforma para ofrecerte una experiencia de compra de élite. Volvemos en breve.</p>
-          
           <div className="mt-8 pt-8 border-t border-gray-200/60">
             <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-4 font-poppins">¿Consultas o pedidos manuales?</p>
-            <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="w-full bg-[#25D366] text-white hover:bg-[#1ebe5d] py-4 rounded-xl font-bebas text-xl uppercase tracking-wider shadow-[0_10px_20px_rgba(37,211,102,0.3)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95">
-              <i className="fab fa-whatsapp text-2xl mb-0.5"></i> Escribinos al WhatsApp
-            </a>
+            <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="w-full bg-[#25D366] text-white hover:bg-[#1ebe5d] py-4 rounded-xl font-bebas text-xl uppercase tracking-wider shadow-[0_10px_20px_rgba(37,211,102,0.3)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95"><i className="fab fa-whatsapp text-2xl mb-0.5"></i> Escribinos al WhatsApp</a>
           </div>
-
         </div>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
       </div>
@@ -351,36 +216,21 @@ export default function Home() {
 
   return (
     <div className="bg-[#f2f2f2] text-[#282723] font-poppins flex flex-col relative pb-20 md:pb-0 min-h-screen selection:bg-[#fcdb00] selection:text-[#282723]">
-      <style dangerouslySetInnerHTML={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;700;900&display=swap');
-        .font-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
-        .font-poppins { font-family: 'Poppins', sans-serif; }
-      `}} />
-
+      <style dangerouslySetInnerHTML={{__html: `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;700;900&display=swap'); .font-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; } .font-poppins { font-family: 'Poppins', sans-serif; }`}} />
       {toastMessage && (<div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-[#282723]/90 backdrop-blur-xl text-white px-6 py-4 rounded-full shadow-[0_20px_40px_rgba(252,219,0,0.2)] border border-[#fcdb00]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">{toastMessage}</div>)}
-      
-      <header className="bg-[#282723]/90 backdrop-blur-2xl text-white h-[72px] sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 shadow-sm border-b border-white/10 transition-all duration-300">
-          <button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#fcdb00] transition-colors p-2"><i className="fas fa-bars"></i></button>
-          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3 cursor-pointer group" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}>
-              <img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" />
-          </div>
-          <button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#fcdb00] transition-colors"><i className="fas fa-shopping-bag text-2xl"></i>{getTotalItems() > 0 && (<span className="absolute top-1.5 -right-1 bg-[#fcdb00] text-[#282723] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-[#282723]">{getTotalItems()}</span>)}</button>
-      </header>
+      <header className="bg-[#282723]/90 backdrop-blur-2xl text-white h-[72px] sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 shadow-sm border-b border-white/10 transition-all duration-300"><button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#fcdb00] transition-colors p-2"><i className="fas fa-bars"></i></button><div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3 cursor-pointer group" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}><img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" /></div><button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#fcdb00] transition-colors"><i className="fas fa-shopping-bag text-2xl"></i>{getTotalItems() > 0 && (<span className="absolute top-1.5 -right-1 bg-[#fcdb00] text-[#282723] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-[#282723]">{getTotalItems()}</span>)}</button></header>
 
       {isMenuOpen && (<div className="fixed inset-0 z-[90] flex"><div className="absolute inset-0 bg-[#282723]/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div><div className="w-[85%] max-w-[380px] bg-[#f2f2f2] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden"><div className="p-8 bg-[#282723] flex justify-between items-center text-white border-b border-white/10"><span className="font-bebas text-3xl tracking-wide uppercase">028<span className="text-[#fcdb00]">MENU</span></span><button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#282723] transition-colors"><i className="fas fa-times text-lg"></i></button></div><div className="flex-1 overflow-y-auto pb-8"><div className="flex flex-col p-4 space-y-2"><button onClick={() => { setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); }} className="text-left p-5 bg-white rounded-2xl shadow-sm border border-[#f2f2f2] font-black uppercase text-sm hover:border-[#fcdb00] hover:shadow-md flex justify-between items-center transition-all">Catálogo Completo <i className="fas fa-arrow-right text-[#fcdb00]"></i></button><div className="pt-6 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Departamentos</p></div>{departments.map(dept => { const isExpanded = expandedDept === dept; const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category))); return (<div key={dept} className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] overflow-hidden transition-all"><button onClick={() => setExpandedDept(isExpanded ? null : dept)} className="w-full text-left p-5 font-black uppercase text-sm flex justify-between items-center transition-colors group">{dept} <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-gray-300 group-hover:text-[#fcdb00] transition-colors`}></i></button><div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="bg-gray-50 flex flex-col pb-4 pt-2 border-t border-gray-100"><button onClick={() => { setActiveFilter({dept, cat: 'all'}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-black text-xs text-[#282723] uppercase hover:text-[#fcdb00] transition-colors flex items-center gap-2"><i className="fas fa-layer-group text-gray-400"></i> Ver todo en {dept}</button>{deptCats.map(cat => (<button key={cat} onClick={() => { setActiveFilter({dept, cat}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-bold text-xs text-gray-500 uppercase hover:text-[#282723] transition-colors pl-12 relative before:content-[''] before:w-1.5 before:h-1.5 before:bg-gray-300 before:rounded-full before:absolute before:left-7 before:top-1/2 before:-translate-y-1/2 hover:before:bg-[#fcdb00]">{cat}</button>))}</div></div></div>); })}<div className="pt-8 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Información Útil</p></div><div className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] p-2 space-y-1"><button onClick={() => {setCurrentView('nosotros'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-users"></i></div> Quiénes Somos</button><button onClick={() => {setCurrentView('envios'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-truck"></i></div> Envíos y Logística</button><button onClick={() => {setCurrentView('pagos'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-credit-card"></i></div> Medios de Pago</button><button onClick={() => {setCurrentView('terminos'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-gray-400"><i className="fas fa-file-contract"></i></div> Legales y Términos</button></div></div></div></div></div>)}
 
       {currentView === 'home' ? (
         <>
           <header className="relative w-full h-[35vh] md:h-[55vh] flex items-center justify-center bg-[#282723] overflow-hidden animate-in fade-in duration-1000 border-b border-[#fcdb00]/20 shadow-xl">
-            {/* SOLUCIÓN DEFINITIVA A PRUEBA DE BLOQUEOS DE SEGURIDAD/ADBLOCK */}
             <img src={CONFIG.bannerImage} alt="Banner 028" className="absolute inset-0 w-full h-full object-cover opacity-60" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#f2f2f2] via-[#282723]/60 to-transparent" />
             <div className="relative z-10 text-center px-4 max-w-4xl flex flex-col items-center mt-6">
               <span className="text-[#fcdb00] text-[10px] md:text-sm font-bold tracking-[0.3em] uppercase mb-2 block font-poppins drop-shadow-md">Bienvenido a la élite</span>
               <h1 className="text-6xl sm:text-7xl md:text-9xl font-bebas uppercase tracking-wide mb-6 drop-shadow-2xl text-white">028 IMPORT</h1>
-              <p className="text-[#282723] font-poppins text-[10px] md:text-xs font-black tracking-widest uppercase bg-[#fcdb00] px-6 py-3 rounded-md shadow-xl">
-                <i className="fas fa-bolt text-[#282723] mr-2"></i> {CONFIG.shippingText}
-              </p>
+              <p className="text-[#282723] font-poppins text-[10px] md:text-xs font-black tracking-widest uppercase bg-[#fcdb00] px-6 py-3 rounded-md shadow-xl"><i className="fas fa-bolt text-[#282723] mr-2"></i> {CONFIG.shippingText}</p>
             </div>
           </header>
           
@@ -390,11 +240,7 @@ export default function Home() {
                      const secProducts = sec.productIds?.map(pid => products.find(p => p.id === pid)).filter(Boolean) || [];
                      if(secProducts.length === 0) return null;
                      return (<div key={sec.id} className="mb-20 animate-in fade-in slide-in-from-bottom-10 duration-1000" style={{animationDelay: `${sectionIndex * 200}ms`}}><div className="flex justify-between items-end mb-6 pl-2 border-b-2 border-[#f2f2f2] pb-3"><h2 className="text-4xl md:text-6xl font-bebas text-[#282723] tracking-wide uppercase"><i className={`fas ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'} mr-3 drop-shadow-sm`}></i>{sec.title}</h2><button onClick={() => navigateTo('catalog')} className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#282723] hover:text-[#fcdb00] transition-colors bg-white/50 px-5 py-2.5 rounded-full border border-white hover:border-[#f2f2f2]">Ver Catálogo <i className="fas fa-arrow-right"></i></button></div>
-                     
-                     <div className={sec.layout === 'vertical' ? "flex flex-wrap gap-3 md:gap-5" : "flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-8 snap-x mask-image-gradient pr-8"}>
-                         {secProducts.map((p, index) => renderProductCard(p, index, true, sec.layout))}
-                     </div>
-                     
+                     <div className={sec.layout === 'vertical' ? "flex flex-wrap gap-3 md:gap-5" : "flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-8 snap-x mask-image-gradient pr-8"}>{secProducts.map((p, index) => renderProductCard(p, index, true, sec.layout))}</div>
                      <button onClick={() => navigateTo('catalog')} className="md:hidden w-full mt-2 bg-white/70 backdrop-blur-xl border border-white shadow-sm text-[#282723] py-4 rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform font-poppins">Explorar más <i className="fas fa-arrow-right text-[#fcdb00]"></i></button></div>)
                  })
              )}
