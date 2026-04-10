@@ -371,10 +371,10 @@ export default function Home() {
 
       {currentView === 'home' ? (
         <>
-          <header className="relative w-full h-[35vh] md:h-[55vh] flex items-center justify-center bg-[#282723] overflow-hidden animate-in fade-in duration-1000 border-b border-gray-300 shadow-sm">
-            {/* AQUÍ ESTÁ LA SINTAXIS CORREGIDA DE LA IMAGEN DE FONDO */}
-            <div className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: `url(${CONFIG.bannerImage})` }} />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#f2f2f2] via-transparent to-black/50" />
+          <header className="relative w-full h-[35vh] md:h-[55vh] flex items-center justify-center bg-[#282723] overflow-hidden animate-in fade-in duration-1000 border-b border-[#fcdb00]/20 shadow-xl">
+            {/* SOLUCIÓN DEFINITIVA A PRUEBA DE BLOQUEOS DE SEGURIDAD/ADBLOCK */}
+            <img src={CONFIG.bannerImage} alt="Banner 028" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#f2f2f2] via-[#282723]/60 to-transparent" />
             <div className="relative z-10 text-center px-4 max-w-4xl flex flex-col items-center mt-6">
               <span className="text-[#fcdb00] text-[10px] md:text-sm font-bold tracking-[0.3em] uppercase mb-2 block font-poppins drop-shadow-md">Bienvenido a la élite</span>
               <h1 className="text-6xl sm:text-7xl md:text-9xl font-bebas uppercase tracking-wide mb-6 drop-shadow-2xl text-white">028 IMPORT</h1>
