@@ -14,6 +14,7 @@ const CONFIG = {
   shippingText: "Pedime te llega en 30'⏰",
 };
 
+// LISTA BASE COMPLETA
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante.", cardSize: "normal" },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto.", cardSize: "normal" },
@@ -52,29 +53,29 @@ const initialProducts = [
   { id: 45, name: "MIAMI MINT", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yWqpSNmv/Lost-mary-20000-MIAMI-MINT.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
   { id: 46, name: "STRAWBERRY ICE", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/zDLJWPw3/Lost-mary-20000-STRAWBERRY-ICE.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
   { id: 47, name: "STRAWBERRY KIWI", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/59Hxvk5q/Lost-mary-20000-STRAWBERRY-KIWI.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 18, name: "BLOW THC", price: 55000, department: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp", description: "Dispositivo de alta pureza.", cardSize: "medium" },
-  { id: 19, name: "TORCH 7.5G", price: 53000, department: "THC", category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png", description: "Extracto premium.", cardSize: "normal" },
+  { id: 18, name: "BLOW THC", price: 55000, department: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp", description: "Dispositivo de alta pureza con extracciones premium.", cardSize: "medium" },
+  { id: 19, name: "TORCH 7.5G", price: 53000, department: "THC", category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png", description: "Capacidad extrema de 7.5G de extracto premium.", cardSize: "normal" },
   { id: 29, name: "TORCH 4.5G", price: 52500, department: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/vmFK42hC/TORCH-4-5G.jpg", description: "4.5G de puro rendimiento.", cardSize: "normal" },
-  { id: 20, name: "PHENOM 6G", price: 56000, department: "THC", category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg", description: "Dispositivo premium.", cardSize: "large" },
-  { id: 27, name: "PLAYSTATION 5", price: 550, department: "TECNOLOGÍA", category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg", description: "PS5 Sellada.", cardSize: "large" },
-  { id: 28, name: "AIRPODS PRO", price: 35000, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg", description: "Originales con cancelación activa.", cardSize: "normal" },
-  { id: 21, name: "CARGADOR 20W", price: 16500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg", description: "Adaptador original.", cardSize: "normal" },
-  { id: 22, name: "CARGADOR 35W", price: 20500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg", description: "Adaptador dual original.", cardSize: "normal" },
-  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg", description: "Cable original.", cardSize: "normal" },
-  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg", description: "Cable original de 2 metros.", cardSize: "normal" },
-  { id: 50, name: "LABUBU V2", price: 17500, department: "LIFESTYLE", category: "Labubu", tag: "Viral", image: "https://i.postimg.cc/654362/labubu.png", description: "Muñeco coleccionable original.", cardSize: "normal" },
-  { id: 51, name: "TERMO STANLEY 1.2L", price: 85000, department: "LIFESTYLE", category: "Stanley", tag: "Original", image: "https://i.postimg.cc/placeholder/stanley.png", description: "Original con garantía de por vida.", cardSize: "medium" },
-  { id: 52, name: "MIEL ENERGY MASCULINA", price: 15000, department: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_h.png", description: "Rendimiento masculino.", cardSize: "normal" },
-  { id: 53, name: "MIEL ENERGY FEMENINA", price: 15000, department: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_m.png", description: "Rendimiento femenino.", cardSize: "normal" }
+  { id: 20, name: "PHENOM 6G", price: 56000, department: "THC", category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg", description: "Dispositivo de grado premium cargado con 6G.", cardSize: "large" },
+  { id: 27, name: "PLAYSTATION 5", price: 550, department: "TECNOLOGÍA", category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg", description: "PlayStation 5 original en caja sellada.", cardSize: "large" },
+  { id: 28, name: "AIRPODS PRO", price: 35000, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg", description: "Auriculares inalámbricos 100% originales con cancelación activa.", cardSize: "normal" },
+  { id: 21, name: "CARGADOR 20W", price: 16500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg", description: "Adaptador de corriente USB-C de 20W original Apple.", cardSize: "normal" },
+  { id: 22, name: "CARGADOR 35W", price: 20500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg", description: "Adaptador de corriente dual USB-C de 35W original Apple.", cardSize: "normal" },
+  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg", description: "Cable original Apple de USB-C a USB-C.", cardSize: "normal" },
+  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg", description: "Cable original Apple USB-C a Lightning de 2 metros.", cardSize: "normal" },
+  { id: 50, name: "LABUBU V2", price: 17500, department: "LIFESTYLE", category: "Labubu", tag: "Viral", image: "https://i.postimg.cc/654362/labubu.png", description: "Muñeco coleccionable original. Consultar modelos por privado.", cardSize: "normal" },
+  { id: 51, name: "TERMO STANLEY 1.2L", price: 85000, department: "LIFESTYLE", category: "Stanley", tag: "Original", image: "https://i.postimg.cc/placeholder/stanley.png", description: "Termo original con garantía de por vida.", cardSize: "medium" },
+  { id: 52, name: "MIEL ENERGY MASCULINA", price: 15000, department: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_h.png", description: "Miel para rendimiento sexual masculino.", cardSize: "normal" },
+  { id: 53, name: "MIEL ENERGY FEMENINA", price: 15000, department: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_m.png", description: "Miel para rendimiento sexual femenino.", cardSize: "normal" }
 ];
 
 const PAGE_CONTENT = {
-  nosotros: { title: "Quiénes Somos", subtitle: "Nuestra Historia", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>En 028 IMPORT redefinimos la experiencia de compra priorizando tu tiempo y confianza.</p></div>) },
-  envios: { title: "Logística de Envío", subtitle: "Envíos y Retiros", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Contamos con un sistema de logística optimizado.</p></div>) },
-  terminos: { title: "Términos y Condiciones", subtitle: "Legal & Políticas", body: (<div className="space-y-8 leading-relaxed text-sm md:text-base font-poppins"><p>El uso de la plataforma se rige por los presentes términos.</p></div>) },
-  privacidad: { title: "Política de Privacidad", subtitle: "Protección de Datos", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>La confidencialidad es nuestra prioridad.</p></div>) },
-  pagos: { title: "Medios de Pago", subtitle: "Transacciones Seguras", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Procesamos los pagos por fuera de la web por seguridad.</p></div>) },
-  arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Plazo de 10 días para revocación.</p></div>) }
+  nosotros: { title: "Quiénes Somos", subtitle: "Nuestra Historia", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>En 028 IMPORT redefinimos la experiencia de compra priorizando tu tiempo y confianza. Somos especialistas en la importación y comercialización de productos premium.</p></div>) },
+  envios: { title: "Logística de Envío", subtitle: "Envíos y Retiros", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Contamos con un sistema de logística optimizado para que recibas tus productos de la manera más rápida y segura posible.</p></div>) },
+  terminos: { title: "Términos y Condiciones", subtitle: "Legal & Políticas", body: (<div className="space-y-8 leading-relaxed text-sm md:text-base font-poppins"><p>El acceso y uso de la plataforma 028 IMPORT se rige por los presentes Términos y Condiciones.</p></div>) },
+  privacidad: { title: "Política de Privacidad", subtitle: "Protección de Datos", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>En 028 IMPORT, la salvaguarda y confidencialidad de su información personal es una absoluta prioridad.</p></div>) },
+  pagos: { title: "Medios de Pago", subtitle: "Transacciones Seguras", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Procesamos los pagos por fuera de la plataforma web, evitando que usted deba ingresar datos sensibles en línea.</p></div>) },
+  arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de 10 días corridos.</p></div>) }
 };
 
 export default function Home() {
@@ -98,20 +99,30 @@ export default function Home() {
   const [toastMessage, setToastMessage] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  const MAINTENANCE_MODE = true; 
+  // --- MODO MANTENIMIENTO ---
+  const MAINTENANCE_MODE = true; // CAMBIAR A FALSE PARA ABRIR LA TIENDA
   const [isBypassed, setIsBypassed] = useState(false);
   const [checkingMaintenance, setCheckingMaintenance] = useState(true);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('admin') === 'true') { localStorage.setItem('adminBypass', 'true'); }
-    if (localStorage.getItem('adminBypass') === 'true') { setIsBypassed(true); }
+    if (urlParams.get('admin') === 'true') {
+      localStorage.setItem('adminBypass', 'true');
+    }
+    if (localStorage.getItem('adminBypass') === 'true') {
+      setIsBypassed(true);
+    }
     setCheckingMaintenance(false);
   }, []);
 
-  const departments = useMemo(() => [...new Set(products.map(p => p.department).filter(Boolean))], [products]);
+  const departments = useMemo(() => {
+    return [...new Set(products.map(p => p.department).filter(Boolean))];
+  }, [products]);
+
   const uniqueCategories = useMemo(() => {
-    if (activeFilter.dept !== 'all') return [...new Set(products.filter(p => p.department === activeFilter.dept).map(p => p.category))];
+    if (activeFilter.dept !== 'all') {
+        return [...new Set(products.filter(p => p.department === activeFilter.dept).map(p => p.category))];
+    }
     return [...new Set(products.map(p => p.category))];
   }, [products, activeFilter.dept]);
 
@@ -126,29 +137,81 @@ export default function Home() {
     } catch (error) { return { auth: null, db: null }; }
   }, []);
 
+  // --- NUEVO EFECTO DE SCROLL SMOOTH (APPLE STYLE) ---
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" } 
+    );
+    
+    // Le damos un respiro de 100ms para asegurar que las tarjetas ya estén en pantalla
+    const timeoutId = setTimeout(() => {
+        const elements = document.querySelectorAll('.reveal-on-scroll');
+        elements.forEach((el) => observer.observe(el));
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    }
+  }, [currentView, activeFilter, products, searchTerm, homeSections]);
+
   useEffect(() => {
     const handleFocus = () => setIsSending(false);
     window.addEventListener('focus', handleFocus);
     window.addEventListener('pageshow', handleFocus);
+
     if (firebaseRefs.auth && firebaseRefs.db) {
       signInAnonymously(firebaseRefs.auth).catch(console.error);
-      onAuthStateChanged(firebaseRefs.auth, (u) => setUser(u));
-      onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
+      const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (u) => setUser(u));
+
+      const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
           setProducts(prev => {
              const combined = [...initialProducts];
              dbProducts.forEach(dbItem => {
                 const index = combined.findIndex(p => p.id == dbItem.id);
-                if (dbItem.isHidden || dbItem.isDeleted) { if (index > -1) combined.splice(index, 1); }
-                else { if (index > -1) combined[index] = { ...combined[index], ...dbItem }; else combined.push(dbItem); }
+                if (dbItem.isHidden || dbItem.isDeleted) {
+                    if (index > -1) combined.splice(index, 1);
+                } else {
+                    if (index > -1) combined[index] = { ...combined[index], ...dbItem, cardSize: dbItem.cardSize || combined[index].cardSize };
+                    else combined.push(dbItem);
+                }
              });
              return combined.sort((a, b) => (a.order || 99) - (b.order || 99));
           });
         }
       });
-      onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
-      onSnapshot(collection(firebaseRefs.db, 'home_sections'), (s) => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
+
+      const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (snapshot) => {
+        if (!snapshot.empty) setPromos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        else setPromos([]);
+      });
+
+      const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (snapshot) => {
+        if (!snapshot.empty) {
+            const sections = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
+            setHomeSections(sections.sort((a, b) => a.order - b.order));
+        } else {
+            setHomeSections([]);
+        }
+      });
+
+      return () => {
+        unsubscribeAuth();
+        unsubscribeStock();
+        unsubscribePromos();
+        unsubscribeHomeSections();
+        window.removeEventListener('focus', handleFocus);
+        window.removeEventListener('pageshow', handleFocus);
+      };
     }
   }, [firebaseRefs]);
 
@@ -157,22 +220,23 @@ export default function Home() {
   const getUnitPromoPrice = (item) => { const promo = promos.find(p => p.category === item.category); if (promo) { const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0); if (catCount >= promo.minQty) return promo.totalPrice / promo.minQty; } return item.price; };
   const calculateTotal = () => cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice(item)), 0);
   const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
-  const navigateTo = (view, dept = null) => { setCurrentView(view); if(dept) setActiveFilter({dept, cat: 'all'}); setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
-  const addToCart = (product, e) => { if(e) e.stopPropagation(); if (product.inStock === false) return; setCart(prev => { const ex = prev.find(i => i.id === product.id); if (ex) return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i); return [...prev, { ...product, qty: 1 }]; }); showToast(`✅ Añadido: ${product.name}`); if(selectedProduct) setSelectedProduct(null); };
-  const changeQty = (id, delta) => { setCart(prev => prev.map(i => i.id === id ? { ...i, qty: i.qty + delta } : i).filter(i => i.qty > 0)); };
+  const navigateTo = (view, dept = null) => { setCurrentView(view); if(dept) setActiveFilter({dept: dept, cat: 'all'}); setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const addToCart = (product, e) => { if(e) e.stopPropagation(); if (product.inStock === false) return; setCart(prev => { const existing = prev.find(item => item.id === product.id); if (existing) return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item); return [...prev, { ...product, qty: 1 }]; }); showToast(`✅ Añadido: ${product.name}`); if(selectedProduct) setSelectedProduct(null); };
+  const changeQty = (id, delta) => { setCart(prev => prev.map(item => { if (item.id === id) { const newQty = item.qty + delta; return newQty > 0 ? { ...item, qty: newQty } : null; } return item; }).filter(Boolean)); };
 
   const handleCheckout = async () => {
-    if (!clientName.trim() || !clientPhone.trim()) { showToast("⚠️ Completá tu Nombre y Teléfono."); return; }
-    if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) { showToast("⚠️ Completá dirección y localidad."); return; }
+    if (!clientName.trim() || !clientPhone.trim()) { showToast("⚠️ Por favor completá tu Nombre y Teléfono."); return; }
+    if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) { showToast("⚠️ Por favor completá tu dirección y localidad."); return; }
     setIsSending(true);
     const finalTotal = calculateTotal();
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
-    cart.forEach(i => { msg += `- ${i.qty}x ${i.name} ($${formatPrice(getUnitPromoPrice(i))} c/u)\n`; });
-    msg += `\n*TOTAL: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n${deliveryMethod === 'envio' ? `*ENVIO:* ${address}, ${zone}` : `*RETIRO LOCAL*`}`;
+    cart.forEach(item => { const unitPrice = getUnitPromoPrice(item); msg += `- ${item.qty}x ${item.name} ($${formatPrice(unitPrice)} c/u)\n`; });
+    msg += `\n*TOTAL ESTIMADO: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
+    msg += deliveryMethod === 'envio' ? `*ENVIO:* ${address}, ${zone}\n` : `*RETIRO EN LOCAL*\n`;
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
-    try { if (firebaseRefs.db) { await addDoc(collection(firebaseRefs.db, 'orders'), { userId: user?.uid || "anon", clientName, clientPhone, items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPromoPrice(i) })), total: finalTotal, delivery: deliveryMethod, address, zone, status: 'pending', createdAt: serverTimestamp() }); } setTimeout(() => { window.location.href = whatsappUrl; }, 400); } catch (e) { window.location.href = whatsappUrl; }
+    try { if (firebaseRefs.db) { await addDoc(collection(firebaseRefs.db, 'orders'), { userId: user?.uid || "anon", clientName: clientName.trim(), clientPhone: clientPhone.trim(), items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPromoPrice(i) })), total: finalTotal, delivery: deliveryMethod, address: address || '', zone: zone || '', status: 'pending', createdAt: serverTimestamp() }); } setTimeout(() => { window.location.href = whatsappUrl; }, 400); } catch (e) { window.location.href = whatsappUrl; }
   };
-  // --- LÓGICA DE TARJETAS (ESTILO URBAN BRANDBOOK) ---
+  // --- LÓGICA DE TARJETAS (CON ANIMACIÓN APPLE SCROLL) ---
   const renderProductCard = (p, index, isVidriera = false, layout = 'horizontal') => {
     const inCart = cart.find(i => i.id === p.id);
     const isOutOfStock = p.inStock === false;
@@ -191,7 +255,8 @@ export default function Home() {
     }
 
     return (
-      <div key={p.id} style={{ animationDelay: `${index * 100}ms`, ...cardStyle }} className={`bg-white border border-[#f2f2f2] shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] overflow-hidden flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] transition-all duration-500 snap-start group animate-in fade-in slide-in-from-bottom-8 ${isOutOfStock ? 'opacity-70 grayscale' : ''} ${sizeClasses}`}>
+      // LA CLASE "reveal-on-scroll" ES LA QUE HACE LA MAGIA AL BAJAR
+      <div key={p.id} style={{ transitionDelay: `${(index % 4) * 75}ms`, ...cardStyle }} className={`reveal-on-scroll bg-white border border-[#f2f2f2] shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] overflow-hidden flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] snap-start group ${isOutOfStock ? 'opacity-70 grayscale' : ''} ${sizeClasses}`}>
         <div className={`relative ${aspectClass} overflow-hidden bg-[#f2f2f2]/50 cursor-pointer rounded-t-[1.5rem]`} onClick={() => setSelectedProduct(p)}>
           <img src={p.image} alt={p.name} className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-out" />
           {isOutOfStock ? ( <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm flex items-center justify-center"><span className="bg-red-600 text-white font-bebas text-sm px-4 py-1.5 rounded-sm uppercase tracking-wider shadow-lg">SIN STOCK</span></div> ) : p.tag && ( <span className="absolute top-3 left-3 bg-[#111111] text-[#fcdb00] font-bebas text-[11px] px-3 py-1 uppercase rounded-sm shadow-md tracking-wider">{p.tag}</span> )}
@@ -215,7 +280,7 @@ export default function Home() {
     const promo = promos.find(p => p.category === category); let promoText = null;
     if (promo) promoText = `${promo.minQty}+ un: $${formatPrice(promo.totalPrice / promo.minQty)} c/u`;
     return (
-      <section key={category} id={slugify(category)} className="mb-20 scroll-mt-40">
+      <section key={category} id={slugify(category)} className="mb-20 scroll-mt-40 reveal-on-scroll">
         <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-3 border-b-2 border-[#f2f2f2] pb-4"><h2 className="text-3xl md:text-5xl font-bebas text-[#111111] tracking-wide uppercase relative">{category} <span className="absolute -bottom-[18px] left-0 w-16 h-1 bg-[#fcdb00] rounded-full"></span></h2>{promoText && <div className="bg-[#fcdb00]/20 text-[#111111] px-4 py-2 font-bebas text-lg rounded-full uppercase tracking-wider flex items-center gap-2"><i className="fas fa-tag text-[#fcdb00] mb-0.5"></i> {promoText}</div>}</div>
         <div className="flex flex-wrap gap-3 md:gap-5">{sectionProducts.map((p, index) => renderProductCard(p, index, false, 'vertical'))}</div>
       </section>
@@ -250,7 +315,23 @@ export default function Home() {
 
   return (
     <div className="bg-[#f2f2f2] text-[#111111] font-poppins flex flex-col relative pb-20 md:pb-0 min-h-screen selection:bg-[#fcdb00] selection:text-[#111111]">
-      <style dangerouslySetInnerHTML={{__html: `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;700;900&display=swap'); .font-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; } .font-poppins { font-family: 'Poppins', sans-serif; }`}} />
+      <style dangerouslySetInnerHTML={{__html: `
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;700;900&display=swap');
+        .font-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        /* ACÁ ESTÁ EL MOTOR APPLE PARA LAS TARJETAS */
+        .reveal-on-scroll {
+          opacity: 0;
+          transform: translateY(40px);
+          transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+          will-change: opacity, transform;
+        }
+        .reveal-on-scroll.is-visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      `}} />
+      
       {toastMessage && (<div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-[#111111]/90 backdrop-blur-xl text-white px-6 py-4 rounded-full shadow-[0_20px_40px_rgba(252,219,0,0.2)] border border-[#fcdb00]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">{toastMessage}</div>)}
       
       <header className="bg-[#111111] text-white h-[72px] sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 shadow-lg border-b border-white/5 transition-all duration-300"><button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#fcdb00] transition-colors p-2"><i className="fas fa-bars"></i></button><div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3 cursor-pointer group" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}><img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" /></div><button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#fcdb00] transition-colors"><i className="fas fa-shopping-bag text-2xl"></i>{getTotalItems() > 0 && (<span className="absolute top-1.5 -right-1 bg-[#fcdb00] text-[#111111] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-[#111111]">{getTotalItems()}</span>)}</button></header>
@@ -259,18 +340,18 @@ export default function Home() {
 
           {currentView === 'home' ? (
             <>
-              {/* BANNER REPARADO: SOLO IMAGEN, SIN TEXTOS NI BOTONES FLOTANTES SOBREPUESTOS */}
-              <header className="relative w-full h-[35vh] md:h-[55vh] flex items-center justify-center bg-[#111111] overflow-hidden animate-in fade-in duration-1000 border-b border-[#282723]">
+              {/* BANNER 100% LIMPIO: SOLO IMAGEN CON PEQUEÑO DIFUMINADO ABAJO */}
+              <header className="relative w-full h-[35vh] md:h-[55vh] flex items-center justify-center bg-[#111111] overflow-hidden border-b border-[#111111]">
                 <img src={CONFIG.bannerImage} alt="Banner 028" className="absolute inset-0 w-full h-full object-cover opacity-90" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-transparent to-transparent opacity-80" />
+                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#f2f2f2] to-transparent" />
               </header>
               
-              <main className="flex-grow px-4 md:px-8 pt-10 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full"><div className="md:hidden relative mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700"><i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" placeholder="Buscar productos, marcas..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] pl-12 pr-6 py-4 rounded-2xl text-sm font-bold outline-none focus:border-[#fcdb00] focus:bg-white transition-all placeholder:text-gray-400 font-poppins" /></div><div className="mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100"><h3 className="font-bebas text-2xl text-[#111111] mb-4 pl-2">Explorar la tienda</h3><div className="flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">{departments.map(dept => (<div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-white/70 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-[#fcdb00] transition-all duration-500 group"><div className="w-14 h-14 md:w-16 md:h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center text-[#111111] text-2xl md:text-3xl group-hover:bg-[#fcdb00] transition-colors">{dept === 'VAPES' && <i className="fas fa-wind"></i>}{dept === 'THC' && <i className="fas fa-leaf"></i>}{dept === 'TECNOLOGÍA' && <i className="fas fa-microchip"></i>}{dept === 'LIFESTYLE' && <i className="fas fa-star"></i>}{dept === 'BIENESTAR' && <i className="fas fa-fire"></i>}{!['VAPES', 'THC', 'TECNOLOGÍA', 'LIFESTYLE', 'BIENESTAR'].includes(dept) && <i className="fas fa-box"></i>}</div><span className="font-bold text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-[#111111] group-hover:text-black transition-colors font-poppins">{dept}</span></div>))}</div></div>
+              <main className="flex-grow px-4 md:px-8 pt-10 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full"><div className="md:hidden relative mb-12 reveal-on-scroll"><i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" placeholder="Buscar productos, marcas..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] pl-12 pr-6 py-4 rounded-2xl text-sm font-bold outline-none focus:border-[#fcdb00] focus:bg-white transition-all placeholder:text-gray-400 font-poppins" /></div><div className="mb-16 reveal-on-scroll"><h3 className="font-bebas text-2xl text-[#111111] mb-4 pl-2">Explorar la tienda</h3><div className="flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">{departments.map(dept => (<div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-white/70 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-[#fcdb00] transition-all duration-500 group"><div className="w-14 h-14 md:w-16 md:h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center text-[#111111] text-2xl md:text-3xl group-hover:bg-[#fcdb00] transition-colors">{dept === 'VAPES' && <i className="fas fa-wind"></i>}{dept === 'THC' && <i className="fas fa-leaf"></i>}{dept === 'TECNOLOGÍA' && <i className="fas fa-microchip"></i>}{dept === 'LIFESTYLE' && <i className="fas fa-star"></i>}{dept === 'BIENESTAR' && <i className="fas fa-fire"></i>}{!['VAPES', 'THC', 'TECNOLOGÍA', 'LIFESTYLE', 'BIENESTAR'].includes(dept) && <i className="fas fa-box"></i>}</div><span className="font-bold text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-[#111111] group-hover:text-black transition-colors font-poppins">{dept}</span></div>))}</div></div>
                  {homeSections.length === 0 ? (<div className="text-center py-20"><div className="w-12 h-12 border-4 border-[#f2f2f2] border-t-[#fcdb00] rounded-full animate-spin mx-auto mb-4"></div><p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest font-poppins">Preparando vidriera...</p></div>) : (
                      homeSections.map((sec, sectionIndex) => {
                          const secProducts = sec.productIds?.map(pid => products.find(p => p.id === pid)).filter(Boolean) || [];
                          if(secProducts.length === 0) return null;
-                         return (<div key={sec.id} className="mb-20 animate-in fade-in slide-in-from-bottom-10 duration-1000" style={{animationDelay: `${sectionIndex * 200}ms`}}><div className="flex justify-between items-end mb-6 pl-2 border-b-2 border-[#f2f2f2] pb-3"><h2 className="text-4xl md:text-6xl font-bebas text-[#111111] tracking-wide uppercase"><i className={`fas ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'} mr-3 drop-shadow-sm`}></i>{sec.title}</h2><button onClick={() => navigateTo('catalog')} className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#111111] hover:text-[#fcdb00] transition-colors bg-white/50 px-5 py-2.5 rounded-full border border-white hover:border-[#f2f2f2]">Ver Catálogo <i className="fas fa-arrow-right"></i></button></div>
+                         return (<div key={sec.id} className="mb-20 reveal-on-scroll"><div className="flex justify-between items-end mb-6 pl-2 border-b-2 border-[#f2f2f2] pb-3"><h2 className="text-4xl md:text-6xl font-bebas text-[#111111] tracking-wide uppercase"><i className={`fas ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'} mr-3 drop-shadow-sm`}></i>{sec.title}</h2><button onClick={() => navigateTo('catalog')} className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#111111] hover:text-[#fcdb00] transition-colors bg-white/50 px-5 py-2.5 rounded-full border border-white hover:border-[#f2f2f2]">Ver Catálogo <i className="fas fa-arrow-right"></i></button></div>
                          <div className={sec.layout === 'vertical' ? "flex flex-wrap gap-3 md:gap-5" : "flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-8 snap-x mask-image-gradient pr-8"}>{secProducts.map((p, index) => renderProductCard(p, index, true, sec.layout))}</div>
                          <button onClick={() => navigateTo('catalog')} className="md:hidden w-full mt-2 bg-white/70 backdrop-blur-xl border border-white shadow-sm text-[#111111] py-4 rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform font-poppins">Explorar más <i className="fas fa-arrow-right text-[#fcdb00]"></i></button></div>)
                      })
@@ -291,7 +372,7 @@ export default function Home() {
           {selectedProduct && (<div className="fixed inset-0 z-[80] flex items-end md:items-center justify-center p-4 sm:p-6"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-xl transition-opacity" onClick={() => setSelectedProduct(null)}></div><div className="relative bg-[#f2f2f2] w-full max-w-4xl rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-500 flex flex-col md:flex-row max-h-[90vh] border border-white/20"><button onClick={() => setSelectedProduct(null)} className="absolute top-6 right-6 z-10 w-10 h-10 bg-white/80 backdrop-blur-2xl border border-white text-[#111111] rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-lg"><i className="fas fa-times text-lg"></i></button><div className="w-full md:w-1/2 bg-white p-8 flex items-center justify-center relative min-h-[350px] border-r border-[#f2f2f2]">{selectedProduct.tag && <span className="absolute top-8 left-8 bg-[#111111] text-[#fcdb00] font-bebas text-sm px-4 py-1.5 uppercase tracking-wider rounded-sm shadow-lg z-10">{selectedProduct.tag}</span>}<img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full max-h-[450px] object-contain drop-shadow-2xl animate-in scale-95 duration-700 ease-out mix-blend-multiply" /></div><div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center overflow-y-auto bg-[#f2f2f2]"><p className="text-[#fcdb00] font-bebas uppercase tracking-wider text-xl mb-1 drop-shadow-sm">{selectedProduct.category}</p><h2 className="text-5xl md:text-6xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-6">{selectedProduct.name}</h2><p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed whitespace-pre-line font-poppins">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p><div className="mt-auto border-t border-gray-300 pt-8"><p className="text-[#111111] font-bebas text-5xl md:text-6xl tracking-wide mb-8 drop-shadow-sm">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}</p>{selectedProduct.inStock === false ? ( <button disabled className="w-full bg-gray-300 text-gray-500 py-4 text-lg font-bebas uppercase tracking-wider rounded-xl cursor-not-allowed border border-gray-400">Producto Agotado</button> ) : ( <button onClick={() => addToCart(selectedProduct)} className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] py-4 text-xl font-bebas uppercase tracking-wider rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95"><i className="fas fa-shopping-cart text-lg mb-0.5"></i> Agregar a la bolsa</button> )}</div></div></div></div>)}
 
           {isCartOpen && (<div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} /><div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] h-[90vh] md:max-h-[85vh] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-500 flex flex-col pb-safe"><div className="p-6 border-b border-gray-300 flex justify-between items-center bg-white sticky top-0 z-10"><div><h2 className="text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest font-poppins">{getTotalItems()} artículos seleccionados</p></div><button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-[#f2f2f2] rounded-full text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex items-center justify-center shadow-sm border border-gray-200"><i className="fas fa-times text-lg"></i></button></div><div className="overflow-y-auto p-4 md:p-6 flex-grow no-scrollbar"><div className="space-y-3 mb-10">{cart.length === 0 && (<div className="text-center py-20 bg-white/50 rounded-2xl border border-dashed border-gray-300"><div className="w-16 h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><i className="fas fa-shopping-bag text-2xl text-gray-400"></i></div><p className="text-gray-400 font-bold text-xs uppercase tracking-widest font-poppins">Tu bolsa está vacía</p></div>)}{cart.map(item => (<div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-[#f2f2f2]"><div className="flex items-center gap-4"><div className="w-16 h-16 bg-[#f2f2f2] rounded-xl overflow-hidden flex items-center justify-center p-1"><img src={item.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex flex-col"><p className="font-bebas text-lg uppercase tracking-wide max-w-[130px] md:max-w-[180px] line-clamp-1 text-[#111111]">{item.name}</p><p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1 bg-gray-100 w-fit px-2 py-0.5 rounded-sm font-poppins">{item.qty} un.</p></div></div><div className="flex items-center gap-4 pr-2"><p className="font-bebas text-[#fcdb00] text-2xl tracking-wide">${formatPrice(item.qty * getUnitPromoPrice(item))}</p><div className="flex flex-col items-center gap-1.5 bg-[#f2f2f2] rounded-md p-1.5 border border-gray-200"><button onClick={() => changeQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-plus text-[10px]"></i></button><button onClick={() => changeQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-minus text-[10px]"></i></button></div></div></div>))}</div>{cart.length > 0 && (<div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100"><div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]"><p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-user-circle text-[#fcdb00] text-xl"></i> Tus Datos</p><div className="flex flex-col gap-3 font-poppins"><input type="text" placeholder="Nombre completo" value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" /><input type="tel" placeholder="Número de WhatsApp" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" /></div></div><div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]"><p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-map-marked-alt text-[#fcdb00] text-xl"></i> Entrega</p><div className="flex gap-2 mb-5 bg-[#f2f2f2] p-1.5 rounded-xl border border-gray-200 font-poppins"><button onClick={() => setDeliveryMethod('retiro')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryMethod === 'retiro' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Retiro Local</button><button onClick={() => setDeliveryMethod('envio')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryMethod === 'envio' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Envío Domicilio</button></div>{deliveryMethod === 'envio' && (<div className="flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-300 font-poppins"><input type="text" placeholder="Dirección completa" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" /><input type="text" placeholder="Barrio / Localidad / CP" value={zone} onChange={(e) => setZone(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" /></div>)}</div></div>)}</div>{cart.length > 0 && (<div className="p-6 bg-white border-t border-gray-200 sticky bottom-0 z-20"><div className="flex justify-between items-end mb-4"><span className="font-bold text-gray-500 text-[10px] uppercase tracking-widest font-poppins">Total a Pagar</span><span className="font-bebas text-5xl text-[#111111] tracking-wide leading-none drop-shadow-sm"><span className="text-[#fcdb00] text-3xl mr-1.5">{CONFIG.currencySymbol}</span>{formatPrice(calculateTotal())}</span></div><button onClick={handleCheckout} disabled={isSending} className={`w-full ${isSending ? 'bg-gray-300 text-gray-500 border-none' : 'bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)] active:scale-95'} font-bebas py-4 rounded-xl uppercase tracking-wider text-xl flex justify-center items-center gap-3 transition-all duration-300`}>{isSending ? <><i className="fas fa-circle-notch fa-spin text-lg"></i> Procesando...</> : <><i className="fab fa-whatsapp text-2xl mb-0.5"></i> Confirmar Pedido</>}</button></div>)}</div></div>)}
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    </div>
-  );
-}
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+        </div>
+      );
+    }
