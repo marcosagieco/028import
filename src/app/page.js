@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, setDoc, increment, query, orderBy, limit } from "firebase/firestore";
@@ -14,7 +14,6 @@ const CONFIG = {
   shippingText: "Pedime te llega en 30'⏰",
 };
 
-// LISTA LIMPIA DE FÁBRICA (Sin Labubu ni Termos)
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante.", cardSize: "normal" },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto.", cardSize: "normal" },
@@ -93,23 +92,10 @@ export default function Home() {
   
   const [user, setUser] = useState(null);
   const [fomoData, setFomoData] = useState(null);
-  
   const [isSending, setIsSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
-
-  // ⚠️ TIENDA ABIERTA AL PÚBLICO
-  const MAINTENANCE_MODE = false; 
-  const [isBypassed, setIsBypassed] = useState(false);
-  const [checkingMaintenance, setCheckingMaintenance] = useState(true);
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('admin') === 'true') { localStorage.setItem('adminBypass', 'true'); }
-    if (localStorage.getItem('adminBypass') === 'true') { setIsBypassed(true); }
-    setCheckingMaintenance(false);
-  }, []);
 
   const departments = useMemo(() => [...new Set(products.map(p => p.department).filter(Boolean))], [products]);
   const uniqueCategories = useMemo(() => {
@@ -141,24 +127,35 @@ export default function Home() {
     return () => { clearTimeout(timeoutId); observer.disconnect(); }
   }, [currentView, activeFilter, products, searchTerm, homeSections]);
 
-  // Motor FOMO
+  // --- MOTOR FOMO 100% REAL EN TIEMPO REAL ---
+  const isFirstLoad = useRef(true);
   useEffect(() => {
     if (!firebaseRefs.db) return;
-    const qFomo = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'), limit(15));
+    
+    // Escuchamos SOLO los últimos pedidos
+    const qFomo = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'), limit(1));
     const unsubscribeFomo = onSnapshot(qFomo, (snap) => {
-        const recent = snap.docs.map(d => d.data()).filter(o => o.clientName && o.items?.length > 0);
-        if (recent.length > 0) {
-            let i = 0;
-            const interval = setInterval(() => {
-                const o = recent[i % recent.length];
-                const firstName = o.clientName.split(' ')[0];
-                setFomoData({ name: firstName, product: o.items[0].name });
-                setTimeout(() => setFomoData(null), 6000);
-                i++;
-            }, 45000); 
-            return () => clearInterval(interval);
+        // Evitamos que salte la notificación ni bien carga la página con un pedido viejo
+        if (isFirstLoad.current) {
+            isFirstLoad.current = false;
+            return;
         }
+
+        // Si hay un cambio y es porque se AGREGÓ un pedido nuevo
+        snap.docChanges().forEach((change) => {
+            if (change.type === "added") {
+                const o = change.doc.data();
+                if (o.clientName && o.items?.length > 0) {
+                    const firstName = o.clientName.split(' ')[0]; // Sacamos solo el primer nombre
+                    setFomoData({ name: firstName, product: o.items[0].name });
+                    
+                    // Desaparece a los 6 segundos y NO SE REPITE
+                    setTimeout(() => setFomoData(null), 6000);
+                }
+            }
+        });
     });
+
     return () => unsubscribeFomo();
   }, [firebaseRefs.db]);
 
@@ -278,7 +275,7 @@ export default function Home() {
           <div className="mt-auto pt-3"><p className={`text-[#fcdb00] font-bebas ${priceClass} mb-4 tracking-wide drop-shadow-sm`}>{CONFIG.currencySymbol}{formatPrice(p.price)}</p>
             {isOutOfStock ? ( <button disabled className="w-full bg-[#f2f2f2] text-gray-400 py-3 font-bebas text-[14px] uppercase tracking-wider rounded-xl cursor-not-allowed">Agotado</button> ) : inCart ? (
               <div className="flex items-center justify-between bg-[#fcdb00] text-[#111111] h-11 rounded-xl font-bold px-1.5 shadow-md"><button className="w-12 h-full flex items-center justify-center hover:text-black transition-colors" onClick={() => changeQty(p.id, -1)}><i className="fas fa-minus text-xs"></i></button><span className="font-bebas text-lg pt-1">{inCart.qty}</span><button className="w-12 h-full flex items-center justify-center hover:text-black transition-colors" onClick={() => addToCart(p)}><i className="fas fa-plus text-xs"></i></button></div>
-            ) : ( <button onClick={(e) => addToCart(p, e)} className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] hover:shadow-lg hover:shadow-[#fcdb00]/30 py-3 font-bebas text-[16px] uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center justify-center gap-2"><i className="fas fa-shopping-bag text-xs mb-0.5"></i> Añadir</button> )}
+            ) : ( <button onClick={(e) => addToCart(p, e)} className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] py-3 font-bebas text-[16px] uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center justify-center gap-2"><i className="fas fa-shopping-bag text-xs mb-0.5"></i> Añadir</button> )}
           </div>
         </div>
       </div>
@@ -305,26 +302,8 @@ export default function Home() {
     return (<div className="min-h-screen py-16 px-4 md:py-24"><div className="max-w-3xl mx-auto bg-white/70 backdrop-blur-2xl p-8 md:p-16 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-white animate-in fade-in slide-in-from-bottom-8 duration-700"><button onClick={() => navigateTo('home')} className="mb-10 text-[#111111] hover:text-[#fcdb00] transition-colors flex items-center gap-2 font-bold text-xs uppercase tracking-widest font-poppins"><i className="fas fa-arrow-left"></i> Volver a la Tienda</button><div className="text-center mb-16"><span className="text-[#fcdb00] font-bebas uppercase tracking-widest text-lg mb-2 block drop-shadow-sm">{pageData.subtitle}</span><h1 className="text-5xl md:text-6xl font-bebas text-[#111111] uppercase tracking-wide">{pageData.title}</h1><div className="w-24 h-1.5 bg-[#fcdb00] mx-auto mt-6 rounded-full"></div></div><div className="prose prose-gray max-w-none font-poppins">{pageData.body}</div></div></div>);
   };
 
+  // Esto desactiva el cartel de mantenimiento para que la web sea 100% pública
   if (checkingMaintenance) return null;
-
-  if (MAINTENANCE_MODE && !isBypassed) {
-    return (
-      <div className="min-h-screen bg-[#f2f2f2] flex flex-col items-center justify-center p-6 selection:bg-[#fcdb00] selection:text-[#111111]">
-        <style dangerouslySetInnerHTML={{__html: `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;700;900&display=swap'); .font-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; } .font-poppins { font-family: 'Poppins', sans-serif; }`}} />
-        <div className="max-w-md w-full bg-white/70 backdrop-blur-2xl p-10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-white text-center animate-in fade-in zoom-in-95 duration-700">
-          <div className="w-20 h-20 bg-[#111111] rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-xl"><i className="fas fa-hammer text-[#fcdb00] text-3xl"></i></div>
-          <span className="text-[#fcdb00] font-bebas uppercase tracking-widest text-lg mb-2 block drop-shadow-sm">028 IMPORT</span>
-          <h1 className="text-4xl font-bebas text-[#111111] uppercase tracking-wide mb-4">En Mantenimiento</h1>
-          <p className="text-gray-500 text-sm font-medium leading-relaxed mb-8 font-poppins">Estamos mejorando nuestra plataforma para ofrecerte una experiencia de compra de élite. Volvemos en breve.</p>
-          <div className="mt-8 pt-8 border-t border-gray-200/60">
-            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-4 font-poppins">¿Consultas o pedidos manuales?</p>
-            <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="w-full bg-[#25D366] text-white hover:bg-[#1ebe5d] py-4 rounded-xl font-bebas text-xl uppercase tracking-wider shadow-[0_10px_20px_rgba(37,211,102,0.3)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95"><i className="fab fa-whatsapp text-2xl mb-0.5"></i> Escribinos al WhatsApp</a>
-          </div>
-        </div>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-      </div>
-    );
-  }
 
   return (
     <div className="bg-[#f2f2f2] text-[#111111] font-poppins flex flex-col relative pb-20 md:pb-0 min-h-screen selection:bg-[#fcdb00] selection:text-[#111111]">
@@ -347,24 +326,24 @@ export default function Home() {
       {/* NOTIFICACIONES TOAST GENERALES */}
       {toastMessage && (<div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-[#111111]/90 backdrop-blur-xl text-white px-6 py-4 rounded-full shadow-[0_20px_40px_rgba(252,219,0,0.2)] border border-[#fcdb00]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">{toastMessage}</div>)}
       
-      {/* --- NUEVO: EFECTO FOMO (NOTIFICACIÓN DE VENTA EN VIVO) --- */}
+      {/* --- EFECTO FOMO 100% REAL --- */}
       {fomoData && (
         <div className="fixed bottom-24 left-4 md:bottom-8 md:left-8 z-[100] bg-[#111111]/95 backdrop-blur-md text-white p-3 md:p-4 rounded-2xl shadow-2xl border border-[#fcdb00]/30 flex items-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-500 hover:scale-105 transition-transform cursor-default">
           <div className="w-10 h-10 bg-[#fcdb00] rounded-full flex items-center justify-center text-[#111111] text-lg shadow-inner"><i className="fas fa-fire"></i></div>
           <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest font-poppins">¡Alguien acaba de comprar!</span>
-            <span className="font-bebas text-lg md:text-xl tracking-wide uppercase leading-none mt-0.5 text-[#fcdb00]"><span className="text-white">{fomoData.name}</span> llevó {fomoData.product}</span>
+            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest font-poppins">¡Venta en Vivo!</span>
+            <span className="font-bebas text-lg md:text-xl tracking-wide uppercase leading-none mt-0.5 text-[#fcdb00]"><span className="text-white">{fomoData.name}</span> compró {fomoData.product}</span>
           </div>
         </div>
       )}
       
       <header className="bg-[#111111] text-white h-[72px] sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 shadow-lg border-b border-white/5 transition-all duration-300"><button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#fcdb00] transition-colors p-2"><i className="fas fa-bars"></i></button><div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3 cursor-pointer group" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}><img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" /></div><button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#fcdb00] transition-colors"><i className="fas fa-shopping-bag text-2xl"></i>{getTotalItems() > 0 && (<span className="absolute top-1.5 -right-1 bg-[#fcdb00] text-[#111111] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-[#111111]">{getTotalItems()}</span>)}</button></header>
 
-      {isMenuOpen && (<div className="fixed inset-0 z-[90] flex"><div className="absolute inset-0 bg-[#111111]/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div><div className="w-[85%] max-w-[380px] bg-[#f2f2f2] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden"><div className="p-8 bg-[#111111] flex justify-between items-center text-white border-b border-white/10"><span className="font-bebas text-3xl tracking-wide uppercase">028<span className="text-[#fcdb00]">MENU</span></span><button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times text-lg"></i></button></div><div className="flex-1 overflow-y-auto pb-8"><div className="flex flex-col p-4 space-y-2"><button onClick={() => { setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); }} className="text-left p-5 bg-white rounded-2xl shadow-sm border border-[#f2f2f2] font-black uppercase text-sm hover:border-[#fcdb00] hover:shadow-md flex justify-between items-center transition-all">Catálogo Completo <i className="fas fa-arrow-right text-[#fcdb00]"></i></button><div className="pt-6 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Departamentos</p></div>{departments.map(dept => { const isExpanded = expandedDept === dept; const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category))); return (<div key={dept} className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] overflow-hidden transition-all"><button onClick={() => setExpandedDept(isExpanded ? null : dept)} className="w-full text-left p-5 font-black uppercase text-sm flex justify-between items-center transition-colors group">{dept} <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-gray-300 group-hover:text-[#fcdb00] transition-colors`}></i></button><div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="bg-gray-50 flex flex-col pb-4 pt-2 border-t border-gray-100"><button onClick={() => { setActiveFilter({dept, cat: 'all'}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-black text-xs text-[#111111] uppercase hover:text-[#fcdb00] transition-colors flex items-center gap-2"><i className="fas fa-layer-group text-gray-400"></i> Ver todo en {dept}</button>{deptCats.map(cat => (<button key={cat} onClick={() => { setActiveFilter({dept, cat}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-bold text-xs text-gray-500 uppercase hover:text-[#111111] transition-colors pl-12 relative before:content-[''] before:w-1.5 before:h-1.5 before:bg-gray-300 before:rounded-full before:absolute before:left-7 before:top-1/2 before:-translate-y-1/2 hover:before:bg-[#fcdb00]">{cat}</button>))}</div></div></div>); })}<div className="pt-8 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Información Útil</p></div><div className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] p-2 space-y-1"><button onClick={() => {setCurrentView('nosotros'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-users"></i></div> Quiénes Somos</button><button onClick={() => {setCurrentView('envios'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-truck"></i></div> Envíos y Logística</button><button onClick={() => {setCurrentView('pagos'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-credit-card"></i></div> Medios de Pago</button><button onClick={() => {setCurrentView('terminos'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-gray-400"><i className="fas fa-file-contract"></i></div> Legales y Términos</button></div></div></div></div></div>)}
+      {/* MENÚ LATERAL (Sin Login por ahora) */}
+      {isMenuOpen && (<div className="fixed inset-0 z-[90] flex"><div className="absolute inset-0 bg-[#111111]/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div><div className="w-[85%] max-w-[380px] bg-[#f2f2f2] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden"><div className="p-8 bg-[#111111] flex justify-between items-center text-white border-b border-white/10"><span className="font-bebas text-3xl tracking-wide uppercase">028<span className="text-[#fcdb00]">MENU</span></span><button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times text-lg"></i></button></div><div className="flex-1 overflow-y-auto pb-8"><div className="flex flex-col p-4 space-y-2"><button onClick={() => { setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); }} className="text-left p-5 bg-white rounded-2xl shadow-sm border border-[#f2f2f2] font-black uppercase text-sm hover:border-[#fcdb00] hover:shadow-md flex justify-between items-center transition-all">Catálogo Completo <i className="fas fa-arrow-right text-[#fcdb00]"></i></button><div className="pt-6 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Departamentos</p></div>{departments.map(dept => { const isExpanded = expandedDept === dept; const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category))); return (<div key={dept} className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] overflow-hidden transition-all"><button onClick={() => setExpandedDept(isExpanded ? null : dept)} className="w-full text-left p-5 font-black uppercase text-sm flex justify-between items-center transition-colors group">{dept} <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-gray-300 group-hover:text-[#fcdb00] transition-colors`}></i></button><div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="bg-gray-50 flex flex-col pb-4 pt-2 border-t border-gray-100"><button onClick={() => { setActiveFilter({dept, cat: 'all'}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-black text-xs text-[#111111] uppercase hover:text-[#fcdb00] transition-colors flex items-center gap-2"><i className="fas fa-layer-group text-gray-400"></i> Ver todo en {dept}</button>{deptCats.map(cat => (<button key={cat} onClick={() => { setActiveFilter({dept, cat}); navigateTo('catalog'); setTimeout(() => { const target = document.getElementById(slugify(cat)); if(target) target.scrollIntoView({behavior: 'smooth'}); }, 300); }} className="text-left px-6 py-3 font-bold text-xs text-gray-500 uppercase hover:text-[#111111] transition-colors pl-12 relative before:content-[''] before:w-1.5 before:h-1.5 before:bg-gray-300 before:rounded-full before:absolute before:left-7 before:top-1/2 before:-translate-y-1/2 hover:before:bg-[#fcdb00]">{cat}</button>))}</div></div></div>); })}<div className="pt-8 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Información Útil</p></div><div className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] p-2 space-y-1"><button onClick={() => {setCurrentView('nosotros'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-users"></i></div> Quiénes Somos</button><button onClick={() => {setCurrentView('envios'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-truck"></i></div> Envíos y Logística</button><button onClick={() => {setCurrentView('pagos'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-credit-card"></i></div> Medios de Pago</button><button onClick={() => {setCurrentView('terminos'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-gray-400"><i className="fas fa-file-contract"></i></div> Legales y Términos</button></div></div></div></div></div>)}
 
       {currentView === 'home' ? (
         <>
-          {/* BANNER 100% LIMPIO: SIN DIFUMINADO NI LETRAS */}
           <header className="relative w-full h-[35vh] md:h-[55vh] flex items-center justify-center bg-[#111111] overflow-hidden border-b border-[#111111]">
             <img src={CONFIG.bannerImage} alt="Banner 028" className="absolute inset-0 w-full h-full object-cover" />
           </header>
@@ -383,7 +362,20 @@ export default function Home() {
         </>
       ) : currentView === 'catalog' ? (
         <>
-          <div className="bg-white/80 backdrop-blur-2xl sticky top-[72px] z-40 border-b border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] pt-3 pb-3 transition-all duration-300"><div className="max-w-7xl mx-auto px-4 md:px-8"><div className="flex items-center gap-3 mb-3"><button onClick={() => navigateTo('home')} className="text-gray-400 hover:text-[#111111] text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5"><i className="fas fa-home"></i> Inicio</button><span className="text-gray-300 text-[10px]"><i className="fas fa-chevron-right"></i></span><span className="text-[#111111] font-bold uppercase tracking-widest text-[10px]">{activeFilter.dept !== 'all' ? activeFilter.dept : 'CATÁLOGO COMPLETO'}</span></div>{uniqueCategories.length > 0 && (<div className="flex gap-2.5 overflow-x-auto no-scrollbar py-2 mask-image-gradient pr-8"><button onClick={() => {setActiveFilter({...activeFilter, cat: 'all'}); window.scrollTo(0,0);}} className={`whitespace-nowrap px-5 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${activeFilter.cat === 'all' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50'}`}>Todos</button>{uniqueCategories.map(cat => (<button key={cat} onClick={() => {setActiveFilter({...activeFilter, cat: cat}); window.scrollTo(0,0);}} className={`whitespace-nowrap px-5 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0 ${activeFilter.cat === cat ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50'}`}>{cat}</button>))}</div>)}</div></div>
+          <div className="bg-white/80 backdrop-blur-2xl sticky top-[72px] z-40 border-b border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] pt-3 pb-3 transition-all duration-300"><div className="max-w-7xl mx-auto px-4 md:px-8"><div className="flex items-center gap-3 mb-3"><button onClick={() => navigateTo('home')} className="text-gray-400 hover:text-[#111111] text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5"><i className="fas fa-home"></i> Inicio</button><span className="text-gray-300 text-[10px]"><i className="fas fa-chevron-right"></i></span><span className="text-[#111111] font-bold uppercase tracking-widest text-[10px]">{activeFilter.dept !== 'all' ? activeFilter.dept : 'CATÁLOGO COMPLETO'}</span></div>{uniqueCategories.length > 0 && (
+            
+            <div className="flex gap-2.5 overflow-x-auto no-scrollbar py-2 mask-image-gradient pr-8">
+              <button onClick={() => {setActiveFilter({...activeFilter, cat: 'all'}); window.scrollTo({top: 0, behavior: 'smooth'});}} className={`whitespace-nowrap px-5 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${activeFilter.cat === 'all' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50'}`}>Todos</button>
+              {uniqueCategories.map(cat => (
+                <button key={cat} onClick={() => {
+                  setActiveFilter({...activeFilter, cat: cat}); 
+                  const target = document.getElementById(slugify(cat));
+                  if(target) target.scrollIntoView({behavior: 'smooth'});
+                }} className={`whitespace-nowrap px-5 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0 ${activeFilter.cat === cat ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50'}`}>{cat}</button>
+              ))}
+            </div>
+
+          )}</div></div>
           <main className="flex-grow px-4 md:px-8 py-10 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full">{searchTerm && products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (<div className="text-center py-24 bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white shadow-sm"><div className="w-20 h-20 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-6"><i className="fas fa-ghost text-3xl text-gray-400"></i></div><h3 className="text-3xl font-bebas uppercase tracking-wide text-[#111111] mb-2">No encontramos nada</h3><p className="text-xs uppercase tracking-widest text-gray-500 font-poppins">Intenta buscar otro sabor o marca.</p></div>)}{uniqueCategories.map(cat => renderProductSection(cat))}</main>
         </>
       ) : ( <main className="flex-grow">{renderLegalPage()}</main> )}
