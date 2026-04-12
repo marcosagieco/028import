@@ -302,9 +302,6 @@ export default function Home() {
     return (<div className="min-h-screen py-16 px-4 md:py-24"><div className="max-w-3xl mx-auto bg-white/70 backdrop-blur-2xl p-8 md:p-16 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-white animate-in fade-in slide-in-from-bottom-8 duration-700"><button onClick={() => navigateTo('home')} className="mb-10 text-[#111111] hover:text-[#fcdb00] transition-colors flex items-center gap-2 font-bold text-xs uppercase tracking-widest font-poppins"><i className="fas fa-arrow-left"></i> Volver a la Tienda</button><div className="text-center mb-16"><span className="text-[#fcdb00] font-bebas uppercase tracking-widest text-lg mb-2 block drop-shadow-sm">{pageData.subtitle}</span><h1 className="text-5xl md:text-6xl font-bebas text-[#111111] uppercase tracking-wide">{pageData.title}</h1><div className="w-24 h-1.5 bg-[#fcdb00] mx-auto mt-6 rounded-full"></div></div><div className="prose prose-gray max-w-none font-poppins">{pageData.body}</div></div></div>);
   };
 
-  // Esto desactiva el cartel de mantenimiento para que la web sea 100% pública
-  if (checkingMaintenance) return null;
-
   return (
     <div className="bg-[#f2f2f2] text-[#111111] font-poppins flex flex-col relative pb-20 md:pb-0 min-h-screen selection:bg-[#fcdb00] selection:text-[#111111]">
       <style dangerouslySetInnerHTML={{__html: `
