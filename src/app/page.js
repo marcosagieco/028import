@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, setDoc, increment } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, setDoc, increment, query, orderBy, limit } from "firebase/firestore";
 
 const CONFIG = {
   brandName: "028", 
@@ -14,6 +14,7 @@ const CONFIG = {
   shippingText: "Pedime te llega en 30'⏰",
 };
 
+// LISTA LIMPIA DE FÁBRICA (Sin Labubu ni Termos)
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante.", cardSize: "normal" },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto.", cardSize: "normal" },
@@ -52,29 +53,25 @@ const initialProducts = [
   { id: 45, name: "MIAMI MINT", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yWqpSNmv/Lost-mary-20000-MIAMI-MINT.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
   { id: 46, name: "STRAWBERRY ICE", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/zDLJWPw3/Lost-mary-20000-STRAWBERRY-ICE.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
   { id: 47, name: "STRAWBERRY KIWI", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/59Hxvk5q/Lost-mary-20000-STRAWBERRY-KIWI.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 18, name: "BLOW THC", price: 55000, department: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp", description: "Dispositivo de alta pureza.", cardSize: "medium" },
-  { id: 19, name: "TORCH 7.5G", price: 53000, department: "THC", category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png", description: "Extracto premium.", cardSize: "normal" },
-  { id: 20, name: "PHENOM 6G", price: 56000, department: "THC", category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg", description: "Dispositivo premium.", cardSize: "large" },
+  { id: 18, name: "BLOW THC", price: 55000, department: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp", description: "Dispositivo de alta pureza con extracciones premium.", cardSize: "medium" },
+  { id: 19, name: "TORCH 7.5G", price: 53000, department: "THC", category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png", description: "Capacidad extrema de 7.5G de extracto premium.", cardSize: "normal" },
   { id: 29, name: "TORCH 4.5G", price: 52500, department: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/vmFK42hC/TORCH-4-5G.jpg", description: "4.5G de puro rendimiento.", cardSize: "normal" },
-  { id: 27, name: "PLAYSTATION 5", price: 550, department: "TECNOLOGÍA", category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg", description: "PS5 Sellada.", cardSize: "large" },
-  { id: 28, name: "AIRPODS PRO", price: 35000, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg", description: "Originales con cancelación activa.", cardSize: "normal" },
-  { id: 21, name: "CARGADOR 20W", price: 16500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg", description: "Adaptador original.", cardSize: "normal" },
-  { id: 22, name: "CARGADOR 35W", price: 20500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg", description: "Adaptador dual original.", cardSize: "normal" },
-  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg", description: "Cable original.", cardSize: "normal" },
-  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg", description: "Cable original de 2 metros.", cardSize: "normal" },
-  { id: 50, name: "LABUBU V2", price: 17500, department: "LIFESTYLE", category: "Labubu", tag: "Viral", image: "https://i.postimg.cc/654362/labubu.png", description: "Muñeco coleccionable original.", cardSize: "normal" },
-  { id: 51, name: "TERMO STANLEY 1.2L", price: 85000, department: "LIFESTYLE", category: "Stanley", tag: "Original", image: "https://i.postimg.cc/placeholder/stanley.png", description: "Original con garantía de por vida.", cardSize: "medium" },
-  { id: 52, name: "MIEL ENERGY MASCULINA", price: 15000, department: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_h.png", description: "Rendimiento masculino.", cardSize: "normal" },
-  { id: 53, name: "MIEL ENERGY FEMENINA", price: 15000, department: "BIENESTAR", category: "Mieles", tag: "Hot", image: "https://i.postimg.cc/placeholder/miel_m.png", description: "Rendimiento femenino.", cardSize: "normal" }
+  { id: 20, name: "PHENOM 6G", price: 56000, department: "THC", category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg", description: "Dispositivo de grado premium cargado con 6G.", cardSize: "large" },
+  { id: 27, name: "PLAYSTATION 5", price: 550, department: "TECNOLOGÍA", category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg", description: "PlayStation 5 original en caja sellada.", cardSize: "large" },
+  { id: 28, name: "AIRPODS PRO", price: 35000, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg", description: "Auriculares inalámbricos originales con cancelación activa.", cardSize: "normal" },
+  { id: 21, name: "CARGADOR 20W", price: 16500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg", description: "Adaptador de corriente USB-C de 20W original Apple.", cardSize: "normal" },
+  { id: 22, name: "CARGADOR 35W", price: 20500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg", description: "Adaptador de corriente dual USB-C de 35W original Apple.", cardSize: "normal" },
+  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg", description: "Cable original Apple de USB-C a USB-C.", cardSize: "normal" },
+  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg", description: "Cable original Apple USB-C a Lightning de 2 metros.", cardSize: "normal" }
 ];
 
 const PAGE_CONTENT = {
-  nosotros: { title: "Quiénes Somos", subtitle: "Nuestra Historia", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>En 028 IMPORT redefinimos la experiencia de compra priorizando tu tiempo y confianza.</p></div>) },
-  envios: { title: "Logística de Envío", subtitle: "Envíos y Retiros", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Contamos con un sistema de logística optimizado.</p></div>) },
-  terminos: { title: "Términos y Condiciones", subtitle: "Legal & Políticas", body: (<div className="space-y-8 leading-relaxed text-sm md:text-base font-poppins"><p>El uso de la plataforma se rige por los presentes términos.</p></div>) },
-  privacidad: { title: "Política de Privacidad", subtitle: "Protección de Datos", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>La confidencialidad es nuestra prioridad.</p></div>) },
-  pagos: { title: "Medios de Pago", subtitle: "Transacciones Seguras", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Procesamos los pagos por fuera de la web por seguridad.</p></div>) },
-  arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Plazo de 10 días para revocación.</p></div>) }
+  nosotros: { title: "Quiénes Somos", subtitle: "Nuestra Historia", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>En 028 IMPORT redefinimos la experiencia de compra priorizando tu tiempo y confianza. Somos especialistas en la importación y comercialización de productos premium.</p></div>) },
+  envios: { title: "Logística de Envío", subtitle: "Envíos y Retiros", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Contamos con un sistema de logística optimizado para que recibas tus productos de la manera más rápida y segura posible.</p></div>) },
+  terminos: { title: "Términos y Condiciones", subtitle: "Legal & Políticas", body: (<div className="space-y-8 leading-relaxed text-sm md:text-base font-poppins"><p>El acceso y uso de la plataforma 028 IMPORT se rige por los presentes Términos y Condiciones.</p></div>) },
+  privacidad: { title: "Política de Privacidad", subtitle: "Protección de Datos", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>En 028 IMPORT, la salvaguarda y confidencialidad de su información personal es una absoluta prioridad.</p></div>) },
+  pagos: { title: "Medios de Pago", subtitle: "Transacciones Seguras", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Procesamos los pagos por fuera de la plataforma web, evitando que usted deba ingresar datos sensibles en línea.</p></div>) },
+  arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de 10 días corridos.</p></div>) }
 };
 
 export default function Home() {
@@ -93,13 +90,17 @@ export default function Home() {
   const [clientPhone, setClientPhone] = useState('');
   const [address, setAddress] = useState('');
   const [zone, setZone] = useState('');
+  
   const [user, setUser] = useState(null);
+  const [fomoData, setFomoData] = useState(null);
+  
   const [isSending, setIsSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  const MAINTENANCE_MODE = true; 
+  // ⚠️ TIENDA ABIERTA AL PÚBLICO
+  const MAINTENANCE_MODE = false; 
   const [isBypassed, setIsBypassed] = useState(false);
   const [checkingMaintenance, setCheckingMaintenance] = useState(true);
 
@@ -127,6 +128,7 @@ export default function Home() {
     } catch (error) { return { auth: null, db: null }; }
   }, []);
 
+  // Animaciones Apple
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach((entry) => { if (entry.isIntersecting) entry.target.classList.add("is-visible"); });
@@ -139,13 +141,39 @@ export default function Home() {
     return () => { clearTimeout(timeoutId); observer.disconnect(); }
   }, [currentView, activeFilter, products, searchTerm, homeSections]);
 
+  // Motor FOMO
+  useEffect(() => {
+    if (!firebaseRefs.db) return;
+    const qFomo = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'), limit(15));
+    const unsubscribeFomo = onSnapshot(qFomo, (snap) => {
+        const recent = snap.docs.map(d => d.data()).filter(o => o.clientName && o.items?.length > 0);
+        if (recent.length > 0) {
+            let i = 0;
+            const interval = setInterval(() => {
+                const o = recent[i % recent.length];
+                const firstName = o.clientName.split(' ')[0];
+                setFomoData({ name: firstName, product: o.items[0].name });
+                setTimeout(() => setFomoData(null), 6000);
+                i++;
+            }, 45000); 
+            return () => clearInterval(interval);
+        }
+    });
+    return () => unsubscribeFomo();
+  }, [firebaseRefs.db]);
+
+  // Auth Anónima y Db Sync
   useEffect(() => {
     const handleFocus = () => setIsSending(false);
     window.addEventListener('focus', handleFocus); window.addEventListener('pageshow', handleFocus);
+    
     if (firebaseRefs.auth && firebaseRefs.db) {
-      signInAnonymously(firebaseRefs.auth).catch(console.error);
-      onAuthStateChanged(firebaseRefs.auth, (u) => setUser(u));
-      onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
+      const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (u) => {
+        setUser(u);
+        if (!u) { signInAnonymously(firebaseRefs.auth).catch(console.error); }
+      });
+
+      const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
           setProducts(prev => {
@@ -159,8 +187,10 @@ export default function Home() {
           });
         }
       });
-      onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
-      onSnapshot(collection(firebaseRefs.db, 'home_sections'), (s) => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
+      const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
+      const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (s) => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
+      
+      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
     }
   }, [firebaseRefs]);
 
@@ -193,18 +223,30 @@ export default function Home() {
     if (!clientName.trim() || !clientPhone.trim()) { showToast("⚠️ Completá tu Nombre y Teléfono."); return; }
     if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) { showToast("⚠️ Completá dirección y localidad."); return; }
     setIsSending(true);
+    
     const finalTotal = calculateTotal();
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
     cart.forEach(i => { msg += `- ${i.qty}x ${i.name} ($${formatPrice(getUnitPromoPrice(i))} c/u)\n`; });
     msg += `\n*TOTAL: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n\n`;
+    
     if (deliveryMethod === 'envio') {
         msg += `*ENVÍO:* ${address}, ${zone}\n`;
         if (shippingType === 'flash') msg += `*TIPO DE ENVÍO:* 🚀 Flash (Menos de 30' - Solo Transferencia)`;
         else msg += `*TIPO DE ENVÍO:* 🛵 Motomensajería (Menos de 1:30hr - Efectivo o Transf)`;
     } else { msg += `*RETIRO LOCAL*`; }
+
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+    
     try { 
-        if (firebaseRefs.db) { await addDoc(collection(firebaseRefs.db, 'orders'), { userId: user?.uid || "anon", clientName, clientPhone, items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPromoPrice(i) })), total: finalTotal, delivery: deliveryMethod, address, zone, shippingOption: deliveryMethod === 'envio' ? shippingType : null, status: 'pending', createdAt: serverTimestamp() }); } 
+        if (firebaseRefs.db) { 
+            await addDoc(collection(firebaseRefs.db, 'orders'), { 
+                userId: user?.uid || "anon", clientName, clientPhone, 
+                items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPromoPrice(i) })), 
+                total: finalTotal, delivery: deliveryMethod, address, zone, 
+                shippingOption: deliveryMethod === 'envio' ? shippingType : null,
+                status: 'pending', createdAt: serverTimestamp() 
+            }); 
+        } 
         setTimeout(() => { window.location.href = whatsappUrl; }, 400); 
     } catch (e) { window.location.href = whatsappUrl; }
   };
@@ -302,7 +344,19 @@ export default function Home() {
         }
       `}} />
       
+      {/* NOTIFICACIONES TOAST GENERALES */}
       {toastMessage && (<div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-[#111111]/90 backdrop-blur-xl text-white px-6 py-4 rounded-full shadow-[0_20px_40px_rgba(252,219,0,0.2)] border border-[#fcdb00]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">{toastMessage}</div>)}
+      
+      {/* --- NUEVO: EFECTO FOMO (NOTIFICACIÓN DE VENTA EN VIVO) --- */}
+      {fomoData && (
+        <div className="fixed bottom-24 left-4 md:bottom-8 md:left-8 z-[100] bg-[#111111]/95 backdrop-blur-md text-white p-3 md:p-4 rounded-2xl shadow-2xl border border-[#fcdb00]/30 flex items-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-500 hover:scale-105 transition-transform cursor-default">
+          <div className="w-10 h-10 bg-[#fcdb00] rounded-full flex items-center justify-center text-[#111111] text-lg shadow-inner"><i className="fas fa-fire"></i></div>
+          <div className="flex flex-col">
+            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest font-poppins">¡Alguien acaba de comprar!</span>
+            <span className="font-bebas text-lg md:text-xl tracking-wide uppercase leading-none mt-0.5 text-[#fcdb00]"><span className="text-white">{fomoData.name}</span> llevó {fomoData.product}</span>
+          </div>
+        </div>
+      )}
       
       <header className="bg-[#111111] text-white h-[72px] sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 shadow-lg border-b border-white/5 transition-all duration-300"><button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#fcdb00] transition-colors p-2"><i className="fas fa-bars"></i></button><div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3 cursor-pointer group" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}><img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" /></div><button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#fcdb00] transition-colors"><i className="fas fa-shopping-bag text-2xl"></i>{getTotalItems() > 0 && (<span className="absolute top-1.5 -right-1 bg-[#fcdb00] text-[#111111] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-[#111111]">{getTotalItems()}</span>)}</button></header>
 
