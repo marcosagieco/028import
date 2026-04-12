@@ -25,55 +25,54 @@ const AVAILABLE_ICONS = [
   { id: 'fa-award', color: 'text-indigo-500' }    
 ];
 
-// LISTA LIMPIA: SIN LABUBU, STANLEY NI MIELES
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante.", cardSize: "normal" },
-  { id: 2, name: "BLUE RAZZ ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto.", cardSize: "normal" },
-  { id: 3, name: "CHERRY FUSE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png", description: "Fusión explosiva de cerezas dulces y jugosas.", cardSize: "normal" },
-  { id: 4, name: "CHERRY STRAZZ", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Destacado", image: "https://i.postimg.cc/7PFVsTG2/CHERRY-STRAZZ.jpg", description: "Una deliciosa combinación de cereza y fresa con sutiles notas cítricas.", cardSize: "medium" },
-  { id: 5, name: "DOUBLE APPLE ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QN9mJqtk/DOUBLE-APPLE-ICE.webp", description: "Intenso sabor a doble manzana, dulce y ácida.", cardSize: "normal" },
-  { id: 6, name: "DRAGON STRAWNANA", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/9X6p8qRB/DRAGON-STRAWNANA.png", description: "Exótico mix de pitahaya, fresa y plátano.", cardSize: "normal" },
-  { id: 7, name: "GRAPE ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/hPV0HPTw/GRAPE-ICE.webp", description: "Auténtico sabor a uva dulce.", cardSize: "normal" },
-  { id: 8, name: "MANGO MAGIC", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Best Seller", image: "https://i.postimg.cc/tCFzLCFC/MANGO-MAGIC.png", description: "La magia del mango maduro y jugoso.", cardSize: "normal" },
-  { id: 9, name: "PEACH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/4xZ1Zk1f/PEACH.webp", description: "Puro sabor a durazno aterciopelado y dulce.", cardSize: "normal" },
-  { id: 10, name: "SCARY BERRY", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/K8F5FS5D/SCARY-BERRY.png", description: "Misteriosa y atrapante mezcla de bayas silvestres oscuras.", cardSize: "normal" },
-  { id: 11, name: "SOUR LUSH GUMMY", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/P54Q536R/SOUR-LUSH-GUMMY.png", description: "El divertido sabor de las gomitas dulces con un toque ácido.", cardSize: "normal" },
-  { id: 12, name: "STRAWBERRY DRAGON FRUIT", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QMdk9QwW/STRAWBERRY-DRAGON-FRUIT.png", description: "Combinación vibrante de fresas maduras y exótica fruta del dragón.", cardSize: "normal" },
-  { id: 13, name: "STRAWBERRY ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/7Lt1gCrC/STRAWBERRY-ICE.png", description: "Fresas recién recolectadas bañadas en una brisa helada.", cardSize: "normal" },
-  { id: 14, name: "STRAWBERRY WATERMELON", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/MG30ycJD/STRAWBERRY-WATERMELON.webp", description: "La clásica e infalible mezcla de fresa y sandía.", cardSize: "normal" },
-  { id: 15, name: "SUMMER SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png", description: "Un cóctel frutal que captura la esencia del verano en cada calada.", cardSize: "normal" },
-  { id: 16, name: "TIGERS BLOOD", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg", description: "Famosa mezcla de sandía y fresa con un exótico y suave toque de coco.", cardSize: "normal" },
-  { id: 17, name: "WATERMELON ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp", description: "Todo el jugo y la dulzura de la sandía con un impacto extra helado.", cardSize: "normal" },
-  { id: 25, name: "SOUR APPLE ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg", description: "Manzana verde crujiente y ácida envuelta en una ráfaga de frío.", cardSize: "normal" },
-  { id: 26, name: "MIAMI MINT", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg", description: "Menta sofisticada estilo Miami: fresca, dulce pero con presencia.", cardSize: "normal" },
-  { id: 30, name: "BLUE RAZZ LEMON", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Jh48hT4x/ignite-v400-BLUE-RAZZ-LEMON.jpg", description: "Dispositivo ultracompacto y premium de Ignite.", cardSize: "normal" },
-  { id: 31, name: "CHERRY WATERMELON", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/nLRJ9vCd/ignite-v400-cherry-watermelon.jpg", description: "Diseño elegante característico de Ignite.", cardSize: "normal" },
-  { id: 32, name: "GRAPE", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/0QzqYbSv/ignite-v400-GRAPE.jpg", description: "Sabor a uva puro y directo.", cardSize: "normal" },
-  { id: 33, name: "MIAMI MINT", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/gJ1bNmyJ/ignite-v400-miami-mint.jpg", description: "Menta premium y refrescante en el formato más cómodo.", cardSize: "normal" },
-  { id: 34, name: "PASSION FRUIT", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/vT9FKkXt/Ignite-v400-PASSION-FRUIT.jpg", description: "El toque ácido y exótico del maracuyá en cada calada.", cardSize: "normal" },
-  { id: 35, name: "STRAWBERRY WATERMELON", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/FFJ41kmG/Ignite-v400-STRAWBERR-WATERMELON.jpg", description: "Dulce, frutal y perfectamente balanceado.", cardSize: "normal" },
-  { id: 36, name: "STRAWBERRY KIWI", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Hsw19GrJ/ignite-v400-STRAWBERRY-KIWI.jpg", description: "Fresa dulce combinada con el toque tropical del kiwi.", cardSize: "normal" },
-  { id: 37, name: "STRAWBERRY", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/cLdyDD35/ignite-v400-strawberry.jpg", description: "Auténtico sabor a fresa de principio a fin.", cardSize: "normal" },
-  { id: 38, name: "TUTTI FRUTI", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/mgVxKQ3v/ignite-v400-TUTI-FRUTI.jpg", description: "Explosión de golosinas frutales en un vaporizador compacto.", cardSize: "normal" },
-  { id: 39, name: "BLUE RAZZ ICE", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yYk7mpF9/Lost-mary-20000-BLUE-RAZZ-ICE.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 40, name: "GRAPE ICE", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05VC/Lost-mary-20000-GRAPE-ICE.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 41, name: "ICE MINT", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05V5/lost-mary-20000-ICE-MINT.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 42, name: "LIME GRAPE FRUIT", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/7LqcVbpW/Lost-mary-20000-LIME-GRAPE-FRUIT.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 43, name: "MANGO TWIST", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/8CwYnNGc/Lost-mary-20000-MANGO-TWIST.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 44, name: "MEXICAN MANGO", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/bvL5FpPx/Lost-mary-20000-MEXICAN-MANGO.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 45, name: "MIAMI MINT", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yWqpSNmv/Lost-mary-20000-MIAMI-MINT.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 46, name: "STRAWBERRY ICE", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/zDLJWPw3/Lost-mary-20000-STRAWBERRY-ICE.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 47, name: "STRAWBERRY KIWI", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/59Hxvk5q/Lost-mary-20000-STRAWBERRY-KIWI.jpg", description: "El dispositivo Lost Mary con 20000 caladas.", cardSize: "normal" },
-  { id: 18, name: "BLOW THC", price: 55000, department: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp", description: "Dispositivo de alta pureza con extracciones premium.", cardSize: "medium" },
-  { id: 19, name: "TORCH 7.5G", price: 53000, department: "THC", category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png", description: "Capacidad extrema de 7.5G de extracto premium.", cardSize: "normal" },
-  { id: 29, name: "TORCH 4.5G", price: 52500, department: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/vmFK42hC/TORCH-4-5G.jpg", description: "4.5G de puro rendimiento.", cardSize: "normal" },
-  { id: 20, name: "PHENOM 6G", price: 56000, department: "THC", category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg", description: "Dispositivo de grado premium cargado con 6G.", cardSize: "large" },
-  { id: 27, name: "PLAYSTATION 5", price: 550, department: "TECNOLOGÍA", category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg", description: "PlayStation 5 original en caja sellada.", cardSize: "large" },
-  { id: 28, name: "AIRPODS PRO", price: 35000, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg", description: "Auriculares inalámbricos 100% originales con cancelación activa.", cardSize: "normal" },
-  { id: 21, name: "CARGADOR 20W", price: 16500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg", description: "Adaptador de corriente USB-C de 20W original Apple.", cardSize: "normal" },
-  { id: 22, name: "CARGADOR 35W", price: 20500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg", description: "Adaptador de corriente dual USB-C de 35W original Apple.", cardSize: "normal" },
-  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg", description: "Cable original Apple de USB-C a USB-C.", cardSize: "normal" },
-  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg", description: "Cable original Apple USB-C a Lightning de 2 metros.", cardSize: "normal" }
+  { id: 2, name: "BLUE RAZZ ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "Sabor a frambuesa azul combinado con un golpe helado.", cardSize: "normal" },
+  { id: 3, name: "CHERRY FUSE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/yd5PzDfx/CHERRY-FUSE.png", description: "Fusión explosiva de cerezas dulces.", cardSize: "normal" },
+  { id: 4, name: "CHERRY STRAZZ", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Destacado", image: "https://i.postimg.cc/7PFVsTG2/CHERRY-STRAZZ.jpg", description: "Cereza y fresa con notas cítricas.", cardSize: "medium" },
+  { id: 5, name: "DOUBLE APPLE ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QN9mJqtk/DOUBLE-APPLE-ICE.webp", description: "Sabor a doble manzana, dulce y ácida.", cardSize: "normal" },
+  { id: 6, name: "DRAGON STRAWNANA", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/9X6p8qRB/DRAGON-STRAWNANA.png", description: "Mix de pitahaya, fresa y plátano.", cardSize: "normal" },
+  { id: 7, name: "GRAPE ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/hPV0HPTw/GRAPE-ICE.webp", description: "Sabor a uva dulce.", cardSize: "normal" },
+  { id: 8, name: "MANGO MAGIC", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Best Seller", image: "https://i.postimg.cc/tCFzLCFC/MANGO-MAGIC.png", description: "Mango maduro y jugoso.", cardSize: "normal" },
+  { id: 9, name: "PEACH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/4xZ1Zk1f/PEACH.webp", description: "Puro sabor a durazno.", cardSize: "normal" },
+  { id: 10, name: "SCARY BERRY", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/K8F5FS5D/SCARY-BERRY.png", description: "Mezcla de bayas silvestres oscuras.", cardSize: "normal" },
+  { id: 11, name: "SOUR LUSH GUMMY", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/P54Q536R/SOUR-LUSH-GUMMY.png", description: "Gomitas dulces con un toque ácido.", cardSize: "normal" },
+  { id: 12, name: "STRAWBERRY DRAGON FRUIT", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/QMdk9QwW/STRAWBERRY-DRAGON-FRUIT.png", description: "Fresas maduras y fruta del dragón.", cardSize: "normal" },
+  { id: 13, name: "STRAWBERRY ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/7Lt1gCrC/STRAWBERRY-ICE.png", description: "Fresas con brisa helada.", cardSize: "normal" },
+  { id: 14, name: "STRAWBERRY WATERMELON", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/MG30ycJD/STRAWBERRY-WATERMELON.webp", description: "Mezcla de fresa y sandía.", cardSize: "normal" },
+  { id: 15, name: "SUMMER SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png", description: "Cóctel frutal de verano.", cardSize: "normal" },
+  { id: 16, name: "TIGERS BLOOD", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg", description: "Sandía, fresa y un toque de coco.", cardSize: "normal" },
+  { id: 17, name: "WATERMELON ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp", description: "Sandía con impacto extra helado.", cardSize: "normal" },
+  { id: 25, name: "SOUR APPLE ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg", description: "Manzana verde crujiente y fría.", cardSize: "normal" },
+  { id: 26, name: "MIAMI MINT", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg", description: "Menta sofisticada estilo Miami.", cardSize: "normal" },
+  { id: 30, name: "BLUE RAZZ LEMON", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Jh48hT4x/ignite-v400-BLUE-RAZZ-LEMON.jpg", description: "Ignite ultracompacto.", cardSize: "normal" },
+  { id: 31, name: "CHERRY WATERMELON", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/nLRJ9vCd/ignite-v400-cherry-watermelon.jpg", description: "Ignite cherry watermelon.", cardSize: "normal" },
+  { id: 32, name: "GRAPE", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/0QzqYbSv/ignite-v400-GRAPE.jpg", description: "Ignite sabor uva.", cardSize: "normal" },
+  { id: 33, name: "MIAMI MINT", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/gJ1bNmyJ/ignite-v400-miami-mint.jpg", description: "Ignite menta premium.", cardSize: "normal" },
+  { id: 34, name: "PASSION FRUIT", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/vT9FKkXt/Ignite-v400-PASSION-FRUIT.jpg", description: "Ignite maracuyá.", cardSize: "normal" },
+  { id: 35, name: "STRAWBERRY WATERMELON", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/FFJ41kmG/Ignite-v400-STRAWBERR-WATERMELON.jpg", description: "Ignite fresa sandía.", cardSize: "normal" },
+  { id: 36, name: "STRAWBERRY KIWI", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Hsw19GrJ/ignite-v400-STRAWBERRY-KIWI.jpg", description: "Ignite fresa kiwi.", cardSize: "normal" },
+  { id: 37, name: "STRAWBERRY", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/cLdyDD35/ignite-v400-strawberry.jpg", description: "Ignite sabor fresa.", cardSize: "normal" },
+  { id: 38, name: "TUTTI FRUTI", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/mgVxKQ3v/ignite-v400-TUTI-FRUTI.jpg", description: "Ignite tutti fruti.", cardSize: "normal" },
+  { id: 39, name: "BLUE RAZZ ICE", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yYk7mpF9/Lost-mary-20000-BLUE-RAZZ-ICE.jpg", description: "Lost Mary 20000 caladas.", cardSize: "normal" },
+  { id: 40, name: "GRAPE ICE", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05VC/Lost-mary-20000-GRAPE-ICE.jpg", description: "Lost Mary sabor uva.", cardSize: "normal" },
+  { id: 41, name: "ICE MINT", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/wTZg05V5/lost-mary-20000-ICE-MINT.jpg", description: "Lost Mary menta helada.", cardSize: "normal" },
+  { id: 42, name: "LIME GRAPE FRUIT", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/7LqcVbpW/Lost-mary-20000-LIME-GRAPE-FRUIT.jpg", description: "Lost Mary lima pomelo.", cardSize: "normal" },
+  { id: 43, name: "MANGO TWIST", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/8CwYnNGc/Lost-mary-20000-MANGO-TWIST.jpg", description: "Lost Mary mango twist.", cardSize: "normal" },
+  { id: 44, name: "MEXICAN MANGO", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/bvL5FpPx/Lost-mary-20000-MEXICAN-MANGO.jpg", description: "Lost Mary mango mexicano.", cardSize: "normal" },
+  { id: 45, name: "MIAMI MINT", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/yWqpSNmv/Lost-mary-20000-MIAMI-MINT.jpg", description: "Lost Mary Miami Mint.", cardSize: "normal" },
+  { id: 46, name: "STRAWBERRY ICE", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/zDLJWPw3/Lost-mary-20000-STRAWBERRY-ICE.jpg", description: "Lost Mary fresa helada.", cardSize: "normal" },
+  { id: 47, name: "STRAWBERRY KIWI", price: 23000, department: "VAPES", category: "Lost Mary 20000", tag: "", image: "https://i.postimg.cc/59Hxvk5q/Lost-mary-20000-STRAWBERRY-KIWI.jpg", description: "Lost Mary fresa kiwi.", cardSize: "normal" },
+  { id: 18, name: "BLOW THC", price: 55000, department: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/x1WJwWsR/Blow-THC.webp", description: "Pureza premium.", cardSize: "medium" },
+  { id: 19, name: "TORCH 7.5G", price: 53000, department: "THC", category: "Vapes THC", tag: "", image: "https://i.postimg.cc/hvdP1jnd/TORCH-7-5G.png", description: "Extracto premium de 7.5G.", cardSize: "normal" },
+  { id: 29, name: "TORCH 4.5G", price: 52500, department: "THC", category: "Vapes THC", tag: "Nuevo", image: "https://i.postimg.cc/vmFK42hC/TORCH-4-5G.jpg", description: "Rendimiento de 4.5G.", cardSize: "normal" },
+  { id: 20, name: "PHENOM 6G", price: 56000, department: "THC", category: "Vapes THC", tag: "Destacado", image: "https://i.postimg.cc/QMGwnJ7B/PHENOM-6G.jpg", description: "Grado premium de 6G.", cardSize: "large" },
+  { id: 27, name: "PLAYSTATION 5", price: 550, department: "TECNOLOGÍA", category: "PlayStation", tag: "USD", image: "https://i.postimg.cc/RFGS0Wzt/PLAY-5.jpg", description: "PS5 en caja sellada.", cardSize: "large" },
+  { id: 28, name: "AIRPODS PRO", price: 35000, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Nuevo", image: "https://i.postimg.cc/X7gzDt0p/AIRPODS-PRO.jpg", description: "Auriculares inalámbricos Apple.", cardSize: "normal" },
+  { id: 21, name: "CARGADOR 20W", price: 16500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/zvy6LthF/power-adapter-20w.jpg", description: "USB-C 20W original.", cardSize: "normal" },
+  { id: 22, name: "CARGADOR 35W", price: 20500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "Potente", image: "https://i.postimg.cc/NFKSyJXZ/power-adapter-35w.jpg", description: "Dual USB-C 35W original.", cardSize: "normal" },
+  { id: 23, name: "CABLE USB-C A USB-C", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/V6WZJy5B/usb-c-cable.jpg", description: "Original Apple USB-C.", cardSize: "normal" },
+  { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg", description: "Original Apple Lightning 2m.", cardSize: "normal" }
 ];
 
 const initialHomeSections = [
@@ -104,13 +103,8 @@ export default function AdminPage() {
     const clientsMap = new Map();
     orders.forEach(o => {
       if (o.clientPhone && o.clientName) {
-        if (!clientsMap.has(o.clientPhone)) {
-          clientsMap.set(o.clientPhone, { name: o.clientName, phone: o.clientPhone, orderCount: 1, lastOrder: o.createdAt });
-        } else {
-          const existing = clientsMap.get(o.clientPhone);
-          existing.orderCount += 1;
-          if (o.createdAt > existing.lastOrder) existing.lastOrder = o.createdAt;
-        }
+        if (!clientsMap.has(o.clientPhone)) { clientsMap.set(o.clientPhone, { name: o.clientName, phone: o.clientPhone, orderCount: 1, lastOrder: o.createdAt }); } 
+        else { const ex = clientsMap.get(o.clientPhone); ex.orderCount += 1; if (o.createdAt > ex.lastOrder) ex.lastOrder = o.createdAt; }
       }
     });
     return Array.from(clientsMap.values()).sort((a, b) => b.lastOrder - a.lastOrder);
@@ -135,90 +129,68 @@ export default function AdminPage() {
   useEffect(() => {
     if (!firebaseRefs.auth || !firebaseRefs.db) return;
     signInAnonymously(firebaseRefs.auth).catch(console.error);
-    const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (user) => {
+    onAuthStateChanged(firebaseRefs.auth, (user) => {
       if (!user) return;
-      const qOrders = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'));
-      const unsubscribeOrders = onSnapshot(qOrders, (snapshot) => { setOrders(snapshot.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); });
-      
-      const unsubscribeProducts = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
-        if (!snapshot.empty) {
-          const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
+      onSnapshot(query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc')), (snap) => { setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); });
+      onSnapshot(collection(firebaseRefs.db, 'products'), (snap) => {
+        if (!snap.empty) {
+          const dbProducts = snap.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
           setProducts(prev => {
              const updatedInitial = initialProducts.map(p => { 
                const match = dbProducts.find(dbP => dbP.id === p.id); 
                if (match && match.isDeleted) return null; 
-               return match ? { ...p, ...match, inStock: match.inStock, price: match.price !== undefined ? match.price : p.price, order: match.order !== undefined ? match.order : 99, description: match.description !== undefined ? match.description : p.description, isHidden: match.isHidden, department: match.department !== undefined ? match.department : p.department, cardSize: match.cardSize || p.cardSize || 'normal', clicks: match.clicks || 0 } : { ...p, inStock: true, order: 99, isHidden: false, cardSize: p.cardSize || 'normal', clicks: 0 }; 
+               return match ? { ...p, ...match } : { ...p, inStock: true, order: 99, isHidden: false, cardSize: 'normal', clicks: 0 }; 
              }).filter(Boolean); 
-             
              const newFromDb = dbProducts.filter(dbP => !initialProducts.find(p => p.id === dbP.id) && !dbP.isDeleted).map(dbP => ({...dbP, isHidden: dbP.isHidden || false, cardSize: dbP.cardSize || 'normal', clicks: dbP.clicks || 0})); 
-             
              return [...updatedInitial, ...newFromDb].sort((a, b) => (a.order || 99) - (b.order || 99));
           });
         }
       });
-      
-      const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (snapshot) => { setPromos(!snapshot.empty ? snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) : []); });
-      const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (snapshot) => { setHomeSections(!snapshot.empty ? snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() })).sort((a, b) => a.order - b.order) : []); });
-      return () => { unsubscribeOrders(); unsubscribeProducts(); unsubscribePromos(); unsubscribeHomeSections(); };
+      onSnapshot(collection(firebaseRefs.db, 'promos'), (snap) => setPromos(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []));
+      onSnapshot(collection(firebaseRefs.db, 'home_sections'), (snap) => setHomeSections(!snap.empty ? snap.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
     });
-    return () => unsubscribeAuth();
   }, [firebaseRefs]);
 
-  const createHomeSection = async () => { if(!newSectionTitle.trim()) return alert("Escribí un título para la sección"); try { const newId = `sec_${Date.now()}`; await setDoc(doc(firebaseRefs.db, 'home_sections', newId), { id: newId, title: newSectionTitle.toUpperCase(), icon: newSectionIcon.id, iconColor: newSectionIcon.color, layout: newSectionLayout, productIds: [], order: homeSections.length + 1, createdAt: serverTimestamp() }); setNewSectionTitle(''); setNewSectionIcon(AVAILABLE_ICONS[0]); setNewSectionLayout('horizontal'); } catch(err) { alert("Error al crear sección: " + err.message); } };
-  const deleteHomeSection = async (sectionId) => { if(!confirm("¿Borrar esta sección de la vidriera?")) return; try { await deleteDoc(doc(firebaseRefs.db, 'home_sections', sectionId)); } catch(err) { alert("Error al borrar: " + err.message); } };
-  const addProductToSection = async (sectionId, productId) => { if(!productId) return; try { const section = homeSections.find(s => s.dbId === sectionId); if(!section) return; const currentProducts = section.productIds || []; if(currentProducts.includes(productId)) return alert("El producto ya está en esta sección"); await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: [...currentProducts, productId] }, { merge: true }); } catch(err) { alert("Error al agregar producto."); } };
-  const removeProductFromSection = async (sectionId, productId) => { try { const section = homeSections.find(s => s.dbId === sectionId); if(!section) return; const currentProducts = section.productIds || []; await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: currentProducts.filter(id => id !== productId) }, { merge: true }); } catch(err) { alert("Error al quitar producto."); } };
-  const toggleSectionLayout = async (section) => { try { const newLayout = section.layout === 'vertical' ? 'horizontal' : 'vertical'; await setDoc(doc(firebaseRefs.db, 'home_sections', section.dbId), { layout: newLayout }, { merge: true }); } catch(err) { alert("Error al cambiar formato."); } };
-  const updateCardSize = async (product, newSize) => { try { const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`); await setDoc(productRef, { id: product.id, cardSize: newSize }, { merge: true }); } catch (err) { alert("Error al cambiar el tamaño del producto."); } };
+  // --- FUNCIONES DE ACTUALIZACIÓN ---
+  const updatePrice = async (product, newPrice) => { const price = parseInt(newPrice); if(isNaN(price) || price < 0) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, price: price }, { merge: true }); } catch(err) { alert("Error"); } }
+  const updateName = async (product, newName) => { const name = newName.trim().toUpperCase(); if(!name) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, name: name }, { merge: true }); } catch(err) { alert("Error"); } }
+  
+  // NUEVA FUNCIÓN: ACTUALIZAR IMAGEN
+  const updateImage = async (product, newImageUrl) => { 
+    const url = newImageUrl.trim(); 
+    if(!url) return; 
+    try { 
+        await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, image: url }, { merge: true }); 
+    } catch(err) { alert("Error al actualizar la imagen."); } 
+  }
+
+  const updateOrder = async (product, newOrder) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, order: parseInt(newOrder) }, { merge: true }); } catch(err) { alert("Error"); } }
+  const updateDescription = async (product, newDesc) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, description: newDesc.trim() }, { merge: true }); } catch(err) { alert("Error"); } }
+  const updateCardSize = async (product, newSize) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, cardSize: newSize }, { merge: true }); } catch (err) { alert("Error"); } };
+  const updateCategoryDepartment = async (categoryName, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept) return; try { const prods = products.filter(p => p.category === categoryName); await Promise.all(prods.map(p => setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, department: dept }, { merge: true }))); } catch (err) { alert("Error"); } }
+  
+  const toggleStock = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, inStock: product.inStock === false }, { merge: true }); } catch (err) { alert("Error"); } };
+  const toggleVisibility = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, isHidden: !product.isHidden }, { merge: true }); } catch (err) { alert("Error"); } };
+  const handleDeleteProduct = async (product) => { if(!confirm(`Eliminar "${product.name}"?`)) return; try { const isHardcoded = initialProducts.some(p => p.id === product.id); const docRef = doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`); if (isHardcoded) { await setDoc(docRef, { isDeleted: true }, { merge: true }); } else { await deleteDoc(docRef); } } catch (err) { alert("Error"); } };
+
+  const createHomeSection = async () => { if(!newSectionTitle.trim()) return; try { const newId = `sec_${Date.now()}`; await setDoc(doc(firebaseRefs.db, 'home_sections', newId), { id: newId, title: newSectionTitle.toUpperCase(), icon: newSectionIcon.id, iconColor: newSectionIcon.color, layout: newSectionLayout, productIds: [], order: homeSections.length + 1, createdAt: serverTimestamp() }); setNewSectionTitle(''); } catch(err) { alert("Error"); } };
+  const deleteHomeSection = async (id) => { if(confirm("¿Borrar?")) { try { await deleteDoc(doc(firebaseRefs.db, 'home_sections', id)); } catch(err) { alert("Error"); } } };
+  const addProductToSection = async (sectionId, productId) => { try { const section = homeSections.find(s => s.dbId === sectionId); const current = section.productIds || []; if(current.includes(productId)) return; await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: [...current, productId] }, { merge: true }); } catch(err) { alert("Error"); } };
+  const removeProductFromSection = async (sectionId, productId) => { try { const section = homeSections.find(s => s.dbId === sectionId); await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: (section.productIds || []).filter(id => id !== productId) }, { merge: true }); } catch(err) { alert("Error"); } };
+  const toggleSectionLayout = async (section) => { try { await setDoc(doc(firebaseRefs.db, 'home_sections', section.dbId), { layout: section.layout === 'vertical' ? 'horizontal' : 'vertical' }, { merge: true }); } catch(err) { alert("Error"); } };
 
   const autoFillLeastClicked = async (sectionId) => {
-    if(!confirm("¿Querés reemplazar los productos de esta sección con los 10 MENOS añadidos al carrito?")) return;
+    if(!confirm("¿Autocompletar con los 10 menos clickeados?")) return;
     try {
-        const availableProducts = products.filter(p => p.inStock !== false && !p.isHidden && !p.isDeleted);
-        const sorted = availableProducts.sort((a, b) => (a.clicks || 0) - (b.clicks || 0));
-        const leastClickedIds = sorted.slice(0, 10).map(p => p.id);
-        await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: leastClickedIds }, { merge: true });
-        alert("¡Sección actualizada con éxito con los menos clickeados!");
-    } catch(err) { alert("Error al autocompletar: " + err.message); }
+        const available = products.filter(p => p.inStock !== false && !p.isHidden && !p.isDeleted);
+        const sorted = available.sort((a, b) => (a.clicks || 0) - (b.clicks || 0));
+        await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: sorted.slice(0, 10).map(p => p.id) }, { merge: true });
+    } catch(err) { alert("Error"); }
   };
+  const handleAddProduct = async (e) => { e.preventDefault(); if (!newProduct.category || !newProduct.department) return alert("Faltan datos"); setIsAdding(true); try { const newId = Date.now(); await setDoc(doc(firebaseRefs.db, 'products', `prod_${newId}`), { id: newId, name: newProduct.name.toUpperCase(), price: Number(newProduct.price), department: newProduct.department.toUpperCase(), category: newProduct.category, image: newProduct.image, tag: newProduct.tag, description: newProduct.description, cardSize: newProduct.cardSize, inStock: true, order: 99, clicks: 0, createdAt: serverTimestamp(), isHidden: false, isDeleted: false }); setNewProduct({ name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '', cardSize: 'normal' }); } catch (error) { alert("Error"); } setIsAdding(false); };
+  const handleAddPromo = async (e) => { e.preventDefault(); try { const promoId = newPromo.category.toLowerCase().replace(/\s+/g, '-'); await setDoc(doc(firebaseRefs.db, 'promos', promoId), { category: newPromo.category, minQty: Number(newPromo.minQty), totalPrice: Number(newPromo.totalPrice), createdAt: serverTimestamp() }); setNewPromo({ category: '', minQty: 2, totalPrice: '' }); } catch(err) { alert("Error"); } };
+  const handleDeletePromo = async (id) => { if(confirm("¿Eliminar?")) { try { await deleteDoc(doc(firebaseRefs.db, 'promos', id)); } catch(err) { alert("Error"); } } };
 
-  const handleAddProduct = async (e) => { e.preventDefault(); if (!newProduct.category || !newProduct.department) return alert("Categoría y departamento requeridos."); setIsAdding(true); try { const newId = Date.now(); await setDoc(doc(firebaseRefs.db, 'products', `prod_${newId}`), { id: newId, name: newProduct.name.toUpperCase(), price: Number(newProduct.price), department: newProduct.department.toUpperCase(), category: newProduct.category, image: newProduct.image, tag: newProduct.tag, description: newProduct.description, cardSize: newProduct.cardSize, inStock: true, order: 99, clicks: 0, createdAt: serverTimestamp(), isHidden: false, isDeleted: false }); alert("¡Producto agregado!"); setNewProduct({ name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '', cardSize: 'normal' }); } catch (error) { alert("Error al crear: " + error.message); } setIsAdding(false); };
-  const handleAddPromo = async (e) => { e.preventDefault(); if(!newPromo.category || !newPromo.minQty || !newPromo.totalPrice) return alert("Completa todos los campos"); try { const promoId = newPromo.category.toLowerCase().replace(/\s+/g, '-'); await setDoc(doc(firebaseRefs.db, 'promos', promoId), { category: newPromo.category, minQty: Number(newPromo.minQty), totalPrice: Number(newPromo.totalPrice), createdAt: serverTimestamp() }); alert("¡Promoción guardada!"); setNewPromo({ category: '', minQty: 2, totalPrice: '' }); } catch(err) { alert("Error al guardar promo: " + err.message); } };
-  const handleDeletePromo = async (id) => { if(confirm("¿Eliminar promoción?")) { try { await deleteDoc(doc(firebaseRefs.db, 'promos', id)); } catch(err) { alert("Error al eliminar promo: " + err.message); } } };
-  const toggleVisibility = async (product) => { try { const newHiddenStatus = !(product.isHidden); const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`); await setDoc(productRef, { id: product.id, isHidden: newHiddenStatus }, { merge: true }); } catch (err) { alert("Error al cambiar la visibilidad."); } };
-  
-  const handleDeleteProduct = async (product) => { 
-    if(!confirm(`¿Eliminar DEFINITIVAMENTE "${product.name}"?`)) return; 
-    try { 
-      const isHardcoded = initialProducts.some(p => p.id === product.id);
-      const docRef = doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`);
-      if (isHardcoded) { await setDoc(docRef, { isDeleted: true }, { merge: true }); } else { await deleteDoc(docRef); }
-    } catch (err) { alert("Error al eliminar: " + err.message); } 
-  };
-  
-  const handleDeleteCategory = async (categoryName) => { 
-    if(!confirm(`⚠️ ¿ELIMINAR categoría "${categoryName}" y todos sus productos?`)) return; 
-    try { 
-      const productsToDelete = products.filter(p => p.category === categoryName); 
-      for (const p of productsToDelete) { 
-        const isHardcoded = initialProducts.some(initP => initP.id === p.id);
-        const docRef = doc(firebaseRefs.db, 'products', p.dbId || `prod_${p.id}`);
-        if (isHardcoded) { await setDoc(docRef, { isDeleted: true }, { merge: true }); } else { await deleteDoc(docRef); }
-      } 
-      try { await deleteDoc(doc(firebaseRefs.db, 'promos', categoryName.toLowerCase().replace(/\s+/g, '-'))); } catch (e) {} 
-      alert(`Categoría eliminada.`); 
-    } catch (err) { alert("Error al eliminar la categoría: " + err.message); } 
-  };
-  
-  const toggleStock = async (product) => { try { const newStockStatus = product.inStock === false ? true : false; const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`); await setDoc(productRef, { id: product.id, name: product.name, inStock: newStockStatus, price: product.price }, { merge: true }); } catch (err) { alert("Error de permisos."); } };
-  const updatePrice = async (product, newPrice) => { const price = parseInt(newPrice); if(isNaN(price) || price < 0) return; try { const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`); await setDoc(productRef, { id: product.id, price: price }, { merge: true }); } catch(err) { alert("Error al actualizar precio."); } }
-  const updateName = async (product, newName) => { const name = newName.trim().toUpperCase(); if(!name) return; try { const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`); await setDoc(productRef, { id: product.id, name: name }, { merge: true }); } catch(err) { alert("Error al actualizar nombre."); } }
-  const updateOrder = async (product, newOrder) => { const orderNum = parseInt(newOrder); if(isNaN(orderNum)) return; try { const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`); await setDoc(productRef, { id: product.id, order: orderNum }, { merge: true }); } catch(err) { alert("Error al actualizar posición."); } }
-  const updateDescription = async (product, newDesc) => { const desc = newDesc.trim(); try { const productRef = doc(firebaseRefs.db, 'products', `prod_${product.id}`); await setDoc(productRef, { id: product.id, description: desc }, { merge: true }); } catch(err) { alert("Error al actualizar descripción."); } }
-  const updateCategoryDepartment = async (categoryName, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept) return; try { const productsToUpdate = products.filter(p => p.category === categoryName); await Promise.all(productsToUpdate.map(p => { const productRef = doc(firebaseRefs.db, 'products', `prod_${p.id}`); return setDoc(productRef, { id: p.id, department: dept }, { merge: true }); })); } catch (err) { alert("Error al actualizar el departamento."); } }
-  const completeOrder = async (id) => { if (confirm("¿Confirmas que el pedido fue entregado?")) { try { await updateDoc(doc(firebaseRefs.db, 'orders', id), { status: 'completed' }); } catch (err) { alert("Error al completar."); } } };
-  const deleteOrder = async (id) => { if (confirm("¿Eliminar pedido permanentemente?")) { try { await deleteDoc(doc(firebaseRefs.db, 'orders', id)); } catch (err) { alert("Error al eliminar."); } } };
-  
   const syncAllProducts = async () => { 
       if (confirm("¿Sincronizar Catálogo y Restaurar Secciones?")) { 
           setLoading(true); 
@@ -235,7 +207,11 @@ export default function AdminPage() {
       } 
   };
 
+  const completeOrder = async (id) => { if (confirm("¿Confirmas que el pedido fue entregado?")) { try { await updateDoc(doc(firebaseRefs.db, 'orders', id), { status: 'completed' }); } catch (err) { alert("Error"); } } };
+  const deleteOrder = async (id) => { if (confirm("¿Eliminar pedido permanentemente?")) { try { await deleteDoc(doc(firebaseRefs.db, 'orders', id)); } catch (err) { alert("Error"); } } };
+
   const filteredOrders = orders.filter(o => o.status !== 'completed');
+
   // --- BRANDBOOK COLORS FOR ADMIN ---
   const theme = {
     bg: darkMode ? 'bg-[#111111]' : 'bg-[#f2f2f2]',
@@ -252,7 +228,6 @@ export default function AdminPage() {
   };
 
   const renderStockGroup = (categoryFilter) => {
-    // Filtramos para no mostrar los eliminados (zombies)
     const group = products.filter(p => p.category === categoryFilter && !p.isDeleted);
     if (group.length === 0) return null;
     const currentDept = group[0]?.department || "SIN DEPTO";
@@ -300,6 +275,11 @@ export default function AdminPage() {
                                   <span className={`w-fit text-[9px] font-bold uppercase px-2 py-0.5 rounded-sm border font-poppins flex items-center gap-1 ${darkMode ? 'bg-[#222] border-[#444] text-[#fcdb00]' : 'bg-gray-100 border-gray-200 text-[#b8952a]'}`} title="Cantidad de veces que intentaron añadirlo al carrito"><i className="fas fa-mouse-pointer"></i> Clicks: {p.clicks || 0}</span>
                                 </div>
                                 <textarea defaultValue={p.description || ""} placeholder="Escribe la biografía o descripción del producto aquí..." className={`w-full mt-3 text-[11px] p-3 rounded-xl outline-none transition-colors border focus:border-[#fcdb00] focus:ring-1 focus:ring-[#fcdb00] resize-none font-poppins ${darkMode ? 'bg-[#222222] border-[#333333] text-gray-300 placeholder-gray-500' : 'bg-[#f2f2f2] border-transparent text-gray-600 placeholder-gray-400'}`} rows="2" onBlur={(e) => { if (e.target.value !== (p.description || "")) { updateDescription(p, e.target.value); } }} title="Haz clic para editar la biografía" />
+                                {/* NUEVO: CAMPO PARA EDITAR URL DE IMAGEN */}
+                                <div className="flex items-center gap-2 mt-2 w-full">
+                                    <i className="fas fa-link text-gray-400 text-[10px]"></i>
+                                    <input type="url" defaultValue={p.image} placeholder="URL de la imagen (Ej: https://i.ibb.co/...)" className={`w-full text-[10px] p-2 rounded-lg outline-none transition-colors border focus:border-[#fcdb00] focus:ring-1 focus:ring-[#fcdb00] font-poppins ${darkMode ? 'bg-[#222222] border-[#333333] text-gray-300 placeholder-gray-500' : 'bg-[#f2f2f2] border-transparent text-gray-600 placeholder-gray-400'}`} onBlur={(e) => { if (e.target.value !== p.image) { updateImage(p, e.target.value); } }} onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }} title="Pegá acá el link directo de ImgBB y tocá afuera para guardar" />
+                                </div>
                             </div>
                         </div>
                         <div className="flex flex-col lg:flex-row items-center gap-2 flex-shrink-0 mt-1">
@@ -339,8 +319,8 @@ export default function AdminPage() {
         {activeTab === 'clientes' && (<div className="animate-in fade-in duration-500"><div className="flex justify-between items-end mb-8"><div><h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Tu Base</h2><p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Directorio CRM</p></div><span className="bg-[#fcdb00] text-[#111111] text-[11px] font-bold px-4 py-2 rounded-lg shadow-sm">{clientsList.length} Registros</span></div>{clientsList.length === 0 ? (<div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}><i className="fas fa-users text-gray-300 text-5xl mb-6"></i><p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">Aún no hay clientes registrados</p></div>) : (<div className="grid grid-cols-1 md:grid-cols-2 gap-4">{clientsList.map((client, index) => (<div key={index} className={`${theme.card} p-6 rounded-[1.5rem] shadow-sm border flex flex-col gap-4 hover:border-[#fcdb00]/50 transition-all`}><div className="flex items-center gap-4"><div className="w-14 h-14 rounded-full bg-[#111111] text-[#fcdb00] flex items-center justify-center text-2xl font-bebas shadow-md uppercase pt-1">{client.name.charAt(0)}</div><div><h4 className="font-bebas tracking-wide text-2xl uppercase leading-none mb-1">{client.name}</h4><p className="text-gray-500 font-bold text-xs"><i className="fas fa-phone text-[10px] mr-1.5 text-[#fcdb00]"></i> {client.phone}</p></div></div><div className="flex justify-between items-center mt-2 border-t pt-4 dark:border-[#333333]"><span className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">{client.orderCount} Pedido{client.orderCount > 1 ? 's' : ''}</span><a href={`https://wa.me/${client.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="bg-[#25D366] text-white text-[11px] font-bold px-5 py-2.5 rounded-lg uppercase tracking-widest flex items-center gap-2 hover:bg-[#1ebe5d] transition-all shadow-md"><i className="fab fa-whatsapp text-sm"></i> Escribir</a></div></div>))}</div>)}</div>)}
 
         {activeTab === 'pendientes' && (<div className="animate-in fade-in duration-500"><div className="flex justify-between items-end mb-8"><div><h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Activos</h2><p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Nuevos pedidos</p></div><span className="bg-[#111111] text-[#fcdb00] text-[11px] font-bold px-4 py-2 rounded-lg shadow-sm">{filteredOrders.length} PENDIENTES</span></div>{filteredOrders.length === 0 ? (<div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}><i className="fas fa-receipt text-gray-300 text-5xl mb-6"></i><p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">No hay pedidos pendientes</p></div>) : (<div className="grid gap-6">{filteredOrders.map((order) => (<div key={order.id} className={`${theme.card} rounded-[2rem] shadow-sm border p-6 md:p-8 hover:shadow-lg transition-all duration-300 ${theme.cardHover}`}><div className="flex justify-between items-start mb-6"><div className="flex items-center gap-4"><div className="bg-[#fcdb00] text-[#111111] w-14 h-14 rounded-2xl flex items-center justify-center font-bebas text-3xl shadow-sm pt-1">{order.items?.reduce((a, b) => a + b.qty, 0)}</div><div><span className="text-[10px] font-bold text-[#b8952a] uppercase tracking-widest block mb-0.5">ID: {order.id.slice(-6).toUpperCase()}</span><p className="text-gray-500 text-[11px] font-bold">{order.createdAt ? order.createdAt.toDate().toLocaleString('es-AR') : 'Procesando...'}</p></div></div><div className="flex gap-2"><button onClick={() => completeOrder(order.id)} className={`${darkMode ? 'bg-[#333] text-white hover:bg-green-600' : 'bg-gray-100 text-gray-600 hover:bg-green-500 hover:text-white'} w-12 h-12 rounded-xl transition-all flex items-center justify-center shadow-sm`}><i className="fas fa-check text-lg"></i></button><button onClick={() => deleteOrder(order.id)} className={`${darkMode ? 'bg-[#333] text-white hover:bg-red-600' : 'bg-gray-100 text-gray-600 hover:bg-red-500 hover:text-white'} w-12 h-12 rounded-xl transition-all flex items-center justify-center shadow-sm`}><i className="fas fa-trash text-lg"></i></button></div></div>{order.clientName && (<div className={`mb-5 pb-5 border-b ${darkMode ? 'border-[#333333]' : 'border-gray-200'} flex items-center gap-4`}><div className="w-10 h-10 bg-[#f2f2f2] rounded-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-lg"></i></div><div><p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest leading-none mb-1">Cliente</p><p className="font-bebas text-xl tracking-wide uppercase text-[#111111] dark:text-white">{order.clientName} <span className="font-poppins font-normal text-sm text-gray-400 ml-2">({order.clientPhone})</span></p></div></div>)}<div className={`space-y-3 mb-6 p-5 rounded-2xl border ${darkMode ? 'bg-[#222] border-[#333333]' : 'bg-[#f2f2f2] border-transparent'}`}>{order.items?.map((item, idx) => (<div key={idx} className="flex justify-between items-center"><span className={`font-bold text-xs uppercase tracking-wide ${darkMode ? 'text-gray-300' : 'text-[#111111]'}`}><span className={`${darkMode ? 'text-[#fcdb00]' : 'text-[#b8952a]'} font-black mr-2 bg-white dark:bg-[#111] px-2 py-0.5 rounded`}>{item.qty}x</span> {item.name}</span><span className="text-gray-500 font-bold text-sm">${item.price?.toLocaleString('es-AR')}</span></div>))}</div>{order.delivery === 'envio' && order.address && (<div className="mb-6 p-5 bg-[#111111] text-white rounded-2xl border-l-8 border-[#fcdb00] shadow-md"><p className="text-[#fcdb00] text-[9px] font-bold uppercase mb-2 tracking-widest"><i className="fas fa-truck mr-1.5"></i> Envío a Domicilio {order.shippingOption === 'flash' ? '🚀 (FLASH)' : order.shippingOption === 'moto' ? '🛵 (MOTO)' : ''}</p><p className="uppercase font-bold text-sm mb-1">{order.address}</p><p className="text-gray-400 text-[10px] uppercase font-bold tracking-widest">{order.zone}</p></div>)}<div className={`flex justify-between items-end border-t pt-6 ${darkMode ? 'border-[#333333]' : 'border-gray-200'}`}><span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Total a pagar</span><div className={`text-4xl font-bebas tracking-wide leading-none ${darkMode ? 'text-white' : 'text-[#111111]'}`}><span className="text-[#fcdb00] text-2xl mr-1.5">$</span>{order.total?.toLocaleString('es-AR')}</div></div></div>))}</div>)}</div>)}
-          </main>
-          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-        </div>
-      );
-    }
+      </main>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    </div>
+  );
+}
