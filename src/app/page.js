@@ -14,6 +14,25 @@ const CONFIG = {
   shippingText: "Pedime te llega en 30'⏰",
 };
 
+// DICCIONARIO DE ÍCONOS PARA LEER LA BASE DE DATOS
+const DEPT_ICONS = [
+  { id: 'fa-box', prefix: 'fas' },
+  { id: 'fa-wind', prefix: 'fas' },
+  { id: 'fa-leaf', prefix: 'fas' },
+  { id: 'fa-microchip', prefix: 'fas' },
+  { id: 'fa-star', prefix: 'fas' },
+  { id: 'fa-fire', prefix: 'fas' },
+  { id: 'fa-apple', prefix: 'fab' }, // Manzanita lista para ser leída
+  { id: 'fa-mobile-alt', prefix: 'fas' },
+  { id: 'fa-laptop', prefix: 'fas' },
+  { id: 'fa-gamepad', prefix: 'fas' },
+  { id: 'fa-headphones', prefix: 'fas' },
+  { id: 'fa-gem', prefix: 'fas' },
+  { id: 'fa-tag', prefix: 'fas' },
+  { id: 'fa-cannabis', prefix: 'fas' },
+  { id: 'fa-smoking', prefix: 'fas' },
+];
+
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante.", cardSize: "normal" },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto.", cardSize: "normal" },
@@ -90,6 +109,9 @@ export default function Home() {
   const [address, setAddress] = useState('');
   const [zone, setZone] = useState('');
   
+  // NUEVO ESTADO: Diccionario para los íconos de los departamentos
+  const [deptIcons, setDeptIcons] = useState({});
+  
   const [user, setUser] = useState(null);
   const [fomoData, setFomoData] = useState(null);
   const [isSending, setIsSending] = useState(false);
@@ -114,7 +136,6 @@ export default function Home() {
     } catch (error) { return { auth: null, db: null }; }
   }, []);
 
-  // Animaciones Apple
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach((entry) => { if (entry.isIntersecting) entry.target.classList.add("is-visible"); });
@@ -127,39 +148,26 @@ export default function Home() {
     return () => { clearTimeout(timeoutId); observer.disconnect(); }
   }, [currentView, activeFilter, products, searchTerm, homeSections]);
 
-  // --- MOTOR FOMO 100% REAL EN TIEMPO REAL ---
   const isFirstLoad = useRef(true);
   useEffect(() => {
     if (!firebaseRefs.db) return;
-    
-    // Escuchamos SOLO los últimos pedidos
     const qFomo = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'), limit(1));
     const unsubscribeFomo = onSnapshot(qFomo, (snap) => {
-        // Evitamos que salte la notificación ni bien carga la página con un pedido viejo
-        if (isFirstLoad.current) {
-            isFirstLoad.current = false;
-            return;
-        }
-
-        // Si hay un cambio y es porque se AGREGÓ un pedido nuevo
+        if (isFirstLoad.current) { isFirstLoad.current = false; return; }
         snap.docChanges().forEach((change) => {
             if (change.type === "added") {
                 const o = change.doc.data();
                 if (o.clientName && o.items?.length > 0) {
-                    const firstName = o.clientName.split(' ')[0]; // Sacamos solo el primer nombre
+                    const firstName = o.clientName.split(' ')[0]; 
                     setFomoData({ name: firstName, product: o.items[0].name });
-                    
-                    // Desaparece a los 6 segundos y NO SE REPITE
                     setTimeout(() => setFomoData(null), 6000);
                 }
             }
         });
     });
-
     return () => unsubscribeFomo();
   }, [firebaseRefs.db]);
 
-  // Auth Anónima y Db Sync
   useEffect(() => {
     const handleFocus = () => setIsSending(false);
     window.addEventListener('focus', handleFocus); window.addEventListener('pageshow', handleFocus);
@@ -187,7 +195,12 @@ export default function Home() {
       const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
       const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (s) => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
       
-      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
+      // ESCUCHADOR DE ÍCONOS DE DEPARTAMENTOS
+      const unsubscribeDeptIcons = onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
+        if (snap.exists()) { setDeptIcons(snap.data().icons || {}); }
+      });
+      
+      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); unsubscribeDeptIcons(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
     }
   }, [firebaseRefs]);
 
@@ -345,12 +358,33 @@ export default function Home() {
             <img src={CONFIG.bannerImage} alt="Banner 028" className="absolute inset-0 w-full h-full object-cover" />
           </header>
           
-          <main className="flex-grow px-4 md:px-8 pt-10 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full"><div className="md:hidden relative mb-12 reveal-on-scroll"><i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" placeholder="Buscar productos, marcas..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] pl-12 pr-6 py-4 rounded-2xl text-sm font-bold outline-none focus:border-[#fcdb00] focus:bg-white transition-all placeholder:text-gray-400 font-poppins" /></div><div className="mb-16 reveal-on-scroll"><h3 className="font-bebas text-2xl text-[#111111] mb-4 pl-2">Explorar la tienda</h3><div className="flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">{departments.map(dept => (<div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-white/70 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-[#fcdb00] transition-all duration-500 group"><div className="w-14 h-14 md:w-16 md:h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center text-[#111111] text-2xl md:text-3xl group-hover:bg-[#fcdb00] transition-colors">{dept === 'VAPES' && <i className="fas fa-wind"></i>}{dept === 'THC' && <i className="fas fa-leaf"></i>}{dept === 'TECNOLOGÍA' && <i className="fas fa-microchip"></i>}{dept === 'LIFESTYLE' && <i className="fas fa-star"></i>}{dept === 'BIENESTAR' && <i className="fas fa-fire"></i>}{!['VAPES', 'THC', 'TECNOLOGÍA', 'LIFESTYLE', 'BIENESTAR'].includes(dept) && <i className="fas fa-box"></i>}</div><span className="font-bold text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-[#111111] group-hover:text-black transition-colors font-poppins">{dept}</span></div>))}</div></div>
+          <main className="flex-grow px-4 md:px-8 pt-10 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full">
+            <div className="md:hidden relative mb-12 reveal-on-scroll"><i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" placeholder="Buscar productos, marcas..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] pl-12 pr-6 py-4 rounded-2xl text-sm font-bold outline-none focus:border-[#fcdb00] focus:bg-white transition-all placeholder:text-gray-400 font-poppins" /></div>
+            
+            {/* --- SECCIÓN DE DEPARTAMENTOS CON ÍCONOS DINÁMICOS --- */}
+            <div className="mb-16 reveal-on-scroll">
+              <h3 className="font-bebas text-2xl text-[#111111] mb-4 pl-2">Explorar la tienda</h3>
+              <div className="flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">
+                {departments.map(dept => {
+                  const iconId = deptIcons[dept] || 'fa-box';
+                  const iconObj = DEPT_ICONS.find(i => i.id === iconId) || { id: 'fa-box', prefix: 'fas' };
+                  
+                  return (
+                  <div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-white/70 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-[#fcdb00] transition-all duration-500 group">
+                    <div className="w-14 h-14 md:w-16 md:h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center text-[#111111] text-2xl md:text-3xl group-hover:bg-[#fcdb00] transition-colors">
+                      <i className={`${iconObj.prefix} ${iconObj.id}`}></i>
+                    </div>
+                    <span className="font-bold text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-[#111111] group-hover:text-black transition-colors font-poppins">{dept}</span>
+                  </div>
+                )})}
+              </div>
+            </div>
+
              {homeSections.length === 0 ? (<div className="text-center py-20"><div className="w-12 h-12 border-4 border-[#f2f2f2] border-t-[#fcdb00] rounded-full animate-spin mx-auto mb-4"></div><p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest font-poppins">Preparando vidriera...</p></div>) : (
                  homeSections.map((sec, sectionIndex) => {
                      const secProducts = sec.productIds?.map(pid => products.find(p => p.id === pid)).filter(Boolean) || [];
                      if(secProducts.length === 0) return null;
-                     return (<div key={sec.id} className="mb-20 reveal-on-scroll"><div className="flex justify-between items-end mb-6 pl-2 border-b-2 border-[#f2f2f2] pb-3"><h2 className="text-4xl md:text-6xl font-bebas text-[#111111] tracking-wide uppercase"><i className={`fas ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'} mr-3 drop-shadow-sm`}></i>{sec.title}</h2><button onClick={() => navigateTo('catalog')} className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#111111] hover:text-[#fcdb00] transition-colors bg-white/50 px-5 py-2.5 rounded-full border border-white hover:border-[#f2f2f2]">Ver Catálogo <i className="fas fa-arrow-right"></i></button></div>
+                     return (<div key={sec.id} className="mb-20 reveal-on-scroll"><div className="flex justify-between items-end mb-6 pl-2 border-b-2 border-[#f2f2f2] pb-3"><h2 className="text-4xl md:text-6xl font-bebas text-[#111111] tracking-wide uppercase"><i className={`${AVAILABLE_ICONS.find(i => i.id === sec.icon)?.prefix || 'fas'} ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'} mr-3 drop-shadow-sm`}></i>{sec.title}</h2><button onClick={() => navigateTo('catalog')} className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#111111] hover:text-[#fcdb00] transition-colors bg-white/50 px-5 py-2.5 rounded-full border border-white hover:border-[#f2f2f2]">Ver Catálogo <i className="fas fa-arrow-right"></i></button></div>
                      <div className={sec.layout === 'vertical' ? "flex flex-wrap gap-3 md:gap-5" : "flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-8 snap-x mask-image-gradient pr-8"}>{secProducts.map((p, index) => renderProductCard(p, index, true, sec.layout))}</div>
                      <button onClick={() => navigateTo('catalog')} className="md:hidden w-full mt-2 bg-white/70 backdrop-blur-xl border border-white shadow-sm text-[#111111] py-4 rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform font-poppins">Explorar más <i className="fas fa-arrow-right text-[#fcdb00]"></i></button></div>)
                  })
