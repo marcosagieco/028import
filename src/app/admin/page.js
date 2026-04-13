@@ -35,7 +35,7 @@ const DEPT_ICONS = [
   { id: 'fa-microchip', prefix: 'fas' },
   { id: 'fa-star', prefix: 'fas' },
   { id: 'fa-fire', prefix: 'fas' },
-  { id: 'fa-apple', prefix: 'fab' }, // Manzanita lista para usar
+  { id: 'fa-apple', prefix: 'fab' }, 
   { id: 'fa-mobile-alt', prefix: 'fas' },
   { id: 'fa-laptop', prefix: 'fas' },
   { id: 'fa-gamepad', prefix: 'fas' },
@@ -112,7 +112,6 @@ export default function AdminPage() {
   const [newSectionIcon, setNewSectionIcon] = useState(AVAILABLE_ICONS[0]); 
   const [newSectionLayout, setNewSectionLayout] = useState('horizontal'); 
   
-  // NUEVO ESTADO: Íconos de Departamentos
   const [deptIcons, setDeptIcons] = useState({}); 
   
   const [loading, setLoading] = useState(true);
@@ -174,38 +173,37 @@ export default function AdminPage() {
       });
       
       onSnapshot(collection(firebaseRefs.db, 'promos'), (snap) => setPromos(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []));
-      onSnapshot(collection(firebaseRefs.db, 'home_sections'), (snap) => setHomeSections(!snap.empty ? snap.docs.map(d => ({ dbId: doc.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
       
-      // NUEVO ESCUCHADOR DE ÍCONOS DE DEPARTAMENTOS
+      // --- ESTE FUE EL TYPO CORREGIDO (d.id en vez de doc.id) ---
+      onSnapshot(collection(firebaseRefs.db, 'home_sections'), (snap) => setHomeSections(!snap.empty ? snap.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
+      
       onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
         if (snap.exists()) { setDeptIcons(snap.data().icons || {}); }
       });
     });
   }, [firebaseRefs]);
 
-  // FUNCIONES DE GUARDADO
-  const updatePrice = async (product, newPrice) => { const price = parseInt(newPrice); if(isNaN(price) || price < 0) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, price: price }, { merge: true }); } catch(err) { alert("Error"); } }
-  const updateName = async (product, newName) => { const name = newName.trim().toUpperCase(); if(!name) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, name: name }, { merge: true }); } catch(err) { alert("Error"); } }
-  const updateImage = async (product, newImageUrl) => { const url = newImageUrl.trim(); if(!url) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, image: url }, { merge: true }); } catch(err) { alert("Error al actualizar la imagen."); } }
-  const updateOrder = async (product, newOrder) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, order: parseInt(newOrder) }, { merge: true }); } catch(err) { alert("Error"); } }
-  const updateDescription = async (product, newDesc) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, description: newDesc.trim() }, { merge: true }); } catch(err) { alert("Error"); } }
-  const updateCardSize = async (product, newSize) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, cardSize: newSize }, { merge: true }); } catch (err) { alert("Error"); } };
-  const updateCategoryDepartment = async (categoryName, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept) return; try { const prods = products.filter(p => p.category === categoryName); await Promise.all(prods.map(p => setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, department: dept }, { merge: true }))); } catch (err) { alert("Error"); } }
-  const toggleStock = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, inStock: product.inStock === false }, { merge: true }); } catch (err) { alert("Error"); } };
-  const toggleVisibility = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, isHidden: !product.isHidden }, { merge: true }); } catch (err) { alert("Error"); } };
-  const handleDeleteProduct = async (product) => { if(!confirm(`Eliminar "${product.name}"?`)) return; try { const isHardcoded = initialProducts.some(p => p.id === product.id); const docRef = doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`); if (isHardcoded) { await setDoc(docRef, { isDeleted: true }, { merge: true }); } else { await deleteDoc(docRef); } } catch (err) { alert("Error"); } };
+  const updatePrice = async (product, newPrice) => { const price = parseInt(newPrice); if(isNaN(price) || price < 0) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, price: price }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
+  const updateName = async (product, newName) => { const name = newName.trim().toUpperCase(); if(!name) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, name: name }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
+  const updateImage = async (product, newImageUrl) => { const url = newImageUrl.trim(); if(!url) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, image: url }, { merge: true }); } catch(err) { alert("Error al actualizar la imagen: " + err.message); } }
+  const updateOrder = async (product, newOrder) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, order: parseInt(newOrder) }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
+  const updateDescription = async (product, newDesc) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, description: newDesc.trim() }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
+  const updateCardSize = async (product, newSize) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, cardSize: newSize }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
+  const updateCategoryDepartment = async (categoryName, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept) return; try { const prods = products.filter(p => p.category === categoryName); await Promise.all(prods.map(p => setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, department: dept }, { merge: true }))); } catch (err) { alert("Error: " + err.message); } }
+  const toggleStock = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, inStock: product.inStock === false }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
+  const toggleVisibility = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, isHidden: !product.isHidden }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
+  const handleDeleteProduct = async (product) => { if(!confirm(`Eliminar "${product.name}"?`)) return; try { const isHardcoded = initialProducts.some(p => p.id === product.id); const docRef = doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`); if (isHardcoded) { await setDoc(docRef, { isDeleted: true }, { merge: true }); } else { await deleteDoc(docRef); } } catch (err) { alert("Error: " + err.message); } };
 
-  // NUEVA FUNCIÓN: Guardar el ícono elegido para el departamento en Firebase
   const updateDeptIcon = async (dept, iconId) => {
     try {
         await setDoc(doc(firebaseRefs.db, 'settings', 'departments'), { icons: { ...deptIcons, [dept]: iconId } }, { merge: true });
     } catch(err) { alert("Error al guardar ícono: " + err.message); }
   };
-  const createHomeSection = async () => { if(!newSectionTitle.trim()) return; try { const newId = `sec_${Date.now()}`; await setDoc(doc(firebaseRefs.db, 'home_sections', newId), { id: newId, title: newSectionTitle.toUpperCase(), icon: newSectionIcon.id, iconColor: newSectionIcon.color, layout: newSectionLayout, productIds: [], order: homeSections.length + 1, createdAt: serverTimestamp() }); setNewSectionTitle(''); } catch(err) { alert("Error"); } };
-  const deleteHomeSection = async (id) => { if(confirm("¿Borrar?")) { try { await deleteDoc(doc(firebaseRefs.db, 'home_sections', id)); } catch(err) { alert("Error"); } } };
-  const addProductToSection = async (sectionId, productId) => { try { const section = homeSections.find(s => s.dbId === sectionId); const current = section.productIds || []; if(current.includes(productId)) return; await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: [...current, productId] }, { merge: true }); } catch(err) { alert("Error"); } };
-  const removeProductFromSection = async (sectionId, productId) => { try { const section = homeSections.find(s => s.dbId === sectionId); await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: (section.productIds || []).filter(id => id !== productId) }, { merge: true }); } catch(err) { alert("Error"); } };
-  const toggleSectionLayout = async (section) => { try { await setDoc(doc(firebaseRefs.db, 'home_sections', section.dbId), { layout: section.layout === 'vertical' ? 'horizontal' : 'vertical' }, { merge: true }); } catch(err) { alert("Error"); } };
+  const createHomeSection = async () => { if(!newSectionTitle.trim()) return; try { const newId = `sec_${Date.now()}`; await setDoc(doc(firebaseRefs.db, 'home_sections', newId), { id: newId, title: newSectionTitle.toUpperCase(), icon: newSectionIcon.id, iconColor: newSectionIcon.color, layout: newSectionLayout, productIds: [], order: homeSections.length + 1, createdAt: serverTimestamp() }); setNewSectionTitle(''); } catch(err) { alert("Error al crear sección: " + err.message); } };
+  const deleteHomeSection = async (id) => { if(confirm("¿Borrar?")) { try { await deleteDoc(doc(firebaseRefs.db, 'home_sections', id)); } catch(err) { alert("Error al borrar sección: " + err.message); } } };
+  const addProductToSection = async (sectionId, productId) => { try { const section = homeSections.find(s => s.dbId === sectionId); const current = section.productIds || []; if(current.includes(productId)) return; await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: [...current, productId] }, { merge: true }); } catch(err) { alert("Error al agregar producto: " + err.message); } };
+  const removeProductFromSection = async (sectionId, productId) => { try { const section = homeSections.find(s => s.dbId === sectionId); await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: (section.productIds || []).filter(id => id !== productId) }, { merge: true }); } catch(err) { alert("Error al quitar producto: " + err.message); } };
+  const toggleSectionLayout = async (section) => { try { await setDoc(doc(firebaseRefs.db, 'home_sections', section.dbId), { layout: section.layout === 'vertical' ? 'horizontal' : 'vertical' }, { merge: true }); } catch(err) { alert("Error al cambiar formato: " + err.message); } };
 
   const autoFillLeastClicked = async (sectionId) => {
     if(!confirm("¿Autocompletar con los 10 menos clickeados?")) return;
@@ -213,12 +211,26 @@ export default function AdminPage() {
         const available = products.filter(p => p.inStock !== false && !p.isHidden && !p.isDeleted);
         const sorted = available.sort((a, b) => (a.clicks || 0) - (b.clicks || 0));
         await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: sorted.slice(0, 10).map(p => p.id) }, { merge: true });
-    } catch(err) { alert("Error"); }
+        alert("¡Sección actualizada con éxito con los menos clickeados! 🚀");
+    } catch(err) { alert("Error al autocompletar: " + err.message); }
   };
 
-  const handleAddProduct = async (e) => { e.preventDefault(); if (!newProduct.category || !newProduct.department) return alert("Faltan datos"); setIsAdding(true); try { const newId = Date.now(); await setDoc(doc(firebaseRefs.db, 'products', `prod_${newId}`), { id: newId, name: newProduct.name.toUpperCase(), price: Number(newProduct.price), department: newProduct.department.toUpperCase(), category: newProduct.category, image: newProduct.image, tag: newProduct.tag, description: newProduct.description, cardSize: newProduct.cardSize, inStock: true, order: 99, clicks: 0, createdAt: serverTimestamp(), isHidden: false, isDeleted: false }); setNewProduct({ name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '', cardSize: 'normal' }); } catch (error) { alert("Error"); } setIsAdding(false); };
-  const handleAddPromo = async (e) => { e.preventDefault(); try { const promoId = newPromo.category.toLowerCase().replace(/\s+/g, '-'); await setDoc(doc(firebaseRefs.db, 'promos', promoId), { category: newPromo.category, minQty: Number(newPromo.minQty), totalPrice: Number(newPromo.totalPrice), createdAt: serverTimestamp() }); setNewPromo({ category: '', minQty: 2, totalPrice: '' }); } catch(err) { alert("Error"); } };
-  const handleDeletePromo = async (id) => { if(confirm("¿Eliminar?")) { try { await deleteDoc(doc(firebaseRefs.db, 'promos', id)); } catch(err) { alert("Error"); } } };
+  const handleAddProduct = async (e) => { e.preventDefault(); if (!newProduct.category || !newProduct.department) return alert("Faltan datos"); setIsAdding(true); try { const newId = Date.now(); await setDoc(doc(firebaseRefs.db, 'products', `prod_${newId}`), { id: newId, name: newProduct.name.toUpperCase(), price: Number(newProduct.price), department: newProduct.department.toUpperCase(), category: newProduct.category, image: newProduct.image, tag: newProduct.tag, description: newProduct.description, cardSize: newProduct.cardSize, inStock: true, order: 99, clicks: 0, createdAt: serverTimestamp(), isHidden: false, isDeleted: false }); setNewProduct({ name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '', cardSize: 'normal' }); alert("¡Producto agregado!"); } catch (error) { alert("Error al agregar producto: " + error.message); } setIsAdding(false); };
+  const handleAddPromo = async (e) => { e.preventDefault(); try { const promoId = newPromo.category.toLowerCase().replace(/\s+/g, '-'); await setDoc(doc(firebaseRefs.db, 'promos', promoId), { category: newPromo.category, minQty: Number(newPromo.minQty), totalPrice: Number(newPromo.totalPrice), createdAt: serverTimestamp() }); setNewPromo({ category: '', minQty: 2, totalPrice: '' }); alert("¡Promo guardada!"); } catch(err) { alert("Error al guardar promo: " + err.message); } };
+  const handleDeletePromo = async (id) => { if(confirm("¿Eliminar?")) { try { await deleteDoc(doc(firebaseRefs.db, 'promos', id)); } catch(err) { alert("Error al borrar promo: " + err.message); } } };
+  const handleDeleteCategory = async (categoryName) => { 
+    if(!confirm(`⚠️ ¿ELIMINAR categoría "${categoryName}" y todos sus productos?`)) return; 
+    try { 
+      const productsToDelete = products.filter(p => p.category === categoryName); 
+      for (const p of productsToDelete) { 
+        const isHardcoded = initialProducts.some(initP => initP.id === p.id);
+        const docRef = doc(firebaseRefs.db, 'products', p.dbId || `prod_${p.id}`);
+        if (isHardcoded) { await setDoc(docRef, { isDeleted: true }, { merge: true }); } else { await deleteDoc(docRef); }
+      } 
+      try { await deleteDoc(doc(firebaseRefs.db, 'promos', categoryName.toLowerCase().replace(/\s+/g, '-'))); } catch (e) {} 
+      alert(`Categoría eliminada.`); 
+    } catch (err) { alert("Error al eliminar la categoría: " + err.message); } 
+  };
 
   const syncAllProducts = async () => { 
       if (confirm("¿Sincronizar Catálogo y Restaurar Secciones?")) { 
@@ -236,8 +248,8 @@ export default function AdminPage() {
       } 
   };
 
-  const completeOrder = async (id) => { if (confirm("¿Confirmas que el pedido fue entregado?")) { try { await updateDoc(doc(firebaseRefs.db, 'orders', id), { status: 'completed' }); } catch (err) { alert("Error"); } } };
-  const deleteOrder = async (id) => { if (confirm("¿Eliminar pedido permanentemente?")) { try { await deleteDoc(doc(firebaseRefs.db, 'orders', id)); } catch (err) { alert("Error"); } } };
+  const completeOrder = async (id) => { if (confirm("¿Confirmas que el pedido fue entregado?")) { try { await updateDoc(doc(firebaseRefs.db, 'orders', id), { status: 'completed' }); } catch (err) { alert("Error: " + err.message); } } };
+  const deleteOrder = async (id) => { if (confirm("¿Eliminar pedido permanentemente?")) { try { await deleteDoc(doc(firebaseRefs.db, 'orders', id)); } catch (err) { alert("Error: " + err.message); } } };
 
   const filteredOrders = orders.filter(o => o.status !== 'completed');
 
@@ -341,7 +353,6 @@ export default function AdminPage() {
         {activeTab === 'vidriera' && (<div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
           <div className="flex justify-between items-end mb-8"><div><h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Vidriera</h2><p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Armá las secciones del Inicio</p></div></div>
           
-          {/* NUEVO PANEL: ÍCONOS DE DEPARTAMENTOS */}
           <div className={`${theme.card} p-6 rounded-[2rem] mb-8 shadow-sm border`}>
             <div className="mb-4">
                 <h3 className={`text-2xl font-bebas uppercase tracking-wide ${theme.text}`}>Íconos de Departamentos</h3>
