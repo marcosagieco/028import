@@ -14,7 +14,22 @@ const CONFIG = {
   shippingText: "Pedime te llega en 30'⏰",
 };
 
-// DICCIONARIO DE ÍCONOS PARA LEER LA BASE DE DATOS
+// --- ¡ACÁ ESTÁ LA LISTA QUE FALTABA! ---
+const AVAILABLE_ICONS = [
+  { id: 'fa-star', prefix: 'fas', color: 'text-[#fcdb00]' },     
+  { id: 'fa-fire', prefix: 'fas', color: 'text-red-500' },       
+  { id: 'fa-bolt', prefix: 'fas', color: 'text-yellow-400' },    
+  { id: 'fa-crown', prefix: 'fas', color: 'text-amber-500' },    
+  { id: 'fa-gem', prefix: 'fas', color: 'text-purple-500' },     
+  { id: 'fa-heart', prefix: 'fas', color: 'text-pink-500' },     
+  { id: 'fa-tag', prefix: 'fas', color: 'text-green-500' },      
+  { id: 'fa-gift', prefix: 'fas', color: 'text-blue-500' },      
+  { id: 'fa-rocket', prefix: 'fas', color: 'text-orange-500' },  
+  { id: 'fa-award', prefix: 'fas', color: 'text-indigo-500' },
+  { id: 'fa-apple', prefix: 'fab', color: 'text-gray-800' } 
+];
+
+// DICCIONARIO DE ÍCONOS PARA LEER LA BASE DE DATOS (DEPARTAMENTOS)
 const DEPT_ICONS = [
   { id: 'fa-box', prefix: 'fas' },
   { id: 'fa-wind', prefix: 'fas' },
@@ -22,7 +37,7 @@ const DEPT_ICONS = [
   { id: 'fa-microchip', prefix: 'fas' },
   { id: 'fa-star', prefix: 'fas' },
   { id: 'fa-fire', prefix: 'fas' },
-  { id: 'fa-apple', prefix: 'fab' }, // Manzanita lista para ser leída
+  { id: 'fa-apple', prefix: 'fab' }, 
   { id: 'fa-mobile-alt', prefix: 'fas' },
   { id: 'fa-laptop', prefix: 'fas' },
   { id: 'fa-gamepad', prefix: 'fas' },
@@ -109,7 +124,6 @@ export default function Home() {
   const [address, setAddress] = useState('');
   const [zone, setZone] = useState('');
   
-  // NUEVO ESTADO: Diccionario para los íconos de los departamentos
   const [deptIcons, setDeptIcons] = useState({});
   
   const [user, setUser] = useState(null);
@@ -195,7 +209,6 @@ export default function Home() {
       const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
       const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (s) => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
       
-      // ESCUCHADOR DE ÍCONOS DE DEPARTAMENTOS
       const unsubscribeDeptIcons = onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
         if (snap.exists()) { setDeptIcons(snap.data().icons || {}); }
       });
