@@ -1,4 +1,5 @@
 import './globals.css'; 
+import Script from 'next/script';
 
 const CONFIG = {
   brandName: "028", 
@@ -19,6 +20,21 @@ export default function RootLayout({ children }) {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
       </head>
       <body className="bg-[#fafafa] text-[#1a1a1a] font-sans flex flex-col relative min-h-screen">
+        
+        {/* === GOOGLE ANALYTICS === */}
+        <Script 
+          src="https://www.googletagmanager.com/gtag/js?id=G-ZY044XNNSC" 
+          strategy="afterInteractive" 
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){window.dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-ZY044XNNSC');
+          `}
+        </Script>
         
         {/* === CONTENIDO PRINCIPAL === */}
         {/* Al sacar el <nav> de acá, la ÚNICA barra que va a aparecer es la nueva que armamos en tu página principal */}
