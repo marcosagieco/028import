@@ -92,14 +92,14 @@ const PAGE_CONTENT = {
 const ROULETTE_PRIZES = [
   { id: 'sigue1', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#fcdb00' }, 
   { id: 'off5_1', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#111111' }, 
-  { id: 'off10_1', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#fcdb00' }, 
+  { id: 'off10_1', text: '10% OFF', prob: 0.205, type: 'percent', value: 10, textC: '#fcdb00' }, 
   { id: 'sigue2', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#111111' }, 
   { id: 'off5_2', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#fcdb00' }, 
-  { id: 'off10_2', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#111111' }, 
+  { id: 'off10_2', text: '10% OFF', prob: 0.205, type: 'percent', value: 10, textC: '#111111' }, 
   { id: 'off15', text: '15% OFF', prob: 0.07, type: 'percent', value: 15, textC: '#fcdb00' }, 
-  { id: 'off20', text: '20% OFF', prob: 0.015, type: 'percent', value: 20, textC: '#111111' }, 
+  { id: 'off20', text: '20% OFF', prob: 0.005, type: 'percent', value: 20, textC: '#111111' }, 
   { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#fcdb00' }, 
-  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, textC: '#111111' }, 
+  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.005, type: 'shipping', value: 0, textC: '#111111' }, 
 ];
 
 export default function Home() {
