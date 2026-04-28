@@ -141,8 +141,10 @@ export default function Home() {
   const [showResultModal, setShowResultModal] = useState(false);
   const [wonPrizeData, setWonPrizeData] = useState(null);
 
-  // --- NUEVO ESTADO: LISTA DE OFERTAS UPSELL ---
+  // NUEVOS ESTADOS DE UPSELL (OFERTA FINAL) ADENTRO DEL CARRITO
   const [upsellsList, setUpsellsList] = useState([]);
+  const [upsellSettings, setUpsellSettings] = useState(null);
+  const [showUpsellModal, setShowUpsellModal] = useState(false);
 
   const departments = useMemo(() => [...new Set(products.map(p => p.department).filter(Boolean))], [products]);
   const uniqueCategories = useMemo(() => {
@@ -228,7 +230,7 @@ export default function Home() {
       });
       const unsubscribeCoupons = onSnapshot(collection(firebaseRefs.db, 'coupons'), (snap) => setActiveCouponsDb(!snap.empty ? snap.docs.map(d => d.data()) : []));
       
-      // LECTURA DE LA LISTA DE OFERTAS UPSELLS
+      // LECTURA DE OFERTA UPSELLS (LISTA)
       const unsubscribeUpsells = onSnapshot(collection(firebaseRefs.db, 'upsells'), (snap) => {
         setUpsellsList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
       });
@@ -377,7 +379,7 @@ export default function Home() {
   
   const changeQty = (id, delta) => { setCart(prev => prev.map(i => i.id === id ? { ...i, qty: i.qty + delta } : i).filter(i => i.qty > 0)); };
 
-  // --- FUNCIÓN PARA AGREGAR LA OFERTA DIRECTO DESDE EL CARRITO ---
+  // --- LÓGICA PARA AÑADIR LA OFERTA DIRECTAMENTE AL CARRITO ---
   const handleAddUpsellToCart = (upsell) => {
       const prod = products.find(p => p.id == upsell.productId);
       if (!prod) return;
@@ -393,7 +395,7 @@ export default function Home() {
     if (!clientName.trim() || !clientPhone.trim()) { showToast("⚠️ Completá tu Nombre y Teléfono."); return; }
     if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) { showToast("⚠️ Completá dirección y localidad."); return; }
     
-    executeOrder(); // Como la oferta ahora está adentro del carrito, va directo al WhatsApp
+    executeOrder(); 
   };
 
   const executeOrder = async () => {
@@ -540,7 +542,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MODAL DE RESULTADO CENTRAL DE LA RULETA 🎉 --- */}
+      {/* --- MODAL NOTIFICACIÓN CENTRAL DE PREMIO --- */}
       {showResultModal && wonPrizeData && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#111111]/95 backdrop-blur-xl" onClick={() => setShowResultModal(false)}></div>
@@ -553,7 +555,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MODAL RULETA BLANCA ORIGINAL CON BOTÓN GOOGLE --- */}
+      {/* --- MODAL RULETA DE ANIVERSARIO ORIGINAL CON BOTÓN GOOGLE --- */}
       {showRouletteModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#111111]/90 backdrop-blur-sm" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
@@ -572,7 +574,6 @@ export default function Home() {
             <p className="text-[11px] font-bold text-[#111111] uppercase tracking-widest mb-10 text-center font-poppins relative z-30 drop-shadow-md">Tirás 1 sola vez por cuenta. ¡Suerte!</p>
             
             <div className="relative w-64 h-64 md:w-72 md:h-72 mb-8 mt-2 z-20 flex items-center justify-center">
-              
               <div className="absolute inset-0 rounded-full border-[6px] border-dotted border-[#fcdb00] opacity-80 z-0 animate-[spin_20s_linear_infinite] pointer-events-none"></div>
 
               <div 
@@ -606,7 +607,6 @@ export default function Home() {
                 className="absolute top-[-60px] left-1/3 -translate-x-1/4 w-[87px] h-auto z-30 drop-shadow-xl pointer-events-none" 
                 alt="Puntero Dedo" 
               />
-
             </div>
             
             {(!user || user.isAnonymous) ? (
@@ -641,7 +641,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* --- MARQUEE ACTUALIZADO (Aniversario) --- */}
+      {/* --- MARQUEE --- */}
       {currentView === 'home' && (
         <div className="w-full bg-[#111111] py-2 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex">
           <div className="animate-marquee whitespace-nowrap flex items-center">
@@ -735,23 +735,27 @@ export default function Home() {
 
       {isCartOpen && (<div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} /><div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] h-[90vh] md:max-h-[85vh] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-500 flex flex-col pb-safe"><div className="p-6 border-b border-gray-300 flex justify-between items-center bg-white sticky top-0 z-10"><div><h2 className="text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest font-poppins">{getTotalItems()} artículos seleccionados</p></div><button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-[#f2f2f2] rounded-full text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex items-center justify-center shadow-sm border border-gray-200"><i className="fas fa-times text-lg"></i></button></div><div className="overflow-y-auto p-4 md:p-6 flex-grow no-scrollbar"><div className="space-y-3 mb-10">{cart.length === 0 && (<div className="text-center py-20 bg-white/50 rounded-2xl border border-dashed border-gray-300"><div className="w-16 h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><i className="fas fa-shopping-bag text-2xl text-gray-400"></i></div><p className="text-gray-400 font-bold text-xs uppercase tracking-widest font-poppins">Tu bolsa está vacía</p></div>)}{cart.map(item => (<div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-[#f2f2f2]"><div className="flex items-center gap-4"><div className="w-16 h-16 bg-[#f2f2f2] rounded-xl overflow-hidden flex items-center justify-center p-1"><img src={item.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex flex-col"><p className="font-bebas text-lg uppercase tracking-wide max-w-[130px] md:max-w-[180px] line-clamp-1 text-[#111111]">{item.name}</p><p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1 bg-gray-100 w-fit px-2 py-0.5 rounded-sm font-poppins">{item.qty} un.</p></div></div><div className="flex items-center gap-4 pr-2"><p className="font-bebas text-[#fcdb00] text-2xl tracking-wide">${formatPrice(item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item)))}</p><div className="flex flex-col items-center gap-1.5 bg-[#f2f2f2] rounded-md p-1.5 border border-gray-200"><button onClick={() => changeQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-plus text-[10px]"></i></button><button onClick={() => changeQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-minus text-[10px]"></i></button></div></div></div>))}
         
-        {/* LÓGICA UPSELL: OFERTAS INYECTADAS ADENTRO DEL CARRITO */}
+        {/* --- NUEVO DISEÑO DE UPSELLS: LIMPIO Y 028-STYLE --- */}
         {upsellsList.length > 0 && upsellsList.some(u => u.active && !cart.find(c => c.id == u.productId)) && (
             <div className="mt-8 mb-2 animate-in slide-in-from-bottom duration-500">
-                <p className="font-bebas text-xl mb-3 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-fire text-red-500"></i> Agregá a tu pedido</p>
-                <div className="flex overflow-x-auto gap-3 pb-2 no-scrollbar snap-x">
+                <p className="font-bebas text-xl mb-3 uppercase tracking-wider text-[#111111] flex items-center gap-2">
+                    <i className="fas fa-fire text-[#fcdb00]"></i> Agregá a tu pedido
+                </p>
+                <div className="flex overflow-x-auto gap-3 pb-2 no-scrollbar snap-x mask-image-gradient pr-4">
                     {upsellsList.filter(u => u.active && !cart.find(c => c.id == u.productId)).map(upsell => {
                         const prod = products.find(p => p.id == upsell.productId);
                         if (!prod || prod.inStock === false || prod.isDeleted) return null;
                         return (
-                            <div key={upsell.id} className="snap-start flex-shrink-0 w-[260px] bg-white p-3 rounded-2xl shadow-sm border border-red-100 flex items-center gap-3 relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
-                                <img src={prod.image} className="w-14 h-14 object-contain mix-blend-multiply bg-[#f2f2f2] rounded-lg p-1" alt="" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-bebas text-sm uppercase truncate text-[#111111] leading-tight">{prod.name}</p>
-                                    <p className="text-red-500 font-black text-[15px] leading-none mt-1">${formatPrice(upsell.price)} <span className="line-through text-gray-300 text-[10px] font-poppins">${formatPrice(prod.price)}</span></p>
+                            <div key={upsell.id} className="snap-start flex-shrink-0 w-[260px] bg-white p-3 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-[#f2f2f2] flex items-center gap-3 relative transition-all hover:border-[#fcdb00]">
+                                <div className="relative w-16 h-16 bg-[#f2f2f2] rounded-xl overflow-hidden flex items-center justify-center p-1 flex-shrink-0">
+                                    <span className="absolute top-0 left-0 bg-[#111111] text-[#fcdb00] text-[8px] font-black uppercase px-1.5 py-0.5 rounded-br-lg shadow-sm z-10 font-poppins">Oferta</span>
+                                    <img src={prod.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/>
                                 </div>
-                                <button onClick={() => handleAddUpsellToCart(upsell)} className="w-10 h-10 flex-shrink-0 bg-[#111111] text-[#fcdb00] rounded-xl flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-md">
+                                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                    <p className="font-bebas text-sm uppercase truncate text-[#111111] leading-tight">{prod.name}</p>
+                                    <p className="text-[#111111] font-bebas text-xl leading-none mt-1.5 drop-shadow-sm">${formatPrice(upsell.price)} <span className="line-through text-gray-400 text-[10px] font-poppins ml-1">${formatPrice(prod.price)}</span></p>
+                                </div>
+                                <button onClick={() => handleAddUpsellToCart(upsell)} className="w-10 h-10 flex-shrink-0 bg-[#111111] text-[#fcdb00] rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-md active:scale-90">
                                     <i className="fas fa-plus text-sm"></i>
                                 </button>
                             </div>
