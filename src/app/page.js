@@ -29,21 +29,7 @@ const AVAILABLE_ICONS = [
 ];
 
 const DEPT_ICONS = [
-  { id: 'fa-box', prefix: 'fas' },
-  { id: 'fa-wind', prefix: 'fas' },
-  { id: 'fa-leaf', prefix: 'fas' },
-  { id: 'fa-microchip', prefix: 'fas' },
-  { id: 'fa-star', prefix: 'fas' },
-  { id: 'fa-fire', prefix: 'fas' },
-  { id: 'fa-apple', prefix: 'fab' }, 
-  { id: 'fa-mobile-alt', prefix: 'fas' },
-  { id: 'fa-laptop', prefix: 'fas' },
-  { id: 'fa-gamepad', prefix: 'fas' },
-  { id: 'fa-headphones', prefix: 'fas' },
-  { id: 'fa-gem', prefix: 'fas' },
-  { id: 'fa-tag', prefix: 'fas' },
-  { id: 'fa-cannabis', prefix: 'fas' },
-  { id: 'fa-smoking', prefix: 'fas' },
+  { id: 'fa-box', prefix: 'fas' }, { id: 'fa-wind', prefix: 'fas' }, { id: 'fa-leaf', prefix: 'fas' }, { id: 'fa-microchip', prefix: 'fas' }, { id: 'fa-star', prefix: 'fas' }, { id: 'fa-fire', prefix: 'fas' }, { id: 'fa-apple', prefix: 'fab' }, { id: 'fa-mobile-alt', prefix: 'fas' }, { id: 'fa-laptop', prefix: 'fas' }, { id: 'fa-gamepad', prefix: 'fas' }, { id: 'fa-headphones', prefix: 'fas' }, { id: 'fa-gem', prefix: 'fas' }, { id: 'fa-tag', prefix: 'fas' }, { id: 'fa-cannabis', prefix: 'fas' }, { id: 'fa-smoking', prefix: 'fas' },
 ];
 
 const initialProducts = [
@@ -63,7 +49,7 @@ const initialProducts = [
   { id: 14, name: "STRAWBERRY WATERMELON", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/MG30ycJD/STRAWBERRY-WATERMELON.webp", description: "La clásica e infalible mezcla de fresa y sandía.", cardSize: "normal" },
   { id: 15, name: "SUMMER SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png", description: "Un cóctel frutal que captura la esencia del verano en cada calada.", cardSize: "normal" },
   { id: 16, name: "TIGERS BLOOD", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg", description: "Famosa mezcla de sandía y fresa con un exótico y suave toque de coco.", cardSize: "normal" },
-  { id: 17, name: "WATERMELON ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp", description: "Todo el jugo y la dulzura de la sandía con un impacto extra helado.", cardSize: "normal" },
+  { id: 17, name: "WATERMELON ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMODERN-ICE.webp", description: "Todo el jugo y la dulzura de la sandía con un impacto extra helado.", cardSize: "normal" },
   { id: 25, name: "SOUR APPLE ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg", description: "Manzana verde crujiente y ácida envuelta en una ráfaga de frío.", cardSize: "normal" },
   { id: 26, name: "MIAMI MINT", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg", description: "Menta sofisticada estilo Miami: fresca, dulce pero con presencia.", cardSize: "normal" },
   { id: 30, name: "BLUE RAZZ LEMON", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Jh48hT4x/ignite-v400-BLUE-RAZZ-LEMON.jpg", description: "Dispositivo ultracompacto y premium de Ignite.", cardSize: "normal" },
@@ -103,18 +89,17 @@ const PAGE_CONTENT = {
   arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de 10 días corridos.</p></div>) }
 };
 
-// --- MOTOR DE PROBABILIDADES DE LA RULETA (10 PORCIONES EXACTAS, SÓLO NEGRO Y AMARILLO) ---
 const ROULETTE_PRIZES = [
-  { id: 'sigue1', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#fcdb00' }, // 0: Bg Black
-  { id: 'off5_1', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#111111' }, // 1: Bg Yellow
-  { id: 'off10_1', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#fcdb00' }, // 2: Bg Black
-  { id: 'sigue2', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#111111' }, // 3: Bg Yellow
-  { id: 'off5_2', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#fcdb00' }, // 4: Bg Black
-  { id: 'off10_2', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#111111' }, // 5: Bg Yellow
-  { id: 'off15', text: '15% OFF', prob: 0.07, type: 'percent', value: 15, textC: '#fcdb00' }, // 6: Bg Black
-  { id: 'off20', text: '20% OFF', prob: 0.015, type: 'percent', value: 20, textC: '#111111' }, // 7: Bg Yellow
-  { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#fcdb00' }, // 8: Bg Black 
-  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, textC: '#111111' }, // 9: Bg Yellow
+  { id: 'sigue1', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#fcdb00' }, 
+  { id: 'off5_1', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#111111' }, 
+  { id: 'off10_1', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#fcdb00' }, 
+  { id: 'sigue2', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#111111' }, 
+  { id: 'off5_2', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#fcdb00' }, 
+  { id: 'off10_2', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#111111' }, 
+  { id: 'off15', text: '15% OFF', prob: 0.07, type: 'percent', value: 15, textC: '#fcdb00' }, 
+  { id: 'off20', text: '20% OFF', prob: 0.015, type: 'percent', value: 20, textC: '#111111' }, 
+  { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#fcdb00' }, 
+  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, textC: '#111111' }, 
 ];
 export default function Home() {
   const [cart, setCart] = useState([]);
@@ -148,9 +133,14 @@ export default function Home() {
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   
-  const [showRouletteModal, setShowRouletteModal] = useState(false);
+  // RULETA ESTADOS
+  const [showRouletteModal, setShowRouletteModal] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
   const [rouletteRotation, setRouletteRotation] = useState(0);
+
+  // NUEVOS ESTADOS PARA RESULTADO DE RULETA
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [wonPrizeData, setWonPrizeData] = useState(null);
 
   const departments = useMemo(() => [...new Set(products.map(p => p.department).filter(Boolean))], [products]);
   const uniqueCategories = useMemo(() => {
@@ -267,11 +257,25 @@ export default function Home() {
       } catch (error) { console.error(error); showToast("Error al iniciar con Google"); }
   };
 
+  const fireConfetti = () => {
+    if (typeof window !== 'undefined' && window.confetti) {
+      window.confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 9999 });
+    }
+  };
+
   const handleSpinRoulette = async () => {
-      if (!user || user.isAnonymous || !dbUser) return showToast("Debes iniciar sesión primero.");
+      if (isSpinning) return;
       
-      if (dbUser.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") {
-          return showToast("¡Ya utilizaste tu tiro de ruleta!");
+      // LÓGICA AGREGADA: VERIFICACIÓN DE LOGIN DE GOOGLE
+      if (!user || user.isAnonymous) {
+        handleGoogleLogin();
+        return; // Detiene la ruleta para que no gire hasta que se loguee
+      }
+
+      // LÓGICA AGREGADA: BLOQUEO PARA QUE NO TIREN DOS VECES
+      if (dbUser && dbUser.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") {
+        showToast("¡Ya utilizaste tu tiro de ruleta!");
+        return;
       }
       
       setIsSpinning(true);
@@ -284,6 +288,13 @@ export default function Home() {
           if (rand <= sum) { wonPrize = p; break; }
       }
 
+      // PARCHE ANTITRAMPAS: Guardamos en Firebase ANTES de que termine el giro
+      try {
+          if (user && dbUser && firebaseRefs.db) {
+             await setDoc(doc(firebaseRefs.db, 'users', user.uid), { hasSpunRoulette: true, roulettePrize: wonPrize }, { merge: true });
+          }
+      } catch(err) { console.error("Error Antitrampas:", err); }
+
       const extraSpins = 5 * 360; 
       const prizeIndex = ROULETTE_PRIZES.findIndex(p => p.id === wonPrize.id);
       const sliceAngle = 360 / ROULETTE_PRIZES.length;
@@ -291,18 +302,19 @@ export default function Home() {
       
       setRouletteRotation(targetRotation);
 
-      setTimeout(async () => {
-          try {
-              await setDoc(doc(firebaseRefs.db, 'users', user.uid), { hasSpunRoulette: true, roulettePrize: wonPrize }, { merge: true });
-              if(wonPrize.type === 'none') {
-                  showToast("¡Ufa! Sigue participando. 😢");
-              } else {
-                  showToast(`¡GANASTE! 🎉 ${wonPrize.text}`);
-                  setAppliedCoupon(null); 
-              }
-          } catch(err) { console.error(err); }
+      setTimeout(() => {
           setIsSpinning(false);
-          setTimeout(() => setShowRouletteModal(false), 2000);
+          setWonPrizeData(wonPrize);
+          setShowRouletteModal(false); // Se cierra la ruleta
+          setShowResultModal(true);    // Se abre el Modal de Premio
+          
+          if(wonPrize.type === 'none') {
+              showToast("¡Ufa! Sigue participando. 😢");
+          } else {
+              showToast(`¡GANASTE! 🎉 ${wonPrize.text}`);
+              setAppliedCoupon(null); 
+              fireConfetti(); // 🎊 LLUVIA DE CONFETI
+          }
       }, 5000); 
   };
 
@@ -335,7 +347,6 @@ export default function Home() {
       }
       return subtotal;
   };
-
   const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
   const navigateTo = (view, dept = null) => { setCurrentView(view); if(dept) setActiveFilter({dept, cat: 'all'}); setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   
@@ -483,7 +494,7 @@ export default function Home() {
           will-change: transform;
         }
       `}} />
-      {toastMessage && (<div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-[#111111]/90 backdrop-blur-xl text-white px-6 py-4 rounded-full shadow-[0_20px_40px_rgba(252,219,0,0.2)] border border-[#fcdb00]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">{toastMessage}</div>)}
+      {toastMessage && (<div className="fixed top-5 left-1/2 -translate-x-1/2 z-[300] bg-[#111111]/90 backdrop-blur-xl text-white px-6 py-4 rounded-full shadow-[0_20px_40px_rgba(252,219,0,0.2)] border border-[#fcdb00]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">{toastMessage}</div>)}
       
       {fomoData && (
         <div className="fixed bottom-24 left-4 md:bottom-8 md:left-8 z-[100] bg-[#111111]/95 backdrop-blur-md text-white p-3 md:p-4 rounded-2xl shadow-2xl border border-[#fcdb00]/30 flex items-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-500 hover:scale-105 transition-transform cursor-default">
@@ -495,42 +506,60 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MODAL RULETA DE ANIVERSARIO --- */}
+      {/* --- NUEVO: MODAL NOTIFICACIÓN CENTRAL DE PREMIO --- */}
+      {showResultModal && wonPrizeData && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#111111]/95 backdrop-blur-xl" onClick={() => setShowResultModal(false)}></div>
+          <div className="relative bg-white p-10 rounded-[2.5rem] shadow-2xl border-4 border-[#fcdb00] text-center max-w-sm w-full animate-in zoom-in-95 duration-500">
+             <div className="text-6xl mb-4">{wonPrizeData.type === 'none' ? '😢' : '🎉'}</div>
+             <h3 className="font-bebas text-5xl uppercase mb-2 text-[#111111]">{wonPrizeData.type === 'none' ? 'UFA...' : '¡GANASTE!'}</h3>
+             <p className="text-xl font-bold text-gray-600 mb-8 uppercase tracking-widest leading-tight">{wonPrizeData.text}</p>
+             <button onClick={() => setShowResultModal(false)} className="w-full bg-[#111111] text-[#fcdb00] py-4 rounded-xl font-bebas text-2xl uppercase hover:bg-black transition-all">CONTINUAR COMPRANDO</button>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL RULETA DE ANIVERSARIO ARREGLADO ESTÉTICAMENTE --- */}
       {showRouletteModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          {/* Bloqueo Escape: Solo cierra si no está girando */}
           <div className="absolute inset-0 bg-[#111111]/90 backdrop-blur-sm" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
-          <div className="relative bg-[#f2f2f2] w-full max-w-md rounded-[2rem] shadow-2xl border border-white/20 p-8 pt-20 flex flex-col items-center animate-in zoom-in-95 duration-500">
-            {!isSpinning && <button onClick={() => setShowRouletteModal(false)} className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-[#fcdb00] hover:text-[#111111] transition-colors z-30 text-gray-500"><i className="fas fa-times"></i></button>}
+          
+          <div className="relative w-full max-w-[480px] rounded-[2rem] shadow-2xl border border-white/20 p-8 pt-16 flex flex-col items-center animate-in zoom-in-95 duration-500 overflow-hidden bg-white">
             
-            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wide text-[#111111] mb-2 text-center relative z-30">Ruleta de Aniversario</h2>
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-10 text-center font-poppins relative z-30">Tirás 1 sola vez por cuenta. ¡Suerte!</p>
-            
-            <div className="relative w-64 h-64 md:w-72 md:h-72 mb-8 mt-4">
-              
-              {/* CAPA 1: MASCOTA ATRÁS */}
-              <img 
-                src="URL_DE_TU_MASCOTA_SIN_FONDO.png" 
-                className="absolute top-[-70px] left-1/2 -translate-x-1/2 w-[280px] h-auto z-0 opacity-100" 
-                alt="Fondo Mascota" 
-              />
+            <img 
+              src="https://i.ibb.co/BKTk8xrW/image.png" 
+              className="absolute -top-[6%] -right-[17.5%] w-[101%] h-auto max-w-none z-0 object-contain pointer-events-none" 
+              alt="Fondo Mascota" 
+            />
 
-              {/* CAPA 2: LA RULETA */}
+            {!isSpinning && <button onClick={() => setShowRouletteModal(false)} className="absolute top-4 right-4 w-10 h-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm hover:bg-[#fcdb00] hover:text-[#111111] transition-colors z-30 text-gray-600"><i className="fas fa-times"></i></button>}
+            
+            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wide text-[#111111] mb-1 text-center relative z-30 drop-shadow-md">Ruleta de Aniversario</h2>
+            <p className="text-[11px] font-bold text-[#111111] uppercase tracking-widest mb-10 text-center font-poppins relative z-30 drop-shadow-md">Tirás 1 sola vez por cuenta. ¡Suerte!</p>
+            
+            {/* Contenedor Ruleta con Luces de Casino (Ring punteado amarillo) */}
+            <div className="relative w-64 h-64 md:w-72 md:h-72 mb-8 mt-2 z-20 flex items-center justify-center">
+              
+              <div className="absolute inset-0 rounded-full border-[6px] border-dotted border-[#fcdb00] opacity-80 z-0 animate-[spin_20s_linear_infinite] pointer-events-none"></div>
+
+              {/* LA RULETA CON SOMBRA 3D */}
               <div 
-                className="w-full h-full rounded-full border-8 border-[#111111] shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative overflow-hidden z-10"
+                className="w-full h-full rounded-full border-[10px] border-[#111111] relative overflow-hidden z-10"
                 style={{ 
                   background: 'conic-gradient(#111111 0deg 36deg, #fcdb00 36deg 72deg, #111111 72deg 108deg, #fcdb00 108deg 144deg, #111111 144deg 180deg, #fcdb00 180deg 216deg, #111111 216deg 252deg, #fcdb00 252deg 288deg, #111111 288deg 324deg, #fcdb00 324deg 360deg)',
                   transform: `rotate(${rouletteRotation}deg)`, 
-                  transition: isSpinning ? 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none' 
+                  transition: isSpinning ? 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none',
+                  boxShadow: 'inset 0 0 50px rgba(0,0,0,0.7)' 
                 }}
               >
                 {ROULETTE_PRIZES.map((prize, idx) => {
                   const angle = (360 / 10) * idx;
                   return (
                     <div key={idx} className="absolute inset-0" style={{ transform: `rotate(${angle + 18}deg)` }}>
-                      {/* ESTA ES LA REGLA QUE ALEJA EL TEXTO Y ACHICA LA LETRA SI ES MUY LARGA */}
                       <div className="absolute top-0 left-0 right-0 h-1/2 flex items-start justify-center pt-4 md:pt-5">
                         <span 
-                          className={`font-bebas uppercase whitespace-nowrap ${prize.text.length > 12 ? 'text-[10px] md:text-[12px] tracking-normal' : 'text-[13px] md:text-[16px] tracking-wider'}`} 
+                          className={`font-bebas uppercase whitespace-nowrap drop-shadow-sm ${prize.text.length > 12 ? 'text-[9px] md:text-[11px] tracking-normal' : 'text-[12px] md:text-[14px] tracking-wider'}`} 
                           style={{ color: prize.textC, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
                         >
                           {prize.text}
@@ -541,15 +570,11 @@ export default function Home() {
                 })}
               </div>
 
-              {/* CAPA 3: MASCOTA ADELANTE */}
+              {/* Puntero Dedo */}
               <img 
-                src="URL_DE_TU_MASCOTA_SIN_FONDO.png" 
-                className="absolute top-[-70px] left-1/2 -translate-x-1/2 w-[280px] h-auto z-20 drop-shadow-2xl" 
-                style={{ 
-                  pointerEvents: 'none',
-                  clipPath: 'polygon(0% 0%, 100% 0%, 100% 45%, 0% 45%)'
-                }} 
-                alt="Frente Mascota" 
+                src="https://i.ibb.co/G4f7mmwn/converted.png" 
+                className="absolute top-[-60px] left-1/3 -translate-x-1/4 w-[87px] h-auto z-30 drop-shadow-xl pointer-events-none" 
+                alt="Puntero Dedo" 
               />
 
             </div>
@@ -580,15 +605,13 @@ export default function Home() {
         </div>
       </header>
 
+      {/* --- MARQUEE ACTUALIZADO (Aniversario) --- */}
       {currentView === 'home' && (
         <div className="w-full bg-[#111111] py-2 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex">
           <div className="animate-marquee whitespace-nowrap flex items-center">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(8)].map((_, i) => (
               <div key={i} className="flex items-center gap-8 px-4 text-[#fcdb00] font-poppins font-bold text-[10px] md:text-xs tracking-widest uppercase">
-                <span>Envío 24hs CABA/AMBA</span><span className="text-white/30">•</span>
-                <span>Pedime te llega en 30'</span><span className="text-white/30">•</span>
-                <span>Compra 100% Segura</span><span className="text-white/30">•</span>
-                <span>Atención Personalizada por WhatsApp</span><span className="text-white/30">•</span>
+                <span>🔥 SEMANA DE ANIVERSARIO - DESCUENTOS EXCLUSIVOS - 028 IMPORT 🔥</span><span className="text-white/30">•</span>
               </div>
             ))}
           </div>
@@ -724,6 +747,8 @@ export default function Home() {
         <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noopener noreferrer" className="w-14 h-14 md:w-16 md:h-16 bg-[#25D366] rounded-full flex items-center justify-center text-white text-3xl shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform duration-300"><i className="fab fa-whatsapp"></i></a>
       </div>
 
+      {/* SCRIPT DEL CONFETI */}
+      <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     </div>
   );
