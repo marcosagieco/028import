@@ -24,7 +24,7 @@ const AVAILABLE_ICONS = [
   { id: 'fa-gift', prefix: 'fas', color: 'text-blue-500' },      
   { id: 'fa-rocket', prefix: 'fas', color: 'text-orange-500' },  
   { id: 'fa-award', prefix: 'fas', color: 'text-indigo-500' },
-  { id: 'fa-apple', prefix: 'fab', color: 'text-gray-800' } // Manzanita agregada
+  { id: 'fa-apple', prefix: 'fab', color: 'text-gray-800' }
 ];
 
 // Íconos EXCLUSIVOS para los Departamentos
@@ -106,6 +106,12 @@ export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
+  
+  // --- NUEVOS ESTADOS PARA CUPONES Y USUARIOS ---
+  const [coupons, setCoupons] = useState([]);
+  const [usersList, setUsersList] = useState([]);
+  const [newCoupon, setNewCoupon] = useState({ code: '', discount: '' });
+
   const [homeSections, setHomeSections] = useState([]);
   const [newPromo, setNewPromo] = useState({ category: '', minQty: 2, totalPrice: '' });
   const [newSectionTitle, setNewSectionTitle] = useState('');
@@ -175,6 +181,10 @@ export default function AdminPage() {
       onSnapshot(collection(firebaseRefs.db, 'promos'), (snap) => setPromos(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []));
       onSnapshot(collection(firebaseRefs.db, 'home_sections'), (snap) => setHomeSections(!snap.empty ? snap.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
       
+      // --- LECTURA DE CUPONES Y USUARIOS ---
+      onSnapshot(collection(firebaseRefs.db, 'coupons'), (snap) => setCoupons(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []));
+      onSnapshot(collection(firebaseRefs.db, 'users'), (snap) => setUsersList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)) : []));
+
       onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
         if (snap.exists()) { setDeptIcons(snap.data().icons || {}); }
       });
@@ -192,6 +202,24 @@ export default function AdminPage() {
   const toggleStock = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, inStock: product.inStock === false }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const toggleVisibility = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, isHidden: !product.isHidden }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const handleDeleteProduct = async (product) => { if(!confirm(`Eliminar "${product.name}"?`)) return; try { const isHardcoded = initialProducts.some(p => p.id === product.id); const docRef = doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`); if (isHardcoded) { await setDoc(docRef, { isDeleted: true }, { merge: true }); } else { await deleteDoc(docRef); } } catch (err) { alert("Error: " + err.message); } };
+
+  // --- FUNCIONES PARA CREAR Y BORRAR CUPONES ---
+  const handleAddCoupon = async (e) => { 
+    e.preventDefault(); 
+    const codeStr = newCoupon.code.trim().toUpperCase(); 
+    if (!codeStr || !newCoupon.discount) return alert("Faltan datos para el cupón"); 
+    try { 
+      await setDoc(doc(firebaseRefs.db, 'coupons', codeStr), { id: codeStr, code: codeStr, discount: Number(newCoupon.discount), active: true, createdAt: serverTimestamp() }); 
+      setNewCoupon({ code: '', discount: '' }); 
+      alert("¡Cupón guardado con éxito!"); 
+    } catch(err) { alert("Error al guardar cupón: " + err.message); } 
+  };
+  const handleDeleteCoupon = async (id) => { 
+    if(confirm("¿Eliminar cupón definitivamente?")) { 
+      try { await deleteDoc(doc(firebaseRefs.db, 'coupons', id)); } 
+      catch(err) { alert("Error al borrar cupón: " + err.message); } 
+    } 
+  };
 
   const updateDeptIcon = async (dept, iconId) => {
     try {
@@ -248,7 +276,6 @@ export default function AdminPage() {
   };
 
   const deleteOrder = async (id) => { if (confirm("¿Eliminar pedido permanentemente?")) { try { await deleteDoc(doc(firebaseRefs.db, 'orders', id)); } catch (err) { alert("Error: " + err.message); } } };
-
   // --- BRANDBOOK COLORS FOR ADMIN ---
   const theme = {
     bg: darkMode ? 'bg-[#111111]' : 'bg-[#f2f2f2]',
@@ -340,7 +367,19 @@ export default function AdminPage() {
     <div className={`min-h-screen font-poppins pb-10 transition-colors duration-300 ${theme.bg} ${theme.text}`}>
       <style dangerouslySetInnerHTML={{__html: `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;700;900&display=swap'); .font-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; } .font-poppins { font-family: 'Poppins', sans-serif; }`}} />
       <nav className={`${theme.nav} py-4 px-6 text-white flex justify-between items-center shadow-lg border-b border-white/10 sticky top-0 z-50`}><div className="flex items-center gap-4"><img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain" /><h1 className="text-2xl font-bebas tracking-wide uppercase pt-1">028<span className="text-[#fcdb00]">Control</span></h1></div><div className="flex items-center gap-4"><button onClick={() => setDarkMode(!darkMode)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-[#fcdb00] hover:text-[#111111] transition-all text-xs">{darkMode ? '☀️' : '🌙'}</button><a href="/?admin=true" target="_blank" className="text-[11px] text-[#fcdb00] font-bold uppercase hover:text-white transition-all tracking-widest bg-white/10 px-3 py-1.5 rounded-lg border border-white/20">Ver Web</a></div></nav>
-      <div className={`${theme.stickyHeader} border-b sticky top-[72px] z-40 transition-colors duration-300`}><div className="max-w-4xl mx-auto flex overflow-x-auto no-scrollbar"><button onClick={() => setActiveTab('historial')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'historial' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Historial</button><button onClick={() => setActiveTab('stock')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'stock' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Stock</button><button onClick={() => setActiveTab('vidriera')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'vidriera' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Vidriera</button><button onClick={() => setActiveTab('crear')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'crear' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Crear +</button><button onClick={() => setActiveTab('clientes')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'clientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Clientes</button><button onClick={() => setActiveTab('promos')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'promos' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Promos %</button></div></div>
+      <div className={`${theme.stickyHeader} border-b sticky top-[72px] z-40 transition-colors duration-300`}>
+        <div className="max-w-4xl mx-auto flex overflow-x-auto no-scrollbar">
+          <button onClick={() => setActiveTab('historial')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'historial' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Historial</button>
+          <button onClick={() => setActiveTab('stock')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'stock' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Stock</button>
+          <button onClick={() => setActiveTab('vidriera')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'vidriera' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Vidriera</button>
+          <button onClick={() => setActiveTab('crear')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'crear' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Crear +</button>
+          <button onClick={() => setActiveTab('clientes')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'clientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Clientes</button>
+          <button onClick={() => setActiveTab('promos')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'promos' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Promos %</button>
+          {/* NUEVAS PESTAÑAS */}
+          <button onClick={() => setActiveTab('cupones')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'cupones' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Cupones</button>
+          <button onClick={() => setActiveTab('usuarios')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'usuarios' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Usuarios</button>
+        </div>
+      </div>
       <main className="max-w-4xl mx-auto p-4 md:p-8">
         
         {activeTab === 'stock' && (<div className="animate-in fade-in duration-500"><div className="flex justify-between items-center mb-8"><h2 className="text-4xl font-bebas uppercase tracking-wide">Gestión de Stock</h2><button onClick={syncAllProducts} className="text-[10px] bg-[#111111] text-[#fcdb00] px-4 py-2.5 rounded-lg font-bold uppercase tracking-widest shadow-md hover:bg-[#fcdb00] hover:text-[#111111] transition-all">Sincronizar DB</button></div>{uniqueCategories.map(cat => renderStockGroup(cat))}</div>)}
@@ -380,6 +419,85 @@ export default function AdminPage() {
           <div className={`${theme.card} p-6 rounded-[2rem] mb-8 flex flex-col gap-4 shadow-sm border`}><div className="flex flex-col md:flex-row gap-4 items-end w-full"><div className="flex-1 w-full"><label className="text-[10px] font-bold uppercase text-gray-500 tracking-wider">Título de la nueva sección</label><input type="text" value={newSectionTitle} onChange={e=>setNewSectionTitle(e.target.value)} placeholder="Ej: Ofertas Relámpago..." className={`w-full mt-2 p-4 rounded-xl outline-none font-bold text-sm focus:ring-2 focus:ring-[#fcdb00] border-transparent ${theme.input}`}/></div><button onClick={createHomeSection} className="w-full md:w-auto bg-[#fcdb00] text-[#111111] font-bebas text-lg uppercase px-8 py-3.5 rounded-xl hover:bg-[#111111] hover:text-[#fcdb00] hover:shadow-xl transition-all">Crear Sección</button></div><div className="mt-2"><label className="text-[10px] font-bold uppercase text-gray-500 mb-3 block tracking-wider">Ícono</label><div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">{AVAILABLE_ICONS.map(iconObj => (<button key={iconObj.id} onClick={() => setNewSectionIcon(iconObj)} className={`w-12 h-12 flex-shrink-0 rounded-xl flex items-center justify-center text-xl transition-all ${newSectionIcon.id === iconObj.id ? 'bg-[#111111] shadow-md scale-110' : (darkMode ? 'bg-[#222] hover:bg-[#333]' : 'bg-gray-100 hover:bg-gray-200')}`}><i className={`${iconObj.prefix} ${iconObj.id} ${newSectionIcon.id === iconObj.id ? 'text-[#fcdb00]' : 'text-gray-400'}`}></i></button>))}</div></div><div className="mt-2 border-t border-gray-200 dark:border-[#333333] pt-4"><label className="text-[10px] font-bold uppercase text-gray-500 mb-3 block tracking-wider">Formato</label><div className="flex gap-2"><button onClick={() => setNewSectionLayout('horizontal')} className={`flex-1 py-3.5 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all ${newSectionLayout === 'horizontal' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : (darkMode ? 'bg-[#222] text-gray-400 hover:bg-[#333]' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')}`}><i className="fas fa-arrows-alt-h mr-2"></i> Carrusel</button><button onClick={() => setNewSectionLayout('vertical')} className={`flex-1 py-3.5 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all ${newSectionLayout === 'vertical' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : (darkMode ? 'bg-[#222] text-gray-400 hover:bg-[#333]' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')}`}><i className="fas fa-th-large mr-2"></i> Grilla</button></div></div></div>{homeSections.length === 0 && (<div className="text-center py-20 border-2 border-dashed border-gray-300 dark:border-[#333333] rounded-[2rem]"><i className="fas fa-magic text-4xl text-gray-300 mb-4"></i><p className="text-[11px] font-bold uppercase text-gray-500 tracking-widest">No hay secciones.</p></div>)}<div className="space-y-6">{homeSections.map(sec => (<div key={sec.id} className={`${theme.card} p-6 rounded-[2rem] shadow-sm border`}><div className="flex justify-between items-center mb-6 border-b border-gray-200 dark:border-[#333333] pb-4"><h3 className={`text-3xl font-bebas uppercase tracking-wide flex items-center gap-2 ${theme.text}`}><i className={`${AVAILABLE_ICONS.find(i => i.id === sec.icon)?.prefix || 'fas'} ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'}`}></i> {sec.title}</h3><div className="flex items-center gap-2"><button onClick={()=>toggleSectionLayout(sec)} className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-lg transition-colors ${darkMode ? 'bg-[#333] text-gray-300 hover:text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`} title="Cambiar el formato"><i className={`fas ${sec.layout === 'vertical' ? 'fa-th-large' : 'fa-arrows-alt-h'} mr-1.5`}></i> {sec.layout === 'vertical' ? 'Grilla' : 'Carrusel'}</button><button onClick={()=>deleteHomeSection(sec.dbId)} className="text-red-500 hover:text-white hover:bg-red-600 w-9 h-9 rounded-lg flex items-center justify-center transition-all bg-red-50 dark:bg-red-900/20"><i className="fas fa-trash text-sm"></i></button></div></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">{sec.productIds?.map(pid => { const prod = products.find(p => p.id === pid && !p.isDeleted); if(!prod) return null; return (<div key={pid} className={`relative rounded-xl p-4 flex flex-col gap-3 border ${darkMode ? 'bg-[#222] border-[#444]' : 'bg-[#f2f2f2] border-transparent shadow-sm'}`}><div className="flex items-center gap-3"><div className="w-12 h-12 bg-white rounded-lg p-1 shadow-sm"><img src={prod.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex-1 min-w-0"><p className={`text-[12px] font-bebas text-xl uppercase truncate tracking-wide ${theme.text}`}>{prod.name}</p><p className="text-gray-500 text-[9px] font-bold uppercase tracking-widest truncate mt-0.5">{prod.category}</p></div><button onClick={()=>removeProductFromSection(sec.dbId, pid)} className="w-8 h-8 bg-red-100 text-red-600 rounded-lg text-sm flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors shadow-sm"><i className="fas fa-times"></i></button></div><div className="flex items-center justify-between border-t border-gray-200 dark:border-[#444] pt-3 mt-1"><span className="text-[9px] font-bold uppercase text-gray-500 tracking-widest">Tamaño en Vidriera:</span><select value={prod.cardSize || 'normal'} onChange={(e) => updateCardSize(prod, e.target.value)} className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1.5 rounded-md border outline-none cursor-pointer ${darkMode ? 'bg-[#111] border-[#555] text-gray-300 focus:ring-1 focus:ring-[#fcdb00]' : 'bg-white border-gray-300 text-[#111111] focus:ring-1 focus:ring-[#fcdb00]'}`}><option value="normal">📏 Normal</option><option value="medium">🔲 Mediano</option><option value="large">⬜ Grande</option></select></div></div>) })} {(!sec.productIds || sec.productIds.length === 0) && (<p className="text-[11px] font-bold uppercase text-gray-400 italic col-span-full">Aún no agregaste productos a esta sección.</p>)} </div><div className="relative mb-3"><i className="fas fa-plus absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i><select onChange={(e) => { addProductToSection(sec.dbId, parseInt(e.target.value)); e.target.value = ''; }} className={`w-full p-4 pl-12 rounded-xl outline-none font-bold text-xs uppercase cursor-pointer appearance-none tracking-widest focus:ring-2 focus:ring-[#fcdb00] border-transparent ${theme.input}`}><option value="">AGREGAR PRODUCTO A "{sec.title}"...</option>{products.filter(p => !p.isDeleted && !sec.productIds?.includes(p.id)).map(p => (<option key={p.id} value={p.id}>{p.category} - {p.name} (${p.price})</option>))}</select></div><button onClick={() => autoFillLeastClicked(sec.dbId)} className={`w-full py-3.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all flex justify-center items-center gap-2 border ${darkMode ? 'bg-[#222] border-[#fcdb00]/20 text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]' : 'bg-[#111111] border-transparent text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]'}`}><i className="fas fa-magic"></i> Autocompletar con los 10 menos clickeados</button></div>))}</div></div>)}
 
         {activeTab === 'promos' && (<div className="animate-in fade-in duration-500 max-w-lg mx-auto"><div className="flex justify-between items-end mb-8"><div><h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Promociones</h2><p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Descuentos automáticos</p></div></div><form onSubmit={handleAddPromo} className={`${theme.card} p-8 rounded-[2rem] shadow-sm border mb-8 flex flex-col gap-5`}><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Categoría a bonificar</label><input list="promo-category-suggestions" placeholder="Ej: Ignite v400..." value={newPromo.category} onChange={e => setNewPromo({...newPromo, category: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} required/><datalist id="promo-category-suggestions">{uniqueCategories.map(cat => <option key={cat} value={cat} />)}</datalist></div><div className="flex gap-4"><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Cantidad Mínima</label><input type="number" required min="2" placeholder="Ej: 2" value={newPromo.minQty} onChange={e => setNewPromo({...newPromo, minQty: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Precio Total</label><input type="number" required placeholder="Ej: 49000" value={newPromo.totalPrice} onChange={e => setNewPromo({...newPromo, totalPrice: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div></div><p className="text-[11px] text-gray-500">Ejemplo: Llevando 2 o más, quedan a $24.500 c/u automáticamente.</p><button type="submit" className="bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all">Guardar Promoción</button></form><div className="grid gap-4">{promos.length === 0 ? (<p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest mt-10">No hay promos activas</p>) : (promos.map(promo => (<div key={promo.id} className={`${theme.card} p-6 rounded-[1.5rem] flex justify-between items-center shadow-sm border`}><div><h4 className="font-bebas text-2xl uppercase tracking-wide mb-1">{promo.category}</h4><p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase">Llevando {promo.minQty}+ : ${(promo.totalPrice / promo.minQty).toLocaleString('es-AR')} c/u</p></div><button onClick={() => handleDeletePromo(promo.id)} className="w-12 h-12 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition-all shadow-sm"><i className="fas fa-trash text-lg"></i></button></div>)))}</div></div>)}
+
+        {/* --- NUEVA PESTAÑA: CUPONES --- */}
+        {activeTab === 'cupones' && (
+          <div className="animate-in fade-in duration-500 max-w-lg mx-auto">
+            <div className="flex justify-between items-end mb-8">
+              <div>
+                <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Cupones</h2>
+                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Códigos para Influencers</p>
+              </div>
+            </div>
+            <form onSubmit={handleAddCoupon} className={`${theme.card} p-8 rounded-[2rem] shadow-sm border mb-8 flex flex-col gap-5`}>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Código de Descuento</label>
+                <input type="text" required placeholder="Ej: MARTU20" value={newCoupon.code} onChange={e => setNewCoupon({...newCoupon, code: e.target.value.toUpperCase()})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Porcentaje Off (%)</label>
+                <input type="number" required min="1" max="99" placeholder="Ej: 15" value={newCoupon.discount} onChange={e => setNewCoupon({...newCoupon, discount: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+              </div>
+              <button type="submit" className="bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all">Crear Cupón</button>
+            </form>
+            <div className="grid gap-4">
+              {coupons.length === 0 ? (
+                <p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest mt-10">No hay cupones activos</p>
+              ) : (
+                coupons.map(coupon => (
+                  <div key={coupon.id} className={`${theme.card} p-6 rounded-[1.5rem] flex justify-between items-center shadow-sm border`}>
+                    <div>
+                      <h4 className="font-bebas text-2xl uppercase tracking-wide mb-1">{coupon.code}</h4>
+                      <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase">¡Aplica {coupon.discount}% al carrito!</p>
+                    </div>
+                    <button onClick={() => handleDeleteCoupon(coupon.id)} className="w-12 h-12 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition-all shadow-sm"><i className="fas fa-trash text-lg"></i></button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* --- NUEVA PESTAÑA: USUARIOS --- */}
+        {activeTab === 'usuarios' && (
+          <div className="animate-in fade-in duration-500">
+            <div className="flex justify-between items-end mb-8">
+              <div>
+                <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Usuarios</h2>
+                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Cuentas Registradas con Google</p>
+              </div>
+              <span className="bg-[#fcdb00] text-[#111111] text-[11px] font-bold px-4 py-2 rounded-lg shadow-sm">{usersList.length} Registros</span>
+            </div>
+            {usersList.length === 0 ? (
+              <div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}>
+                <i className="fab fa-google text-gray-300 text-5xl mb-6"></i>
+                <p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">Nadie se registró todavía</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {usersList.map((usr, index) => (
+                  <div key={usr.id || index} className={`${theme.card} p-6 rounded-[1.5rem] shadow-sm border flex flex-col gap-4 hover:border-[#fcdb00]/50 transition-all`}>
+                    <div className="flex items-center gap-4">
+                      {usr.photoURL ? (
+                        <img src={usr.photoURL} alt="Perfil" className="w-14 h-14 rounded-full shadow-md object-cover" />
+                      ) : (
+                        <div className="w-14 h-14 rounded-full bg-[#111111] text-[#fcdb00] flex items-center justify-center text-2xl font-bebas shadow-md uppercase pt-1">{usr.name ? usr.name.charAt(0) : 'U'}</div>
+                      )}
+                      <div className="overflow-hidden">
+                        <h4 className="font-bebas tracking-wide text-2xl uppercase leading-none mb-1 truncate">{usr.name || 'Sin Nombre'}</h4>
+                        <p className="text-gray-500 font-bold text-[10px] truncate"><i className="fas fa-envelope mr-1.5 text-[#fcdb00]"></i> {usr.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center mt-2 border-t pt-4 dark:border-[#333333]">
+                      <span className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Ruleta: <span className={usr.hasSpunRoulette ? 'text-green-500' : 'text-gray-400'}>{usr.hasSpunRoulette ? 'Ya giró 🎁' : 'No giró'}</span></span>
+                      <span className="text-[9px] font-bold uppercase text-gray-400">{usr.createdAt?.seconds ? new Date(usr.createdAt.seconds * 1000).toLocaleDateString('es-AR') : 'Reciente'}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ACÁ ESTÁ LA CORRECCIÓN CLAVE EN LA PESTAÑA "CREAR" */}
         {activeTab === 'crear' && (<div className="animate-in fade-in duration-500 max-w-lg mx-auto"><h2 className="text-4xl font-bebas uppercase tracking-wide mb-6 text-center">Nuevo Producto</h2><form onSubmit={handleAddProduct} className={`${theme.card} p-8 rounded-[2rem] shadow-sm border flex flex-col gap-5`}><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Nombre del Producto</label><input type="text" required placeholder="Ej: BLUE RAZZ ICE" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex gap-4"><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Precio</label><input type="number" required placeholder="26000" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Categoría / Marca</label><input list="category-suggestions" placeholder="Ej: Ignite v400 o Crear Nueva..." value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} /><datalist id="category-suggestions">{uniqueCategories.map(cat => <option key={cat} value={cat} />)}</datalist></div></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Departamento Principal</label><input list="dept-suggestions" placeholder="Elegí o escribí uno nuevo..." value={newProduct.department} onChange={e => setNewProduct({...newProduct, department: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} /><datalist id="dept-suggestions">{availableDepartments.map(d => <option key={d} value={d} />)}</datalist></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Link de Imagen (URL)</label><input type="url" required placeholder="https://i.postimg.cc/..." value={newProduct.image} onChange={e => setNewProduct({...newProduct, image: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />{newProduct.image && (<div className="mt-4 relative h-32 rounded-xl overflow-hidden border border-dashed border-gray-300 bg-[#f2f2f2]"><img src={newProduct.image} alt="Vista previa" className="w-full h-full object-contain mix-blend-multiply" /></div>)}</div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Etiqueta y Tamaño</label><div className="flex gap-4"><input type="text" placeholder="Ej: Destacado" value={newProduct.tag} onChange={e => setNewProduct({...newProduct, tag: e.target.value})} className={`flex-1 p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /><select value={newProduct.cardSize} onChange={e => setNewProduct({...newProduct, cardSize: e.target.value})} className={`flex-1 p-4 rounded-xl outline-none font-bold text-xs uppercase cursor-pointer border-transparent focus:ring-2 focus:ring-[#fcdb00] ${theme.input}`}><option value="normal">📏 Tamaño Normal</option><option value="medium">🔲 Tamaño Mediano</option><option value="large">⬜ Tamaño Grande</option></select></div></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Descripción (Biografía)</label><textarea rows="2" placeholder="Escribe aquí..." value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all resize-none ${theme.input}`}></textarea></div><button type="submit" disabled={isAdding} className="bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all disabled:opacity-50">{isAdding ? 'Guardando...' : 'Guardar Producto'}</button></form></div>)}
