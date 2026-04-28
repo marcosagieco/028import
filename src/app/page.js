@@ -84,7 +84,7 @@ const initialProducts = [
 
 const PAGE_CONTENT = {
   terminos: { title: "Términos y Condiciones", subtitle: "Políticas Legales", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p><strong>1. Naturaleza del Servicio:</strong> 028 IMPORT opera como intermediario e importador directo de productos tecnológicos y artículos de vapeo de primera línea.</p><p><strong>2. Precios y Disponibilidad:</strong> Los valores publicados y el stock se encuentran sujetos a modificaciones sin previo aviso, derivado de la dinámica propia de la importación y las fluctuaciones cambiarias del mercado.</p><p><strong>3. Proceso y Confirmación de Compra:</strong> La selección de artículos a través de esta plataforma web representa una solicitud o intención de reserva. La transacción únicamente se considerará perfeccionada y confirmada tras la comunicación directa con nuestro equipo comercial vía WhatsApp y la posterior acreditación del pago.</p><p><strong>4. Garantías y Responsabilidad:</strong> Garantizamos la originalidad y autenticidad del 100% de nuestro catálogo. Se contempla garantía exclusiva por defectos de fabricación de origen. 028 IMPORT no asume responsabilidad alguna por daños derivados del mal uso, manipulación incorrecta o desgaste natural de los dispositivos adquiridos.</p></div>) },
-  privacidad: { title: "Política de Privacidad", subtitle: "Protección de Datos", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>En 028 IMPORT, la salvaguarda y confidencialidad de su información personal es una absoluta prioridad. Los datos recopilados durante el proceso de reserva son utilizados strictly para fines logísticos y de facturación.</p></div>) },
+  privacidad: { title: "Política de Privacidad", subtitle: "Protección de Datos", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>En 028 IMPORT, la salvaguarda y confidencialidad de su información personal es una absoluta prioridad. Los datos recopilados durante el proceso de reserva son utilizados estrictamente para fines logísticos y de facturación.</p></div>) },
   pagos: { title: "Medios de Pago", subtitle: "Transacciones Seguras", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>En <strong>028 IMPORT</strong> priorizamos la seguridad, agilidad y transparencia en cada operación financiera. Con el objetivo de proteger su integridad crediticia, todas las transacciones de pago se procesan de manera externa a nuestro sitio web.</p><div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 mt-4"><h3 className="font-bebas text-2xl uppercase tracking-wide mb-4 text-[#111111]">Opciones Habilitadas:</h3><ul className="space-y-4"><li><strong><i className="fas fa-university text-[#b8952a] mr-2"></i> Transferencia Bancaria (ARS/USD):</strong> Acreditación inmediata. Las coordenadas bancarias (CBU/Alias) se suministrarán exclusivamente vía WhatsApp al validar su pedido.</li><li><strong><i className="fas fa-money-bill-wave text-[#b8952a] mr-2"></i> Efectivo Contra Entrega:</strong> Modalidad disponible únicamente para logística vía Motomensajería dentro de CABA y GBA, o retiros de forma presencial en nuestro showroom.</li><li><strong><i className="fab fa-bitcoin text-[#b8952a] mr-2"></i> Criptomonedas (USDT):</strong> Operamos a través de la red TRC-20 u otras a convenir. Consulte la cotización del momento con su asesor comercial.</li></ul></div><p className="mt-6 p-4 bg-red-50 text-red-800 rounded-xl border border-red-200 text-sm"><strong>⚠️ Importante:</strong> Bajo ninguna circunstancia el personal de 028 IMPORT le solicitará los dígitos de su tarjeta de crédito, claves de seguridad o contraseñas bancarias a través de esta plataforma ni por canales no oficiales.</p></div>) },
   arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de 10 días corridos.</p></div>) }
 };
@@ -92,14 +92,14 @@ const PAGE_CONTENT = {
 const ROULETTE_PRIZES = [
   { id: 'sigue1', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#fcdb00' }, 
   { id: 'off5_1', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#111111' }, 
-  { id: 'off10_1', text: '10% OFF', prob: 0.205, type: 'percent', value: 10, textC: '#fcdb00' }, 
+  { id: 'off10_1', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#fcdb00' }, 
   { id: 'sigue2', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#111111' }, 
   { id: 'off5_2', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#fcdb00' }, 
-  { id: 'off10_2', text: '10% OFF', prob: 0.205, type: 'percent', value: 10, textC: '#111111' }, 
+  { id: 'off10_2', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#111111' }, 
   { id: 'off15', text: '15% OFF', prob: 0.07, type: 'percent', value: 15, textC: '#fcdb00' }, 
-  { id: 'off20', text: '20% OFF', prob: 0.005, type: 'percent', value: 20, textC: '#111111' }, 
+  { id: 'off20', text: '20% OFF', prob: 0.015, type: 'percent', value: 20, textC: '#111111' }, 
   { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#fcdb00' }, 
-  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.005, type: 'shipping', value: 0, textC: '#111111' }, 
+  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, textC: '#111111' }, 
 ];
 
 export default function Home() {
@@ -141,9 +141,8 @@ export default function Home() {
   const [showResultModal, setShowResultModal] = useState(false);
   const [wonPrizeData, setWonPrizeData] = useState(null);
 
-  // NUEVOS ESTADOS DE UPSELL AÑADIDOS A TU CÓDIGO
-  const [upsellSettings, setUpsellSettings] = useState(null);
-  const [showUpsellModal, setShowUpsellModal] = useState(false);
+  // --- NUEVO ESTADO: LISTA DE OFERTAS UPSELL ---
+  const [upsellsList, setUpsellsList] = useState([]);
 
   const departments = useMemo(() => [...new Set(products.map(p => p.department).filter(Boolean))], [products]);
   const uniqueCategories = useMemo(() => {
@@ -156,14 +155,7 @@ export default function Home() {
   const firebaseRefs = useMemo(() => {
     if (typeof window === "undefined") return { auth: null, db: null };
     try {
-      const firebaseConfig = {
-        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-      };
+      const firebaseConfig = { apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY, authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID, storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET, messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID, appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID };
       const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
       return { auth: getAuth(app), db: getFirestore(app) };
     } catch (error) { return { auth: null, db: null }; }
@@ -177,146 +169,163 @@ export default function Home() {
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => { if (entry.isIntersecting) entry.target.classList.add("is-visible"); });
-    }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+        entries.forEach((entry) => { if (entry.isIntersecting) entry.target.classList.add("is-visible"); });
+      }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" } 
+    );
     const timeoutId = setTimeout(() => {
-      document.querySelectorAll('.reveal-on-scroll').forEach((el) => observer.observe(el));
+        const elements = document.querySelectorAll('.reveal-on-scroll');
+        elements.forEach((el) => observer.observe(el));
     }, 100);
     return () => { clearTimeout(timeoutId); observer.disconnect(); }
   }, [currentView, activeFilter, products, searchTerm, homeSections]);
 
+  const isFirstLoad = useRef(true);
   useEffect(() => {
     if (!firebaseRefs.db) return;
     const qFomo = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'), limit(1));
-    return onSnapshot(qFomo, (snap) => {
-      if (isFirstLoad.current) { isFirstLoad.current = false; return; }
-      snap.docChanges().forEach((change) => {
-        if (change.type === "added") {
-          const o = change.doc.data();
-          if (o.clientName && o.items?.length > 0) {
-            setFomoData({ name: o.clientName.split(' ')[0], product: o.items[0].name });
-            setTimeout(() => setFomoData(null), 6000);
-          }
-        }
-      });
+    const unsubscribeFomo = onSnapshot(qFomo, (snap) => {
+        if (isFirstLoad.current) { isFirstLoad.current = false; return; }
+        snap.docChanges().forEach((change) => {
+            if (change.type === "added") {
+                const o = change.doc.data();
+                if (o.clientName && o.items?.length > 0) {
+                    const firstName = o.clientName.split(' ')[0]; 
+                    setFomoData({ name: firstName, product: o.items[0].name });
+                    setTimeout(() => setFomoData(null), 6000);
+                }
+            }
+        });
     });
+    return () => unsubscribeFomo();
   }, [firebaseRefs.db]);
 
   useEffect(() => {
+    const handleFocus = () => setIsSending(false);
+    window.addEventListener('focus', handleFocus); window.addEventListener('pageshow', handleFocus);
     if (firebaseRefs.auth && firebaseRefs.db) {
-      onAuthStateChanged(firebaseRefs.auth, (u) => {
+      const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (u) => {
         setUser(u);
-        if (!u) signInAnonymously(firebaseRefs.auth).catch(console.error);
+        if (!u) { signInAnonymously(firebaseRefs.auth).catch(console.error); }
       });
-      onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
+      const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
           setProducts(prev => {
-            const combined = [...initialProducts];
-            dbProducts.forEach(dbItem => {
-              const index = combined.findIndex(p => p.id == dbItem.id);
-              if (dbItem.isHidden || dbItem.isDeleted) { if (index > -1) combined.splice(index, 1); }
-              else { if (index > -1) combined[index] = { ...combined[index], ...dbItem }; else combined.push(dbItem); }
-            });
-            return combined.sort((a, b) => (a.order || 99) - (b.order || 99));
+             const combined = [...initialProducts];
+             dbProducts.forEach(dbItem => {
+                const index = combined.findIndex(p => p.id == dbItem.id);
+                if (dbItem.isHidden || dbItem.isDeleted) { if (index > -1) combined.splice(index, 1); }
+                else { if (index > -1) combined[index] = { ...combined[index], ...dbItem }; else combined.push(dbItem); }
+             });
+             return combined.sort((a, b) => (a.order || 99) - (b.order || 99));
           });
         }
       });
-      onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
-      onSnapshot(collection(firebaseRefs.db, 'home_sections'), (s) => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
-      onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => { if (snap.exists()) setDeptIcons(snap.data().icons || {}); });
-      onSnapshot(collection(firebaseRefs.db, 'coupons'), (snap) => setActiveCouponsDb(!snap.empty ? snap.docs.map(d => d.data()) : []));
-      
-      // LECTURA DE OFERTA UPSELL
-      onSnapshot(doc(firebaseRefs.db, 'settings', 'upsell'), (snap) => {
-        if (snap.exists()) { setUpsellSettings(snap.data()); }
+      const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
+      const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (s) => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
+      const unsubscribeDeptIcons = onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
+        if (snap.exists()) { setDeptIcons(snap.data().icons || {}); }
       });
+      const unsubscribeCoupons = onSnapshot(collection(firebaseRefs.db, 'coupons'), (snap) => setActiveCouponsDb(!snap.empty ? snap.docs.map(d => d.data()) : []));
+      
+      // LECTURA DE LA LISTA DE OFERTAS UPSELLS
+      const unsubscribeUpsells = onSnapshot(collection(firebaseRefs.db, 'upsells'), (snap) => {
+        setUpsellsList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
+      });
+
+      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); unsubscribeDeptIcons(); unsubscribeCoupons(); unsubscribeUpsells(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
     }
   }, [firebaseRefs]);
 
   useEffect(() => {
-    if (!user || user.isAnonymous || !firebaseRefs.db) return;
-    return onSnapshot(doc(firebaseRefs.db, 'users', user.uid), (docSnap) => {
-      if (docSnap.exists()) { setDbUser(docSnap.data()); if (docSnap.data().name) setClientName(docSnap.data().name); }
-    });
+      if (!user || user.isAnonymous || !firebaseRefs.db) return;
+      const unsubscribe = onSnapshot(doc(firebaseRefs.db, 'users', user.uid), (docSnap) => {
+          if (docSnap.exists()) {
+              const data = docSnap.data();
+              setDbUser(data);
+              if(data.name) setClientName(data.name);
+          }
+      });
+      return () => unsubscribe();
   }, [user, firebaseRefs.db]);
 
   const handleGoogleLogin = async () => {
-    if (!firebaseRefs.auth || !firebaseRefs.db) return;
-    try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(firebaseRefs.auth, provider);
-      const u = result.user;
-      const userRef = doc(firebaseRefs.db, 'users', u.uid);
-      const userSnap = await getDoc(userRef);
-      if (!userSnap.exists()) { await setDoc(userRef, { name: u.displayName, email: u.email, photoURL: u.photoURL, hasSpunRoulette: false, roulettePrize: null, createdAt: serverTimestamp() }); }
-      showToast("¡Sesión iniciada con éxito! 🎉");
-    } catch (error) { showToast("Error al iniciar con Google"); }
+      if (!firebaseRefs.auth || !firebaseRefs.db) return;
+      try {
+          const provider = new GoogleAuthProvider();
+          const result = await signInWithPopup(firebaseRefs.auth, provider);
+          const u = result.user;
+          const userRef = doc(firebaseRefs.db, 'users', u.uid);
+          const userSnap = await getDoc(userRef);
+          if (!userSnap.exists()) {
+              await setDoc(userRef, { name: u.displayName, email: u.email, photoURL: u.photoURL, hasSpunRoulette: false, roulettePrize: null, createdAt: serverTimestamp() });
+          }
+          showToast("¡Sesión iniciada con éxito! 🎉");
+      } catch (error) { console.error(error); showToast("Error al iniciar con Google"); }
+  };
+
+  const fireConfetti = () => {
+    if (typeof window !== 'undefined' && window.confetti) {
+      window.confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 9999 });
+    }
   };
 
   const handleSpinRoulette = async () => {
-    if (isSpinning) return;
-    
-    // BLOQUEO LÓGICO GOOGLE: SI NO ESTÁ LOGUEADO, LE PIDE
-    if (!user || user.isAnonymous) {
-      showToast("⚠️ Debes iniciar sesión con Google para girar.");
-      handleGoogleLogin();
-      return; 
-    }
-
-    if (!dbUser) {
-      showToast("⏳ Cargando perfil...");
-      return;
-    }
-
-    // BLOQUEO LÓGICO: SI YA TIRÓ, NO GIRA
-    if (dbUser.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") {
-      showToast("¡Ya utilizaste tu tiro de ruleta!");
-      return;
-    }
-
-    setIsSpinning(true);
-    // Bloqueo inmediato para UI
-    setDbUser(prev => ({...prev, hasSpunRoulette: true}));
-
-    const rand = Math.random();
-    let sum = 0; let wonPrize = ROULETTE_PRIZES[0];
-    for (let p of ROULETTE_PRIZES) { sum += p.prob; if (rand <= sum) { wonPrize = p; break; } }
-    
-    try {
-      if (firebaseRefs.db) {
-        await setDoc(doc(firebaseRefs.db, 'users', user.uid), { hasSpunRoulette: true, roulettePrize: wonPrize }, { merge: true });
+      if (isSpinning) return;
+      
+      // BLOQUEO ANTITRAMPAS: No girar si ya tiró
+      if (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") {
+        showToast("¡Ya utilizaste tu tiro de ruleta!");
+        return;
       }
-    } catch (err) { console.error(err); }
-
-    const extraSpins = 8 * 360;
-    const prizeIndex = ROULETTE_PRIZES.findIndex(p => p.id === wonPrize.id);
-    const targetRotation = extraSpins + (360 - (prizeIndex * 36)) - 18;
-    setRouletteRotation(targetRotation);
-
-    setTimeout(() => {
-      setIsSpinning(false);
-      setWonPrizeData(wonPrize);
-      setShowRouletteModal(false);
-      setShowResultModal(true);
-      if (wonPrize.type !== 'none') {
-        if (typeof window !== 'undefined' && window.confetti) {
-          window.confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 9999 });
-        }
+      
+      setIsSpinning(true);
+      const rand = Math.random();
+      let sum = 0;
+      let wonPrize = ROULETTE_PRIZES[0];
+      
+      for (let p of ROULETTE_PRIZES) {
+          sum += p.prob;
+          if (rand <= sum) { wonPrize = p; break; }
       }
-    }, 5000);
+
+      // PARCHE ANTITRAMPAS LÓGICO: Guardamos que YA TIRÓ al instante. NO GUARDAMOS EL PREMIO TODAVÍA.
+      try {
+          if (user && dbUser && firebaseRefs.db) {
+             await setDoc(doc(firebaseRefs.db, 'users', user.uid), { hasSpunRoulette: true }, { merge: true });
+          }
+      } catch(err) { console.error("Error Antitrampas:", err); }
+
+      const extraSpins = 5 * 360; 
+      const prizeIndex = ROULETTE_PRIZES.findIndex(p => p.id === wonPrize.id);
+      const sliceAngle = 360 / ROULETTE_PRIZES.length;
+      const targetRotation = extraSpins + (360 - (prizeIndex * sliceAngle)) - (sliceAngle / 2);
+      
+      setRouletteRotation(targetRotation);
+
+      setTimeout(async () => {
+          // AL FINALIZAR, GUARDAMOS EL PREMIO REAL.
+          try {
+             if (firebaseRefs.db && wonPrize.type !== 'none') {
+                await setDoc(doc(firebaseRefs.db, 'users', user.uid), { roulettePrize: wonPrize }, { merge: true });
+             }
+          } catch(err) { console.error(err); }
+
+          setIsSpinning(false);
+          setWonPrizeData(wonPrize);
+          setShowRouletteModal(false); 
+          setShowResultModal(true);    
+          
+          if(wonPrize.type === 'none') {
+              showToast("¡Ufa! Sigue participando. 😢");
+          } else {
+              showToast(`¡GANASTE! 🎉 ${wonPrize.text}`);
+              setAppliedCoupon(null); 
+              fireConfetti(); 
+          }
+      }, 5000); 
   };
 
-  const calculateTotal = (cartData = cart) => {
-    let subtotal = cartData.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
-    if (appliedCoupon) return subtotal * (1 - (appliedCoupon.discount / 100));
-    if (dbUser?.roulettePrize?.type === 'percent') {
-      let maxP = 0;
-      cartData.forEach(i => { const p = i.isUpsell ? i.upsellPrice : getUnitPromoPrice(i); if (p > maxP) maxP = p; });
-      return subtotal - (maxP * (dbUser.roulettePrize.value / 100));
-    }
-    return subtotal;
-  };
   const handleApplyCoupon = () => {
       const code = couponInput.trim().toUpperCase();
       if(!code) return;
@@ -338,6 +347,18 @@ export default function Home() {
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
   const getUnitPromoPrice = (item) => { const promo = promos.find(p => p.category === item.category); if (promo) { const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0); if (catCount >= promo.minQty) return promo.totalPrice / promo.minQty; } return item.price; };
   
+  const calculateTotal = (cartData = cart) => {
+      let subtotal = cartData.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
+      if (appliedCoupon) { return subtotal * (1 - (appliedCoupon.discount / 100)); } 
+      if (dbUser?.roulettePrize && dbUser.roulettePrize.type === 'percent') {
+          let maxPrice = 0;
+          cartData.forEach(item => { const price = item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item); if (price > maxPrice) maxPrice = price; });
+          const discountAmount = maxPrice * (dbUser.roulettePrize.value / 100);
+          return subtotal - discountAmount;
+      }
+      return subtotal;
+  };
+
   const addToCart = async (product, e) => { 
     if(e) e.stopPropagation(); 
     if (product.inStock === false) return; 
@@ -356,35 +377,29 @@ export default function Home() {
   
   const changeQty = (id, delta) => { setCart(prev => prev.map(i => i.id === id ? { ...i, qty: i.qty + delta } : i).filter(i => i.qty > 0)); };
 
+  // --- FUNCIÓN PARA AGREGAR LA OFERTA DIRECTO DESDE EL CARRITO ---
+  const handleAddUpsellToCart = (upsell) => {
+      const prod = products.find(p => p.id == upsell.productId);
+      if (!prod) return;
+      setCart(prev => {
+          const existing = prev.find(item => item.id === prod.id);
+          if (existing) return prev.map(item => item.id === prod.id ? { ...item, qty: item.qty + 1, isUpsell: true, upsellPrice: Number(upsell.price) } : item);
+          return [...prev, { ...prod, qty: 1, isUpsell: true, upsellPrice: Number(upsell.price) }];
+      });
+      showToast(`✅ Oferta agregada: ${prod.name}`);
+  };
+
   const handleCheckout = async () => {
     if (!clientName.trim() || !clientPhone.trim()) { showToast("⚠️ Completá tu Nombre y Teléfono."); return; }
     if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) { showToast("⚠️ Completá dirección y localidad."); return; }
     
-    // --- LÓGICA DE UPSELL (OFERTA FINAL) ---
-    if (upsellSettings && upsellSettings.active && upsellSettings.productId) {
-        const prodInCart = cart.find(i => i.id == upsellSettings.productId);
-        const prodData = products.find(p => p.id == upsellSettings.productId);
-        if (!prodInCart && prodData && prodData.inStock !== false && !prodData.isDeleted) {
-            setShowUpsellModal(true); 
-            return; // Frena el checkout para mostrar la oferta
-        }
-    }
-    
-    executeOrder(false);
+    executeOrder(); // Como la oferta ahora está adentro del carrito, va directo al WhatsApp
   };
 
-  const executeOrder = async (addUpsell = false) => {
-    setShowUpsellModal(false);
+  const executeOrder = async () => {
     setIsSending(true);
     let currentCart = [...cart];
     
-    if (addUpsell && upsellSettings) {
-        const prod = products.find(p => p.id == upsellSettings.productId);
-        if (prod) {
-            currentCart.push({ ...prod, qty: 1, isUpsell: true, upsellPrice: Number(upsellSettings.price) });
-        }
-    }
-
     const finalTotal = calculateTotal(currentCart);
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
     
@@ -432,7 +447,6 @@ export default function Home() {
         setTimeout(() => { window.location.href = whatsappUrl; }, 400); 
     } catch (e) { window.location.href = whatsappUrl; }
   };
-
   const renderProductCard = (p, index, isVidriera = false, layout = 'horizontal') => {
     const inCart = cart.find(i => i.id === p.id);
     const isOutOfStock = p.inStock === false;
@@ -526,7 +540,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- NUEVO: MODAL NOTIFICACIÓN CENTRAL DE PREMIO --- */}
+      {/* --- MODAL DE RESULTADO CENTRAL DE LA RULETA 🎉 --- */}
       {showResultModal && wonPrizeData && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#111111]/95 backdrop-blur-xl" onClick={() => setShowResultModal(false)}></div>
@@ -539,51 +553,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- NUEVO: MODAL DE OFERTA FINAL (UPSELL) ANTES DE IR A WHATSAPP --- */}
-      {showUpsellModal && upsellSettings && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#111111]/95 backdrop-blur-xl" onClick={() => executeOrder(false)}></div>
-          <div className="relative bg-white p-8 rounded-[2.5rem] shadow-2xl border-4 border-[#fcdb00] max-w-sm w-full animate-in zoom-in-95 duration-500 flex flex-col items-center text-center">
-             {(() => {
-               const prod = products.find(p => p.id == upsellSettings.productId);
-               if (!prod) return null;
-               return (
-                 <>
-                   <div className="bg-red-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full mb-5 animate-bounce shadow-md">¡OFERTA EXCLUSIVA PARA VOS!</div>
-                   <h3 className="font-bebas text-3xl uppercase mb-4 text-[#111111]">¿Querés sumar esto a tu pedido?</h3>
-                   
-                   <div className="w-40 h-40 bg-[#f2f2f2] rounded-2xl p-3 mb-4 mx-auto shadow-inner">
-                      <img src={prod.image} alt={prod.name} className="w-full h-full object-contain mix-blend-multiply" />
-                   </div>
-                   
-                   <h4 className="font-bebas text-2xl uppercase tracking-wide leading-tight mb-2 text-gray-800">{prod.name}</h4>
-                   <p className="text-xs text-gray-500 mb-4 px-2 font-poppins">{prod.description}</p>
-                   
-                   <div className="flex items-center justify-center gap-4 mb-6 bg-red-50 py-3 w-full rounded-xl border border-red-100">
-                      <div className="flex flex-col items-end">
-                          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Precio Lista</span>
-                          <span className="text-gray-400 line-through font-bebas text-2xl">${formatPrice(prod.price)}</span>
-                      </div>
-                      <div className="w-px h-8 bg-red-200"></div>
-                      <div className="flex flex-col items-start">
-                          <span className="text-[9px] text-red-500 font-bold uppercase tracking-widest">Precio Oferta</span>
-                          <span className="text-[#fcdb00] font-bebas text-4xl drop-shadow-sm leading-none" style={{textShadow: '0 2px 4px rgba(0,0,0,0.8)'}}>${formatPrice(Number(upsellSettings.price))}</span>
-                      </div>
-                   </div>
-                   
-                   <button onClick={() => executeOrder(true)} className="w-full bg-[#111111] text-[#fcdb00] py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider hover:bg-[#fcdb00] hover:text-[#111111] transition-all mb-4 shadow-lg flex items-center justify-center gap-2"><i className="fas fa-cart-plus"></i> ¡SÍ, LO SUMO AL PEDIDO!</button>
-                   <button onClick={() => executeOrder(false)} className="text-gray-400 text-[10px] font-bold uppercase tracking-widest hover:text-gray-800 font-poppins underline decoration-gray-300 underline-offset-4">No gracias, continuar al pago</button>
-                 </>
-               );
-             })()}
-          </div>
-        </div>
-      )}
-
       {/* --- MODAL RULETA BLANCA ORIGINAL CON BOTÓN GOOGLE --- */}
       {showRouletteModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          {/* Bloqueo Escape: Solo cierra si no está girando */}
           <div className="absolute inset-0 bg-[#111111]/90 backdrop-blur-sm" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
           
           <div className="relative w-full max-w-[480px] rounded-[2rem] shadow-2xl border border-white/20 p-8 pt-16 flex flex-col items-center animate-in zoom-in-95 duration-500 overflow-hidden bg-white">
@@ -596,7 +568,7 @@ export default function Home() {
 
             {!isSpinning && <button onClick={() => setShowRouletteModal(false)} className="absolute top-4 right-4 w-10 h-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm hover:bg-[#fcdb00] hover:text-[#111111] transition-colors z-30 text-gray-600"><i className="fas fa-times"></i></button>}
             
-            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wide text-[#111111] mb-1 text-center relative z-30 drop-shadow-md">Aniversario 028</h2>
+            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wide text-[#111111] mb-1 text-center relative z-30 drop-shadow-md">Ruleta de Aniversario</h2>
             <p className="text-[11px] font-bold text-[#111111] uppercase tracking-widest mb-10 text-center font-poppins relative z-30 drop-shadow-md">Tirás 1 sola vez por cuenta. ¡Suerte!</p>
             
             <div className="relative w-64 h-64 md:w-72 md:h-72 mb-8 mt-2 z-20 flex items-center justify-center">
@@ -637,10 +609,15 @@ export default function Home() {
 
             </div>
             
-            {/* LÓGICA DE BOTÓN INTELIGENTE (PIDE GOOGLE O BLOQUEA) EN TU DISEÑO ORIGINAL */}
-            <button onClick={handleSpinRoulette} disabled={isSpinning} className={`w-full py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider transition-all shadow-[0_10px_30px_rgba(0,0,0,0.15)] active:scale-95 flex items-center justify-center gap-2 relative z-30 ${isSpinning ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-none' : (!user || user.isAnonymous) ? 'bg-[#4285F4] text-white hover:bg-[#3367D6] shadow-[0_10px_30px_rgba(66,133,244,0.3)]' : (dbUser?.hasSpunRoulette && user?.email !== "marcosagieco@gmail.com") ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#fcdb00] text-[#111111] hover:bg-[#e5c600]'}`}>
-                {isSpinning ? <><i className="fas fa-circle-notch fa-spin text-xl"></i> Girando...</> : (!user || user.isAnonymous) ? <><i className="fab fa-google text-xl"></i> LOGUEATE PARA GIRAR</> : (dbUser?.hasSpunRoulette && user?.email !== "marcosagieco@gmail.com") ? '¡YA UTILIZASTE TU TIRO!' : '¡GIRAR AHORA!'}
-            </button>
+            {(!user || user.isAnonymous) ? (
+                <button onClick={() => { handleGoogleLogin(); }} className="w-full py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider transition-all shadow-[0_10px_30px_rgba(0,0,0,0.15)] active:scale-95 flex items-center justify-center gap-2 relative z-30 bg-[#4285F4] text-white hover:bg-[#3367D6]">
+                    <i className="fab fa-google"></i> LOGUEATE PARA GIRAR
+                </button>
+            ) : (
+                <button onClick={handleSpinRoulette} disabled={isSpinning || (dbUser?.hasSpunRoulette && user?.email !== "marcosagieco@gmail.com")} className={`w-full py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider transition-all shadow-[0_10px_30px_rgba(0,0,0,0.15)] active:scale-95 flex items-center justify-center gap-2 relative z-30 ${(isSpinning || (dbUser?.hasSpunRoulette && user?.email !== "marcosagieco@gmail.com")) ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-none' : 'bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)]'}`}>
+                    {isSpinning ? <><i className="fas fa-circle-notch fa-spin text-xl"></i> Girando...</> : (dbUser?.hasSpunRoulette && user?.email !== "marcosagieco@gmail.com") ? '¡YA UTILIZASTE TU TIRO!' : '¡GIRAR AHORA!'}
+                </button>
+            )}
           </div>
         </div>
       )}
@@ -756,23 +733,40 @@ export default function Home() {
 
       {selectedProduct && (<div className="fixed inset-0 z-[80] flex items-end md:items-center justify-center p-4 sm:p-6"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-xl transition-opacity" onClick={() => setSelectedProduct(null)}></div><div className="relative bg-[#f2f2f2] w-full max-w-4xl rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-500 flex flex-col md:flex-row max-h-[90vh] border border-white/20"><button onClick={() => setSelectedProduct(null)} className="absolute top-6 right-6 z-10 w-10 h-10 bg-white/80 backdrop-blur-2xl border border-white text-[#111111] rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-lg"><i className="fas fa-times text-lg"></i></button><div className="w-full md:w-1/2 bg-white p-8 flex items-center justify-center relative min-h-[350px] border-r border-[#f2f2f2]">{selectedProduct.tag && <span className="absolute top-8 left-8 bg-[#111111] text-[#fcdb00] font-bebas text-sm px-4 py-1.5 uppercase tracking-wider rounded-sm shadow-lg z-10">{selectedProduct.tag}</span>}<img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full max-h-[450px] object-contain drop-shadow-2xl animate-in scale-95 duration-700 ease-out mix-blend-multiply" /></div><div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center overflow-y-auto bg-[#f2f2f2]"><p className="text-[#fcdb00] font-bebas uppercase tracking-wider text-xl mb-1 drop-shadow-sm">{selectedProduct.category}</p><h2 className="text-5xl md:text-6xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-6">{selectedProduct.name}</h2><p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed whitespace-pre-line font-poppins">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p><div className="mt-auto border-t border-gray-300 pt-8"><p className="text-[#111111] font-bebas text-5xl md:text-6xl tracking-wide mb-8 drop-shadow-sm">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}</p>{selectedProduct.inStock === false ? ( <button disabled className="w-full bg-gray-300 text-gray-500 py-4 text-lg font-bebas uppercase tracking-wider rounded-xl cursor-not-allowed border border-gray-400">Producto Agotado</button> ) : ( <button onClick={(e) => addToCart(selectedProduct, e)} className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] py-4 text-xl font-bebas uppercase tracking-wider rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95"><i className="fas fa-shopping-cart text-lg mb-0.5"></i> Agregar a la bolsa</button> )}</div></div></div></div>)}
 
-      {isCartOpen && (<div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} /><div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] h-[90vh] md:max-h-[85vh] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-500 flex flex-col pb-safe"><div className="p-6 border-b border-gray-300 flex justify-between items-center bg-white sticky top-0 z-10"><div><h2 className="text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest font-poppins">{getTotalItems()} artículos seleccionados</p></div><button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-[#f2f2f2] rounded-full text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex items-center justify-center shadow-sm border border-gray-200"><i className="fas fa-times text-lg"></i></button></div><div className="overflow-y-auto p-4 md:p-6 flex-grow no-scrollbar"><div className="space-y-3 mb-10">{cart.length === 0 && (<div className="text-center py-20 bg-white/50 rounded-2xl border border-dashed border-gray-300"><div className="w-16 h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><i className="fas fa-shopping-bag text-2xl text-gray-400"></i></div><p className="text-gray-400 font-bold text-xs uppercase tracking-widest font-poppins">Tu bolsa está vacía</p></div>)}{cart.map(item => (<div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-[#f2f2f2]"><div className="flex items-center gap-4"><div className="w-16 h-16 bg-[#f2f2f2] rounded-xl overflow-hidden flex items-center justify-center p-1"><img src={item.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex flex-col"><p className="font-bebas text-lg uppercase tracking-wide max-w-[130px] md:max-w-[180px] line-clamp-1 text-[#111111]">{item.name}</p><p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1 bg-gray-100 w-fit px-2 py-0.5 rounded-sm font-poppins">{item.qty} un.</p></div></div><div className="flex items-center gap-4 pr-2"><p className="font-bebas text-[#fcdb00] text-2xl tracking-wide">${formatPrice(item.qty * getUnitPromoPrice(item))}</p><div className="flex flex-col items-center gap-1.5 bg-[#f2f2f2] rounded-md p-1.5 border border-gray-200"><button onClick={() => changeQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-plus text-[10px]"></i></button><button onClick={() => changeQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-minus text-[10px]"></i></button></div></div></div>))}</div>{cart.length > 0 && (<div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+      {isCartOpen && (<div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} /><div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] h-[90vh] md:max-h-[85vh] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-500 flex flex-col pb-safe"><div className="p-6 border-b border-gray-300 flex justify-between items-center bg-white sticky top-0 z-10"><div><h2 className="text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest font-poppins">{getTotalItems()} artículos seleccionados</p></div><button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-[#f2f2f2] rounded-full text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex items-center justify-center shadow-sm border border-gray-200"><i className="fas fa-times text-lg"></i></button></div><div className="overflow-y-auto p-4 md:p-6 flex-grow no-scrollbar"><div className="space-y-3 mb-10">{cart.length === 0 && (<div className="text-center py-20 bg-white/50 rounded-2xl border border-dashed border-gray-300"><div className="w-16 h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><i className="fas fa-shopping-bag text-2xl text-gray-400"></i></div><p className="text-gray-400 font-bold text-xs uppercase tracking-widest font-poppins">Tu bolsa está vacía</p></div>)}{cart.map(item => (<div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-[#f2f2f2]"><div className="flex items-center gap-4"><div className="w-16 h-16 bg-[#f2f2f2] rounded-xl overflow-hidden flex items-center justify-center p-1"><img src={item.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex flex-col"><p className="font-bebas text-lg uppercase tracking-wide max-w-[130px] md:max-w-[180px] line-clamp-1 text-[#111111]">{item.name}</p><p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1 bg-gray-100 w-fit px-2 py-0.5 rounded-sm font-poppins">{item.qty} un.</p></div></div><div className="flex items-center gap-4 pr-2"><p className="font-bebas text-[#fcdb00] text-2xl tracking-wide">${formatPrice(item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item)))}</p><div className="flex flex-col items-center gap-1.5 bg-[#f2f2f2] rounded-md p-1.5 border border-gray-200"><button onClick={() => changeQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-plus text-[10px]"></i></button><button onClick={() => changeQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-minus text-[10px]"></i></button></div></div></div>))}
+        
+        {/* LÓGICA UPSELL: OFERTAS INYECTADAS ADENTRO DEL CARRITO */}
+        {upsellsList.length > 0 && upsellsList.some(u => u.active && !cart.find(c => c.id == u.productId)) && (
+            <div className="mt-8 mb-2 animate-in slide-in-from-bottom duration-500">
+                <p className="font-bebas text-xl mb-3 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-fire text-red-500"></i> Agregá a tu pedido</p>
+                <div className="flex overflow-x-auto gap-3 pb-2 no-scrollbar snap-x">
+                    {upsellsList.filter(u => u.active && !cart.find(c => c.id == u.productId)).map(upsell => {
+                        const prod = products.find(p => p.id == upsell.productId);
+                        if (!prod || prod.inStock === false || prod.isDeleted) return null;
+                        return (
+                            <div key={upsell.id} className="snap-start flex-shrink-0 w-[260px] bg-white p-3 rounded-2xl shadow-sm border border-red-100 flex items-center gap-3 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+                                <img src={prod.image} className="w-14 h-14 object-contain mix-blend-multiply bg-[#f2f2f2] rounded-lg p-1" alt="" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-bebas text-sm uppercase truncate text-[#111111] leading-tight">{prod.name}</p>
+                                    <p className="text-red-500 font-black text-[15px] leading-none mt-1">${formatPrice(upsell.price)} <span className="line-through text-gray-300 text-[10px] font-poppins">${formatPrice(prod.price)}</span></p>
+                                </div>
+                                <button onClick={() => handleAddUpsellToCart(upsell)} className="w-10 h-10 flex-shrink-0 bg-[#111111] text-[#fcdb00] rounded-xl flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-md">
+                                    <i className="fas fa-plus text-sm"></i>
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        )}
+        
+        </div>{cart.length > 0 && (<div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
         <div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
             <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-ticket-alt text-[#fcdb00] text-xl"></i> Descuentos</p>
-            {/* LÓGICA DE TEXTO EN EL CARRITO CON LA ACLARACIÓN */}
             {dbUser?.roulettePrize && !appliedCoupon && (
                 <div className="mb-4 bg-[#111111] text-[#fcdb00] p-3 rounded-xl flex items-center justify-between border border-[#fcdb00]/30 shadow-md">
-                    <div className="flex items-center gap-3">
-                        <i className="fas fa-gift text-lg"></i>
-                        <div className="flex flex-col">
-                            <span className="font-bold text-[10px] uppercase tracking-widest text-white">Premio de Ruleta</span>
-                            <span className="font-bebas text-lg leading-none">{dbUser.roulettePrize.text}</span>
-                            {dbUser.roulettePrize.type === 'percent' && (
-                                <span className="text-[9px] text-gray-400 font-poppins mt-0.5 font-normal tracking-wide capitalize">*Aplica a 1 un. del prod. más caro</span>
-                            )}
-                        </div>
-                    </div>
-                    <i className="fas fa-check-circle"></i>
+                    <div className="flex items-center gap-3"><i className="fas fa-gift text-lg"></i><div className="flex flex-col"><span className="font-bold text-[10px] uppercase tracking-widest text-white">Premio de Ruleta</span><span className="font-bebas text-lg leading-none">{dbUser.roulettePrize.text}</span>{dbUser.roulettePrize.type === 'percent' && (<span className="text-[9px] text-gray-400 font-poppins mt-0.5 font-normal tracking-wide capitalize">*Aplica a 1 un. del prod. más caro</span>)}</div></div><i className="fas fa-check-circle"></i>
                 </div>
             )}
             <div className="flex gap-2">
