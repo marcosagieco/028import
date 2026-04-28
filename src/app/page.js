@@ -103,18 +103,18 @@ const PAGE_CONTENT = {
   arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de 10 días corridos.</p></div>) }
 };
 
-// --- MOTOR DE PROBABILIDADES DE LA RULETA (10 PORCIONES EXACTAS Y COLORES PREMIUM) ---
+// --- MOTOR DE PROBABILIDADES DE LA RULETA (10 PORCIONES EXACTAS Y TEXTOS ALINEADOS AL RADIO) ---
 const ROULETTE_PRIZES = [
-  { id: 'sigue1', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#0f172a' }, // Fondo Blanco
-  { id: 'off5_1', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#ffffff' }, // Fondo Azul Noche
-  { id: 'off10_1', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#0f172a' }, // Fondo Blanco
-  { id: 'sigue2', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#ffffff' }, // Fondo Azul Noche
-  { id: 'off5_2', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#0f172a' }, // Fondo Blanco
-  { id: 'off10_2', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#ffffff' }, // Fondo Azul Noche
-  { id: 'off15', text: '15% OFF', prob: 0.07, type: 'percent', value: 15, textC: '#0f172a' }, // Fondo Blanco
-  { id: 'off20', text: '20% OFF', prob: 0.015, type: 'percent', value: 20, textC: '#ffffff' }, // Fondo Azul Noche
-  { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#0f172a' }, // Dorado Premium (0%)
-  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, textC: '#ffffff' }, // Fondo Azul Noche
+  { id: 'sigue1', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#fcdb00' }, // 0: Bg Black
+  { id: 'off5_1', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#111111' }, // 1: Bg Yellow
+  { id: 'off10_1', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#fcdb00' }, // 2: Bg Black
+  { id: 'sigue2', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#111111' }, // 3: Bg Yellow
+  { id: 'off5_2', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#fcdb00' }, // 4: Bg Black
+  { id: 'off10_2', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#111111' }, // 5: Bg Yellow
+  { id: 'off15', text: '15% OFF', prob: 0.07, type: 'percent', value: 15, textC: '#fcdb00' }, // 6: Bg Black
+  { id: 'off20', text: '20% OFF', prob: 0.015, type: 'percent', value: 20, textC: '#111111' }, // 7: Bg Yellow
+  { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#fcdb00' }, // 8: Bg Black (Premio imposible 0%)
+  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, textC: '#111111' }, // 9: Bg Yellow
 ];
 
 export default function Home() {
@@ -498,12 +498,12 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MODAL RULETA DE ANIVERSARIO (10 PORCIONES CASINO PREMIUM) --- */}
+      {/* --- MODAL RULETA DE ANIVERSARIO (10 PORCIONES CASINO PREMIUM - TEXTO RADIAL) --- */}
       {showRouletteModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#111111]/90 backdrop-blur-sm" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
           <div className="relative bg-[#f2f2f2] w-full max-w-md rounded-[2rem] shadow-2xl border border-white/20 p-8 flex flex-col items-center animate-in zoom-in-95 duration-500 overflow-hidden">
-            {!isSpinning && <button onClick={() => setShowRouletteModal(false)} className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-[#fcdb00] hover:text-[#111111] transition-colors z-20 text-gray-500"><i className="fas fa-times"></i></button>}
+            {!isSpinning && <button onClick={() => setShowRouletteModal(false)} className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-[#eab308] hover:text-[#111111] transition-colors z-20 text-gray-500"><i className="fas fa-times"></i></button>}
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wide text-[#111111] mb-2 text-center">Ruleta de Aniversario</h2>
             <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-8 text-center font-poppins">Tirás 1 sola vez por cuenta. ¡Suerte!</p>
             
@@ -512,7 +512,7 @@ export default function Home() {
               <div 
                 className="w-full h-full rounded-full border-8 border-[#111111] shadow-[0_10px_30px_rgba(0,0,0,0.2)] relative overflow-hidden"
                 style={{ 
-                  /* 10 porciones exactas de 36 grados cada una. Blanco, Azul Noche y Dorado */
+                  /* 10 porciones exactas de 36 grados. Blanco, Azul Noche y Dorado (30%) */
                   background: 'conic-gradient(#ffffff 0deg 36deg, #0f172a 36deg 72deg, #ffffff 72deg 108deg, #0f172a 108deg 144deg, #ffffff 144deg 180deg, #0f172a 180deg 216deg, #ffffff 216deg 252deg, #0f172a 252deg 288deg, #eab308 288deg 324deg, #0f172a 324deg 360deg)',
                   transform: `rotate(${rouletteRotation}deg)`, 
                   transition: isSpinning ? 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none' 
@@ -522,8 +522,9 @@ export default function Home() {
                   const angle = (360 / 10) * idx + 18; // Centro exacto de cada porción (36 grados / 2 = 18)
                   return (
                     <div key={idx} className="absolute inset-0 w-full h-full" style={{ transform: `rotate(${angle}deg)` }}>
-                      <div className="absolute top-3 md:top-5 left-1/2 -translate-x-1/2 text-center w-16 md:w-20" style={{ color: prize.textC }}>
-                        <span className="block font-bebas text-[11px] md:text-[14px] leading-tight uppercase tracking-wider drop-shadow-sm">{prize.text}</span>
+                      {/* ALINEACIÓN RADIAL PERFECTA: Lee desde el centro hacia los bordes */}
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[50%] flex items-center justify-center pl-4 pb-2" style={{ color: prize.textC }}>
+                        <span className="block font-bebas text-[11px] md:text-[14px] leading-tight uppercase tracking-wider drop-shadow-sm whitespace-nowrap" style={{ transform: 'rotate(-90deg)' }}>{prize.text}</span>
                       </div>
                     </div>
                   );
@@ -575,7 +576,7 @@ export default function Home() {
       {isMenuOpen && (<div className="fixed inset-0 z-[90] flex"><div className="absolute inset-0 bg-[#111111]/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div><div className="w-[85%] max-w-[380px] bg-[#f2f2f2] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden"><div className="p-8 bg-[#111111] flex justify-between items-center text-white border-b border-white/10"><span className="font-bebas text-3xl tracking-wide uppercase">028<span className="text-[#fcdb00]">MENU</span></span><button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times text-lg"></i></button></div><div className="flex-1 overflow-y-auto pb-8"><div className="flex flex-col p-4 space-y-2">
         <div className="md:hidden mb-4">
             {!user || user.isAnonymous ? (
-                <button onClick={handleGoogleLogin} className="w-full bg-[#111111] text-white p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#fcdb00] hover:text-[#111111] transition-all flex justify-center items-center gap-3"><i className="fab fa-google text-lg"></i> Iniciar sesión con Google</button>
+                <button onClick={handleGoogleLogin} className="w-full bg-[#111111] text-white p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#eab308] hover:text-[#111111] transition-all flex justify-center items-center gap-3"><i className="fab fa-google text-lg"></i> Iniciar sesión con Google</button>
             ) : (
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-3">
                     <p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest text-center">Hola, {dbUser?.name?.split(' ')[0] || 'Cliente'}</p>
