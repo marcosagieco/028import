@@ -103,15 +103,18 @@ const PAGE_CONTENT = {
   arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de 10 días corridos.</p></div>) }
 };
 
-// --- MOTOR DE PROBABILIDADES DE LA RULETA (ACTUALIZADO CON 7 PREMIOS) ---
+// --- MOTOR DE PROBABILIDADES DE LA RULETA (10 PORCIONES EXACTAS Y COLORES PREMIUM) ---
 const ROULETTE_PRIZES = [
-  { id: 'sigue', text: 'SEGUÍ PARTICIPANDO', prob: 0.25, type: 'none', value: 0, bg: '#fcdb00', textC: '#111111' },
-  { id: 'off5', text: '5% OFF', prob: 0.30, type: 'percent', value: 5, bg: '#111111', textC: '#fcdb00' },
-  { id: 'off10', text: '10% OFF', prob: 0.35, type: 'percent', value: 10, bg: '#fcdb00', textC: '#111111' },
-  { id: 'off15', text: '15% OFF', prob: 0.07, type: 'percent', value: 15, bg: '#111111', textC: '#fcdb00' },
-  { id: 'off20', text: '20% OFF', prob: 0.015, type: 'percent', value: 20, bg: '#fcdb00', textC: '#111111' },
-  { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, bg: '#ef4444', textC: '#ffffff' }, // Rojo imposible
-  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, bg: '#111111', textC: '#fcdb00' },
+  { id: 'sigue1', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#0f172a' }, // Fondo Blanco
+  { id: 'off5_1', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#ffffff' }, // Fondo Azul Noche
+  { id: 'off10_1', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#0f172a' }, // Fondo Blanco
+  { id: 'sigue2', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#ffffff' }, // Fondo Azul Noche
+  { id: 'off5_2', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#0f172a' }, // Fondo Blanco
+  { id: 'off10_2', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#ffffff' }, // Fondo Azul Noche
+  { id: 'off15', text: '15% OFF', prob: 0.07, type: 'percent', value: 15, textC: '#0f172a' }, // Fondo Blanco
+  { id: 'off20', text: '20% OFF', prob: 0.015, type: 'percent', value: 20, textC: '#ffffff' }, // Fondo Azul Noche
+  { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#0f172a' }, // Dorado Premium (0%)
+  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, textC: '#ffffff' }, // Fondo Azul Noche
 ];
 
 export default function Home() {
@@ -495,7 +498,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MODAL RULETA DE ANIVERSARIO (7 PREMIOS CON CONIC GRADIENT) --- */}
+      {/* --- MODAL RULETA DE ANIVERSARIO (10 PORCIONES CASINO PREMIUM) --- */}
       {showRouletteModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#111111]/90 backdrop-blur-sm" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
@@ -505,21 +508,22 @@ export default function Home() {
             <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-8 text-center font-poppins">Tirás 1 sola vez por cuenta. ¡Suerte!</p>
             
             <div className="relative w-64 h-64 md:w-72 md:h-72 mb-8">
-              <div className="absolute top-[-10px] left-1/2 -translate-x-1/2 w-8 h-8 bg-[#111111] rotate-45 z-10 border-b-4 border-r-4 border-white shadow-sm rounded-sm"></div>
+              <div className="absolute top-[-10px] left-1/2 -translate-x-1/2 w-8 h-8 bg-[#111111] rotate-45 z-10 border-b-4 border-r-4 border-[#eab308] shadow-sm rounded-sm"></div>
               <div 
-                className="w-full h-full rounded-full border-8 border-white shadow-[0_10px_30px_rgba(0,0,0,0.1)] relative overflow-hidden"
+                className="w-full h-full rounded-full border-8 border-[#111111] shadow-[0_10px_30px_rgba(0,0,0,0.2)] relative overflow-hidden"
                 style={{ 
-                  background: 'conic-gradient(#fcdb00 0deg 51.43deg, #111111 51.43deg 102.86deg, #fcdb00 102.86deg 154.29deg, #111111 154.29deg 205.71deg, #fcdb00 205.71deg 257.14deg, #ef4444 257.14deg 308.57deg, #111111 308.57deg 360deg)',
+                  /* 10 porciones exactas de 36 grados cada una. Blanco, Azul Noche y Dorado */
+                  background: 'conic-gradient(#ffffff 0deg 36deg, #0f172a 36deg 72deg, #ffffff 72deg 108deg, #0f172a 108deg 144deg, #ffffff 144deg 180deg, #0f172a 180deg 216deg, #ffffff 216deg 252deg, #0f172a 252deg 288deg, #eab308 288deg 324deg, #0f172a 324deg 360deg)',
                   transform: `rotate(${rouletteRotation}deg)`, 
                   transition: isSpinning ? 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none' 
                 }}
               >
                 {ROULETTE_PRIZES.map((prize, idx) => {
-                  const angle = (360 / 7) * idx + (360 / 14); // Centro de la porción para 7 premios
+                  const angle = (360 / 10) * idx + 18; // Centro exacto de cada porción (36 grados / 2 = 18)
                   return (
                     <div key={idx} className="absolute inset-0 w-full h-full" style={{ transform: `rotate(${angle}deg)` }}>
-                      <div className="absolute top-3 md:top-5 left-1/2 -translate-x-1/2 text-center w-20 md:w-24" style={{ color: prize.textC }}>
-                        <span className="block font-bebas text-[12px] md:text-[15px] leading-tight uppercase tracking-wider drop-shadow-sm">{prize.text}</span>
+                      <div className="absolute top-3 md:top-5 left-1/2 -translate-x-1/2 text-center w-16 md:w-20" style={{ color: prize.textC }}>
+                        <span className="block font-bebas text-[11px] md:text-[14px] leading-tight uppercase tracking-wider drop-shadow-sm">{prize.text}</span>
                       </div>
                     </div>
                   );
@@ -527,7 +531,7 @@ export default function Home() {
               </div>
             </div>
             
-            <button onClick={handleSpinRoulette} disabled={isSpinning} className={`w-full py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider transition-all shadow-[0_10px_30px_rgba(0,0,0,0.15)] active:scale-95 flex items-center justify-center gap-2 ${isSpinning ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-none' : 'bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)]'}`}>
+            <button onClick={handleSpinRoulette} disabled={isSpinning} className={`w-full py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider transition-all shadow-[0_10px_30px_rgba(0,0,0,0.15)] active:scale-95 flex items-center justify-center gap-2 ${isSpinning ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-none' : 'bg-[#111111] text-white hover:bg-[#eab308] hover:text-[#111111] hover:shadow-[0_10px_30px_rgba(234,179,8,0.4)]'}`}>
                 {isSpinning ? <><i className="fas fa-circle-notch fa-spin text-xl"></i> Girando...</> : '¡GIRAR AHORA!'}
             </button>
           </div>
@@ -545,7 +549,7 @@ export default function Home() {
                 <i className="fab fa-google"></i> Iniciar Sesión
             </button>
           ) : (
-            <button onClick={() => (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? showToast("Ya utilizaste tu tiro 🎁") : setShowRouletteModal(true)} className={`hidden md:flex text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full items-center gap-2 transition-all border ${(dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? 'bg-white/5 text-gray-500 border-transparent' : 'bg-[#fcdb00] text-[#111111] border-[#fcdb00] hover:bg-white animate-pulse'}`}>
+            <button onClick={() => (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? showToast("Ya utilizaste tu tiro 🎁") : setShowRouletteModal(true)} className={`hidden md:flex text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full items-center gap-2 transition-all border ${(dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? 'bg-white/5 text-gray-500 border-transparent' : 'bg-[#eab308] text-[#111111] border-[#eab308] hover:bg-white animate-pulse'}`}>
                 <i className="fas fa-gift text-sm"></i> Girar Ruleta
             </button>
           )}
@@ -575,7 +579,7 @@ export default function Home() {
             ) : (
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-3">
                     <p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest text-center">Hola, {dbUser?.name?.split(' ')[0] || 'Cliente'}</p>
-                    <button onClick={() => { setIsMenuOpen(false); (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? showToast("Ya utilizaste tu tiro 🎁") : setShowRouletteModal(true); }} className={`w-full py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-2 transition-all ${(dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? 'bg-gray-100 text-gray-400' : 'bg-[#fcdb00] text-[#111111] shadow-md animate-pulse'}`}>
+                    <button onClick={() => { setIsMenuOpen(false); (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? showToast("Ya utilizaste tu tiro 🎁") : setShowRouletteModal(true); }} className={`w-full py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-2 transition-all ${(dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? 'bg-gray-100 text-gray-400' : 'bg-[#eab308] text-[#111111] shadow-md animate-pulse'}`}>
                         <i className="fas fa-gift text-lg"></i> Girar Ruleta
                     </button>
                 </div>
