@@ -84,7 +84,7 @@ const initialProducts = [
 
 const PAGE_CONTENT = {
   terminos: { title: "Términos y Condiciones", subtitle: "Políticas Legales", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p><strong>1. Naturaleza del Servicio:</strong> 028 IMPORT opera como intermediario e importador directo de productos tecnológicos y artículos de vapeo de primera línea.</p><p><strong>2. Precios y Disponibilidad:</strong> Los valores publicados y el stock se encuentran sujetos a modificaciones sin previo aviso, derivado de la dinámica propia de la importación y las fluctuaciones cambiarias del mercado.</p><p><strong>3. Proceso y Confirmación de Compra:</strong> La selección de artículos a través de esta plataforma web representa una solicitud o intención de reserva. La transacción únicamente se considerará perfeccionada y confirmada tras la comunicación directa con nuestro equipo comercial vía WhatsApp y la posterior acreditación del pago.</p><p><strong>4. Garantías y Responsabilidad:</strong> Garantizamos la originalidad y autenticidad del 100% de nuestro catálogo. Se contempla garantía exclusiva por defectos de fabricación de origen. 028 IMPORT no asume responsabilidad alguna por daños derivados del mal uso, manipulación incorrecta o desgaste natural de los dispositivos adquiridos.</p></div>) },
-  privacidad: { title: "Política de Privacidad", subtitle: "Protección de Datos", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>En 028 IMPORT, la salvaguarda y confidencialidad de su información personal es una absoluta prioridad. Los datos recopilados durante el proceso de reserva son utilizados estrictamente para fines logísticos y de facturación.</p></div>) },
+  privacidad: { title: "Política de Privacidad", subtitle: "Protección de Datos", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>En 028 IMPORT, la salvaguarda y confidencialidad de su información personal es una absoluta prioridad. Los datos recopilados durante el proceso de reserva son utilizados strictly para fines logísticos y de facturación.</p></div>) },
   pagos: { title: "Medios de Pago", subtitle: "Transacciones Seguras", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>En <strong>028 IMPORT</strong> priorizamos la seguridad, agilidad y transparencia en cada operación financiera. Con el objetivo de proteger su integridad crediticia, todas las transacciones de pago se procesan de manera externa a nuestro sitio web.</p><div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 mt-4"><h3 className="font-bebas text-2xl uppercase tracking-wide mb-4 text-[#111111]">Opciones Habilitadas:</h3><ul className="space-y-4"><li><strong><i className="fas fa-university text-[#b8952a] mr-2"></i> Transferencia Bancaria (ARS/USD):</strong> Acreditación inmediata. Las coordenadas bancarias (CBU/Alias) se suministrarán exclusivamente vía WhatsApp al validar su pedido.</li><li><strong><i className="fas fa-money-bill-wave text-[#b8952a] mr-2"></i> Efectivo Contra Entrega:</strong> Modalidad disponible únicamente para logística vía Motomensajería dentro de CABA y GBA, o retiros de forma presencial en nuestro showroom.</li><li><strong><i className="fab fa-bitcoin text-[#b8952a] mr-2"></i> Criptomonedas (USDT):</strong> Operamos a través de la red TRC-20 u otras a convenir. Consulte la cotización del momento con su asesor comercial.</li></ul></div><p className="mt-6 p-4 bg-red-50 text-red-800 rounded-xl border border-red-200 text-sm"><strong>⚠️ Importante:</strong> Bajo ninguna circunstancia el personal de 028 IMPORT le solicitará los dígitos de su tarjeta de crédito, claves de seguridad o contraseñas bancarias a través de esta plataforma ni por canales no oficiales.</p></div>) },
   arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de 10 días corridos.</p></div>) }
 };
@@ -101,6 +101,7 @@ const ROULETTE_PRIZES = [
   { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#fcdb00' }, 
   { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, textC: '#111111' }, 
 ];
+
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState(initialProducts);
@@ -133,14 +134,16 @@ export default function Home() {
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   
-  // RULETA ESTADOS
   const [showRouletteModal, setShowRouletteModal] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
   const [rouletteRotation, setRouletteRotation] = useState(0);
 
-  // NUEVOS ESTADOS PARA RESULTADO DE RULETA
   const [showResultModal, setShowResultModal] = useState(false);
   const [wonPrizeData, setWonPrizeData] = useState(null);
+
+  // NUEVOS ESTADOS DE UPSELL AÑADIDOS A TU CÓDIGO
+  const [upsellSettings, setUpsellSettings] = useState(null);
+  const [showUpsellModal, setShowUpsellModal] = useState(false);
 
   const departments = useMemo(() => [...new Set(products.map(p => p.department).filter(Boolean))], [products]);
   const uniqueCategories = useMemo(() => {
@@ -153,7 +156,14 @@ export default function Home() {
   const firebaseRefs = useMemo(() => {
     if (typeof window === "undefined") return { auth: null, db: null };
     try {
-      const firebaseConfig = { apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY, authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID, storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET, messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID, appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID };
+      const firebaseConfig = {
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+      };
       const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
       return { auth: getAuth(app), db: getFirestore(app) };
     } catch (error) { return { auth: null, db: null }; }
@@ -167,157 +177,146 @@ export default function Home() {
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => { if (entry.isIntersecting) entry.target.classList.add("is-visible"); });
-      }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" } 
-    );
+      entries.forEach((entry) => { if (entry.isIntersecting) entry.target.classList.add("is-visible"); });
+    }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
     const timeoutId = setTimeout(() => {
-        const elements = document.querySelectorAll('.reveal-on-scroll');
-        elements.forEach((el) => observer.observe(el));
+      document.querySelectorAll('.reveal-on-scroll').forEach((el) => observer.observe(el));
     }, 100);
     return () => { clearTimeout(timeoutId); observer.disconnect(); }
   }, [currentView, activeFilter, products, searchTerm, homeSections]);
 
-  const isFirstLoad = useRef(true);
   useEffect(() => {
     if (!firebaseRefs.db) return;
     const qFomo = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'), limit(1));
-    const unsubscribeFomo = onSnapshot(qFomo, (snap) => {
-        if (isFirstLoad.current) { isFirstLoad.current = false; return; }
-        snap.docChanges().forEach((change) => {
-            if (change.type === "added") {
-                const o = change.doc.data();
-                if (o.clientName && o.items?.length > 0) {
-                    const firstName = o.clientName.split(' ')[0]; 
-                    setFomoData({ name: firstName, product: o.items[0].name });
-                    setTimeout(() => setFomoData(null), 6000);
-                }
-            }
-        });
+    return onSnapshot(qFomo, (snap) => {
+      if (isFirstLoad.current) { isFirstLoad.current = false; return; }
+      snap.docChanges().forEach((change) => {
+        if (change.type === "added") {
+          const o = change.doc.data();
+          if (o.clientName && o.items?.length > 0) {
+            setFomoData({ name: o.clientName.split(' ')[0], product: o.items[0].name });
+            setTimeout(() => setFomoData(null), 6000);
+          }
+        }
+      });
     });
-    return () => unsubscribeFomo();
   }, [firebaseRefs.db]);
 
   useEffect(() => {
-    const handleFocus = () => setIsSending(false);
-    window.addEventListener('focus', handleFocus); window.addEventListener('pageshow', handleFocus);
     if (firebaseRefs.auth && firebaseRefs.db) {
-      const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (u) => {
+      onAuthStateChanged(firebaseRefs.auth, (u) => {
         setUser(u);
-        if (!u) { signInAnonymously(firebaseRefs.auth).catch(console.error); }
+        if (!u) signInAnonymously(firebaseRefs.auth).catch(console.error);
       });
-      const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
+      onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (!snapshot.empty) {
           const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
           setProducts(prev => {
-             const combined = [...initialProducts];
-             dbProducts.forEach(dbItem => {
-                const index = combined.findIndex(p => p.id == dbItem.id);
-                if (dbItem.isHidden || dbItem.isDeleted) { if (index > -1) combined.splice(index, 1); }
-                else { if (index > -1) combined[index] = { ...combined[index], ...dbItem }; else combined.push(dbItem); }
-             });
-             return combined.sort((a, b) => (a.order || 99) - (b.order || 99));
+            const combined = [...initialProducts];
+            dbProducts.forEach(dbItem => {
+              const index = combined.findIndex(p => p.id == dbItem.id);
+              if (dbItem.isHidden || dbItem.isDeleted) { if (index > -1) combined.splice(index, 1); }
+              else { if (index > -1) combined[index] = { ...combined[index], ...dbItem }; else combined.push(dbItem); }
+            });
+            return combined.sort((a, b) => (a.order || 99) - (b.order || 99));
           });
         }
       });
-      const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
-      const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (s) => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
-      const unsubscribeDeptIcons = onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
-        if (snap.exists()) { setDeptIcons(snap.data().icons || {}); }
+      onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
+      onSnapshot(collection(firebaseRefs.db, 'home_sections'), (s) => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
+      onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => { if (snap.exists()) setDeptIcons(snap.data().icons || {}); });
+      onSnapshot(collection(firebaseRefs.db, 'coupons'), (snap) => setActiveCouponsDb(!snap.empty ? snap.docs.map(d => d.data()) : []));
+      
+      // LECTURA DE OFERTA UPSELL
+      onSnapshot(doc(firebaseRefs.db, 'settings', 'upsell'), (snap) => {
+        if (snap.exists()) { setUpsellSettings(snap.data()); }
       });
-      const unsubscribeCoupons = onSnapshot(collection(firebaseRefs.db, 'coupons'), (snap) => setActiveCouponsDb(!snap.empty ? snap.docs.map(d => d.data()) : []));
-
-      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); unsubscribeDeptIcons(); unsubscribeCoupons(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
     }
   }, [firebaseRefs]);
 
   useEffect(() => {
-      if (!user || user.isAnonymous || !firebaseRefs.db) return;
-      const unsubscribe = onSnapshot(doc(firebaseRefs.db, 'users', user.uid), (docSnap) => {
-          if (docSnap.exists()) {
-              const data = docSnap.data();
-              setDbUser(data);
-              if(data.name) setClientName(data.name);
-          }
-      });
-      return () => unsubscribe();
+    if (!user || user.isAnonymous || !firebaseRefs.db) return;
+    return onSnapshot(doc(firebaseRefs.db, 'users', user.uid), (docSnap) => {
+      if (docSnap.exists()) { setDbUser(docSnap.data()); if (docSnap.data().name) setClientName(docSnap.data().name); }
+    });
   }, [user, firebaseRefs.db]);
 
   const handleGoogleLogin = async () => {
-      if (!firebaseRefs.auth || !firebaseRefs.db) return;
-      try {
-          const provider = new GoogleAuthProvider();
-          const result = await signInWithPopup(firebaseRefs.auth, provider);
-          const u = result.user;
-          const userRef = doc(firebaseRefs.db, 'users', u.uid);
-          const userSnap = await getDoc(userRef);
-          if (!userSnap.exists()) {
-              await setDoc(userRef, { name: u.displayName, email: u.email, photoURL: u.photoURL, hasSpunRoulette: false, roulettePrize: null, createdAt: serverTimestamp() });
-          }
-          showToast("¡Sesión iniciada con éxito! 🎉");
-      } catch (error) { console.error(error); showToast("Error al iniciar con Google"); }
-  };
-
-  const fireConfetti = () => {
-    if (typeof window !== 'undefined' && window.confetti) {
-      window.confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 9999 });
-    }
+    if (!firebaseRefs.auth || !firebaseRefs.db) return;
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(firebaseRefs.auth, provider);
+      const u = result.user;
+      const userRef = doc(firebaseRefs.db, 'users', u.uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) { await setDoc(userRef, { name: u.displayName, email: u.email, photoURL: u.photoURL, hasSpunRoulette: false, roulettePrize: null, createdAt: serverTimestamp() }); }
+      showToast("¡Sesión iniciada con éxito! 🎉");
+    } catch (error) { showToast("Error al iniciar con Google"); }
   };
 
   const handleSpinRoulette = async () => {
-      if (isSpinning) return;
-      
-      // LÓGICA AGREGADA: VERIFICACIÓN DE LOGIN DE GOOGLE
-      if (!user || user.isAnonymous) {
-        handleGoogleLogin();
-        return; // Detiene la ruleta para que no gire hasta que se loguee
+    if (isSpinning) return;
+    
+    // BLOQUEO LÓGICO GOOGLE: SI NO ESTÁ LOGUEADO, LE PIDE
+    if (!user || user.isAnonymous) {
+      showToast("⚠️ Debes iniciar sesión con Google para girar.");
+      handleGoogleLogin();
+      return; 
+    }
+
+    if (!dbUser) {
+      showToast("⏳ Cargando perfil...");
+      return;
+    }
+
+    // BLOQUEO LÓGICO: SI YA TIRÓ, NO GIRA
+    if (dbUser.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") {
+      showToast("¡Ya utilizaste tu tiro de ruleta!");
+      return;
+    }
+
+    setIsSpinning(true);
+    // Bloqueo inmediato para UI
+    setDbUser(prev => ({...prev, hasSpunRoulette: true}));
+
+    const rand = Math.random();
+    let sum = 0; let wonPrize = ROULETTE_PRIZES[0];
+    for (let p of ROULETTE_PRIZES) { sum += p.prob; if (rand <= sum) { wonPrize = p; break; } }
+    
+    try {
+      if (firebaseRefs.db) {
+        await setDoc(doc(firebaseRefs.db, 'users', user.uid), { hasSpunRoulette: true, roulettePrize: wonPrize }, { merge: true });
       }
+    } catch (err) { console.error(err); }
 
-      // LÓGICA AGREGADA: BLOQUEO PARA QUE NO TIREN DOS VECES
-      if (dbUser && dbUser.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") {
-        showToast("¡Ya utilizaste tu tiro de ruleta!");
-        return;
+    const extraSpins = 8 * 360;
+    const prizeIndex = ROULETTE_PRIZES.findIndex(p => p.id === wonPrize.id);
+    const targetRotation = extraSpins + (360 - (prizeIndex * 36)) - 18;
+    setRouletteRotation(targetRotation);
+
+    setTimeout(() => {
+      setIsSpinning(false);
+      setWonPrizeData(wonPrize);
+      setShowRouletteModal(false);
+      setShowResultModal(true);
+      if (wonPrize.type !== 'none') {
+        if (typeof window !== 'undefined' && window.confetti) {
+          window.confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 9999 });
+        }
       }
-      
-      setIsSpinning(true);
-      const rand = Math.random();
-      let sum = 0;
-      let wonPrize = ROULETTE_PRIZES[0];
-      
-      for (let p of ROULETTE_PRIZES) {
-          sum += p.prob;
-          if (rand <= sum) { wonPrize = p; break; }
-      }
-
-      // PARCHE ANTITRAMPAS: Guardamos en Firebase ANTES de que termine el giro
-      try {
-          if (user && dbUser && firebaseRefs.db) {
-             await setDoc(doc(firebaseRefs.db, 'users', user.uid), { hasSpunRoulette: true, roulettePrize: wonPrize }, { merge: true });
-          }
-      } catch(err) { console.error("Error Antitrampas:", err); }
-
-      const extraSpins = 5 * 360; 
-      const prizeIndex = ROULETTE_PRIZES.findIndex(p => p.id === wonPrize.id);
-      const sliceAngle = 360 / ROULETTE_PRIZES.length;
-      const targetRotation = extraSpins + (360 - (prizeIndex * sliceAngle)) - (sliceAngle / 2);
-      
-      setRouletteRotation(targetRotation);
-
-      setTimeout(() => {
-          setIsSpinning(false);
-          setWonPrizeData(wonPrize);
-          setShowRouletteModal(false); // Se cierra la ruleta
-          setShowResultModal(true);    // Se abre el Modal de Premio
-          
-          if(wonPrize.type === 'none') {
-              showToast("¡Ufa! Sigue participando. 😢");
-          } else {
-              showToast(`¡GANASTE! 🎉 ${wonPrize.text}`);
-              setAppliedCoupon(null); 
-              fireConfetti(); // 🎊 LLUVIA DE CONFETI
-          }
-      }, 5000); 
+    }, 5000);
   };
 
+  const calculateTotal = (cartData = cart) => {
+    let subtotal = cartData.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
+    if (appliedCoupon) return subtotal * (1 - (appliedCoupon.discount / 100));
+    if (dbUser?.roulettePrize?.type === 'percent') {
+      let maxP = 0;
+      cartData.forEach(i => { const p = i.isUpsell ? i.upsellPrice : getUnitPromoPrice(i); if (p > maxP) maxP = p; });
+      return subtotal - (maxP * (dbUser.roulettePrize.value / 100));
+    }
+    return subtotal;
+  };
   const handleApplyCoupon = () => {
       const code = couponInput.trim().toUpperCase();
       if(!code) return;
@@ -332,23 +331,12 @@ export default function Home() {
       }
   };
 
+  const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
+  const navigateTo = (view, dept = null) => { setCurrentView(view); if(dept) setActiveFilter({dept, cat: 'all'}); setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
   const getUnitPromoPrice = (item) => { const promo = promos.find(p => p.category === item.category); if (promo) { const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0); if (catCount >= promo.minQty) return promo.totalPrice / promo.minQty; } return item.price; };
-  
-  const calculateTotal = () => {
-      let subtotal = cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice(item)), 0);
-      if (appliedCoupon) { return subtotal * (1 - (appliedCoupon.discount / 100)); } 
-      if (dbUser?.roulettePrize && dbUser.roulettePrize.type === 'percent') {
-          let maxPrice = 0;
-          cart.forEach(item => { const price = getUnitPromoPrice(item); if (price > maxPrice) maxPrice = price; });
-          const discountAmount = maxPrice * (dbUser.roulettePrize.value / 100);
-          return subtotal - discountAmount;
-      }
-      return subtotal;
-  };
-  const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
-  const navigateTo = (view, dept = null) => { setCurrentView(view); if(dept) setActiveFilter({dept, cat: 'all'}); setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   
   const addToCart = async (product, e) => { 
     if(e) e.stopPropagation(); 
@@ -371,10 +359,42 @@ export default function Home() {
   const handleCheckout = async () => {
     if (!clientName.trim() || !clientPhone.trim()) { showToast("⚠️ Completá tu Nombre y Teléfono."); return; }
     if (deliveryMethod === 'envio' && (!address.trim() || !zone.trim())) { showToast("⚠️ Completá dirección y localidad."); return; }
+    
+    // --- LÓGICA DE UPSELL (OFERTA FINAL) ---
+    if (upsellSettings && upsellSettings.active && upsellSettings.productId) {
+        const prodInCart = cart.find(i => i.id == upsellSettings.productId);
+        const prodData = products.find(p => p.id == upsellSettings.productId);
+        if (!prodInCart && prodData && prodData.inStock !== false && !prodData.isDeleted) {
+            setShowUpsellModal(true); 
+            return; // Frena el checkout para mostrar la oferta
+        }
+    }
+    
+    executeOrder(false);
+  };
+
+  const executeOrder = async (addUpsell = false) => {
+    setShowUpsellModal(false);
     setIsSending(true);
-    const finalTotal = calculateTotal();
+    let currentCart = [...cart];
+    
+    if (addUpsell && upsellSettings) {
+        const prod = products.find(p => p.id == upsellSettings.productId);
+        if (prod) {
+            currentCart.push({ ...prod, qty: 1, isUpsell: true, upsellPrice: Number(upsellSettings.price) });
+        }
+    }
+
+    const finalTotal = calculateTotal(currentCart);
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
-    cart.forEach(i => { msg += `- ${i.qty}x ${i.name} ($${formatPrice(getUnitPromoPrice(i))} c/u)\n`; });
+    
+    currentCart.forEach(i => { 
+        if (i.isUpsell) {
+            msg += `- ${i.qty}x ${i.name} (OFERTA: $${formatPrice(i.upsellPrice)})\n`;
+        } else {
+            msg += `- ${i.qty}x ${i.name} ($${formatPrice(getUnitPromoPrice(i))} c/u)\n`; 
+        }
+    });
     
     if (appliedCoupon) {
         msg += `\n🎟️ *CUPÓN APLICADO:* ${appliedCoupon.code} (-${appliedCoupon.discount}% OFF)\n`;
@@ -400,7 +420,7 @@ export default function Home() {
         if (firebaseRefs.db) { 
             await addDoc(collection(firebaseRefs.db, 'orders'), { 
                 userId: user?.uid || "anon", clientName, clientPhone, 
-                items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPromoPrice(i) })), 
+                items: currentCart.map(i => ({ name: i.name, qty: i.qty, price: i.isUpsell ? i.upsellPrice : getUnitPromoPrice(i) })), 
                 total: finalTotal, delivery: deliveryMethod, address, zone, 
                 aptDetails: aptDetails.trim(), 
                 shippingOption: deliveryMethod === 'envio' ? shippingType : null,
@@ -519,7 +539,48 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MODAL RULETA DE ANIVERSARIO ARREGLADO ESTÉTICAMENTE --- */}
+      {/* --- NUEVO: MODAL DE OFERTA FINAL (UPSELL) ANTES DE IR A WHATSAPP --- */}
+      {showUpsellModal && upsellSettings && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#111111]/95 backdrop-blur-xl" onClick={() => executeOrder(false)}></div>
+          <div className="relative bg-white p-8 rounded-[2.5rem] shadow-2xl border-4 border-[#fcdb00] max-w-sm w-full animate-in zoom-in-95 duration-500 flex flex-col items-center text-center">
+             {(() => {
+               const prod = products.find(p => p.id == upsellSettings.productId);
+               if (!prod) return null;
+               return (
+                 <>
+                   <div className="bg-red-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full mb-5 animate-bounce shadow-md">¡OFERTA EXCLUSIVA PARA VOS!</div>
+                   <h3 className="font-bebas text-3xl uppercase mb-4 text-[#111111]">¿Querés sumar esto a tu pedido?</h3>
+                   
+                   <div className="w-40 h-40 bg-[#f2f2f2] rounded-2xl p-3 mb-4 mx-auto shadow-inner">
+                      <img src={prod.image} alt={prod.name} className="w-full h-full object-contain mix-blend-multiply" />
+                   </div>
+                   
+                   <h4 className="font-bebas text-2xl uppercase tracking-wide leading-tight mb-2 text-gray-800">{prod.name}</h4>
+                   <p className="text-xs text-gray-500 mb-4 px-2 font-poppins">{prod.description}</p>
+                   
+                   <div className="flex items-center justify-center gap-4 mb-6 bg-red-50 py-3 w-full rounded-xl border border-red-100">
+                      <div className="flex flex-col items-end">
+                          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Precio Lista</span>
+                          <span className="text-gray-400 line-through font-bebas text-2xl">${formatPrice(prod.price)}</span>
+                      </div>
+                      <div className="w-px h-8 bg-red-200"></div>
+                      <div className="flex flex-col items-start">
+                          <span className="text-[9px] text-red-500 font-bold uppercase tracking-widest">Precio Oferta</span>
+                          <span className="text-[#fcdb00] font-bebas text-4xl drop-shadow-sm leading-none" style={{textShadow: '0 2px 4px rgba(0,0,0,0.8)'}}>${formatPrice(Number(upsellSettings.price))}</span>
+                      </div>
+                   </div>
+                   
+                   <button onClick={() => executeOrder(true)} className="w-full bg-[#111111] text-[#fcdb00] py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider hover:bg-[#fcdb00] hover:text-[#111111] transition-all mb-4 shadow-lg flex items-center justify-center gap-2"><i className="fas fa-cart-plus"></i> ¡SÍ, LO SUMO AL PEDIDO!</button>
+                   <button onClick={() => executeOrder(false)} className="text-gray-400 text-[10px] font-bold uppercase tracking-widest hover:text-gray-800 font-poppins underline decoration-gray-300 underline-offset-4">No gracias, continuar al pago</button>
+                 </>
+               );
+             })()}
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL RULETA BLANCA ORIGINAL CON BOTÓN GOOGLE --- */}
       {showRouletteModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           {/* Bloqueo Escape: Solo cierra si no está girando */}
@@ -535,15 +596,13 @@ export default function Home() {
 
             {!isSpinning && <button onClick={() => setShowRouletteModal(false)} className="absolute top-4 right-4 w-10 h-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm hover:bg-[#fcdb00] hover:text-[#111111] transition-colors z-30 text-gray-600"><i className="fas fa-times"></i></button>}
             
-            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wide text-[#111111] mb-1 text-center relative z-30 drop-shadow-md">Ruleta de Aniversario</h2>
+            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wide text-[#111111] mb-1 text-center relative z-30 drop-shadow-md">Aniversario 028</h2>
             <p className="text-[11px] font-bold text-[#111111] uppercase tracking-widest mb-10 text-center font-poppins relative z-30 drop-shadow-md">Tirás 1 sola vez por cuenta. ¡Suerte!</p>
             
-            {/* Contenedor Ruleta con Luces de Casino (Ring punteado amarillo) */}
             <div className="relative w-64 h-64 md:w-72 md:h-72 mb-8 mt-2 z-20 flex items-center justify-center">
               
               <div className="absolute inset-0 rounded-full border-[6px] border-dotted border-[#fcdb00] opacity-80 z-0 animate-[spin_20s_linear_infinite] pointer-events-none"></div>
 
-              {/* LA RULETA CON SOMBRA 3D */}
               <div 
                 className="w-full h-full rounded-full border-[10px] border-[#111111] relative overflow-hidden z-10"
                 style={{ 
@@ -570,7 +629,6 @@ export default function Home() {
                 })}
               </div>
 
-              {/* Puntero Dedo */}
               <img 
                 src="https://i.ibb.co/G4f7mmwn/converted.png" 
                 className="absolute top-[-60px] left-1/3 -translate-x-1/4 w-[87px] h-auto z-30 drop-shadow-xl pointer-events-none" 
@@ -579,8 +637,9 @@ export default function Home() {
 
             </div>
             
-            <button onClick={handleSpinRoulette} disabled={isSpinning} className={`w-full py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider transition-all shadow-[0_10px_30px_rgba(0,0,0,0.15)] active:scale-95 flex items-center justify-center gap-2 relative z-30 ${isSpinning ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-none' : 'bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)]'}`}>
-                {isSpinning ? <><i className="fas fa-circle-notch fa-spin text-xl"></i> Girando...</> : '¡GIRAR AHORA!'}
+            {/* LÓGICA DE BOTÓN INTELIGENTE (PIDE GOOGLE O BLOQUEA) EN TU DISEÑO ORIGINAL */}
+            <button onClick={handleSpinRoulette} disabled={isSpinning} className={`w-full py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider transition-all shadow-[0_10px_30px_rgba(0,0,0,0.15)] active:scale-95 flex items-center justify-center gap-2 relative z-30 ${isSpinning ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-none' : (!user || user.isAnonymous) ? 'bg-[#4285F4] text-white hover:bg-[#3367D6] shadow-[0_10px_30px_rgba(66,133,244,0.3)]' : (dbUser?.hasSpunRoulette && user?.email !== "marcosagieco@gmail.com") ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#fcdb00] text-[#111111] hover:bg-[#e5c600]'}`}>
+                {isSpinning ? <><i className="fas fa-circle-notch fa-spin text-xl"></i> Girando...</> : (!user || user.isAnonymous) ? <><i className="fab fa-google text-xl"></i> LOGUEATE PARA GIRAR</> : (dbUser?.hasSpunRoulette && user?.email !== "marcosagieco@gmail.com") ? '¡YA UTILIZASTE TU TIRO!' : '¡GIRAR AHORA!'}
             </button>
           </div>
         </div>
@@ -700,9 +759,20 @@ export default function Home() {
       {isCartOpen && (<div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} /><div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] h-[90vh] md:max-h-[85vh] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-500 flex flex-col pb-safe"><div className="p-6 border-b border-gray-300 flex justify-between items-center bg-white sticky top-0 z-10"><div><h2 className="text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest font-poppins">{getTotalItems()} artículos seleccionados</p></div><button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-[#f2f2f2] rounded-full text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex items-center justify-center shadow-sm border border-gray-200"><i className="fas fa-times text-lg"></i></button></div><div className="overflow-y-auto p-4 md:p-6 flex-grow no-scrollbar"><div className="space-y-3 mb-10">{cart.length === 0 && (<div className="text-center py-20 bg-white/50 rounded-2xl border border-dashed border-gray-300"><div className="w-16 h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><i className="fas fa-shopping-bag text-2xl text-gray-400"></i></div><p className="text-gray-400 font-bold text-xs uppercase tracking-widest font-poppins">Tu bolsa está vacía</p></div>)}{cart.map(item => (<div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-[#f2f2f2]"><div className="flex items-center gap-4"><div className="w-16 h-16 bg-[#f2f2f2] rounded-xl overflow-hidden flex items-center justify-center p-1"><img src={item.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex flex-col"><p className="font-bebas text-lg uppercase tracking-wide max-w-[130px] md:max-w-[180px] line-clamp-1 text-[#111111]">{item.name}</p><p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1 bg-gray-100 w-fit px-2 py-0.5 rounded-sm font-poppins">{item.qty} un.</p></div></div><div className="flex items-center gap-4 pr-2"><p className="font-bebas text-[#fcdb00] text-2xl tracking-wide">${formatPrice(item.qty * getUnitPromoPrice(item))}</p><div className="flex flex-col items-center gap-1.5 bg-[#f2f2f2] rounded-md p-1.5 border border-gray-200"><button onClick={() => changeQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-plus text-[10px]"></i></button><button onClick={() => changeQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-minus text-[10px]"></i></button></div></div></div>))}</div>{cart.length > 0 && (<div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
         <div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
             <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-ticket-alt text-[#fcdb00] text-xl"></i> Descuentos</p>
+            {/* LÓGICA DE TEXTO EN EL CARRITO CON LA ACLARACIÓN */}
             {dbUser?.roulettePrize && !appliedCoupon && (
                 <div className="mb-4 bg-[#111111] text-[#fcdb00] p-3 rounded-xl flex items-center justify-between border border-[#fcdb00]/30 shadow-md">
-                    <div className="flex items-center gap-3"><i className="fas fa-gift text-lg"></i><div className="flex flex-col"><span className="font-bold text-[10px] uppercase tracking-widest text-white">Premio de Ruleta</span><span className="font-bebas text-lg leading-none">{dbUser.roulettePrize.text}</span></div></div><i className="fas fa-check-circle"></i>
+                    <div className="flex items-center gap-3">
+                        <i className="fas fa-gift text-lg"></i>
+                        <div className="flex flex-col">
+                            <span className="font-bold text-[10px] uppercase tracking-widest text-white">Premio de Ruleta</span>
+                            <span className="font-bebas text-lg leading-none">{dbUser.roulettePrize.text}</span>
+                            {dbUser.roulettePrize.type === 'percent' && (
+                                <span className="text-[9px] text-gray-400 font-poppins mt-0.5 font-normal tracking-wide capitalize">*Aplica a 1 un. del prod. más caro</span>
+                            )}
+                        </div>
+                    </div>
+                    <i className="fas fa-check-circle"></i>
                 </div>
             )}
             <div className="flex gap-2">
