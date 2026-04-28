@@ -63,7 +63,7 @@ const initialProducts = [
   { id: 14, name: "STRAWBERRY WATERMELON", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/MG30ycJD/STRAWBERRY-WATERMELON.webp", description: "La clásica e infalible mezcla de fresa y sandía.", cardSize: "normal" },
   { id: 15, name: "SUMMER SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png", description: "Un cóctel frutal que captura la esencia del verano en cada calada.", cardSize: "normal" },
   { id: 16, name: "TIGERS BLOOD", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg", description: "Famosa mezcla de sandía y fresa con un exótico y suave toque de coco.", cardSize: "normal" },
-  { id: 17, name: "WATERMELON ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMODERN-ICE.webp", description: "Todo el jugo y la dulzura de la sandía con un impacto extra helado.", cardSize: "normal" },
+  { id: 17, name: "WATERMELON ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp", description: "Todo el jugo y la dulzura de la sandía con un impacto extra helado.", cardSize: "normal" },
   { id: 25, name: "SOUR APPLE ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg", description: "Manzana verde crujiente y ácida envuelta en una ráfaga de frío.", cardSize: "normal" },
   { id: 26, name: "MIAMI MINT", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg", description: "Menta sofisticada estilo Miami: fresca, dulce pero con presencia.", cardSize: "normal" },
   { id: 30, name: "BLUE RAZZ LEMON", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Jh48hT4x/ignite-v400-BLUE-RAZZ-LEMON.jpg", description: "Dispositivo ultracompacto y premium de Ignite.", cardSize: "normal" },
@@ -103,7 +103,7 @@ const PAGE_CONTENT = {
   arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de 10 días corridos.</p></div>) }
 };
 
-// --- MOTOR DE PROBABILIDADES DE LA RULETA (10 PORCIONES EXACTAS: NEGRO Y AMARILLO INTERCALADOS) ---
+// --- MOTOR DE PROBABILIDADES DE LA RULETA (10 PORCIONES EXACTAS, SÓLO NEGRO Y AMARILLO) ---
 const ROULETTE_PRIZES = [
   { id: 'sigue1', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#fcdb00' }, // Negro
   { id: 'off5_1', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#111111' }, // Amarillo
@@ -113,7 +113,7 @@ const ROULETTE_PRIZES = [
   { id: 'off10_2', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#111111' }, // Amarillo
   { id: 'off15', text: '15% OFF', prob: 0.07, type: 'percent', value: 15, textC: '#fcdb00' }, // Negro
   { id: 'off20', text: '20% OFF', prob: 0.015, type: 'percent', value: 20, textC: '#111111' }, // Amarillo
-  { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#fcdb00' }, // Negro (Mantuvo patrón, chances 0)
+  { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#fcdb00' }, // Negro
   { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, textC: '#111111' }, // Amarillo
 ];
 export default function Home() {
@@ -270,7 +270,7 @@ export default function Home() {
   const handleSpinRoulette = async () => {
       if (!user || user.isAnonymous || !dbUser) return showToast("Debes iniciar sesión primero.");
       
-      // ACÁ ESTÁ TU EXCEPCIÓN DE GMAIL:
+      // ACÁ ESTÁ TU EXCEPCIÓN DE GMAIL (INTACTA):
       if (dbUser.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") {
           return showToast("¡Ya utilizaste tu tiro de ruleta!");
       }
@@ -497,11 +497,11 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MODAL RULETA DE ANIVERSARIO (SÁNDWICH 3D + TEXTO RADIAL) --- */}
+      {/* --- MODAL RULETA DE ANIVERSARIO (SÁNDWICH 3D + TEXTO CORREGIDO) --- */}
       {showRouletteModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#111111]/90 backdrop-blur-sm" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
-          <div className="relative bg-[#f2f2f2] w-full max-w-md rounded-[2rem] shadow-2xl border border-white/20 p-8 pt-20 flex flex-col items-center animate-in zoom-in-95 duration-500">
+          <div className="relative bg-[#f2f2f2] w-full max-w-md rounded-[2rem] shadow-2xl border border-white/20 p-8 pt-20 flex flex-col items-center animate-in zoom-in-95 duration-500 overflow-hidden">
             {!isSpinning && <button onClick={() => setShowRouletteModal(false)} className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-[#fcdb00] hover:text-[#111111] transition-colors z-30 text-gray-500"><i className="fas fa-times"></i></button>}
             
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wide text-[#111111] mb-2 text-center relative z-30">Ruleta de Aniversario</h2>
@@ -509,14 +509,14 @@ export default function Home() {
             
             <div className="relative w-64 h-64 md:w-72 md:h-72 mb-8 mt-4">
               
-              {/* CAPA 1: MASCOTA ATRÁS (Cuerpo entero) */}
+              {/* CAPA 1: MASCOTA ATRÁS (El cuerpo) */}
               <img 
                 src="URL_DE_TU_MASCOTA_SIN_FONDO.png" 
                 className="absolute top-[-70px] left-1/2 -translate-x-1/2 w-[280px] h-auto z-0 opacity-100" 
                 alt="Fondo Mascota" 
               />
 
-              {/* CAPA 2: LA RULETA */}
+              {/* CAPA 2: LA RULETA (Con el color Negro y Amarillo puro) */}
               <div 
                 className="w-full h-full rounded-full border-[10px] border-[#111111] shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative overflow-hidden z-10"
                 style={{ 
@@ -526,29 +526,34 @@ export default function Home() {
                 }}
               >
                 {ROULETTE_PRIZES.map((prize, idx) => {
-                  const angle = (360 / 10) * idx + 18;
+                  const angle = (360 / 10) * idx;
                   return (
-                    <div key={idx} className="absolute inset-0 flex justify-center" style={{ transform: `rotate(${angle}deg)` }}>
-                      {/* TEXTO RADIAL */}
-                      <div className="mt-5 flex items-center justify-center" style={{ color: prize.textC, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                        <span className="font-bebas text-[11px] md:text-[14px] uppercase tracking-wider whitespace-nowrap">{prize.text}</span>
+                    /* EL ARREGLO ESTÁ ACÁ: Rotamos todo el div exterior para alinear el bloque */
+                    <div key={idx} className="absolute inset-0" style={{ transform: `rotate(${angle + 18}deg)` }}>
+                      {/* Div interior toma la mitad superior, centra y empuja de arriba a abajo */}
+                      <div className="absolute top-0 left-0 right-0 h-1/2 flex items-start justify-center pt-3 md:pt-4">
+                        <span 
+                          className="font-bebas text-[11px] md:text-[13px] uppercase tracking-wider" 
+                          style={{ color: prize.textC, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                        >
+                          {prize.text}
+                        </span>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* CAPA 3: MASCOTA ADELANTE */}
+              {/* CAPA 3: MASCOTA ADELANTE (La cabeza y la pata que pisan la ruleta) */}
               <img 
                 src="URL_DE_TU_MASCOTA_SIN_FONDO.png" 
                 className="absolute top-[-70px] left-1/2 -translate-x-1/2 w-[280px] h-auto z-20 drop-shadow-2xl" 
                 style={{ 
                   pointerEvents: 'none',
-                  clipPath: 'polygon(0% 0%, 100% 0%, 100% 45%, 0% 45%)' 
+                  clipPath: 'polygon(0% 0%, 100% 0%, 100% 45%, 0% 45%)'
                 }} 
                 alt="Frente Mascota" 
               />
-
             </div>
             
             <button onClick={handleSpinRoulette} disabled={isSpinning} className={`w-full py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider transition-all shadow-[0_10px_30px_rgba(0,0,0,0.15)] active:scale-95 flex items-center justify-center gap-2 relative z-30 ${isSpinning ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-none' : 'bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)]'}`}>
