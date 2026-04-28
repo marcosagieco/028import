@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, setDoc, increment, query, orderBy, limit } from "firebase/firestore";
+import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, setDoc, getDoc, increment, query, orderBy, limit } from "firebase/firestore";
 
 const CONFIG = {
   brandName: "028", 
@@ -103,6 +103,16 @@ const PAGE_CONTENT = {
   arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de 10 días corridos.</p></div>) }
 };
 
+// --- MOTOR DE PROBABILIDADES DE LA RULETA ---
+const ROULETTE_PRIZES = [
+  { id: 'sigue', text: 'SIGUE PARTICIPANDO', prob: 0.40, type: 'none', value: 0 },
+  { id: 'off5', text: '5% OFF (1 PROD)', prob: 0.25, type: 'percent', value: 5 },
+  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.15, type: 'shipping', value: 0 },
+  { id: 'off10', text: '10% OFF (1 PROD)', prob: 0.15, type: 'percent', value: 10 },
+  { id: 'off20', text: '20% OFF (1 PROD)', prob: 0.04, type: 'percent', value: 20 },
+  { id: 'off25', text: '25% OFF (1 PROD)', prob: 0.01, type: 'percent', value: 25 },
+];
+
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState(initialProducts);
@@ -119,17 +129,26 @@ export default function Home() {
   const [clientPhone, setClientPhone] = useState('');
   const [address, setAddress] = useState('');
   const [zone, setZone] = useState('');
-  // --- NUEVA VARIABLE PARA EL DEPARTAMENTO / PISO OPCIONAL ---
   const [aptDetails, setAptDetails] = useState(''); 
   const [showTooltip, setShowTooltip] = useState(false);
   
   const [deptIcons, setDeptIcons] = useState({});
   const [user, setUser] = useState(null);
+  const [dbUser, setDbUser] = useState(null); // INFO DEL USUARIO EN FIRESTORE
   const [fomoData, setFomoData] = useState(null);
   const [isSending, setIsSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  // --- ESTADOS NUEVOS PARA CUPONES Y RULETA ---
+  const [activeCouponsDb, setActiveCouponsDb] = useState([]); 
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  
+  const [showRouletteModal, setShowRouletteModal] = useState(false);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [rouletteRotation, setRouletteRotation] = useState(0);
 
   const departments = useMemo(() => [...new Set(products.map(p => p.department).filter(Boolean))], [products]);
   const uniqueCategories = useMemo(() => {
@@ -213,14 +232,116 @@ export default function Home() {
       const unsubscribeDeptIcons = onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
         if (snap.exists()) { setDeptIcons(snap.data().icons || {}); }
       });
-      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); unsubscribeDeptIcons(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
+      const unsubscribeCoupons = onSnapshot(collection(firebaseRefs.db, 'coupons'), (snap) => setActiveCouponsDb(!snap.empty ? snap.docs.map(d => d.data()) : []));
+
+      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); unsubscribeDeptIcons(); unsubscribeCoupons(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
     }
   }, [firebaseRefs]);
+
+  // LECTOR DEL USUARIO EN LA BASE DE DATOS
+  useEffect(() => {
+      if (!user || user.isAnonymous || !firebaseRefs.db) return;
+      const unsubscribe = onSnapshot(doc(firebaseRefs.db, 'users', user.uid), (docSnap) => {
+          if (docSnap.exists()) {
+              const data = docSnap.data();
+              setDbUser(data);
+              if(data.name) setClientName(data.name);
+          }
+      });
+      return () => unsubscribe();
+  }, [user, firebaseRefs.db]);
+
+  // --- LOGIN CON GOOGLE ---
+  const handleGoogleLogin = async () => {
+      if (!firebaseRefs.auth || !firebaseRefs.db) return;
+      try {
+          const provider = new GoogleAuthProvider();
+          const result = await signInWithPopup(firebaseRefs.auth, provider);
+          const u = result.user;
+          const userRef = doc(firebaseRefs.db, 'users', u.uid);
+          const userSnap = await getDoc(userRef);
+          if (!userSnap.exists()) {
+              await setDoc(userRef, { name: u.displayName, email: u.email, photoURL: u.photoURL, hasSpunRoulette: false, roulettePrize: null, createdAt: serverTimestamp() });
+          }
+          showToast("¡Sesión iniciada con éxito! 🎉");
+      } catch (error) { console.error(error); showToast("Error al iniciar con Google"); }
+  };
+
+  // --- MOTOR DE LA RULETA ---
+  const handleSpinRoulette = async () => {
+      if (!user || user.isAnonymous || !dbUser) return showToast("Debes iniciar sesión primero.");
+      if (dbUser.hasSpunRoulette) return showToast("¡Ya utilizaste tu tiro de ruleta!");
+      
+      setIsSpinning(true);
+      const rand = Math.random();
+      let sum = 0;
+      let wonPrize = ROULETTE_PRIZES[0];
+      
+      for (let p of ROULETTE_PRIZES) {
+          sum += p.prob;
+          if (rand <= sum) { wonPrize = p; break; }
+      }
+
+      // Animación visual falopa para que gire
+      const extraSpins = 5 * 360; 
+      const prizeIndex = ROULETTE_PRIZES.findIndex(p => p.id === wonPrize.id);
+      const sliceAngle = 360 / ROULETTE_PRIZES.length;
+      const targetRotation = extraSpins + (360 - (prizeIndex * sliceAngle)) - (sliceAngle / 2);
+      
+      setRouletteRotation(targetRotation);
+
+      setTimeout(async () => {
+          try {
+              await setDoc(doc(firebaseRefs.db, 'users', user.uid), { hasSpunRoulette: true, roulettePrize: wonPrize }, { merge: true });
+              if(wonPrize.type === 'none') {
+                  showToast("¡Ufa! Sigue participando. 😢");
+              } else {
+                  showToast(`¡GANASTE! 🎉 ${wonPrize.text}`);
+                  setAppliedCoupon(null); // Si gana ruleta, anula cupones manuales
+              }
+          } catch(err) { console.error(err); }
+          setIsSpinning(false);
+          setTimeout(() => setShowRouletteModal(false), 2000);
+      }, 5000); // 5 segundos dura la animación
+  };
+
+  // --- VALIDAR CUPÓN MANUAL ---
+  const handleApplyCoupon = () => {
+      const code = couponInput.trim().toUpperCase();
+      if(!code) return;
+      const found = activeCouponsDb.find(c => c.code === code && c.active);
+      if (found) {
+          setAppliedCoupon(found);
+          showToast(`¡Cupón ${code} aplicado! (-${found.discount}%)`);
+          setCouponInput('');
+      } else {
+          showToast("❌ Cupón inválido o inactivo.");
+          setAppliedCoupon(null);
+      }
+  };
 
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
   const getUnitPromoPrice = (item) => { const promo = promos.find(p => p.category === item.category); if (promo) { const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0); if (catCount >= promo.minQty) return promo.totalPrice / promo.minQty; } return item.price; };
-  const calculateTotal = () => cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice(item)), 0);
+  
+  // --- CÁLCULO DE TOTAL (CON DESCUENTOS) ---
+  const calculateTotal = () => {
+      let subtotal = cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice(item)), 0);
+      
+      if (appliedCoupon) {
+          return subtotal * (1 - (appliedCoupon.discount / 100));
+      } 
+      
+      if (dbUser?.roulettePrize && dbUser.roulettePrize.type === 'percent') {
+          let maxPrice = 0;
+          cart.forEach(item => { const price = getUnitPromoPrice(item); if (price > maxPrice) maxPrice = price; });
+          const discountAmount = maxPrice * (dbUser.roulettePrize.value / 100);
+          return subtotal - discountAmount;
+      }
+      
+      return subtotal;
+  };
+
   const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
   const navigateTo = (view, dept = null) => { setCurrentView(view); if(dept) setActiveFilter({dept, cat: 'all'}); setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   
@@ -249,12 +370,23 @@ export default function Home() {
     const finalTotal = calculateTotal();
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
     cart.forEach(i => { msg += `- ${i.qty}x ${i.name} ($${formatPrice(getUnitPromoPrice(i))} c/u)\n`; });
-    msg += `\n*TOTAL: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n\n`;
     
-    // --- ACÁ SE AGREGA EL DEPTO AL WHATSAPP ---
+    // --- TEXTOS DE DESCUENTOS EN WHATSAPP ---
+    if (appliedCoupon) {
+        msg += `\n🎟️ *CUPÓN APLICADO:* ${appliedCoupon.code} (-${appliedCoupon.discount}% OFF)\n`;
+    } else if (dbUser?.roulettePrize) {
+        if (dbUser.roulettePrize.type === 'percent') {
+            msg += `\n🎰 *PREMIO RULETA:* ${dbUser.roulettePrize.text} aplicado al producto más caro.\n`;
+        } else if (dbUser.roulettePrize.type === 'shipping') {
+            msg += `\n🔥 *PREMIO RULETA:* ¡ENVÍO GRATIS GANADO! 🔥\n`;
+        }
+    }
+
+    msg += `\n*TOTAL FINAL: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n\n`;
+    
     if (deliveryMethod === 'envio') {
         msg += `*ENVÍO:* ${address}, ${zone}\n`;
-        if (aptDetails.trim()) msg += `*DEPTO/PISO:* ${aptDetails.trim()}\n`; // LÍNEA NUEVA
+        if (aptDetails.trim()) msg += `*DEPTO/PISO:* ${aptDetails.trim()}\n`; 
         if (shippingType === 'flash') msg += `*TIPO DE ENVÍO:* 🚀 Flash (Menos de 30' - Solo Transferencia)`;
         else msg += `*TIPO DE ENVÍO:* 🛵 Motomensajería (Menos de 1:30hr - Efectivo o Transf)`;
     } else { msg += `*RETIRO LOCAL*`; }
@@ -266,15 +398,17 @@ export default function Home() {
                 userId: user?.uid || "anon", clientName, clientPhone, 
                 items: cart.map(i => ({ name: i.name, qty: i.qty, price: getUnitPromoPrice(i) })), 
                 total: finalTotal, delivery: deliveryMethod, address, zone, 
-                aptDetails: aptDetails.trim(), // LÍNEA NUEVA PARA FIREBASE
+                aptDetails: aptDetails.trim(), 
                 shippingOption: deliveryMethod === 'envio' ? shippingType : null,
+                couponUsed: appliedCoupon ? appliedCoupon.code : null,
+                rouletteUsed: !appliedCoupon && dbUser?.roulettePrize ? dbUser.roulettePrize.text : null,
                 status: 'pending', createdAt: serverTimestamp() 
             }); 
         } 
         setTimeout(() => { window.location.href = whatsappUrl; }, 400); 
     } catch (e) { window.location.href = whatsappUrl; }
   };
-  // --- LÓGICA DE TARJETAS (MÁXIMA CONVERSIÓN + FLUIDEZ) ---
+
   const renderProductCard = (p, index, isVidriera = false, layout = 'horizontal') => {
     const inCart = cart.find(i => i.id === p.id);
     const isOutOfStock = p.inStock === false;
@@ -345,7 +479,6 @@ export default function Home() {
           opacity: 1;
           transform: translateY(0);
         }
-        /* --- ANIMACIÓN MANTECA (FLUIDEZ TOTAL CON ACELERACIÓN GPU) --- */
         @keyframes marquee {
           0% { transform: translate3d(0, 0, 0); }
           100% { transform: translate3d(-50%, 0, 0); }
@@ -357,7 +490,6 @@ export default function Home() {
           will-change: transform;
         }
       `}} />
-      
       {toastMessage && (<div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-[#111111]/90 backdrop-blur-xl text-white px-6 py-4 rounded-full shadow-[0_20px_40px_rgba(252,219,0,0.2)] border border-[#fcdb00]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">{toastMessage}</div>)}
       
       {fomoData && (
@@ -369,10 +501,67 @@ export default function Home() {
           </div>
         </div>
       )}
-      
-      <header className="bg-[#111111] text-white h-[72px] sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 shadow-lg border-b border-white/5 transition-all duration-300"><button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#fcdb00] transition-colors p-2"><i className="fas fa-bars"></i></button><div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3 cursor-pointer group" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}><img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" /></div><button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#fcdb00] transition-colors"><i className="fas fa-shopping-bag text-2xl"></i>{getTotalItems() > 0 && (<span className="absolute top-1.5 -right-1 bg-[#fcdb00] text-[#111111] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-[#111111]">{getTotalItems()}</span>)}</button></header>
 
-      {/* --- BARRITA DE BENEFICIOS (EXACTAMENTE ARRIBA DEL BANNER, LOOP INFINITO) --- */}
+      {/* --- MODAL RULETA DE ANIVERSARIO --- */}
+      {showRouletteModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#111111]/90 backdrop-blur-sm" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
+          <div className="relative bg-[#f2f2f2] w-full max-w-md rounded-[2rem] shadow-2xl border border-white/20 p-8 flex flex-col items-center animate-in zoom-in-95 duration-500 overflow-hidden">
+            {!isSpinning && <button onClick={() => setShowRouletteModal(false)} className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-[#fcdb00] hover:text-[#111111] transition-colors z-20 text-gray-500"><i className="fas fa-times"></i></button>}
+            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wide text-[#111111] mb-2 text-center">Ruleta de Aniversario</h2>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-8 text-center font-poppins">Tirás 1 sola vez en la vida. ¡Suerte!</p>
+            
+            <div className="relative w-64 h-64 md:w-72 md:h-72 mb-8">
+              {/* Flecha indicadora */}
+              <div className="absolute top-[-10px] left-1/2 -translate-x-1/2 w-8 h-8 bg-[#111111] rotate-45 z-10 border-b-4 border-r-4 border-white shadow-sm"></div>
+              {/* Rueda */}
+              <div 
+                className="w-full h-full rounded-full border-8 border-white shadow-[0_10px_30px_rgba(0,0,0,0.1)] overflow-hidden relative"
+                style={{ transform: `rotate(${rouletteRotation}deg)`, transition: isSpinning ? 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none' }}
+              >
+                {ROULETTE_PRIZES.map((prize, idx) => {
+                  const angle = 360 / ROULETTE_PRIZES.length;
+                  const rotate = angle * idx;
+                  return (
+                    <div key={idx} className="absolute top-0 left-0 w-full h-full" style={{ transform: `rotate(${rotate}deg)` }}>
+                      <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] origin-bottom ${idx % 2 === 0 ? 'bg-[#fcdb00] text-[#111111]' : 'bg-[#111111] text-[#fcdb00]'}`} style={{ transform: `rotate(${angle / 2}deg) skewY(${90 - angle}deg)` }}></div>
+                      <div className="absolute top-6 left-1/2 -translate-x-1/2 origin-bottom text-center z-10 w-24" style={{ transform: `rotate(${angle / 2}deg)` }}>
+                        <span className={`block font-bebas text-[15px] leading-tight uppercase tracking-wider ${idx % 2 === 0 ? 'text-[#111111]' : 'text-[#fcdb00]'}`}>{prize.text}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            
+            <button onClick={handleSpinRoulette} disabled={isSpinning} className={`w-full py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider transition-all shadow-[0_10px_30px_rgba(0,0,0,0.15)] active:scale-95 flex items-center justify-center gap-2 ${isSpinning ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-none' : 'bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)]'}`}>
+                {isSpinning ? <><i className="fas fa-circle-notch fa-spin text-xl"></i> Girando...</> : '¡GIRAR AHORA!'}
+            </button>
+          </div>
+        </div>
+      )}
+      
+      <header className="bg-[#111111] text-white h-[72px] sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 shadow-lg border-b border-white/5 transition-all duration-300">
+        <button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#fcdb00] transition-colors p-2"><i className="fas fa-bars"></i></button>
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3 cursor-pointer group" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}>
+          <img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" />
+        </div>
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* --- BOTONES DE REGISTRO Y RULETA EN HEADER --- */}
+          {!user || user.isAnonymous ? (
+            <button onClick={handleGoogleLogin} className="hidden md:flex bg-white/10 hover:bg-white hover:text-[#111111] text-white text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full items-center gap-2 transition-all border border-white/20">
+                <i className="fab fa-google"></i> Iniciar Sesión
+            </button>
+          ) : (
+            <button onClick={() => dbUser?.hasSpunRoulette ? showToast("Ya utilizaste tu tiro de ruleta 🎁") : setShowRouletteModal(true)} className={`hidden md:flex text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full items-center gap-2 transition-all border ${dbUser?.hasSpunRoulette ? 'bg-white/5 text-gray-500 border-transparent cursor-not-allowed' : 'bg-[#fcdb00] text-[#111111] border-[#fcdb00] hover:bg-white hover:border-white animate-pulse'}`}>
+                <i className="fas fa-gift text-sm"></i> {dbUser?.hasSpunRoulette ? 'Ruleta Usada' : 'Girar Ruleta'}
+            </button>
+          )}
+          <button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#fcdb00] transition-colors"><i className="fas fa-shopping-bag text-2xl"></i>{getTotalItems() > 0 && (<span className="absolute top-1.5 -right-1 bg-[#fcdb00] text-[#111111] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-[#111111]">{getTotalItems()}</span>)}</button>
+        </div>
+      </header>
+
+      {/* --- BARRITA DE BENEFICIOS --- */}
       {currentView === 'home' && (
         <div className="w-full bg-[#111111] py-2 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex">
           <div className="animate-marquee whitespace-nowrap flex items-center">
@@ -389,15 +578,28 @@ export default function Home() {
       )}
 
       {/* MENÚ LATERAL */}
-      {isMenuOpen && (<div className="fixed inset-0 z-[90] flex"><div className="absolute inset-0 bg-[#111111]/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div><div className="w-[85%] max-w-[380px] bg-[#f2f2f2] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden"><div className="p-8 bg-[#111111] flex justify-between items-center text-white border-b border-white/10"><span className="font-bebas text-3xl tracking-wide uppercase">028<span className="text-[#fcdb00]">MENU</span></span><button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times text-lg"></i></button></div><div className="flex-1 overflow-y-auto pb-8"><div className="flex flex-col p-4 space-y-2"><button onClick={() => { setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); }} className="text-left p-5 bg-white rounded-2xl shadow-sm border border-[#f2f2f2] font-black uppercase text-sm hover:border-[#fcdb00] hover:shadow-md flex justify-between items-center transition-all">Catálogo Completo <i className="fas fa-arrow-right text-[#fcdb00]"></i></button><div className="pt-6 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Departamentos</p></div>{departments.map(dept => { const isExpanded = expandedDept === dept; const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category))); return (<div key={dept} className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] overflow-hidden transition-all"><button onClick={() => setExpandedDept(isExpanded ? null : dept)} className="w-full text-left p-5 font-black uppercase text-sm flex justify-between items-center transition-colors group">{dept} <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-gray-300 group-hover:text-[#fcdb00] transition-colors`}></i></button><div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="bg-gray-50 flex flex-col pb-4 pt-2 border-t border-gray-100"><button onClick={() => { setActiveFilter({dept, cat: 'all'}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-black text-xs text-[#111111] uppercase hover:text-[#fcdb00] transition-colors flex items-center gap-2"><i className="fas fa-layer-group text-gray-400"></i> Ver todo en {dept}</button>{deptCats.map(cat => (<button key={cat} onClick={() => { setActiveFilter({dept, cat}); navigateTo('catalog'); setTimeout(() => { const target = document.getElementById(slugify(cat)); if(target) target.scrollIntoView({behavior: 'smooth'}); }, 300); }} className="text-left px-6 py-3 font-bold text-xs text-gray-500 uppercase hover:text-[#111111] transition-colors pl-12 relative before:content-[''] before:w-1.5 before:h-1.5 before:bg-gray-300 before:rounded-full before:absolute before:left-7 before:top-1/2 before:-translate-y-1/2 hover:before:bg-[#fcdb00]">{cat}</button>))}</div></div></div>); })}<div className="pt-8 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Información Útil</p></div><div className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] p-2 space-y-1">
-                  
-                  <button onClick={() => { window.location.href = 'https://028import.com/nosotros'; }} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-users"></i></div> Quiénes Somos</button>
-                  <button onClick={() => { window.location.href = 'https://028import.com/envios'; }} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-truck"></i></div> Envíos y Logística</button>
-                  
-                  <button onClick={() => {setCurrentView('pagos'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-credit-card"></i></div> Medios de Pago</button>
-                  <button onClick={() => {setCurrentView('terminos'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-gray-400"><i className="fas fa-file-contract"></i></div> Legales y Términos</button>
-                  
-                </div></div></div></div></div>)}
+      {isMenuOpen && (<div className="fixed inset-0 z-[90] flex"><div className="absolute inset-0 bg-[#111111]/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div><div className="w-[85%] max-w-[380px] bg-[#f2f2f2] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden"><div className="p-8 bg-[#111111] flex justify-between items-center text-white border-b border-white/10"><span className="font-bebas text-3xl tracking-wide uppercase">028<span className="text-[#fcdb00]">MENU</span></span><button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times text-lg"></i></button></div><div className="flex-1 overflow-y-auto pb-8"><div className="flex flex-col p-4 space-y-2">
+        
+        {/* --- REGISTRO Y RULETA EN EL MENÚ MÓVIL --- */}
+        <div className="md:hidden mb-4">
+            {!user || user.isAnonymous ? (
+                <button onClick={handleGoogleLogin} className="w-full bg-[#111111] text-white p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#fcdb00] hover:text-[#111111] transition-all flex justify-center items-center gap-3"><i className="fab fa-google text-lg"></i> Iniciar sesión y Ganar</button>
+            ) : (
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-3">
+                    <p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest text-center">Hola, {dbUser?.name?.split(' ')[0] || 'Cliente'}</p>
+                    <button onClick={() => { setIsMenuOpen(false); dbUser?.hasSpunRoulette ? showToast("Ya utilizaste tu tiro de ruleta 🎁") : setShowRouletteModal(true); }} className={`w-full py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-2 transition-all ${dbUser?.hasSpunRoulette ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#fcdb00] text-[#111111] shadow-md animate-pulse'}`}>
+                        <i className="fas fa-gift text-lg"></i> {dbUser?.hasSpunRoulette ? 'Ruleta Usada' : 'Girar Ruleta'}
+                    </button>
+                </div>
+            )}
+        </div>
+
+        <button onClick={() => { setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); }} className="text-left p-5 bg-white rounded-2xl shadow-sm border border-[#f2f2f2] font-black uppercase text-sm hover:border-[#fcdb00] hover:shadow-md flex justify-between items-center transition-all">Catálogo Completo <i className="fas fa-arrow-right text-[#fcdb00]"></i></button><div className="pt-6 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Departamentos</p></div>{departments.map(dept => { const isExpanded = expandedDept === dept; const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category))); return (<div key={dept} className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] overflow-hidden transition-all"><button onClick={() => setExpandedDept(isExpanded ? null : dept)} className="w-full text-left p-5 font-black uppercase text-sm flex justify-between items-center transition-colors group">{dept} <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-gray-300 group-hover:text-[#fcdb00] transition-colors`}></i></button><div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="bg-gray-50 flex flex-col pb-4 pt-2 border-t border-gray-100"><button onClick={() => { setActiveFilter({dept, cat: 'all'}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-black text-xs text-[#111111] uppercase hover:text-[#fcdb00] transition-colors flex items-center gap-2"><i className="fas fa-layer-group text-gray-400"></i> Ver todo en {dept}</button>{deptCats.map(cat => (<button key={cat} onClick={() => { setActiveFilter({dept, cat}); navigateTo('catalog'); setTimeout(() => { const target = document.getElementById(slugify(cat)); if(target) target.scrollIntoView({behavior: 'smooth'}); }, 300); }} className="text-left px-6 py-3 font-bold text-xs text-gray-500 uppercase hover:text-[#111111] transition-colors pl-12 relative before:content-[''] before:w-1.5 before:h-1.5 before:bg-gray-300 before:rounded-full before:absolute before:left-7 before:top-1/2 before:-translate-y-1/2 hover:before:bg-[#fcdb00]">{cat}</button>))}</div></div></div>); })}<div className="pt-8 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Información Útil</p></div><div className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] p-2 space-y-1">
+          <button onClick={() => { window.location.href = 'https://028import.com/nosotros'; }} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-users"></i></div> Quiénes Somos</button>
+          <button onClick={() => { window.location.href = 'https://028import.com/envios'; }} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-truck"></i></div> Envíos y Logística</button>
+          <button onClick={() => {setCurrentView('pagos'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-credit-card"></i></div> Medios de Pago</button>
+          <button onClick={() => {setCurrentView('terminos'); setIsMenuOpen(false); window.scrollTo(0,0);}} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-gray-400"><i className="fas fa-file-contract"></i></div> Legales y Términos</button>
+        </div></div></div></div></div>)}
 
       {currentView === 'home' ? (
         <>
@@ -467,7 +669,42 @@ export default function Home() {
 
       {selectedProduct && (<div className="fixed inset-0 z-[80] flex items-end md:items-center justify-center p-4 sm:p-6"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-xl transition-opacity" onClick={() => setSelectedProduct(null)}></div><div className="relative bg-[#f2f2f2] w-full max-w-4xl rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-500 flex flex-col md:flex-row max-h-[90vh] border border-white/20"><button onClick={() => setSelectedProduct(null)} className="absolute top-6 right-6 z-10 w-10 h-10 bg-white/80 backdrop-blur-2xl border border-white text-[#111111] rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-lg"><i className="fas fa-times text-lg"></i></button><div className="w-full md:w-1/2 bg-white p-8 flex items-center justify-center relative min-h-[350px] border-r border-[#f2f2f2]">{selectedProduct.tag && <span className="absolute top-8 left-8 bg-[#111111] text-[#fcdb00] font-bebas text-sm px-4 py-1.5 uppercase tracking-wider rounded-sm shadow-lg z-10">{selectedProduct.tag}</span>}<img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full max-h-[450px] object-contain drop-shadow-2xl animate-in scale-95 duration-700 ease-out mix-blend-multiply" /></div><div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center overflow-y-auto bg-[#f2f2f2]"><p className="text-[#fcdb00] font-bebas uppercase tracking-wider text-xl mb-1 drop-shadow-sm">{selectedProduct.category}</p><h2 className="text-5xl md:text-6xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-6">{selectedProduct.name}</h2><p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed whitespace-pre-line font-poppins">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p><div className="mt-auto border-t border-gray-300 pt-8"><p className="text-[#111111] font-bebas text-5xl md:text-6xl tracking-wide mb-8 drop-shadow-sm">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}</p>{selectedProduct.inStock === false ? ( <button disabled className="w-full bg-gray-300 text-gray-500 py-4 text-lg font-bebas uppercase tracking-wider rounded-xl cursor-not-allowed border border-gray-400">Producto Agotado</button> ) : ( <button onClick={(e) => addToCart(selectedProduct, e)} className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] py-4 text-xl font-bebas uppercase tracking-wider rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95"><i className="fas fa-shopping-cart text-lg mb-0.5"></i> Agregar a la bolsa</button> )}</div></div></div></div>)}
 
-      {isCartOpen && (<div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} /><div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] h-[90vh] md:max-h-[85vh] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-500 flex flex-col pb-safe"><div className="p-6 border-b border-gray-300 flex justify-between items-center bg-white sticky top-0 z-10"><div><h2 className="text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest font-poppins">{getTotalItems()} artículos seleccionados</p></div><button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-[#f2f2f2] rounded-full text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex items-center justify-center shadow-sm border border-gray-200"><i className="fas fa-times text-lg"></i></button></div><div className="overflow-y-auto p-4 md:p-6 flex-grow no-scrollbar"><div className="space-y-3 mb-10">{cart.length === 0 && (<div className="text-center py-20 bg-white/50 rounded-2xl border border-dashed border-gray-300"><div className="w-16 h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><i className="fas fa-shopping-bag text-2xl text-gray-400"></i></div><p className="text-gray-400 font-bold text-xs uppercase tracking-widest font-poppins">Tu bolsa está vacía</p></div>)}{cart.map(item => (<div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-[#f2f2f2]"><div className="flex items-center gap-4"><div className="w-16 h-16 bg-[#f2f2f2] rounded-xl overflow-hidden flex items-center justify-center p-1"><img src={item.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex flex-col"><p className="font-bebas text-lg uppercase tracking-wide max-w-[130px] md:max-w-[180px] line-clamp-1 text-[#111111]">{item.name}</p><p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1 bg-gray-100 w-fit px-2 py-0.5 rounded-sm font-poppins">{item.qty} un.</p></div></div><div className="flex items-center gap-4 pr-2"><p className="font-bebas text-[#fcdb00] text-2xl tracking-wide">${formatPrice(item.qty * getUnitPromoPrice(item))}</p><div className="flex flex-col items-center gap-1.5 bg-[#f2f2f2] rounded-md p-1.5 border border-gray-200"><button onClick={() => changeQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-plus text-[10px]"></i></button><button onClick={() => changeQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-minus text-[10px]"></i></button></div></div></div>))}</div>{cart.length > 0 && (<div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100"><div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]"><p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-user-circle text-[#fcdb00] text-xl"></i> Tus Datos</p><div className="flex flex-col gap-3 font-poppins"><input type="text" placeholder="Nombre completo" value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" /><input type="tel" placeholder="Número de WhatsApp" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" /></div></div><div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]"><p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-map-marked-alt text-[#fcdb00] text-xl"></i> Entrega</p><div className="flex gap-2 mb-5 bg-[#f2f2f2] p-1.5 rounded-xl border border-gray-200 font-poppins"><button onClick={() => setDeliveryMethod('retiro')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryMethod === 'retiro' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Retiro Local</button><button onClick={() => setDeliveryMethod('envio')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryMethod === 'envio' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Envío Domicilio</button></div>
+      {isCartOpen && (<div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} /><div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] h-[90vh] md:max-h-[85vh] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-500 flex flex-col pb-safe"><div className="p-6 border-b border-gray-300 flex justify-between items-center bg-white sticky top-0 z-10"><div><h2 className="text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest font-poppins">{getTotalItems()} artículos seleccionados</p></div><button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-[#f2f2f2] rounded-full text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex items-center justify-center shadow-sm border border-gray-200"><i className="fas fa-times text-lg"></i></button></div><div className="overflow-y-auto p-4 md:p-6 flex-grow no-scrollbar"><div className="space-y-3 mb-10">{cart.length === 0 && (<div className="text-center py-20 bg-white/50 rounded-2xl border border-dashed border-gray-300"><div className="w-16 h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><i className="fas fa-shopping-bag text-2xl text-gray-400"></i></div><p className="text-gray-400 font-bold text-xs uppercase tracking-widest font-poppins">Tu bolsa está vacía</p></div>)}{cart.map(item => (<div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-[#f2f2f2]"><div className="flex items-center gap-4"><div className="w-16 h-16 bg-[#f2f2f2] rounded-xl overflow-hidden flex items-center justify-center p-1"><img src={item.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex flex-col"><p className="font-bebas text-lg uppercase tracking-wide max-w-[130px] md:max-w-[180px] line-clamp-1 text-[#111111]">{item.name}</p><p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1 bg-gray-100 w-fit px-2 py-0.5 rounded-sm font-poppins">{item.qty} un.</p></div></div><div className="flex items-center gap-4 pr-2"><p className="font-bebas text-[#fcdb00] text-2xl tracking-wide">${formatPrice(item.qty * getUnitPromoPrice(item))}</p><div className="flex flex-col items-center gap-1.5 bg-[#f2f2f2] rounded-md p-1.5 border border-gray-200"><button onClick={() => changeQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-plus text-[10px]"></i></button><button onClick={() => changeQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-minus text-[10px]"></i></button></div></div></div>))}</div>{cart.length > 0 && (<div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+        
+        {/* --- SECCIÓN CUPONES Y DESCUENTOS EN CARRITO --- */}
+        <div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
+            <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-ticket-alt text-[#fcdb00] text-xl"></i> Descuentos</p>
+            
+            {dbUser?.roulettePrize && !appliedCoupon && (
+                <div className="mb-4 bg-[#111111] text-[#fcdb00] p-3 rounded-xl flex items-center justify-between border border-[#fcdb00]/30 shadow-md">
+                    <div className="flex items-center gap-3">
+                        <i className="fas fa-gift text-lg"></i>
+                        <div className="flex flex-col">
+                            <span className="font-bold text-[10px] uppercase tracking-widest text-white">Premio de Ruleta</span>
+                            <span className="font-bebas text-lg leading-none">{dbUser.roulettePrize.text}</span>
+                        </div>
+                    </div>
+                    <i className="fas fa-check-circle"></i>
+                </div>
+            )}
+
+            <div className="flex gap-2">
+                <input type="text" placeholder="CÓDIGO INFLUENCER" value={couponInput} onChange={(e) => setCouponInput(e.target.value.toUpperCase())} className="flex-1 p-3 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400 font-poppins" />
+                <button onClick={handleApplyCoupon} className="bg-[#111111] text-[#fcdb00] px-4 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-md">Aplicar</button>
+            </div>
+            
+            {appliedCoupon && (
+                <div className="mt-3 flex items-center justify-between bg-green-50 p-2 rounded-lg border border-green-200">
+                    <span className="text-[10px] font-bold text-green-700 uppercase tracking-widest"><i className="fas fa-check-circle mr-1"></i> Cupón {appliedCoupon.code} aplicado (-{appliedCoupon.discount}%)</span>
+                    <button onClick={() => setAppliedCoupon(null)} className="text-red-500 hover:text-red-700 text-xs"><i className="fas fa-times"></i></button>
+                </div>
+            )}
+            {appliedCoupon && dbUser?.roulettePrize && (
+                <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-2 italic">*El cupón anula el premio de la ruleta.</p>
+            )}
+        </div>
+
+        <div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]"><p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-user-circle text-[#fcdb00] text-xl"></i> Tus Datos</p><div className="flex flex-col gap-3 font-poppins"><input type="text" placeholder="Nombre completo" value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" /><input type="tel" placeholder="Número de WhatsApp" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" /></div></div><div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]"><p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-map-marked-alt text-[#fcdb00] text-xl"></i> Entrega</p><div className="flex gap-2 mb-5 bg-[#f2f2f2] p-1.5 rounded-xl border border-gray-200 font-poppins"><button onClick={() => setDeliveryMethod('retiro')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryMethod === 'retiro' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Retiro Local</button><button onClick={() => setDeliveryMethod('envio')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryMethod === 'envio' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Envío Domicilio</button></div>
               {deliveryMethod === 'envio' && (
                 <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-300 font-poppins">
                   <div className="flex flex-col gap-3 mb-2">
@@ -489,7 +726,6 @@ export default function Home() {
                       {shippingType === 'moto' && <div className="ml-auto text-[#fcdb00]"><i className="fas fa-check-circle text-xl"></i></div>}
                     </div>
                   </div>
-                  {/* --- AQUÍ ESTÁ EL CAMPO NUEVO OPCIONAL --- */}
                   <input type="text" placeholder="Dirección completa" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
                   <input type="text" placeholder="Piso / Depto / Torre (Opcional)" value={aptDetails} onChange={(e) => setAptDetails(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
                   <input type="text" placeholder="Barrio / Localidad / CP" value={zone} onChange={(e) => setZone(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
