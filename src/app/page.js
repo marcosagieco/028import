@@ -63,7 +63,7 @@ const initialProducts = [
   { id: 14, name: "STRAWBERRY WATERMELON", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/MG30ycJD/STRAWBERRY-WATERMELON.webp", description: "La clásica e infalible mezcla de fresa y sandía.", cardSize: "normal" },
   { id: 15, name: "SUMMER SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png", description: "Un cóctel frutal que captura la esencia del verano en cada calada.", cardSize: "normal" },
   { id: 16, name: "TIGERS BLOOD", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg", description: "Famosa mezcla de sandía y fresa con un exótico y suave toque de coco.", cardSize: "normal" },
-  { id: 17, name: "WATERMELON ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp", description: "Todo el jugo y la dulzura de la sandía con un impacto extra helado.", cardSize: "normal" },
+  { id: 17, name: "WATERMELON ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMODERN-ICE.webp", description: "Todo el jugo y la dulzura de la sandía con un impacto extra helado.", cardSize: "normal" },
   { id: 25, name: "SOUR APPLE ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg", description: "Manzana verde crujiente y ácida envuelta en una ráfaga de frío.", cardSize: "normal" },
   { id: 26, name: "MIAMI MINT", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg", description: "Menta sofisticada estilo Miami: fresca, dulce pero con presencia.", cardSize: "normal" },
   { id: 30, name: "BLUE RAZZ LEMON", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Jh48hT4x/ignite-v400-BLUE-RAZZ-LEMON.jpg", description: "Dispositivo ultracompacto y premium de Ignite.", cardSize: "normal" },
@@ -103,20 +103,19 @@ const PAGE_CONTENT = {
   arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de 10 días corridos.</p></div>) }
 };
 
-// --- MOTOR DE PROBABILIDADES DE LA RULETA (10 PORCIONES EXACTAS, SÓLO NEGRO Y AMARILLO) ---
+// --- MOTOR DE PROBABILIDADES DE LA RULETA (10 PORCIONES EXACTAS: NEGRO Y AMARILLO INTERCALADOS) ---
 const ROULETTE_PRIZES = [
-  { id: 'sigue1', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#fcdb00' }, // 0: Bg Black
-  { id: 'off5_1', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#111111' }, // 1: Bg Yellow
-  { id: 'off10_1', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#fcdb00' }, // 2: Bg Black
-  { id: 'sigue2', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#111111' }, // 3: Bg Yellow
-  { id: 'off5_2', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#fcdb00' }, // 4: Bg Black
-  { id: 'off10_2', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#111111' }, // 5: Bg Yellow
-  { id: 'off15', text: '15% OFF', prob: 0.07, type: 'percent', value: 15, textC: '#fcdb00' }, // 6: Bg Black
-  { id: 'off20', text: '20% OFF', prob: 0.015, type: 'percent', value: 20, textC: '#111111' }, // 7: Bg Yellow
-  { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#fcdb00' }, // 8: Bg Black 
-  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, textC: '#111111' }, // 9: Bg Yellow
+  { id: 'sigue1', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#fcdb00' }, // Negro
+  { id: 'off5_1', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#111111' }, // Amarillo
+  { id: 'off10_1', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#fcdb00' }, // Negro
+  { id: 'sigue2', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#111111' }, // Amarillo
+  { id: 'off5_2', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#fcdb00' }, // Negro
+  { id: 'off10_2', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#111111' }, // Amarillo
+  { id: 'off15', text: '15% OFF', prob: 0.07, type: 'percent', value: 15, textC: '#fcdb00' }, // Negro
+  { id: 'off20', text: '20% OFF', prob: 0.015, type: 'percent', value: 20, textC: '#111111' }, // Amarillo
+  { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#fcdb00' }, // Negro (Mantuvo patrón, chances 0)
+  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, textC: '#111111' }, // Amarillo
 ];
-
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState(initialProducts);
@@ -498,7 +497,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MODAL RULETA DE ANIVERSARIO (SÁNDWICH 3D + COLORES 028) --- */}
+      {/* --- MODAL RULETA DE ANIVERSARIO (SÁNDWICH 3D + TEXTO RADIAL) --- */}
       {showRouletteModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#111111]/90 backdrop-blur-sm" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
@@ -517,9 +516,9 @@ export default function Home() {
                 alt="Fondo Mascota" 
               />
 
-              {/* CAPA 2: LA RULETA (En el medio) */}
+              {/* CAPA 2: LA RULETA */}
               <div 
-                className="w-full h-full rounded-full border-8 border-[#111111] shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative overflow-hidden z-10"
+                className="w-full h-full rounded-full border-[10px] border-[#111111] shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative overflow-hidden z-10"
                 style={{ 
                   background: 'conic-gradient(#111111 0deg 36deg, #fcdb00 36deg 72deg, #111111 72deg 108deg, #fcdb00 108deg 144deg, #111111 144deg 180deg, #fcdb00 180deg 216deg, #111111 216deg 252deg, #fcdb00 252deg 288deg, #111111 288deg 324deg, #fcdb00 324deg 360deg)',
                   transform: `rotate(${rouletteRotation}deg)`, 
@@ -529,22 +528,23 @@ export default function Home() {
                 {ROULETTE_PRIZES.map((prize, idx) => {
                   const angle = (360 / 10) * idx + 18;
                   return (
-                    <div key={idx} className="absolute inset-0 w-full h-full" style={{ transform: `rotate(${angle}deg)` }}>
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[50%] flex items-center justify-center pl-4 pb-2" style={{ color: prize.textC }}>
-                        <span className="block font-bebas text-[11px] md:text-[14px] leading-tight uppercase tracking-wider drop-shadow-sm whitespace-nowrap" style={{ transform: 'rotate(-90deg)' }}>{prize.text}</span>
+                    <div key={idx} className="absolute inset-0 flex justify-center" style={{ transform: `rotate(${angle}deg)` }}>
+                      {/* TEXTO RADIAL */}
+                      <div className="mt-5 flex items-center justify-center" style={{ color: prize.textC, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                        <span className="font-bebas text-[11px] md:text-[14px] uppercase tracking-wider whitespace-nowrap">{prize.text}</span>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* CAPA 3: MASCOTA ADELANTE (Cabeza y brazo recortado) */}
+              {/* CAPA 3: MASCOTA ADELANTE */}
               <img 
                 src="URL_DE_TU_MASCOTA_SIN_FONDO.png" 
                 className="absolute top-[-70px] left-1/2 -translate-x-1/2 w-[280px] h-auto z-20 drop-shadow-2xl" 
                 style={{ 
                   pointerEvents: 'none',
-                  clipPath: 'polygon(0% 0%, 100% 0%, 100% 45%, 0% 45%)' // Solo muestra la parte de arriba (Cabeza y Mano)
+                  clipPath: 'polygon(0% 0%, 100% 0%, 100% 45%, 0% 45%)' 
                 }} 
                 alt="Frente Mascota" 
               />
