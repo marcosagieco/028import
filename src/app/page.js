@@ -431,7 +431,7 @@ export default function Home() {
         if (shippingType === 'flash') msg += `*TIPO DE ENVÍO:* 🚀 Flash (Menos de 30' - Solo Transferencia)`;
         else msg += `*TIPO DE ENVÍO:* 🛵 Motomensajería (Menos de 1:30hr - Efectivo o Transf)`;
     } else { msg += `*RETIRO LOCAL*`; }
-    
+    gtag("event", "whatsapp_click");
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
     try { 
         if (firebaseRefs.db) { 
