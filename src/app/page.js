@@ -103,14 +103,15 @@ const PAGE_CONTENT = {
   arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de 10 días corridos.</p></div>) }
 };
 
-// --- MOTOR DE PROBABILIDADES DE LA RULETA ---
+// --- MOTOR DE PROBABILIDADES DE LA RULETA (ACTUALIZADO CON 7 PREMIOS) ---
 const ROULETTE_PRIZES = [
-  { id: 'sigue', text: 'SIGUE PARTICIPANDO', prob: 0.40, type: 'none', value: 0 },
-  { id: 'off5', text: '5% OFF (1 PROD)', prob: 0.25, type: 'percent', value: 5 },
-  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.15, type: 'shipping', value: 0 },
-  { id: 'off10', text: '10% OFF (1 PROD)', prob: 0.15, type: 'percent', value: 10 },
-  { id: 'off20', text: '20% OFF (1 PROD)', prob: 0.04, type: 'percent', value: 20 },
-  { id: 'off25', text: '25% OFF (1 PROD)', prob: 0.01, type: 'percent', value: 25 },
+  { id: 'sigue', text: 'SEGUÍ PARTICIPANDO', prob: 0.25, type: 'none', value: 0, bg: '#fcdb00', textC: '#111111' },
+  { id: 'off5', text: '5% OFF', prob: 0.30, type: 'percent', value: 5, bg: '#111111', textC: '#fcdb00' },
+  { id: 'off10', text: '10% OFF', prob: 0.35, type: 'percent', value: 10, bg: '#fcdb00', textC: '#111111' },
+  { id: 'off15', text: '15% OFF', prob: 0.07, type: 'percent', value: 15, bg: '#111111', textC: '#fcdb00' },
+  { id: 'off20', text: '20% OFF', prob: 0.015, type: 'percent', value: 20, bg: '#fcdb00', textC: '#111111' },
+  { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, bg: '#ef4444', textC: '#ffffff' }, // Rojo imposible
+  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, bg: '#111111', textC: '#fcdb00' },
 ];
 
 export default function Home() {
@@ -134,14 +135,13 @@ export default function Home() {
   
   const [deptIcons, setDeptIcons] = useState({});
   const [user, setUser] = useState(null);
-  const [dbUser, setDbUser] = useState(null); // INFO DEL USUARIO EN FIRESTORE
+  const [dbUser, setDbUser] = useState(null); 
   const [fomoData, setFomoData] = useState(null);
   const [isSending, setIsSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  // --- ESTADOS NUEVOS PARA CUPONES Y RULETA ---
   const [activeCouponsDb, setActiveCouponsDb] = useState([]); 
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -238,7 +238,6 @@ export default function Home() {
     }
   }, [firebaseRefs]);
 
-  // LECTOR DEL USUARIO EN LA BASE DE DATOS
   useEffect(() => {
       if (!user || user.isAnonymous || !firebaseRefs.db) return;
       const unsubscribe = onSnapshot(doc(firebaseRefs.db, 'users', user.uid), (docSnap) => {
@@ -251,7 +250,6 @@ export default function Home() {
       return () => unsubscribe();
   }, [user, firebaseRefs.db]);
 
-  // --- LOGIN CON GOOGLE ---
   const handleGoogleLogin = async () => {
       if (!firebaseRefs.auth || !firebaseRefs.db) return;
       try {
@@ -267,10 +265,13 @@ export default function Home() {
       } catch (error) { console.error(error); showToast("Error al iniciar con Google"); }
   };
 
-  // --- MOTOR DE LA RULETA ---
   const handleSpinRoulette = async () => {
       if (!user || user.isAnonymous || !dbUser) return showToast("Debes iniciar sesión primero.");
-      if (dbUser.hasSpunRoulette) return showToast("¡Ya utilizaste tu tiro de ruleta!");
+      
+      // ACÁ ESTÁ TU EXCEPCIÓN DE GMAIL:
+      if (dbUser.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") {
+          return showToast("¡Ya utilizaste tu tiro de ruleta!");
+      }
       
       setIsSpinning(true);
       const rand = Math.random();
@@ -282,10 +283,10 @@ export default function Home() {
           if (rand <= sum) { wonPrize = p; break; }
       }
 
-      // Animación visual falopa para que gire
       const extraSpins = 5 * 360; 
       const prizeIndex = ROULETTE_PRIZES.findIndex(p => p.id === wonPrize.id);
       const sliceAngle = 360 / ROULETTE_PRIZES.length;
+      // Ajuste fino para caer exactamente en el centro de la porción generada
       const targetRotation = extraSpins + (360 - (prizeIndex * sliceAngle)) - (sliceAngle / 2);
       
       setRouletteRotation(targetRotation);
@@ -297,15 +298,14 @@ export default function Home() {
                   showToast("¡Ufa! Sigue participando. 😢");
               } else {
                   showToast(`¡GANASTE! 🎉 ${wonPrize.text}`);
-                  setAppliedCoupon(null); // Si gana ruleta, anula cupones manuales
+                  setAppliedCoupon(null); 
               }
           } catch(err) { console.error(err); }
           setIsSpinning(false);
           setTimeout(() => setShowRouletteModal(false), 2000);
-      }, 5000); // 5 segundos dura la animación
+      }, 5000); 
   };
 
-  // --- VALIDAR CUPÓN MANUAL ---
   const handleApplyCoupon = () => {
       const code = couponInput.trim().toUpperCase();
       if(!code) return;
@@ -324,21 +324,15 @@ export default function Home() {
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
   const getUnitPromoPrice = (item) => { const promo = promos.find(p => p.category === item.category); if (promo) { const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0); if (catCount >= promo.minQty) return promo.totalPrice / promo.minQty; } return item.price; };
   
-  // --- CÁLCULO DE TOTAL (CON DESCUENTOS) ---
   const calculateTotal = () => {
       let subtotal = cart.reduce((acc, item) => acc + (item.qty * getUnitPromoPrice(item)), 0);
-      
-      if (appliedCoupon) {
-          return subtotal * (1 - (appliedCoupon.discount / 100));
-      } 
-      
+      if (appliedCoupon) { return subtotal * (1 - (appliedCoupon.discount / 100)); } 
       if (dbUser?.roulettePrize && dbUser.roulettePrize.type === 'percent') {
           let maxPrice = 0;
           cart.forEach(item => { const price = getUnitPromoPrice(item); if (price > maxPrice) maxPrice = price; });
           const discountAmount = maxPrice * (dbUser.roulettePrize.value / 100);
           return subtotal - discountAmount;
       }
-      
       return subtotal;
   };
 
@@ -371,7 +365,6 @@ export default function Home() {
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
     cart.forEach(i => { msg += `- ${i.qty}x ${i.name} ($${formatPrice(getUnitPromoPrice(i))} c/u)\n`; });
     
-    // --- TEXTOS DE DESCUENTOS EN WHATSAPP ---
     if (appliedCoupon) {
         msg += `\n🎟️ *CUPÓN APLICADO:* ${appliedCoupon.code} (-${appliedCoupon.discount}% OFF)\n`;
     } else if (dbUser?.roulettePrize) {
@@ -502,7 +495,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MODAL RULETA DE ANIVERSARIO (VERSIÓN CORREGIDA) --- */}
+      {/* --- MODAL RULETA DE ANIVERSARIO (7 PREMIOS CON CONIC GRADIENT) --- */}
       {showRouletteModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#111111]/90 backdrop-blur-sm" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
@@ -516,17 +509,17 @@ export default function Home() {
               <div 
                 className="w-full h-full rounded-full border-8 border-white shadow-[0_10px_30px_rgba(0,0,0,0.1)] relative overflow-hidden"
                 style={{ 
-                  background: 'conic-gradient(#fcdb00 0deg 60deg, #111111 60deg 120deg, #fcdb00 120deg 180deg, #111111 180deg 240deg, #fcdb00 240deg 300deg, #111111 300deg 360deg)',
+                  background: 'conic-gradient(#fcdb00 0deg 51.43deg, #111111 51.43deg 102.86deg, #fcdb00 102.86deg 154.29deg, #111111 154.29deg 205.71deg, #fcdb00 205.71deg 257.14deg, #ef4444 257.14deg 308.57deg, #111111 308.57deg 360deg)',
                   transform: `rotate(${rouletteRotation}deg)`, 
                   transition: isSpinning ? 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none' 
                 }}
               >
                 {ROULETTE_PRIZES.map((prize, idx) => {
-                  const angle = (360 / 6) * idx + 30;
+                  const angle = (360 / 7) * idx + (360 / 14); // Centro de la porción para 7 premios
                   return (
                     <div key={idx} className="absolute inset-0 w-full h-full" style={{ transform: `rotate(${angle}deg)` }}>
-                      <div className={`absolute top-4 md:top-6 left-1/2 -translate-x-1/2 text-center w-20 md:w-24 ${idx % 2 === 0 ? 'text-[#111111]' : 'text-[#fcdb00]'}`}>
-                        <span className="block font-bebas text-[13px] md:text-[16px] leading-tight uppercase tracking-wider drop-shadow-sm">{prize.text}</span>
+                      <div className="absolute top-3 md:top-5 left-1/2 -translate-x-1/2 text-center w-20 md:w-24" style={{ color: prize.textC }}>
+                        <span className="block font-bebas text-[12px] md:text-[15px] leading-tight uppercase tracking-wider drop-shadow-sm">{prize.text}</span>
                       </div>
                     </div>
                   );
@@ -552,7 +545,7 @@ export default function Home() {
                 <i className="fab fa-google"></i> Iniciar Sesión
             </button>
           ) : (
-            <button onClick={() => (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? showToast("Ya utilizaste tu tiro 🎁") : setShowRouletteModal(true)} className={`hidden md:flex text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full items-center gap-2 transition-all border ${dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com" ? 'bg-white/5 text-gray-500 border-transparent' : 'bg-[#fcdb00] text-[#111111] border-[#fcdb00] hover:bg-white animate-pulse'}`}>
+            <button onClick={() => (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? showToast("Ya utilizaste tu tiro 🎁") : setShowRouletteModal(true)} className={`hidden md:flex text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full items-center gap-2 transition-all border ${(dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? 'bg-white/5 text-gray-500 border-transparent' : 'bg-[#fcdb00] text-[#111111] border-[#fcdb00] hover:bg-white animate-pulse'}`}>
                 <i className="fas fa-gift text-sm"></i> Girar Ruleta
             </button>
           )}
