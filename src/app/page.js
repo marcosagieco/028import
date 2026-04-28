@@ -103,7 +103,7 @@ const PAGE_CONTENT = {
   arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de 10 días corridos.</p></div>) }
 };
 
-// --- MOTOR DE PROBABILIDADES DE LA RULETA (10 PORCIONES EXACTAS Y TEXTOS ALINEADOS AL RADIO) ---
+// --- MOTOR DE PROBABILIDADES DE LA RULETA (10 PORCIONES EXACTAS, SÓLO NEGRO Y AMARILLO) ---
 const ROULETTE_PRIZES = [
   { id: 'sigue1', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#fcdb00' }, // 0: Bg Black
   { id: 'off5_1', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#111111' }, // 1: Bg Yellow
@@ -113,7 +113,7 @@ const ROULETTE_PRIZES = [
   { id: 'off10_2', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#111111' }, // 5: Bg Yellow
   { id: 'off15', text: '15% OFF', prob: 0.07, type: 'percent', value: 15, textC: '#fcdb00' }, // 6: Bg Black
   { id: 'off20', text: '20% OFF', prob: 0.015, type: 'percent', value: 20, textC: '#111111' }, // 7: Bg Yellow
-  { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#fcdb00' }, // 8: Bg Black (Premio imposible 0%)
+  { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#fcdb00' }, // 8: Bg Black 
   { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, textC: '#111111' }, // 9: Bg Yellow
 ];
 
@@ -498,31 +498,38 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MODAL RULETA DE ANIVERSARIO (10 PORCIONES CASINO PREMIUM - TEXTO RADIAL) --- */}
+      {/* --- MODAL RULETA DE ANIVERSARIO (SÁNDWICH 3D + COLORES 028) --- */}
       {showRouletteModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#111111]/90 backdrop-blur-sm" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
-          <div className="relative bg-[#f2f2f2] w-full max-w-md rounded-[2rem] shadow-2xl border border-white/20 p-8 flex flex-col items-center animate-in zoom-in-95 duration-500 overflow-hidden">
-            {!isSpinning && <button onClick={() => setShowRouletteModal(false)} className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-[#eab308] hover:text-[#111111] transition-colors z-20 text-gray-500"><i className="fas fa-times"></i></button>}
-            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wide text-[#111111] mb-2 text-center">Ruleta de Aniversario</h2>
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-8 text-center font-poppins">Tirás 1 sola vez por cuenta. ¡Suerte!</p>
+          <div className="relative bg-[#f2f2f2] w-full max-w-md rounded-[2rem] shadow-2xl border border-white/20 p-8 pt-20 flex flex-col items-center animate-in zoom-in-95 duration-500">
+            {!isSpinning && <button onClick={() => setShowRouletteModal(false)} className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-[#fcdb00] hover:text-[#111111] transition-colors z-30 text-gray-500"><i className="fas fa-times"></i></button>}
             
-            <div className="relative w-64 h-64 md:w-72 md:h-72 mb-8">
-              <div className="absolute top-[-10px] left-1/2 -translate-x-1/2 w-8 h-8 bg-[#111111] rotate-45 z-10 border-b-4 border-r-4 border-[#eab308] shadow-sm rounded-sm"></div>
+            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wide text-[#111111] mb-2 text-center relative z-30">Ruleta de Aniversario</h2>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-10 text-center font-poppins relative z-30">Tirás 1 sola vez por cuenta. ¡Suerte!</p>
+            
+            <div className="relative w-64 h-64 md:w-72 md:h-72 mb-8 mt-4">
+              
+              {/* CAPA 1: MASCOTA ATRÁS (Cuerpo entero) */}
+              <img 
+                src="URL_DE_TU_MASCOTA_SIN_FONDO.png" 
+                className="absolute top-[-70px] left-1/2 -translate-x-1/2 w-[280px] h-auto z-0 opacity-100" 
+                alt="Fondo Mascota" 
+              />
+
+              {/* CAPA 2: LA RULETA (En el medio) */}
               <div 
-                className="w-full h-full rounded-full border-8 border-[#111111] shadow-[0_10px_30px_rgba(0,0,0,0.2)] relative overflow-hidden"
+                className="w-full h-full rounded-full border-8 border-[#111111] shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative overflow-hidden z-10"
                 style={{ 
-                  /* 10 porciones exactas de 36 grados. Blanco, Azul Noche y Dorado (30%) */
-                  background: 'conic-gradient(#ffffff 0deg 36deg, #0f172a 36deg 72deg, #ffffff 72deg 108deg, #0f172a 108deg 144deg, #ffffff 144deg 180deg, #0f172a 180deg 216deg, #ffffff 216deg 252deg, #0f172a 252deg 288deg, #eab308 288deg 324deg, #0f172a 324deg 360deg)',
+                  background: 'conic-gradient(#111111 0deg 36deg, #fcdb00 36deg 72deg, #111111 72deg 108deg, #fcdb00 108deg 144deg, #111111 144deg 180deg, #fcdb00 180deg 216deg, #111111 216deg 252deg, #fcdb00 252deg 288deg, #111111 288deg 324deg, #fcdb00 324deg 360deg)',
                   transform: `rotate(${rouletteRotation}deg)`, 
                   transition: isSpinning ? 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none' 
                 }}
               >
                 {ROULETTE_PRIZES.map((prize, idx) => {
-                  const angle = (360 / 10) * idx + 18; // Centro exacto de cada porción (36 grados / 2 = 18)
+                  const angle = (360 / 10) * idx + 18;
                   return (
                     <div key={idx} className="absolute inset-0 w-full h-full" style={{ transform: `rotate(${angle}deg)` }}>
-                      {/* ALINEACIÓN RADIAL PERFECTA: Lee desde el centro hacia los bordes */}
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[50%] flex items-center justify-center pl-4 pb-2" style={{ color: prize.textC }}>
                         <span className="block font-bebas text-[11px] md:text-[14px] leading-tight uppercase tracking-wider drop-shadow-sm whitespace-nowrap" style={{ transform: 'rotate(-90deg)' }}>{prize.text}</span>
                       </div>
@@ -530,9 +537,21 @@ export default function Home() {
                   );
                 })}
               </div>
+
+              {/* CAPA 3: MASCOTA ADELANTE (Cabeza y brazo recortado) */}
+              <img 
+                src="URL_DE_TU_MASCOTA_SIN_FONDO.png" 
+                className="absolute top-[-70px] left-1/2 -translate-x-1/2 w-[280px] h-auto z-20 drop-shadow-2xl" 
+                style={{ 
+                  pointerEvents: 'none',
+                  clipPath: 'polygon(0% 0%, 100% 0%, 100% 45%, 0% 45%)' // Solo muestra la parte de arriba (Cabeza y Mano)
+                }} 
+                alt="Frente Mascota" 
+              />
+
             </div>
             
-            <button onClick={handleSpinRoulette} disabled={isSpinning} className={`w-full py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider transition-all shadow-[0_10px_30px_rgba(0,0,0,0.15)] active:scale-95 flex items-center justify-center gap-2 ${isSpinning ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-none' : 'bg-[#111111] text-white hover:bg-[#eab308] hover:text-[#111111] hover:shadow-[0_10px_30px_rgba(234,179,8,0.4)]'}`}>
+            <button onClick={handleSpinRoulette} disabled={isSpinning} className={`w-full py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider transition-all shadow-[0_10px_30px_rgba(0,0,0,0.15)] active:scale-95 flex items-center justify-center gap-2 relative z-30 ${isSpinning ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-none' : 'bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)]'}`}>
                 {isSpinning ? <><i className="fas fa-circle-notch fa-spin text-xl"></i> Girando...</> : '¡GIRAR AHORA!'}
             </button>
           </div>
@@ -550,7 +569,7 @@ export default function Home() {
                 <i className="fab fa-google"></i> Iniciar Sesión
             </button>
           ) : (
-            <button onClick={() => (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? showToast("Ya utilizaste tu tiro 🎁") : setShowRouletteModal(true)} className={`hidden md:flex text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full items-center gap-2 transition-all border ${(dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? 'bg-white/5 text-gray-500 border-transparent' : 'bg-[#eab308] text-[#111111] border-[#eab308] hover:bg-white animate-pulse'}`}>
+            <button onClick={() => (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? showToast("Ya utilizaste tu tiro 🎁") : setShowRouletteModal(true)} className={`hidden md:flex text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full items-center gap-2 transition-all border ${(dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? 'bg-white/5 text-gray-500 border-transparent' : 'bg-[#fcdb00] text-[#111111] border-[#fcdb00] hover:bg-white animate-pulse'}`}>
                 <i className="fas fa-gift text-sm"></i> Girar Ruleta
             </button>
           )}
@@ -576,11 +595,11 @@ export default function Home() {
       {isMenuOpen && (<div className="fixed inset-0 z-[90] flex"><div className="absolute inset-0 bg-[#111111]/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div><div className="w-[85%] max-w-[380px] bg-[#f2f2f2] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden"><div className="p-8 bg-[#111111] flex justify-between items-center text-white border-b border-white/10"><span className="font-bebas text-3xl tracking-wide uppercase">028<span className="text-[#fcdb00]">MENU</span></span><button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times text-lg"></i></button></div><div className="flex-1 overflow-y-auto pb-8"><div className="flex flex-col p-4 space-y-2">
         <div className="md:hidden mb-4">
             {!user || user.isAnonymous ? (
-                <button onClick={handleGoogleLogin} className="w-full bg-[#111111] text-white p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#eab308] hover:text-[#111111] transition-all flex justify-center items-center gap-3"><i className="fab fa-google text-lg"></i> Iniciar sesión con Google</button>
+                <button onClick={handleGoogleLogin} className="w-full bg-[#111111] text-white p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#fcdb00] hover:text-[#111111] transition-all flex justify-center items-center gap-3"><i className="fab fa-google text-lg"></i> Iniciar sesión con Google</button>
             ) : (
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-3">
                     <p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest text-center">Hola, {dbUser?.name?.split(' ')[0] || 'Cliente'}</p>
-                    <button onClick={() => { setIsMenuOpen(false); (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? showToast("Ya utilizaste tu tiro 🎁") : setShowRouletteModal(true); }} className={`w-full py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-2 transition-all ${(dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? 'bg-gray-100 text-gray-400' : 'bg-[#eab308] text-[#111111] shadow-md animate-pulse'}`}>
+                    <button onClick={() => { setIsMenuOpen(false); (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? showToast("Ya utilizaste tu tiro 🎁") : setShowRouletteModal(true); }} className={`w-full py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-2 transition-all ${(dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? 'bg-gray-100 text-gray-400' : 'bg-[#fcdb00] text-[#111111] shadow-md animate-pulse'}`}>
                         <i className="fas fa-gift text-lg"></i> Girar Ruleta
                     </button>
                 </div>
