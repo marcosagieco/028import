@@ -502,31 +502,31 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MODAL RULETA DE ANIVERSARIO --- */}
+      {/* --- MODAL RULETA DE ANIVERSARIO (VERSIÓN CORREGIDA) --- */}
       {showRouletteModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#111111]/90 backdrop-blur-sm" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
           <div className="relative bg-[#f2f2f2] w-full max-w-md rounded-[2rem] shadow-2xl border border-white/20 p-8 flex flex-col items-center animate-in zoom-in-95 duration-500 overflow-hidden">
             {!isSpinning && <button onClick={() => setShowRouletteModal(false)} className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-[#fcdb00] hover:text-[#111111] transition-colors z-20 text-gray-500"><i className="fas fa-times"></i></button>}
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wide text-[#111111] mb-2 text-center">Ruleta de Aniversario</h2>
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-8 text-center font-poppins">Tirás 1 sola vez en la vida. ¡Suerte!</p>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-8 text-center font-poppins">Tirás 1 sola vez por cuenta. ¡Suerte!</p>
             
             <div className="relative w-64 h-64 md:w-72 md:h-72 mb-8">
-              {/* Flecha indicadora */}
-              <div className="absolute top-[-10px] left-1/2 -translate-x-1/2 w-8 h-8 bg-[#111111] rotate-45 z-10 border-b-4 border-r-4 border-white shadow-sm"></div>
-              {/* Rueda */}
+              <div className="absolute top-[-10px] left-1/2 -translate-x-1/2 w-8 h-8 bg-[#111111] rotate-45 z-10 border-b-4 border-r-4 border-white shadow-sm rounded-sm"></div>
               <div 
-                className="w-full h-full rounded-full border-8 border-white shadow-[0_10px_30px_rgba(0,0,0,0.1)] overflow-hidden relative"
-                style={{ transform: `rotate(${rouletteRotation}deg)`, transition: isSpinning ? 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none' }}
+                className="w-full h-full rounded-full border-8 border-white shadow-[0_10px_30px_rgba(0,0,0,0.1)] relative overflow-hidden"
+                style={{ 
+                  background: 'conic-gradient(#fcdb00 0deg 60deg, #111111 60deg 120deg, #fcdb00 120deg 180deg, #111111 180deg 240deg, #fcdb00 240deg 300deg, #111111 300deg 360deg)',
+                  transform: `rotate(${rouletteRotation}deg)`, 
+                  transition: isSpinning ? 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none' 
+                }}
               >
                 {ROULETTE_PRIZES.map((prize, idx) => {
-                  const angle = 360 / ROULETTE_PRIZES.length;
-                  const rotate = angle * idx;
+                  const angle = (360 / 6) * idx + 30;
                   return (
-                    <div key={idx} className="absolute top-0 left-0 w-full h-full" style={{ transform: `rotate(${rotate}deg)` }}>
-                      <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] origin-bottom ${idx % 2 === 0 ? 'bg-[#fcdb00] text-[#111111]' : 'bg-[#111111] text-[#fcdb00]'}`} style={{ transform: `rotate(${angle / 2}deg) skewY(${90 - angle}deg)` }}></div>
-                      <div className="absolute top-6 left-1/2 -translate-x-1/2 origin-bottom text-center z-10 w-24" style={{ transform: `rotate(${angle / 2}deg)` }}>
-                        <span className={`block font-bebas text-[15px] leading-tight uppercase tracking-wider ${idx % 2 === 0 ? 'text-[#111111]' : 'text-[#fcdb00]'}`}>{prize.text}</span>
+                    <div key={idx} className="absolute inset-0 w-full h-full" style={{ transform: `rotate(${angle}deg)` }}>
+                      <div className={`absolute top-4 md:top-6 left-1/2 -translate-x-1/2 text-center w-20 md:w-24 ${idx % 2 === 0 ? 'text-[#111111]' : 'text-[#fcdb00]'}`}>
+                        <span className="block font-bebas text-[13px] md:text-[16px] leading-tight uppercase tracking-wider drop-shadow-sm">{prize.text}</span>
                       </div>
                     </div>
                   );
@@ -547,21 +547,19 @@ export default function Home() {
           <img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" />
         </div>
         <div className="flex items-center gap-2 md:gap-4">
-          {/* --- BOTONES DE REGISTRO Y RULETA EN HEADER --- */}
           {!user || user.isAnonymous ? (
             <button onClick={handleGoogleLogin} className="hidden md:flex bg-white/10 hover:bg-white hover:text-[#111111] text-white text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full items-center gap-2 transition-all border border-white/20">
                 <i className="fab fa-google"></i> Iniciar Sesión
             </button>
           ) : (
-            <button onClick={() => dbUser?.hasSpunRoulette ? showToast("Ya utilizaste tu tiro de ruleta 🎁") : setShowRouletteModal(true)} className={`hidden md:flex text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full items-center gap-2 transition-all border ${dbUser?.hasSpunRoulette ? 'bg-white/5 text-gray-500 border-transparent cursor-not-allowed' : 'bg-[#fcdb00] text-[#111111] border-[#fcdb00] hover:bg-white hover:border-white animate-pulse'}`}>
-                <i className="fas fa-gift text-sm"></i> {dbUser?.hasSpunRoulette ? 'Ruleta Usada' : 'Girar Ruleta'}
+            <button onClick={() => (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? showToast("Ya utilizaste tu tiro 🎁") : setShowRouletteModal(true)} className={`hidden md:flex text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full items-center gap-2 transition-all border ${dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com" ? 'bg-white/5 text-gray-500 border-transparent' : 'bg-[#fcdb00] text-[#111111] border-[#fcdb00] hover:bg-white animate-pulse'}`}>
+                <i className="fas fa-gift text-sm"></i> Girar Ruleta
             </button>
           )}
           <button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#fcdb00] transition-colors"><i className="fas fa-shopping-bag text-2xl"></i>{getTotalItems() > 0 && (<span className="absolute top-1.5 -right-1 bg-[#fcdb00] text-[#111111] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-[#111111]">{getTotalItems()}</span>)}</button>
         </div>
       </header>
 
-      {/* --- BARRITA DE BENEFICIOS --- */}
       {currentView === 'home' && (
         <div className="w-full bg-[#111111] py-2 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex">
           <div className="animate-marquee whitespace-nowrap flex items-center">
@@ -577,23 +575,19 @@ export default function Home() {
         </div>
       )}
 
-      {/* MENÚ LATERAL */}
       {isMenuOpen && (<div className="fixed inset-0 z-[90] flex"><div className="absolute inset-0 bg-[#111111]/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div><div className="w-[85%] max-w-[380px] bg-[#f2f2f2] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden"><div className="p-8 bg-[#111111] flex justify-between items-center text-white border-b border-white/10"><span className="font-bebas text-3xl tracking-wide uppercase">028<span className="text-[#fcdb00]">MENU</span></span><button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times text-lg"></i></button></div><div className="flex-1 overflow-y-auto pb-8"><div className="flex flex-col p-4 space-y-2">
-        
-        {/* --- REGISTRO Y RULETA EN EL MENÚ MÓVIL --- */}
         <div className="md:hidden mb-4">
             {!user || user.isAnonymous ? (
-                <button onClick={handleGoogleLogin} className="w-full bg-[#111111] text-white p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#fcdb00] hover:text-[#111111] transition-all flex justify-center items-center gap-3"><i className="fab fa-google text-lg"></i> Iniciar sesión y Ganar</button>
+                <button onClick={handleGoogleLogin} className="w-full bg-[#111111] text-white p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#fcdb00] hover:text-[#111111] transition-all flex justify-center items-center gap-3"><i className="fab fa-google text-lg"></i> Iniciar sesión con Google</button>
             ) : (
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-3">
                     <p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest text-center">Hola, {dbUser?.name?.split(' ')[0] || 'Cliente'}</p>
-                    <button onClick={() => { setIsMenuOpen(false); dbUser?.hasSpunRoulette ? showToast("Ya utilizaste tu tiro de ruleta 🎁") : setShowRouletteModal(true); }} className={`w-full py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-2 transition-all ${dbUser?.hasSpunRoulette ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#fcdb00] text-[#111111] shadow-md animate-pulse'}`}>
-                        <i className="fas fa-gift text-lg"></i> {dbUser?.hasSpunRoulette ? 'Ruleta Usada' : 'Girar Ruleta'}
+                    <button onClick={() => { setIsMenuOpen(false); (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? showToast("Ya utilizaste tu tiro 🎁") : setShowRouletteModal(true); }} className={`w-full py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-2 transition-all ${(dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? 'bg-gray-100 text-gray-400' : 'bg-[#fcdb00] text-[#111111] shadow-md animate-pulse'}`}>
+                        <i className="fas fa-gift text-lg"></i> Girar Ruleta
                     </button>
                 </div>
             )}
         </div>
-
         <button onClick={() => { setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); }} className="text-left p-5 bg-white rounded-2xl shadow-sm border border-[#f2f2f2] font-black uppercase text-sm hover:border-[#fcdb00] hover:shadow-md flex justify-between items-center transition-all">Catálogo Completo <i className="fas fa-arrow-right text-[#fcdb00]"></i></button><div className="pt-6 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Departamentos</p></div>{departments.map(dept => { const isExpanded = expandedDept === dept; const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category))); return (<div key={dept} className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] overflow-hidden transition-all"><button onClick={() => setExpandedDept(isExpanded ? null : dept)} className="w-full text-left p-5 font-black uppercase text-sm flex justify-between items-center transition-colors group">{dept} <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-gray-300 group-hover:text-[#fcdb00] transition-colors`}></i></button><div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="bg-gray-50 flex flex-col pb-4 pt-2 border-t border-gray-100"><button onClick={() => { setActiveFilter({dept, cat: 'all'}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-black text-xs text-[#111111] uppercase hover:text-[#fcdb00] transition-colors flex items-center gap-2"><i className="fas fa-layer-group text-gray-400"></i> Ver todo en {dept}</button>{deptCats.map(cat => (<button key={cat} onClick={() => { setActiveFilter({dept, cat}); navigateTo('catalog'); setTimeout(() => { const target = document.getElementById(slugify(cat)); if(target) target.scrollIntoView({behavior: 'smooth'}); }, 300); }} className="text-left px-6 py-3 font-bold text-xs text-gray-500 uppercase hover:text-[#111111] transition-colors pl-12 relative before:content-[''] before:w-1.5 before:h-1.5 before:bg-gray-300 before:rounded-full before:absolute before:left-7 before:top-1/2 before:-translate-y-1/2 hover:before:bg-[#fcdb00]">{cat}</button>))}</div></div></div>); })}<div className="pt-8 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Información Útil</p></div><div className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] p-2 space-y-1">
           <button onClick={() => { window.location.href = 'https://028import.com/nosotros'; }} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-users"></i></div> Quiénes Somos</button>
           <button onClick={() => { window.location.href = 'https://028import.com/envios'; }} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-truck"></i></div> Envíos y Logística</button>
@@ -606,10 +600,8 @@ export default function Home() {
           <header className="relative w-full h-[35vh] md:h-[55vh] flex items-center justify-center bg-[#111111] overflow-hidden border-b border-[#111111]">
             <img src={CONFIG.bannerImage} alt="Banner 028" className="absolute inset-0 w-full h-full object-cover object-center" />
           </header>
-          
           <main className="flex-grow px-4 md:px-8 pt-10 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full">
             <div className="md:hidden relative mb-12 reveal-on-scroll"><i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" placeholder="Buscar productos, marcas..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] pl-12 pr-6 py-4 rounded-2xl text-sm font-bold outline-none focus:border-[#fcdb00] focus:bg-white transition-all placeholder:text-gray-400 font-poppins" /></div>
-            
             <div className="mb-16 reveal-on-scroll">
               <h3 className="font-bebas text-2xl text-[#111111] mb-4 pl-2">Explorar la tienda</h3>
               <div className="flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">
@@ -618,15 +610,12 @@ export default function Home() {
                   const iconObj = DEPT_ICONS.find(i => i.id === iconId) || { id: 'fa-box', prefix: 'fas' };
                   return (
                   <div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-white/70 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-[#fcdb00] transition-all duration-500 group">
-                    <div className="w-14 h-14 md:w-16 md:h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center text-[#111111] text-2xl md:text-3xl group-hover:bg-[#fcdb00] transition-colors">
-                      <i className={`${iconObj.prefix} ${iconObj.id}`}></i>
-                    </div>
+                    <div className="w-14 h-14 md:w-16 md:h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center text-[#111111] text-2xl md:text-3xl group-hover:bg-[#fcdb00] transition-colors"><i className={`${iconObj.prefix} ${iconObj.id}`}></i></div>
                     <span className="font-bold text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-[#111111] group-hover:text-black transition-colors font-poppins">{dept}</span>
                   </div>
                 )})}
               </div>
             </div>
-
              {homeSections.length === 0 ? (<div className="text-center py-20"><div className="w-12 h-12 border-4 border-[#f2f2f2] border-t-[#fcdb00] rounded-full animate-spin mx-auto mb-4"></div><p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest font-poppins">Preparando vidriera...</p></div>) : (
                  homeSections.map((sec, sectionIndex) => {
                      const secProducts = sec.productIds?.map(pid => products.find(p => p.id === pid)).filter(Boolean) || [];
@@ -644,11 +633,7 @@ export default function Home() {
             <div className="flex gap-2.5 overflow-x-auto no-scrollbar py-2 mask-image-gradient pr-8">
               <button onClick={() => {setActiveFilter({...activeFilter, cat: 'all'}); window.scrollTo({top: 0, behavior: 'smooth'});}} className={`whitespace-nowrap px-5 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${activeFilter.cat === 'all' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50'}`}>Todos</button>
               {uniqueCategories.map(cat => (
-                <button key={cat} onClick={() => {
-                  setActiveFilter({...activeFilter, cat: cat}); 
-                  const target = document.getElementById(slugify(cat));
-                  if(target) target.scrollIntoView({behavior: 'smooth'});
-                }} className={`whitespace-nowrap px-5 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0 ${activeFilter.cat === cat ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50'}`}>{cat}</button>
+                <button key={cat} onClick={() => { setActiveFilter({...activeFilter, cat: cat}); const target = document.getElementById(slugify(cat)); if(target) target.scrollIntoView({behavior: 'smooth'}); }} className={`whitespace-nowrap px-5 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0 ${activeFilter.cat === cat ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50'}`}>{cat}</button>
               ))}
             </div>
           )}</div></div>
@@ -670,40 +655,24 @@ export default function Home() {
       {selectedProduct && (<div className="fixed inset-0 z-[80] flex items-end md:items-center justify-center p-4 sm:p-6"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-xl transition-opacity" onClick={() => setSelectedProduct(null)}></div><div className="relative bg-[#f2f2f2] w-full max-w-4xl rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-500 flex flex-col md:flex-row max-h-[90vh] border border-white/20"><button onClick={() => setSelectedProduct(null)} className="absolute top-6 right-6 z-10 w-10 h-10 bg-white/80 backdrop-blur-2xl border border-white text-[#111111] rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-lg"><i className="fas fa-times text-lg"></i></button><div className="w-full md:w-1/2 bg-white p-8 flex items-center justify-center relative min-h-[350px] border-r border-[#f2f2f2]">{selectedProduct.tag && <span className="absolute top-8 left-8 bg-[#111111] text-[#fcdb00] font-bebas text-sm px-4 py-1.5 uppercase tracking-wider rounded-sm shadow-lg z-10">{selectedProduct.tag}</span>}<img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full max-h-[450px] object-contain drop-shadow-2xl animate-in scale-95 duration-700 ease-out mix-blend-multiply" /></div><div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center overflow-y-auto bg-[#f2f2f2]"><p className="text-[#fcdb00] font-bebas uppercase tracking-wider text-xl mb-1 drop-shadow-sm">{selectedProduct.category}</p><h2 className="text-5xl md:text-6xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-6">{selectedProduct.name}</h2><p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed whitespace-pre-line font-poppins">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p><div className="mt-auto border-t border-gray-300 pt-8"><p className="text-[#111111] font-bebas text-5xl md:text-6xl tracking-wide mb-8 drop-shadow-sm">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}</p>{selectedProduct.inStock === false ? ( <button disabled className="w-full bg-gray-300 text-gray-500 py-4 text-lg font-bebas uppercase tracking-wider rounded-xl cursor-not-allowed border border-gray-400">Producto Agotado</button> ) : ( <button onClick={(e) => addToCart(selectedProduct, e)} className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] py-4 text-xl font-bebas uppercase tracking-wider rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95"><i className="fas fa-shopping-cart text-lg mb-0.5"></i> Agregar a la bolsa</button> )}</div></div></div></div>)}
 
       {isCartOpen && (<div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} /><div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] h-[90vh] md:max-h-[85vh] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-500 flex flex-col pb-safe"><div className="p-6 border-b border-gray-300 flex justify-between items-center bg-white sticky top-0 z-10"><div><h2 className="text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest font-poppins">{getTotalItems()} artículos seleccionados</p></div><button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-[#f2f2f2] rounded-full text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex items-center justify-center shadow-sm border border-gray-200"><i className="fas fa-times text-lg"></i></button></div><div className="overflow-y-auto p-4 md:p-6 flex-grow no-scrollbar"><div className="space-y-3 mb-10">{cart.length === 0 && (<div className="text-center py-20 bg-white/50 rounded-2xl border border-dashed border-gray-300"><div className="w-16 h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><i className="fas fa-shopping-bag text-2xl text-gray-400"></i></div><p className="text-gray-400 font-bold text-xs uppercase tracking-widest font-poppins">Tu bolsa está vacía</p></div>)}{cart.map(item => (<div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-[#f2f2f2]"><div className="flex items-center gap-4"><div className="w-16 h-16 bg-[#f2f2f2] rounded-xl overflow-hidden flex items-center justify-center p-1"><img src={item.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex flex-col"><p className="font-bebas text-lg uppercase tracking-wide max-w-[130px] md:max-w-[180px] line-clamp-1 text-[#111111]">{item.name}</p><p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1 bg-gray-100 w-fit px-2 py-0.5 rounded-sm font-poppins">{item.qty} un.</p></div></div><div className="flex items-center gap-4 pr-2"><p className="font-bebas text-[#fcdb00] text-2xl tracking-wide">${formatPrice(item.qty * getUnitPromoPrice(item))}</p><div className="flex flex-col items-center gap-1.5 bg-[#f2f2f2] rounded-md p-1.5 border border-gray-200"><button onClick={() => changeQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-plus text-[10px]"></i></button><button onClick={() => changeQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-minus text-[10px]"></i></button></div></div></div>))}</div>{cart.length > 0 && (<div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-        
-        {/* --- SECCIÓN CUPONES Y DESCUENTOS EN CARRITO --- */}
         <div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
             <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-ticket-alt text-[#fcdb00] text-xl"></i> Descuentos</p>
-            
             {dbUser?.roulettePrize && !appliedCoupon && (
                 <div className="mb-4 bg-[#111111] text-[#fcdb00] p-3 rounded-xl flex items-center justify-between border border-[#fcdb00]/30 shadow-md">
-                    <div className="flex items-center gap-3">
-                        <i className="fas fa-gift text-lg"></i>
-                        <div className="flex flex-col">
-                            <span className="font-bold text-[10px] uppercase tracking-widest text-white">Premio de Ruleta</span>
-                            <span className="font-bebas text-lg leading-none">{dbUser.roulettePrize.text}</span>
-                        </div>
-                    </div>
-                    <i className="fas fa-check-circle"></i>
+                    <div className="flex items-center gap-3"><i className="fas fa-gift text-lg"></i><div className="flex flex-col"><span className="font-bold text-[10px] uppercase tracking-widest text-white">Premio de Ruleta</span><span className="font-bebas text-lg leading-none">{dbUser.roulettePrize.text}</span></div></div><i className="fas fa-check-circle"></i>
                 </div>
             )}
-
             <div className="flex gap-2">
                 <input type="text" placeholder="CÓDIGO INFLUENCER" value={couponInput} onChange={(e) => setCouponInput(e.target.value.toUpperCase())} className="flex-1 p-3 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400 font-poppins" />
                 <button onClick={handleApplyCoupon} className="bg-[#111111] text-[#fcdb00] px-4 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-md">Aplicar</button>
             </div>
-            
             {appliedCoupon && (
                 <div className="mt-3 flex items-center justify-between bg-green-50 p-2 rounded-lg border border-green-200">
                     <span className="text-[10px] font-bold text-green-700 uppercase tracking-widest"><i className="fas fa-check-circle mr-1"></i> Cupón {appliedCoupon.code} aplicado (-{appliedCoupon.discount}%)</span>
                     <button onClick={() => setAppliedCoupon(null)} className="text-red-500 hover:text-red-700 text-xs"><i className="fas fa-times"></i></button>
                 </div>
             )}
-            {appliedCoupon && dbUser?.roulettePrize && (
-                <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-2 italic">*El cupón anula el premio de la ruleta.</p>
-            )}
         </div>
-
         <div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]"><p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-user-circle text-[#fcdb00] text-xl"></i> Tus Datos</p><div className="flex flex-col gap-3 font-poppins"><input type="text" placeholder="Nombre completo" value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" /><input type="tel" placeholder="Número de WhatsApp" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" /></div></div><div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]"><p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-map-marked-alt text-[#fcdb00] text-xl"></i> Entrega</p><div className="flex gap-2 mb-5 bg-[#f2f2f2] p-1.5 rounded-xl border border-gray-200 font-poppins"><button onClick={() => setDeliveryMethod('retiro')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryMethod === 'retiro' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Retiro Local</button><button onClick={() => setDeliveryMethod('envio')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryMethod === 'envio' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Envío Domicilio</button></div>
               {deliveryMethod === 'envio' && (
                 <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-300 font-poppins">
@@ -711,18 +680,12 @@ export default function Home() {
                     <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Elegí tu opción de envío:</label>
                     <div onClick={() => setShippingType('flash')} className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex gap-4 items-center ${shippingType === 'flash' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-200 bg-white hover:border-[#fcdb00]/50'}`}>
                       <div className="text-3xl">🚀</div>
-                      <div className="flex flex-col">
-                        <span className={`font-bebas text-xl tracking-wide leading-none mb-1.5 ${shippingType === 'flash' ? 'text-[#111111]' : 'text-gray-700'}`}>Envío Flash</span>
-                        <span className="text-[10px] font-bold text-gray-500 leading-relaxed">⏱️ Te llega en menos de 30 minutos.<br/>💳 Abonando solo por transferencia.</span>
-                      </div>
+                      <div className="flex flex-col"><span className={`font-bebas text-xl tracking-wide leading-none mb-1.5 ${shippingType === 'flash' ? 'text-[#111111]' : 'text-gray-700'}`}>Envío Flash</span><span className="text-[10px] font-bold text-gray-500 leading-relaxed">⏱️ Te llega en menos de 30 minutos.<br/>💳 Abonando solo por transferencia.</span></div>
                       {shippingType === 'flash' && <div className="ml-auto text-[#fcdb00]"><i className="fas fa-check-circle text-xl"></i></div>}
                     </div>
                     <div onClick={() => setShippingType('moto')} className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex gap-4 items-center ${shippingType === 'moto' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-200 bg-white hover:border-[#fcdb00]/50'}`}>
                       <div className="text-3xl">🛵</div>
-                      <div className="flex flex-col">
-                        <span className={`font-bebas text-xl tracking-wide leading-none mb-1.5 ${shippingType === 'moto' ? 'text-[#111111]' : 'text-gray-700'}`}>Vía Motomensajería</span>
-                        <span className="text-[10px] font-bold text-gray-500 leading-relaxed">⏲️ Llegamos en menos de 1:30hr.<br/>💵 Efectivo y transf. contra entrega.</span>
-                      </div>
+                      <div className="flex flex-col"><span className={`font-bebas text-xl tracking-wide leading-none mb-1.5 ${shippingType === 'moto' ? 'text-[#111111]' : 'text-gray-700'}`}>Vía Motomensajería</span><span className="text-[10px] font-bold text-gray-500 leading-relaxed">⏲️ Llegamos en menos de 1:30hr.<br/>💵 Efectivo y transf. contra entrega.</span></div>
                       {shippingType === 'moto' && <div className="ml-auto text-[#fcdb00]"><i className="fas fa-check-circle text-xl"></i></div>}
                     </div>
                   </div>
@@ -733,15 +696,12 @@ export default function Home() {
               )}
               </div></div>)}</div>{cart.length > 0 && (<div className="p-6 bg-white border-t border-gray-200 sticky bottom-0 z-20"><div className="flex justify-between items-end mb-4"><span className="font-bold text-gray-500 text-[10px] uppercase tracking-widest font-poppins">Total a Pagar</span><span className="font-bebas text-5xl text-[#111111] tracking-wide leading-none drop-shadow-sm"><span className="text-[#fcdb00] text-3xl mr-1.5">{CONFIG.currencySymbol}</span>{formatPrice(calculateTotal())}</span></div><button onClick={handleCheckout} disabled={isSending} className={`w-full ${isSending ? 'bg-gray-300 text-gray-500 border-none' : 'bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)] active:scale-95'} font-bebas py-4 rounded-xl uppercase tracking-wider text-xl flex justify-center items-center gap-3 transition-all duration-300`}>{isSending ? <><i className="fas fa-circle-notch fa-spin text-lg"></i> Procesando...</> : <><i className="fab fa-whatsapp text-2xl mb-0.5"></i> Confirmar Pedido</>}</button></div>)}</div></div>)}
       
-      {/* BOTÓN FLOTANTE WHATSAPP CON TOOLTIP ORGANICO */}
       <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[100] flex flex-col items-end gap-3 group">
         <div className={`bg-white text-[#111111] p-3 md:p-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] border border-gray-200 max-w-[180px] md:max-w-[200px] text-center transform transition-all duration-700 ease-out origin-bottom-right relative ${showTooltip ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-90 group-hover:translate-y-0 group-hover:opacity-100 group-hover:scale-100'}`}>
           <p className="font-poppins font-bold text-[10px] md:text-xs">¿No sabés cuál elegir? Te ayudamos</p>
           <div className="absolute bottom-[-6px] right-6 w-3 h-3 md:w-4 md:h-4 bg-white transform rotate-45 border-r border-b border-gray-200"></div>
         </div>
-        <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noopener noreferrer" className="w-14 h-14 md:w-16 md:h-16 bg-[#25D366] rounded-full flex items-center justify-center text-white text-3xl shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform duration-300">
-          <i className="fab fa-whatsapp"></i>
-        </a>
+        <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noopener noreferrer" className="w-14 h-14 md:w-16 md:h-16 bg-[#25D366] rounded-full flex items-center justify-center text-white text-3xl shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform duration-300"><i className="fab fa-whatsapp"></i></a>
       </div>
 
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
