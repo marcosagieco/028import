@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { 
@@ -125,6 +125,9 @@ export default function AdminPage() {
   const [newProduct, setNewProduct] = useState({ name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '', cardSize: 'normal' });
   const [isAdding, setIsAdding] = useState(false);
 
+  // --- NUEVO ESTADO PARA EL UPSELL (RECOMENDADOS) ---
+  const [upsellSettings, setUpsellSettings] = useState({ productId: '', price: '', active: false });
+
   const uniqueCategories = useMemo(() => [...new Set(products.filter(p => !p.isDeleted).map(p => p.category))], [products]);
   const PREDEFINED_DEPARTMENTS = ["VAPES", "THC", "TECNOLOGÍA", "APPLE"];
   const availableDepartments = useMemo(() => Array.from(new Set([...PREDEFINED_DEPARTMENTS, ...products.filter(p => !p.isDeleted).map(p => p.department).filter(Boolean)])), [products]);
@@ -185,11 +188,29 @@ export default function AdminPage() {
       onSnapshot(collection(firebaseRefs.db, 'coupons'), (snap) => setCoupons(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []));
       onSnapshot(collection(firebaseRefs.db, 'users'), (snap) => setUsersList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)) : []));
 
+      // LECTURA DE CONFIGURACIÓN DE OFERTA (UPSELL)
+      onSnapshot(doc(firebaseRefs.db, 'settings', 'upsell'), (snap) => {
+        if (snap.exists()) { setUpsellSettings(snap.data()); }
+      });
+
       onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
         if (snap.exists()) { setDeptIcons(snap.data().icons || {}); }
       });
     });
   }, [firebaseRefs]);
+
+  const saveUpsellSettings = async (e) => {
+    e.preventDefault();
+    try {
+      await setDoc(doc(firebaseRefs.db, 'settings', 'upsell'), {
+        productId: Number(upsellSettings.productId),
+        price: Number(upsellSettings.price),
+        active: upsellSettings.active,
+        updatedAt: serverTimestamp()
+      });
+      alert("¡Oferta de compra actualizada!");
+    } catch (err) { alert("Error al guardar oferta: " + err.message); }
+  };
 
   const updatePrice = async (product, newPrice) => { const price = parseInt(newPrice); if(isNaN(price) || price < 0) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, price: price }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
   const updateName = async (product, newName) => { const name = newName.trim().toUpperCase(); if(!name) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, name: name }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
@@ -362,7 +383,6 @@ export default function AdminPage() {
       <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest font-poppins">Cargando...</p>
     </div>
   );
-
   return (
     <div className={`min-h-screen font-poppins pb-10 transition-colors duration-300 ${theme.bg} ${theme.text}`}>
       <style dangerouslySetInnerHTML={{__html: `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;700;900&display=swap'); .font-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; } .font-poppins { font-family: 'Poppins', sans-serif; }`}} />
@@ -375,9 +395,9 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('crear')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'crear' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Crear +</button>
           <button onClick={() => setActiveTab('clientes')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'clientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Clientes</button>
           <button onClick={() => setActiveTab('promos')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'promos' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Promos %</button>
-          {/* NUEVAS PESTAÑAS */}
           <button onClick={() => setActiveTab('cupones')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'cupones' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Cupones</button>
           <button onClick={() => setActiveTab('usuarios')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'usuarios' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Usuarios</button>
+          <button onClick={() => setActiveTab('ofertas')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'ofertas' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Ofertas 🔥</button>
         </div>
       </div>
       <main className="max-w-4xl mx-auto p-4 md:p-8">
@@ -420,7 +440,7 @@ export default function AdminPage() {
 
         {activeTab === 'promos' && (<div className="animate-in fade-in duration-500 max-w-lg mx-auto"><div className="flex justify-between items-end mb-8"><div><h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Promociones</h2><p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Descuentos automáticos</p></div></div><form onSubmit={handleAddPromo} className={`${theme.card} p-8 rounded-[2rem] shadow-sm border mb-8 flex flex-col gap-5`}><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Categoría a bonificar</label><input list="promo-category-suggestions" placeholder="Ej: Ignite v400..." value={newPromo.category} onChange={e => setNewPromo({...newPromo, category: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} required/><datalist id="promo-category-suggestions">{uniqueCategories.map(cat => <option key={cat} value={cat} />)}</datalist></div><div className="flex gap-4"><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Cantidad Mínima</label><input type="number" required min="2" placeholder="Ej: 2" value={newPromo.minQty} onChange={e => setNewPromo({...newPromo, minQty: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Precio Total</label><input type="number" required placeholder="Ej: 49000" value={newPromo.totalPrice} onChange={e => setNewPromo({...newPromo, totalPrice: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div></div><p className="text-[11px] text-gray-500">Ejemplo: Llevando 2 o más, quedan a $24.500 c/u automáticamente.</p><button type="submit" className="bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all">Guardar Promoción</button></form><div className="grid gap-4">{promos.length === 0 ? (<p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest mt-10">No hay promos activas</p>) : (promos.map(promo => (<div key={promo.id} className={`${theme.card} p-6 rounded-[1.5rem] flex justify-between items-center shadow-sm border`}><div><h4 className="font-bebas text-2xl uppercase tracking-wide mb-1">{promo.category}</h4><p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase">Llevando {promo.minQty}+ : ${(promo.totalPrice / promo.minQty).toLocaleString('es-AR')} c/u</p></div><button onClick={() => handleDeletePromo(promo.id)} className="w-12 h-12 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition-all shadow-sm"><i className="fas fa-trash text-lg"></i></button></div>)))}</div></div>)}
 
-        {/* --- NUEVA PESTAÑA: CUPONES --- */}
+        {/* --- PESTAÑA: CUPONES --- */}
         {activeTab === 'cupones' && (
           <div className="animate-in fade-in duration-500 max-w-lg mx-auto">
             <div className="flex justify-between items-end mb-8">
@@ -458,7 +478,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* --- NUEVA PESTAÑA: USUARIOS --- */}
+        {/* --- PESTAÑA: USUARIOS --- */}
         {activeTab === 'usuarios' && (
           <div className="animate-in fade-in duration-500">
             <div className="flex justify-between items-end mb-8">
@@ -499,12 +519,11 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ACÁ ESTÁ LA CORRECCIÓN CLAVE EN LA PESTAÑA "CREAR" */}
         {activeTab === 'crear' && (<div className="animate-in fade-in duration-500 max-w-lg mx-auto"><h2 className="text-4xl font-bebas uppercase tracking-wide mb-6 text-center">Nuevo Producto</h2><form onSubmit={handleAddProduct} className={`${theme.card} p-8 rounded-[2rem] shadow-sm border flex flex-col gap-5`}><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Nombre del Producto</label><input type="text" required placeholder="Ej: BLUE RAZZ ICE" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex gap-4"><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Precio</label><input type="number" required placeholder="26000" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Categoría / Marca</label><input list="category-suggestions" placeholder="Ej: Ignite v400 o Crear Nueva..." value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} /><datalist id="category-suggestions">{uniqueCategories.map(cat => <option key={cat} value={cat} />)}</datalist></div></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Departamento Principal</label><input list="dept-suggestions" placeholder="Elegí o escribí uno nuevo..." value={newProduct.department} onChange={e => setNewProduct({...newProduct, department: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} /><datalist id="dept-suggestions">{availableDepartments.map(d => <option key={d} value={d} />)}</datalist></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Link de Imagen (URL)</label><input type="url" required placeholder="https://i.postimg.cc/..." value={newProduct.image} onChange={e => setNewProduct({...newProduct, image: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />{newProduct.image && (<div className="mt-4 relative h-32 rounded-xl overflow-hidden border border-dashed border-gray-300 bg-[#f2f2f2]"><img src={newProduct.image} alt="Vista previa" className="w-full h-full object-contain mix-blend-multiply" /></div>)}</div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Etiqueta y Tamaño</label><div className="flex gap-4"><input type="text" placeholder="Ej: Destacado" value={newProduct.tag} onChange={e => setNewProduct({...newProduct, tag: e.target.value})} className={`flex-1 p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /><select value={newProduct.cardSize} onChange={e => setNewProduct({...newProduct, cardSize: e.target.value})} className={`flex-1 p-4 rounded-xl outline-none font-bold text-xs uppercase cursor-pointer border-transparent focus:ring-2 focus:ring-[#fcdb00] ${theme.input}`}><option value="normal">📏 Tamaño Normal</option><option value="medium">🔲 Tamaño Mediano</option><option value="large">⬜ Tamaño Grande</option></select></div></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Descripción (Biografía)</label><textarea rows="2" placeholder="Escribe aquí..." value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all resize-none ${theme.input}`}></textarea></div><button type="submit" disabled={isAdding} className="bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all disabled:opacity-50">{isAdding ? 'Guardando...' : 'Guardar Producto'}</button></form></div>)}
 
         {activeTab === 'clientes' && (<div className="animate-in fade-in duration-500"><div className="flex justify-between items-end mb-8"><div><h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Tu Base</h2><p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Directorio CRM</p></div><span className="bg-[#fcdb00] text-[#111111] text-[11px] font-bold px-4 py-2 rounded-lg shadow-sm">{clientsList.length} Registros</span></div>{clientsList.length === 0 ? (<div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}><i className="fas fa-users text-gray-300 text-5xl mb-6"></i><p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">Aún no hay clientes registrados</p></div>) : (<div className="grid grid-cols-1 md:grid-cols-2 gap-4">{clientsList.map((client, index) => (<div key={index} className={`${theme.card} p-6 rounded-[1.5rem] shadow-sm border flex flex-col gap-4 hover:border-[#fcdb00]/50 transition-all`}><div className="flex items-center gap-4"><div className="w-14 h-14 rounded-full bg-[#111111] text-[#fcdb00] flex items-center justify-center text-2xl font-bebas shadow-md uppercase pt-1">{client.name.charAt(0)}</div><div><h4 className="font-bebas tracking-wide text-2xl uppercase leading-none mb-1">{client.name}</h4><p className="text-gray-500 font-bold text-xs"><i className="fas fa-phone text-[10px] mr-1.5 text-[#fcdb00]"></i> {client.phone}</p></div></div><div className="flex justify-between items-center mt-2 border-t pt-4 dark:border-[#333333]"><span className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">{client.orderCount} Pedido{client.orderCount > 1 ? 's' : ''}</span><a href={`https://wa.me/${client.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="bg-[#25D366] text-white text-[11px] font-bold px-5 py-2.5 rounded-lg uppercase tracking-widest flex items-center gap-2 hover:bg-[#1ebe5d] transition-all shadow-md"><i className="fab fa-whatsapp text-sm"></i> Escribir</a></div></div>))}</div>)}</div>)}
 
-        {/* --- PESTAÑA HISTORIAL (Limpia y al grano) --- */}
+        {/* --- PESTAÑA HISTORIAL --- */}
         {activeTab === 'historial' && (<div className="animate-in fade-in duration-500">
           <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-[#333333] pb-6">
             <div>
@@ -516,6 +535,44 @@ export default function AdminPage() {
           
           {orders.length === 0 ? (<div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}><i className="fas fa-receipt text-gray-300 text-5xl mb-6"></i><p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">No hay pedidos en el historial</p></div>) : (<div className="grid gap-6">{orders.map((order) => (<div key={order.id} className={`${theme.card} rounded-[2rem] shadow-sm border p-6 md:p-8 hover:shadow-lg transition-all duration-300 ${theme.cardHover}`}><div className="flex justify-between items-start mb-6"><div className="flex items-center gap-4"><div className="bg-[#fcdb00] text-[#111111] w-14 h-14 rounded-2xl flex items-center justify-center font-bebas text-3xl shadow-sm pt-1">{order.items?.reduce((a, b) => a + b.qty, 0)}</div><div><span className="text-[10px] font-bold text-[#b8952a] uppercase tracking-widest block mb-0.5">ID: {order.id.slice(-6).toUpperCase()}</span><p className="text-gray-500 text-[11px] font-bold">{order.createdAt ? order.createdAt.toDate().toLocaleString('es-AR') : 'Procesando...'}</p></div></div><div className="flex gap-2"><button onClick={() => deleteOrder(order.id)} className={`${darkMode ? 'bg-[#333] text-white hover:bg-red-600' : 'bg-gray-100 text-gray-600 hover:bg-red-500 hover:text-white'} w-12 h-12 rounded-xl transition-all flex items-center justify-center shadow-sm`}><i className="fas fa-trash text-lg"></i></button></div></div>{order.clientName && (<div className={`mb-5 pb-5 border-b ${darkMode ? 'border-[#333333]' : 'border-gray-200'} flex items-center gap-4`}><div className="w-10 h-10 bg-[#f2f2f2] rounded-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-lg"></i></div><div><p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest leading-none mb-1">Cliente</p><p className="font-bebas text-xl tracking-wide uppercase text-[#111111] dark:text-white">{order.clientName} <span className="font-poppins font-normal text-sm text-gray-400 ml-2">({order.clientPhone})</span></p></div></div>)}<div className={`space-y-3 mb-6 p-5 rounded-2xl border ${darkMode ? 'bg-[#222] border-[#333333]' : 'bg-[#f2f2f2] border-transparent'}`}>{order.items?.map((item, idx) => (<div key={idx} className="flex justify-between items-center"><span className={`font-bold text-xs uppercase tracking-wide ${darkMode ? 'text-gray-300' : 'text-[#111111]'}`}><span className={`${darkMode ? 'text-[#fcdb00]' : 'text-[#b8952a]'} font-black mr-2 bg-white dark:bg-[#111] px-2 py-0.5 rounded`}>{item.qty}x</span> {item.name}</span><span className="text-gray-500 font-bold text-sm">${item.price?.toLocaleString('es-AR')}</span></div>))}</div>{order.delivery === 'envio' && order.address && (<div className="mb-6 p-5 bg-[#111111] text-white rounded-2xl border-l-8 border-[#fcdb00] shadow-md"><p className="text-[#fcdb00] text-[9px] font-bold uppercase mb-2 tracking-widest"><i className="fas fa-truck mr-1.5"></i> Envío a Domicilio {order.shippingOption === 'flash' ? '🚀 (FLASH)' : order.shippingOption === 'moto' ? '🛵 (MOTO)' : ''}</p><p className="uppercase font-bold text-sm mb-1">{order.address}</p><p className="text-gray-400 text-[10px] uppercase font-bold tracking-widest">{order.zone}</p></div>)}</div>))}</div>)}
         </div>)}
+
+        {/* --- NUEVA PESTAÑA: OFERTAS (UPSELL) --- */}
+        {activeTab === 'ofertas' && (
+          <div className="animate-in fade-in duration-500 max-w-lg mx-auto">
+            <div className="flex justify-between items-end mb-8">
+              <div>
+                <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Oferta Final (Upsell)</h2>
+                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Ofrecé algo más antes del checkout</p>
+              </div>
+            </div>
+            <div className={`p-4 rounded-xl border mb-6 flex gap-3 items-start ${darkMode ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'}`}>
+              <i className="fas fa-info-circle text-blue-500 mt-1"></i>
+              <p className={`text-[11px] font-bold uppercase tracking-wider leading-relaxed ${darkMode ? 'text-blue-200' : 'text-blue-800'}`}>Este producto se ofrecerá con un precio especial justo antes de que el cliente confirme el pedido por WhatsApp.</p>
+            </div>
+            <form onSubmit={saveUpsellSettings} className={`${theme.card} p-8 rounded-[2rem] shadow-sm border flex flex-col gap-6`}>
+              <div className={`flex items-center justify-between p-4 rounded-xl border border-dashed ${darkMode ? 'bg-white/5 border-gray-600' : 'bg-gray-50 border-gray-300'}`}>
+                <span className={`font-black text-[11px] uppercase tracking-widest ${theme.text}`}>¿Activar Oferta?</span>
+                <input type="checkbox" checked={upsellSettings.active} onChange={e => setUpsellSettings({...upsellSettings, active: e.target.checked})} className="w-6 h-6 accent-[#fcdb00] cursor-pointer"/>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Producto a Ofrecer</label>
+                <select value={upsellSettings.productId} onChange={e => setUpsellSettings({...upsellSettings, productId: e.target.value})} className={`w-full p-4 rounded-xl font-bold text-xs outline-none uppercase appearance-none focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}>
+                  <option value="">Seleccioná un producto...</option>
+                  {products.filter(p => !p.isDeleted).map(p => (<option key={p.id} value={p.id}>{p.category} - {p.name} (Lista: ${p.price})</option>))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Precio Especial de Oferta</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bebas text-xl text-gray-400">$</span>
+                  <input type="number" step="0.01" required min="0" value={upsellSettings.price} onChange={e => setUpsellSettings({...upsellSettings, price: e.target.value})} placeholder="Ej: 10999" className={`w-full p-4 pl-10 rounded-xl font-black text-lg outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}/>
+                </div>
+              </div>
+              <button type="submit" className="bg-[#fcdb00] text-[#111111] font-bebas text-2xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all">Guardar Configuración</button>
+            </form>
+          </div>
+        )}
+
       </main>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     </div>
