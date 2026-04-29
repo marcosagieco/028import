@@ -49,7 +49,7 @@ const initialProducts = [
   { id: 14, name: "STRAWBERRY WATERMELON", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/MG30ycJD/STRAWBERRY-WATERMELON.webp", description: "La clásica e infalible mezcla de fresa y sandía.", cardSize: "normal" },
   { id: 15, name: "SUMMER SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/LXqtvHmV/SUMMER-SPLASH.png", description: "Un cóctel frutal que captura la esencia del verano en cada calada.", cardSize: "normal" },
   { id: 16, name: "TIGERS BLOOD", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/3RyX9K3P/TIGERS-BLOOD.jpg", description: "Famosa mezcla de sandía y fresa con un exótico y suave toque de coco.", cardSize: "normal" },
-  { id: 17, name: "WATERMELON ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMODERN-ICE.webp", description: "Todo el jugo y la dulzura de la sandía con un impacto extra helado.", cardSize: "normal" },
+  { id: 17, name: "WATERMELON ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "Refrescante", image: "https://i.postimg.cc/63DdmD3s/WATERMELON-ICE.webp", description: "Todo el jugo y la dulzura de la sandía con un impacto extra helado.", cardSize: "normal" },
   { id: 25, name: "SOUR APPLE ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/X7QqQDGS/SOUR-APPLE-ICE.jpg", description: "Manzana verde crujiente y ácida envuelta en una ráfaga de frío.", cardSize: "normal" },
   { id: 26, name: "MIAMI MINT", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/bJhqzQDS/MIAMI-MINT.jpg", description: "Menta sofisticada estilo Miami: fresca, dulce pero con presencia.", cardSize: "normal" },
   { id: 30, name: "BLUE RAZZ LEMON", price: 28000, department: "VAPES", category: "Ignite v400", tag: "", image: "https://i.postimg.cc/Jh48hT4x/ignite-v400-BLUE-RAZZ-LEMON.jpg", description: "Dispositivo ultracompacto y premium de Ignite.", cardSize: "normal" },
@@ -89,19 +89,6 @@ const PAGE_CONTENT = {
   arrepentimiento: { title: "Botón de Arrepentimiento", subtitle: "Devoluciones", body: (<div className="space-y-6 leading-relaxed text-sm md:text-base font-poppins"><p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de 10 días corridos.</p></div>) }
 };
 
-const ROULETTE_PRIZES = [
-  { id: 'sigue1', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#fcdb00' }, 
-  { id: 'off5_1', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#111111' }, 
-  { id: 'off10_1', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#fcdb00' }, 
-  { id: 'sigue2', text: 'SEGUÍ PARTICIPANDO', prob: 0.085, type: 'none', value: 0, textC: '#111111' }, 
-  { id: 'off5_2', text: '5% OFF', prob: 0.17, type: 'percent', value: 5, textC: '#fcdb00' }, 
-  { id: 'off10_2', text: '10% OFF', prob: 0.195, type: 'percent', value: 10, textC: '#111111' }, 
-  { id: 'off15', text: '15% OFF', prob: 0.07, type: 'percent', value: 15, textC: '#fcdb00' }, 
-  { id: 'off20', text: '20% OFF', prob: 0.015, type: 'percent', value: 20, textC: '#111111' }, 
-  { id: 'off30', text: '30% OFF', prob: 0.00, type: 'percent', value: 30, textC: '#fcdb00' }, 
-  { id: 'envio', text: 'ENVÍO GRATIS', prob: 0.015, type: 'shipping', value: 0, textC: '#111111' }, 
-];
-
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState(initialProducts);
@@ -133,18 +120,9 @@ export default function Home() {
   const [activeCouponsDb, setActiveCouponsDb] = useState([]); 
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
-  
-  const [showRouletteModal, setShowRouletteModal] = useState(true);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [rouletteRotation, setRouletteRotation] = useState(0);
 
-  const [showResultModal, setShowResultModal] = useState(false);
-  const [wonPrizeData, setWonPrizeData] = useState(null);
-
-  // NUEVOS ESTADOS DE UPSELL (OFERTA FINAL) ADENTRO DEL CARRITO
+  // ESTADOS DE UPSELL (OFERTA FINAL) ADENTRO DEL CARRITO
   const [upsellsList, setUpsellsList] = useState([]);
-  const [upsellSettings, setUpsellSettings] = useState(null);
-  const [showUpsellModal, setShowUpsellModal] = useState(false);
 
   const departments = useMemo(() => [...new Set(products.map(p => p.department).filter(Boolean))], [products]);
   const uniqueCategories = useMemo(() => {
@@ -266,68 +244,6 @@ export default function Home() {
       } catch (error) { console.error(error); showToast("Error al iniciar con Google"); }
   };
 
-  const fireConfetti = () => {
-    if (typeof window !== 'undefined' && window.confetti) {
-      window.confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 9999 });
-    }
-  };
-
-  const handleSpinRoulette = async () => {
-      if (isSpinning) return;
-      
-      // BLOQUEO ANTITRAMPAS: No girar si ya tiró
-      if (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") {
-        showToast("¡Ya utilizaste tu tiro de ruleta!");
-        return;
-      }
-      
-      setIsSpinning(true);
-      const rand = Math.random();
-      let sum = 0;
-      let wonPrize = ROULETTE_PRIZES[0];
-      
-      for (let p of ROULETTE_PRIZES) {
-          sum += p.prob;
-          if (rand <= sum) { wonPrize = p; break; }
-      }
-
-      // PARCHE ANTITRAMPAS LÓGICO: Guardamos que YA TIRÓ al instante. NO GUARDAMOS EL PREMIO TODAVÍA.
-      try {
-          if (user && dbUser && firebaseRefs.db) {
-             await setDoc(doc(firebaseRefs.db, 'users', user.uid), { hasSpunRoulette: true }, { merge: true });
-          }
-      } catch(err) { console.error("Error Antitrampas:", err); }
-
-      const extraSpins = 5 * 360; 
-      const prizeIndex = ROULETTE_PRIZES.findIndex(p => p.id === wonPrize.id);
-      const sliceAngle = 360 / ROULETTE_PRIZES.length;
-      const targetRotation = extraSpins + (360 - (prizeIndex * sliceAngle)) - (sliceAngle / 2);
-      
-      setRouletteRotation(targetRotation);
-
-      setTimeout(async () => {
-          // AL FINALIZAR, GUARDAMOS EL PREMIO REAL.
-          try {
-             if (firebaseRefs.db && wonPrize.type !== 'none') {
-                await setDoc(doc(firebaseRefs.db, 'users', user.uid), { roulettePrize: wonPrize }, { merge: true });
-             }
-          } catch(err) { console.error(err); }
-
-          setIsSpinning(false);
-          setWonPrizeData(wonPrize);
-          setShowRouletteModal(false); 
-          setShowResultModal(true);    
-          
-          if(wonPrize.type === 'none') {
-              showToast("¡Ufa! Sigue participando. 😢");
-          } else {
-              showToast(`¡GANASTE! 🎉 ${wonPrize.text}`);
-              setAppliedCoupon(null); 
-              fireConfetti(); 
-          }
-      }, 5000); 
-  };
-
   const handleApplyCoupon = () => {
       const code = couponInput.trim().toUpperCase();
       if(!code) return;
@@ -352,12 +268,6 @@ export default function Home() {
   const calculateTotal = (cartData = cart) => {
       let subtotal = cartData.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
       if (appliedCoupon) { return subtotal * (1 - (appliedCoupon.discount / 100)); } 
-      if (dbUser?.roulettePrize && dbUser.roulettePrize.type === 'percent') {
-          let maxPrice = 0;
-          cartData.forEach(item => { const price = item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item); if (price > maxPrice) maxPrice = price; });
-          const discountAmount = maxPrice * (dbUser.roulettePrize.value / 100);
-          return subtotal - discountAmount;
-      }
       return subtotal;
   };
 
@@ -379,7 +289,6 @@ export default function Home() {
   
   const changeQty = (id, delta) => { setCart(prev => prev.map(i => i.id === id ? { ...i, qty: i.qty + delta } : i).filter(i => i.qty > 0)); };
 
-  // --- LÓGICA PARA AÑADIR LA OFERTA DIRECTAMENTE AL CARRITO ---
   const handleAddUpsellToCart = (upsell) => {
       const prod = products.find(p => p.id == upsell.productId);
       if (!prod) return;
@@ -415,12 +324,6 @@ export default function Home() {
     
     if (appliedCoupon) {
         msg += `\n🎟️ *CUPÓN APLICADO:* ${appliedCoupon.code} (-${appliedCoupon.discount}% OFF)\n`;
-    } else if (dbUser?.roulettePrize) {
-        if (dbUser.roulettePrize.type === 'percent') {
-            msg += `\n🎰 *PREMIO RULETA:* ${dbUser.roulettePrize.text} aplicado al producto más caro.\n`;
-        } else if (dbUser.roulettePrize.type === 'shipping') {
-            msg += `\n🔥 *PREMIO RULETA:* ¡ENVÍO GRATIS GANADO! 🔥\n`;
-        }
     }
 
     msg += `\n*TOTAL FINAL: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n\n`;
@@ -431,7 +334,7 @@ export default function Home() {
         if (shippingType === 'flash') msg += `*TIPO DE ENVÍO:* 🚀 Flash (Menos de 30' - Solo Transferencia)`;
         else msg += `*TIPO DE ENVÍO:* 🛵 Motomensajería (Menos de 1:30hr - Efectivo o Transf)`;
     } else { msg += `*RETIRO LOCAL*`; }
-    gtag("event", "whatsapp_click");
+    
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
     try { 
         if (firebaseRefs.db) { 
@@ -442,7 +345,6 @@ export default function Home() {
                 aptDetails: aptDetails.trim(), 
                 shippingOption: deliveryMethod === 'envio' ? shippingType : null,
                 couponUsed: appliedCoupon ? appliedCoupon.code : null,
-                rouletteUsed: !appliedCoupon && dbUser?.roulettePrize ? dbUser.roulettePrize.text : null,
                 status: 'pending', createdAt: serverTimestamp() 
             }); 
         } 
@@ -541,86 +443,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
-      {/* --- MODAL NOTIFICACIÓN CENTRAL DE PREMIO --- */}
-      {showResultModal && wonPrizeData && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#111111]/95 backdrop-blur-xl" onClick={() => setShowResultModal(false)}></div>
-          <div className="relative bg-white p-10 rounded-[2.5rem] shadow-2xl border-4 border-[#fcdb00] text-center max-w-sm w-full animate-in zoom-in-95 duration-500">
-             <div className="text-6xl mb-4">{wonPrizeData.type === 'none' ? '😢' : '🎉'}</div>
-             <h3 className="font-bebas text-5xl uppercase mb-2 text-[#111111]">{wonPrizeData.type === 'none' ? 'UFA...' : '¡GANASTE!'}</h3>
-             <p className="text-xl font-bold text-gray-600 mb-8 uppercase tracking-widest leading-tight">{wonPrizeData.text}</p>
-             <button onClick={() => setShowResultModal(false)} className="w-full bg-[#111111] text-[#fcdb00] py-4 rounded-xl font-bebas text-2xl uppercase hover:bg-black transition-all">CONTINUAR COMPRANDO</button>
-          </div>
-        </div>
-      )}
-
-      {/* --- MODAL RULETA DE ANIVERSARIO ORIGINAL CON BOTÓN GOOGLE --- */}
-      {showRouletteModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#111111]/90 backdrop-blur-sm" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
-          
-          <div className="relative w-full max-w-[480px] rounded-[2rem] shadow-2xl border border-white/20 p-8 pt-16 flex flex-col items-center animate-in zoom-in-95 duration-500 overflow-hidden bg-white">
-            
-            <img 
-              src="https://i.ibb.co/BKTk8xrW/image.png" 
-              className="absolute -top-[6%] -right-[17.5%] w-[101%] h-auto max-w-none z-0 object-contain pointer-events-none" 
-              alt="Fondo Mascota" 
-            />
-
-            {!isSpinning && <button onClick={() => setShowRouletteModal(false)} className="absolute top-4 right-4 w-10 h-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm hover:bg-[#fcdb00] hover:text-[#111111] transition-colors z-30 text-gray-600"><i className="fas fa-times"></i></button>}
-            
-            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wide text-[#111111] mb-1 text-center relative z-30 drop-shadow-md">Ruleta de Aniversario</h2>
-            <p className="text-[11px] font-bold text-[#111111] uppercase tracking-widest mb-10 text-center font-poppins relative z-30 drop-shadow-md">Tirás 1 sola vez por cuenta. ¡Suerte!</p>
-            
-            <div className="relative w-64 h-64 md:w-72 md:h-72 mb-8 mt-2 z-20 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full border-[6px] border-dotted border-[#fcdb00] opacity-80 z-0 animate-[spin_20s_linear_infinite] pointer-events-none"></div>
-
-              <div 
-                className="w-full h-full rounded-full border-[10px] border-[#111111] relative overflow-hidden z-10"
-                style={{ 
-                  background: 'conic-gradient(#111111 0deg 36deg, #fcdb00 36deg 72deg, #111111 72deg 108deg, #fcdb00 108deg 144deg, #111111 144deg 180deg, #fcdb00 180deg 216deg, #111111 216deg 252deg, #fcdb00 252deg 288deg, #111111 288deg 324deg, #fcdb00 324deg 360deg)',
-                  transform: `rotate(${rouletteRotation}deg)`, 
-                  transition: isSpinning ? 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none',
-                  boxShadow: 'inset 0 0 50px rgba(0,0,0,0.7)' 
-                }}
-              >
-                {ROULETTE_PRIZES.map((prize, idx) => {
-                  const angle = (360 / 10) * idx;
-                  return (
-                    <div key={idx} className="absolute inset-0" style={{ transform: `rotate(${angle + 18}deg)` }}>
-                      <div className="absolute top-0 left-0 right-0 h-1/2 flex items-start justify-center pt-4 md:pt-5">
-                        <span 
-                          className={`font-bebas uppercase whitespace-nowrap drop-shadow-sm ${prize.text.length > 12 ? 'text-[9px] md:text-[11px] tracking-normal' : 'text-[12px] md:text-[14px] tracking-wider'}`} 
-                          style={{ color: prize.textC, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-                        >
-                          {prize.text}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <img 
-                src="https://i.ibb.co/G4f7mmwn/converted.png" 
-                className="absolute top-[-60px] left-1/3 -translate-x-1/4 w-[87px] h-auto z-30 drop-shadow-xl pointer-events-none" 
-                alt="Puntero Dedo" 
-              />
-            </div>
-            
-            {(!user || user.isAnonymous) ? (
-                <button onClick={() => { handleGoogleLogin(); }} className="w-full py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider transition-all shadow-[0_10px_30px_rgba(0,0,0,0.15)] active:scale-95 flex items-center justify-center gap-2 relative z-30 bg-[#4285F4] text-white hover:bg-[#3367D6]">
-                    <i className="fab fa-google"></i> LOGUEATE PARA GIRAR
-                </button>
-            ) : (
-                <button onClick={handleSpinRoulette} disabled={isSpinning || (dbUser?.hasSpunRoulette && user?.email !== "marcosagieco@gmail.com")} className={`w-full py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider transition-all shadow-[0_10px_30px_rgba(0,0,0,0.15)] active:scale-95 flex items-center justify-center gap-2 relative z-30 ${(isSpinning || (dbUser?.hasSpunRoulette && user?.email !== "marcosagieco@gmail.com")) ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-none' : 'bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)]'}`}>
-                    {isSpinning ? <><i className="fas fa-circle-notch fa-spin text-xl"></i> Girando...</> : (dbUser?.hasSpunRoulette && user?.email !== "marcosagieco@gmail.com") ? '¡YA UTILIZASTE TU TIRO!' : '¡GIRAR AHORA!'}
-                </button>
-            )}
-          </div>
-        </div>
-      )}
       
       <header className="bg-[#111111] text-white h-[72px] sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 shadow-lg border-b border-white/5 transition-all duration-300">
         <button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#fcdb00] transition-colors p-2"><i className="fas fa-bars"></i></button>
@@ -633,26 +455,13 @@ export default function Home() {
                 <i className="fab fa-google"></i> Iniciar Sesión
             </button>
           ) : (
-            <button onClick={() => (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? showToast("Ya utilizaste tu tiro 🎁") : setShowRouletteModal(true)} className={`hidden md:flex text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full items-center gap-2 transition-all border ${(dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? 'bg-white/5 text-gray-500 border-transparent' : 'bg-[#fcdb00] text-[#111111] border-[#fcdb00] hover:bg-white animate-pulse'}`}>
-                <i className="fas fa-gift text-sm"></i> Girar Ruleta
-            </button>
+            <span className="hidden md:flex text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full items-center gap-2 border border-white/10 bg-white/5 text-gray-300">
+                <i className="fas fa-user text-sm text-[#fcdb00]"></i> Hola, {dbUser?.name?.split(' ')[0] || 'Cliente'}
+            </span>
           )}
           <button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#fcdb00] transition-colors"><i className="fas fa-shopping-bag text-2xl"></i>{getTotalItems() > 0 && (<span className="absolute top-1.5 -right-1 bg-[#fcdb00] text-[#111111] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-[#111111]">{getTotalItems()}</span>)}</button>
         </div>
       </header>
-
-      {/* --- MARQUEE --- */}
-      {currentView === 'home' && (
-        <div className="w-full bg-[#111111] py-2 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex">
-          <div className="animate-marquee whitespace-nowrap flex items-center">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="flex items-center gap-8 px-4 text-[#fcdb00] font-poppins font-bold text-[10px] md:text-xs tracking-widest uppercase">
-                <span>🔥 SEMANA DE ANIVERSARIO - DESCUENTOS EXCLUSIVOS - 028 IMPORT 🔥</span><span className="text-white/30">•</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {isMenuOpen && (<div className="fixed inset-0 z-[90] flex"><div className="absolute inset-0 bg-[#111111]/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div><div className="w-[85%] max-w-[380px] bg-[#f2f2f2] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden"><div className="p-8 bg-[#111111] flex justify-between items-center text-white border-b border-white/10"><span className="font-bebas text-3xl tracking-wide uppercase">028<span className="text-[#fcdb00]">MENU</span></span><button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times text-lg"></i></button></div><div className="flex-1 overflow-y-auto pb-8"><div className="flex flex-col p-4 space-y-2">
         <div className="md:hidden mb-4">
@@ -661,9 +470,6 @@ export default function Home() {
             ) : (
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-3">
                     <p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest text-center">Hola, {dbUser?.name?.split(' ')[0] || 'Cliente'}</p>
-                    <button onClick={() => { setIsMenuOpen(false); (dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? showToast("Ya utilizaste tu tiro 🎁") : setShowRouletteModal(true); }} className={`w-full py-3 rounded-xl font-black uppercase text-xs flex justify-center items-center gap-2 transition-all ${(dbUser?.hasSpunRoulette && user.email !== "marcosagieco@gmail.com") ? 'bg-gray-100 text-gray-400' : 'bg-[#fcdb00] text-[#111111] shadow-md animate-pulse'}`}>
-                        <i className="fas fa-gift text-lg"></i> Girar Ruleta
-                    </button>
                 </div>
             )}
         </div>
@@ -733,9 +539,9 @@ export default function Home() {
 
       {selectedProduct && (<div className="fixed inset-0 z-[80] flex items-end md:items-center justify-center p-4 sm:p-6"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-xl transition-opacity" onClick={() => setSelectedProduct(null)}></div><div className="relative bg-[#f2f2f2] w-full max-w-4xl rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-500 flex flex-col md:flex-row max-h-[90vh] border border-white/20"><button onClick={() => setSelectedProduct(null)} className="absolute top-6 right-6 z-10 w-10 h-10 bg-white/80 backdrop-blur-2xl border border-white text-[#111111] rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-lg"><i className="fas fa-times text-lg"></i></button><div className="w-full md:w-1/2 bg-white p-8 flex items-center justify-center relative min-h-[350px] border-r border-[#f2f2f2]">{selectedProduct.tag && <span className="absolute top-8 left-8 bg-[#111111] text-[#fcdb00] font-bebas text-sm px-4 py-1.5 uppercase tracking-wider rounded-sm shadow-lg z-10">{selectedProduct.tag}</span>}<img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full max-h-[450px] object-contain drop-shadow-2xl animate-in scale-95 duration-700 ease-out mix-blend-multiply" /></div><div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center overflow-y-auto bg-[#f2f2f2]"><p className="text-[#fcdb00] font-bebas uppercase tracking-wider text-xl mb-1 drop-shadow-sm">{selectedProduct.category}</p><h2 className="text-5xl md:text-6xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-6">{selectedProduct.name}</h2><p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed whitespace-pre-line font-poppins">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p><div className="mt-auto border-t border-gray-300 pt-8"><p className="text-[#111111] font-bebas text-5xl md:text-6xl tracking-wide mb-8 drop-shadow-sm">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}</p>{selectedProduct.inStock === false ? ( <button disabled className="w-full bg-gray-300 text-gray-500 py-4 text-lg font-bebas uppercase tracking-wider rounded-xl cursor-not-allowed border border-gray-400">Producto Agotado</button> ) : ( <button onClick={(e) => addToCart(selectedProduct, e)} className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] py-4 text-xl font-bebas uppercase tracking-wider rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95"><i className="fas fa-shopping-cart text-lg mb-0.5"></i> Agregar a la bolsa</button> )}</div></div></div></div>)}
 
-      {isCartOpen && (<div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} /><div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] h-[90vh] md:max-h-[85vh] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-500 flex flex-col pb-safe"><div className="p-6 border-b border-gray-300 flex justify-between items-center bg-white sticky top-0 z-10"><div><h2 className="text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest font-poppins">{getTotalItems()} artículos seleccionados</p></div><button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-[#f2f2f2] rounded-full text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex items-center justify-center shadow-sm border border-gray-200"><i className="fas fa-times text-lg"></i></button></div><div className="overflow-y-auto p-4 md:p-6 flex-grow no-scrollbar"><div className="space-y-3 mb-10">{cart.length === 0 && (<div className="text-center py-20 bg-white/50 rounded-2xl border border-dashed border-gray-300"><div className="w-16 h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><i className="fas fa-shopping-bag text-2xl text-gray-400"></i></div><p className="text-gray-400 font-bold text-xs uppercase tracking-widest font-poppins">Tu bolsa está vacía</p></div>)}{cart.map(item => (<div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-[#f2f2f2]"><div className="flex items-center gap-4"><div className="w-16 h-16 bg-[#f2f2f2] rounded-xl overflow-hidden flex items-center justify-center p-1"><img src={item.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex flex-col"><p className="font-bebas text-lg uppercase tracking-wide max-w-[130px] md:max-w-[180px] line-clamp-1 text-[#111111]">{item.name}</p><p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1 bg-gray-100 w-fit px-2 py-0.5 rounded-sm font-poppins">{item.qty} un.</p></div></div><div className="flex items-center gap-4 pr-2"><p className="font-bebas text-[#fcdb00] text-2xl tracking-wide">${formatPrice(item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item)))}</p><div className="flex flex-col items-center gap-1.5 bg-[#f2f2f2] rounded-md p-1.5 border border-gray-200"><button onClick={() => changeQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-plus text-[10px]"></i></button><button onClick={() => changeQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-white rounded-md shadow-sm hover:bg-[#fcdb00] transition-colors"><i className="fas fa-minus text-[10px]"></i></button></div></div></div>))}
+      {isCartOpen && (<div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4"><div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} /><div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] h-[90vh] md:max-h-[85vh] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-500 flex flex-col pb-safe"><div className="p-6 border-b border-gray-300 flex justify-between items-center bg-white sticky top-0 z-10"><div><h2 className="text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest font-poppins">{getTotalItems()} artículos seleccionados</p></div><button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-[#f2f2f2] rounded-full text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex items-center justify-center shadow-sm border border-gray-200"><i className="fas fa-times text-lg"></i></button></div><div className="overflow-y-auto p-4 md:p-6 flex-grow no-scrollbar"><div className="space-y-3 mb-10">{cart.length === 0 && (<div className="text-center py-20 bg-white/50 rounded-2xl border border-dashed border-gray-300"><div className="w-16 h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><i className="fas fa-shopping-bag text-2xl text-gray-400"></i></div><p className="text-gray-400 font-bold text-xs uppercase tracking-widest font-poppins">Tu bolsa está vacía</p></div>)}{cart.map(item => (<div key={item.id} className="flex justify-between items-center bg-[#f9f9f9] p-3 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-gray-200"><div className="flex items-center gap-4"><div className="w-16 h-16 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center p-1"><img src={item.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex flex-col"><p className="font-bebas text-lg uppercase tracking-wide max-w-[130px] md:max-w-[180px] line-clamp-1 text-[#111111]">{item.name}</p><p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1 bg-white border border-gray-100 w-fit px-2 py-0.5 rounded-md font-poppins">{item.qty} un.</p></div></div><div className="flex items-center gap-4 pr-2"><p className="font-bebas text-[#fcdb00] text-2xl tracking-wide drop-shadow-sm">${formatPrice(item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item)))}</p><div className="flex flex-col items-center gap-1.5 bg-white rounded-md p-1.5 border border-gray-200 shadow-sm"><button onClick={() => changeQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-gray-50 rounded-md hover:bg-[#fcdb00] transition-colors"><i className="fas fa-plus text-[10px]"></i></button><button onClick={() => changeQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-gray-50 rounded-md hover:bg-[#fcdb00] transition-colors"><i className="fas fa-minus text-[10px]"></i></button></div></div></div>))}
         
-        {/* --- NUEVO DISEÑO DE UPSELLS: LIMPIO Y 028-STYLE --- */}
+        {/* --- NUEVO DISEÑO DE UPSELLS (TARJETA GRIS CLARA, FONDO FOTO BLANCO) --- */}
         {upsellsList.length > 0 && upsellsList.some(u => u.active && !cart.find(c => c.id == u.productId)) && (
             <div className="mt-8 mb-2 animate-in slide-in-from-bottom duration-500">
                 <p className="font-bebas text-xl mb-3 uppercase tracking-wider text-[#111111] flex items-center gap-2">
@@ -746,8 +552,8 @@ export default function Home() {
                         const prod = products.find(p => p.id == upsell.productId);
                         if (!prod || prod.inStock === false || prod.isDeleted) return null;
                         return (
-                            <div key={upsell.id} className="snap-start flex-shrink-0 w-[260px] bg-white p-3 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-[#f2f2f2] flex items-center gap-3 relative transition-all hover:border-[#fcdb00]">
-                                <div className="relative w-16 h-16 bg-[#f2f2f2] rounded-xl overflow-hidden flex items-center justify-center p-1 flex-shrink-0">
+                            <div key={upsell.id} className="snap-start flex-shrink-0 w-[260px] bg-[#f9f9f9] p-3 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 relative transition-all hover:border-[#fcdb00]">
+                                <div className="relative w-16 h-16 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center p-1 flex-shrink-0">
                                     <span className="absolute top-0 left-0 bg-[#111111] text-[#fcdb00] text-[8px] font-black uppercase px-1.5 py-0.5 rounded-br-lg shadow-sm z-10 font-poppins">Oferta</span>
                                     <img src={prod.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/>
                                 </div>
@@ -768,11 +574,6 @@ export default function Home() {
         </div>{cart.length > 0 && (<div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
         <div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
             <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-ticket-alt text-[#fcdb00] text-xl"></i> Descuentos</p>
-            {dbUser?.roulettePrize && !appliedCoupon && (
-                <div className="mb-4 bg-[#111111] text-[#fcdb00] p-3 rounded-xl flex items-center justify-between border border-[#fcdb00]/30 shadow-md">
-                    <div className="flex items-center gap-3"><i className="fas fa-gift text-lg"></i><div className="flex flex-col"><span className="font-bold text-[10px] uppercase tracking-widest text-white">Premio de Ruleta</span><span className="font-bebas text-lg leading-none">{dbUser.roulettePrize.text}</span>{dbUser.roulettePrize.type === 'percent' && (<span className="text-[9px] text-gray-400 font-poppins mt-0.5 font-normal tracking-wide capitalize">*Aplica a 1 un. del prod. más caro</span>)}</div></div><i className="fas fa-check-circle"></i>
-                </div>
-            )}
             <div className="flex gap-2">
                 <input type="text" placeholder="CÓDIGO INFLUENCER" value={couponInput} onChange={(e) => setCouponInput(e.target.value.toUpperCase())} className="flex-1 p-3 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400 font-poppins" />
                 <button onClick={handleApplyCoupon} className="bg-[#111111] text-[#fcdb00] px-4 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-md">Aplicar</button>
@@ -815,8 +616,6 @@ export default function Home() {
         <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noopener noreferrer" className="w-14 h-14 md:w-16 md:h-16 bg-[#25D366] rounded-full flex items-center justify-center text-white text-3xl shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform duration-300"><i className="fab fa-whatsapp"></i></a>
       </div>
 
-      {/* SCRIPT DEL CONFETI */}
-      <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     </div>
   );
