@@ -466,7 +466,7 @@ export default function Home() {
       {currentView === 'home' && (
         <div className="w-full bg-[#111111] py-2 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex">
           <div className="animate-marquee whitespace-nowrap flex items-center">
-            {[...Array(8)].map((_, i) => (
+            {[...Array(4)].map((_, i) => (
               <div key={i} className="flex items-center gap-8 px-4 text-[#fcdb00] font-poppins font-bold text-[10px] md:text-xs tracking-widest uppercase">
                 {/* ACÁ ABAJO ESTÁ EL TEXTO DEL MARQUEE PARA QUE LO EDITES */}
                 <span> ENVIOS 24HS CABA/AMBA </span><span className="text-white/30">•</span>
