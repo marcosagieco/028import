@@ -851,7 +851,7 @@ export default function Home() {
                       height="100%" 
                       frameBorder="0" 
                       style={{ border: 0, position: 'relative', zIndex: 10 }}
-                      src="https://maps.google.com/maps?q=Mi%C3%B1ones%202061,%20Belgrano,%20CABA&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+                      src="https://maps.google.com/maps?q=Mi%C3%B1ones%20y%20Juramento,%20Belgrano,%20CABA&t=&z=16&ie=UTF8&iwloc=&output=embed" 
                       allowFullScreen
                     ></iframe>
                   </div>
