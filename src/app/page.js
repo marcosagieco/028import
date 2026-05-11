@@ -1269,10 +1269,10 @@ export default function Home() {
                       <span className="text-[#111111] font-bold uppercase tracking-widest text-[10px]">{activeFilter.dept !== 'all' ? activeFilter.dept : 'CATÁLOGO COMPLETO'}</span>
                   </div>
                   {uniqueCategories.length > 0 && (
-                    <div className="flex flex-wrap md:flex-nowrap md:overflow-x-auto gap-2.5 py-2 md:mask-image-gradient md:pr-8 justify-center md:justify-start">
-                      <button onClick={() => {setActiveFilter({...activeFilter, cat: 'all'}); window.scrollTo({top: 0, behavior: 'smooth'});}} className={`whitespace-nowrap px-5 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${activeFilter.cat === 'all' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50'}`}>Todos</button>
+                    <div className="flex overflow-x-auto gap-2.5 py-3 no-scrollbar pr-6 pl-1 -ml-1 mask-image-gradient">
+                      <button onClick={() => {setActiveFilter({...activeFilter, cat: 'all'}); window.scrollTo({top: 0, behavior: 'smooth'});}} className={`flex-shrink-0 whitespace-nowrap px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeFilter.cat === 'all' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50 hover:border-[#fcdb00]'}`}>Todos</button>
                       {uniqueCategories.map(cat => (
-                        <button key={cat} onClick={() => { setActiveFilter({...activeFilter, cat: cat}); const target = document.getElementById(slugify(cat)); if(target) target.scrollIntoView({behavior: 'smooth'}); }} className={`whitespace-nowrap px-5 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0 ${activeFilter.cat === cat ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50'}`}>{cat}</button>
+                        <button key={cat} onClick={() => { setActiveFilter({...activeFilter, cat: cat}); const target = document.getElementById(slugify(cat)); if(target) target.scrollIntoView({behavior: 'smooth'}); }} className={`flex-shrink-0 whitespace-nowrap px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeFilter.cat === cat ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50 hover:border-[#fcdb00]'}`}>{cat}</button>
                       ))}
                     </div>
                   )}
