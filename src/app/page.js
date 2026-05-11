@@ -247,6 +247,78 @@ const PAGE_CONTENT = {
   }
 };
 
+// COMPONENTE CONTADOR EXTRAÍDO PARA NO TRABAR LA PÁGINA
+const CountdownBanner = () => {
+  const calculateTimeToNextWednesday = () => {
+    if (typeof window === 'undefined') return null;
+    const now = new Date();
+    const target = new Date(now);
+    let daysUntilWednesday = 3 - now.getDay();
+    if (daysUntilWednesday < 0 || (daysUntilWednesday === 0 && now.getHours() >= 23)) {
+      daysUntilWednesday += 7;
+    }
+    target.setDate(now.getDate() + daysUntilWednesday);
+    target.setHours(23, 59, 59, 999);
+    const difference = target - now;
+    if (difference > 0) {
+      return {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / 1000 / 60) % 60),
+        seconds: Math.floor((difference / 1000) % 60)
+      };
+    }
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(null);
+
+  useEffect(() => {
+    setTimeLeft(calculateTimeToNextWednesday());
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeToNextWednesday());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="bg-[#0E0E0E] text-white py-3 md:py-4 overflow-hidden m-0 relative z-30 flex flex-col items-center justify-center border-b border-white/[0.06] shadow-md">
+      <div className="w-full overflow-hidden mb-1.5 opacity-90">
+        <div className="animate-marquee whitespace-nowrap flex items-center">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="flex items-center gap-4 px-2 text-[#fcdb00] font-poppins font-bold text-[9px] md:text-[10px] uppercase tracking-[0.15em]">
+              <span> HOT 028 </span>
+              <span className="text-white/30 text-[8px]">•</span>
+              <span>DESCUENTOS EXCLUSIVOS POR TIEMPO LIMITADO</span>
+              <span className="text-white/30 text-[8px]">•</span>
+              <span>ENVÍOS EN 30 MIN</span>
+              <span className="text-white/30 text-[8px]">•</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex gap-6 md:gap-10 font-bebas tracking-wide items-baseline mt-0.5">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-3xl md:text-4xl font-black drop-shadow-lg leading-none text-[#fcdb00]">{timeLeft?.days || 0}</span>
+          <span className="text-[10px] text-white opacity-50 uppercase tracking-[0.2em] font-poppins font-medium">DÍAS</span>
+        </div>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-3xl md:text-4xl font-black drop-shadow-lg leading-none text-[#fcdb00]">{String(timeLeft?.hours || 0).padStart(2, '0')}</span>
+          <span className="text-[10px] text-white opacity-50 uppercase tracking-[0.2em] font-poppins font-medium">HS</span>
+        </div>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-3xl md:text-4xl font-black drop-shadow-lg leading-none text-[#fcdb00]">{String(timeLeft?.minutes || 0).padStart(2, '0')}</span>
+          <span className="text-[10px] text-white opacity-50 uppercase tracking-[0.2em] font-poppins font-medium">MIN</span>
+        </div>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-3xl md:text-4xl font-black drop-shadow-lg leading-none text-[#fcdb00]">{String(timeLeft?.seconds || 0).padStart(2, '0')}</span>
+          <span className="text-[10px] text-white opacity-50 uppercase tracking-[0.2em] font-poppins font-medium">SEG</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState(initialProducts);
@@ -284,7 +356,6 @@ export default function Home() {
 
   const [upsellsList, setUpsellsList] = useState([]);
 
-  // --- ESTADOS RULETA HOT SALE ---
   const [showRouletteModal, setShowRouletteModal] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
   const [rouletteRotation, setRouletteRotation] = useState(-30);
@@ -293,39 +364,6 @@ export default function Home() {
   
   const [localRoulettePrize, setLocalRoulettePrize] = useState(null);
   const [hasSpunLocal, setHasSpunLocal] = useState(false);
-
-  // --- LOGICA Y ESTADOS DEL CONTADOR HOT SALE ---
-  const calculateTimeToNextWednesday = () => {
-    if (typeof window === 'undefined') return null;
-    const now = new Date();
-    const target = new Date(now);
-    let daysUntilWednesday = 3 - now.getDay();
-    if (daysUntilWednesday < 0 || (daysUntilWednesday === 0 && now.getHours() >= 23)) {
-      daysUntilWednesday += 7;
-    }
-    target.setDate(now.getDate() + daysUntilWednesday);
-    target.setHours(23, 59, 59, 999);
-    const difference = target - now;
-    if (difference > 0) {
-      return {
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / 1000 / 60) % 60),
-        seconds: Math.floor((difference / 1000) % 60)
-      };
-    }
-    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-  };
-
-  const [timeLeft, setTimeLeft] = useState(null);
-
-  useEffect(() => {
-    setTimeLeft(calculateTimeToNextWednesday());
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeToNextWednesday());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const next7Days = useMemo(() => {
     const days = [];
@@ -373,7 +411,7 @@ export default function Home() {
         const hasSpun = localStorage.getItem('hotSaleSpun');
         
         if (savedPrize) setLocalRoulettePrize(JSON.parse(savedPrize));
-        if (pendingPrize) setWonPrizeData(JSON.parse(pendingPrize)); // Carga el pendiente si el usuario recargó la pág
+        if (pendingPrize) setWonPrizeData(JSON.parse(pendingPrize)); 
 
         if (hasSpun === 'true') {
             setHasSpunLocal(true);
@@ -498,7 +536,6 @@ export default function Home() {
           }
       } catch (error) { console.error(error); showToast("Error al iniciar con Google"); }
   };
-
   const fireConfetti = () => {
     if (typeof window !== 'undefined' && window.confetti) {
       const defaults = { origin: { y: 0.7 }, colors: ['#fcdb00', '#ffffff', '#111111', '#eab308'], zIndex: 9999, gravity: 0.5, scalar: 1.1, ticks: 200 };
@@ -508,7 +545,6 @@ export default function Home() {
   };
 
   const handleSpinRoulette = async () => {
-      // LOGICA NUEVA: Bloqueo para que obligatoriamente tengan que registrarse ANTES de girar
       if (!user || user.isAnonymous) {
           showToast("⚠️ Iniciá sesión para poder girar");
           handleGoogleLogin();
@@ -574,6 +610,7 @@ export default function Home() {
       if (localRoulettePrize && localRoulettePrize.type === 'shipping' && deliveryMethod === 'envio' && shippingType === 'moto') { envio = 0; }
       return subtotal + envio;
   };
+
   const addToCart = async (product, e) => { 
     if(e) e.stopPropagation(); 
     if (product.inStock === false) return; 
@@ -931,7 +968,6 @@ export default function Home() {
         </div>
     );
   };
-
   return (
     <div className="bg-[#f2f2f2] text-[#111111] font-poppins flex flex-col relative pb-20 md:pb-0 min-h-screen selection:bg-[#fcdb00] selection:text-[#111111]">
       <style dangerouslySetInnerHTML={{__html: `
@@ -1023,50 +1059,9 @@ export default function Home() {
         </div>
       </header>
 
-      {/* --- BARRA CONTADOR CON MARQUESINA DE CONVERSIÓN TÁCTICA (#0E0E0E) --- */}
-      <div className="bg-[#0E0E0E] text-white py-3 md:py-4 overflow-hidden m-0 relative z-30 flex flex-col items-center justify-center border-b border-white/[0.06] shadow-md">
-        
-        {/* MARQUESINA DE CONVERSIÓN TÁCTICA */}
-        <div className="w-full overflow-hidden mb-1.5 opacity-90">
-          <div className="animate-marquee whitespace-nowrap flex items-center">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="flex items-center gap-4 px-2 text-[#fcdb00] font-poppins font-bold text-[9px] md:text-[10px] uppercase tracking-[0.15em]">
-                <span> HOT 028 </span>
-                <span className="text-white/30 text-[8px]">•</span>
-                <span>DESCUENTOS EXCLUSIVOS POR TIEMPO LIMITADO</span>
-                <span className="text-white/30 text-[8px]">•</span>
-                <span>ENVÍOS EN 30 MIN</span>
-                <span className="text-white/30 text-[8px]">•</span>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* --- BARRA CONTADOR OPTIMIZADA --- */}
+      <CountdownBanner />
 
-        {/* NÚMEROS CON RESPIRACIÓN (MIN / SEG) */}
-        <div className="flex gap-6 md:gap-10 font-bebas tracking-wide items-baseline mt-0.5">
-          
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl md:text-4xl font-black drop-shadow-lg leading-none text-[#fcdb00]">{timeLeft?.days || 0}</span>
-            <span className="text-[10px] text-white opacity-50 uppercase tracking-[0.2em] font-poppins font-medium">DÍAS</span>
-          </div>
-          
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl md:text-4xl font-black drop-shadow-lg leading-none text-[#fcdb00]">{String(timeLeft?.hours || 0).padStart(2, '0')}</span>
-            <span className="text-[10px] text-white opacity-50 uppercase tracking-[0.2em] font-poppins font-medium">HS</span>
-          </div>
-          
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl md:text-4xl font-black drop-shadow-lg leading-none text-[#fcdb00]">{String(timeLeft?.minutes || 0).padStart(2, '0')}</span>
-            <span className="text-[10px] text-white opacity-50 uppercase tracking-[0.2em] font-poppins font-medium">MIN</span>
-          </div>
-          
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl md:text-4xl font-black drop-shadow-lg leading-none text-[#fcdb00]">{String(timeLeft?.seconds || 0).padStart(2, '0')}</span>
-            <span className="text-[10px] text-white opacity-50 uppercase tracking-[0.2em] font-poppins font-medium">SEG</span>
-          </div>
-
-        </div>
-      </div>
       {toastMessage && (
           <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[300] bg-[#111111]/90 backdrop-blur-xl text-white px-6 py-4 rounded-full shadow-[0_20px_40px_rgba(252,219,0,0.2)] border border-[#fcdb00]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">
               {toastMessage}
@@ -1084,7 +1079,8 @@ export default function Home() {
           </div>
         </div>
       )}
-      {/* --- MENÚ MÓVIL (3 RAYITAS) - RESTAURADO DE TU VERSIÓN ORIGINAL --- */}
+
+      {/* --- MENÚ MÓVIL (3 RAYITAS) --- */}
       {isMenuOpen && (<div className="fixed inset-0 z-[90] flex"><div className="absolute inset-0 bg-[#111111]/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div><div className="w-[85%] max-w-[380px] bg-[#f2f2f2] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden"><div className="p-8 bg-[#111111] flex justify-between items-center text-white border-b border-white/10"><span className="font-bebas text-3xl tracking-wide uppercase">028<span className="text-[#fcdb00]">MENU</span></span><button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times text-lg"></i></button></div><div className="flex-1 overflow-y-auto pb-8"><div className="flex flex-col p-4 space-y-2">
         
         <div className="md:hidden mb-2">
@@ -1110,7 +1106,6 @@ export default function Home() {
           <button onClick={() => { navigateTo('arrepentimiento'); }} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-gray-400"><i className="fas fa-undo"></i></div> Botón de Arrepentimiento</button>
         </div>
 
-        {/* REDES SOCIALES EN MENÚ MÓVIL */}
         <div className="pt-8 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins text-center">Nuestras Redes</p></div>
         <div className="flex gap-4 justify-center pb-4">
           <a href="https://www.tiktok.com/@028.import" target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center text-[#111111] hover:bg-[#fcdb00] hover:border-[#fcdb00] transition-all"><i className="fab fa-tiktok text-xl"></i></a>
@@ -1120,42 +1115,30 @@ export default function Home() {
 
         </div></div></div></div>)}
 
-      {/* --- MODAL NOTIFICACIÓN CENTRAL DE PREMIO (TEXTO GRIS ABAJO) --- */}
+      {/* --- MODAL NOTIFICACIÓN CENTRAL DE PREMIO --- */}
       {showResultModal && wonPrizeData && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#111111]/95 backdrop-blur-xl" onClick={() => localRoulettePrize && setShowResultModal(false)}></div>
           <div className="relative bg-[#111111] p-8 md:p-10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-[#cca300]/50 text-center max-w-sm w-full animate-in zoom-in-95 duration-500 flex flex-col items-center overflow-hidden">
-             
-             {/* BRILLO DE FONDO DEL MODAL */}
              <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#cca300]/20 via-transparent to-transparent pointer-events-none"></div>
-
              <div className="text-6xl mb-4 drop-shadow-[0_0_15px_rgba(252,219,0,0.5)] relative z-10">
                 {wonPrizeData.id === 'sorpresa' ? '🏆' : (wonPrizeData.id === 'labubu' ? '🎁' : '✨')}
              </div>
-             
              <h3 className="font-bebas text-4xl md:text-5xl uppercase mb-4 text-white relative z-10 tracking-wide">
                  ¡Felicidades!
              </h3>
-             
-             {/* ETIQUETA DEL PREMIO (ESTILO PLACA METÁLICA) */}
              <div className="bg-[#1a1a1a] text-[#fcdb00] px-6 py-4 rounded-xl border border-[#cca300]/40 shadow-[inset_0_2px_10px_rgba(0,0,0,0.8)] mb-6 w-full relative overflow-hidden z-10">
                <div className="absolute top-0 left-[-100%] w-[50%] h-full bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-[-20deg] animate-[shimmerFull_3s_infinite_linear]"></div>
                <span className="font-bebas text-3xl tracking-wider block drop-shadow-md">{wonPrizeData.text}</span>
              </div>
-
-             {/* TEXTO EXPLICATIVO */}
              <div className="relative z-10 font-poppins mb-6">
                  <p className="text-sm md:text-base font-medium text-gray-300 leading-relaxed px-2">
                     {wonPrizeData.description}
                  </p>
              </div>
-
-             {/* BOTÓN CTA METÁLICO */}
              <button onClick={() => claimPrize(wonPrizeData)} className="w-full bg-gradient-to-b from-[#ffea60] to-[#dfb411] text-[#111111] py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider shadow-[0_6px_0_#9a7b0a,0_10px_20px_rgba(0,0,0,0.5)] active:translate-y-[6px] active:shadow-[0_0px_0_#9a7b0a,0_0px_0_rgba(0,0,0,0)] transition-all relative z-10">
                {localRoulettePrize ? 'Cerrar' : 'Reclamar Premio'}
              </button>
-
-             {/* TEXTO GRIS MOVIDO ACA ABAJO COMO PEDISTE */}
              <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-5 font-bold relative z-10 font-poppins">
                 {wonPrizeData.id === 'off5' ? 'VÁLIDO POR 30 DÍAS' : 'PROMO VÁLIDA HASTA QUE TERMINE EL HOT 028'}
              </p>
@@ -1163,41 +1146,24 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MODAL RULETA HOT SALE (CON BLOQUEO DE INICIO DE SESIÓN) --- */}
+      {/* --- MODAL RULETA HOT SALE --- */}
       {showRouletteModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          
           <div className="absolute inset-0 bg-black/40 transition-opacity duration-500" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
-          
           <div className="relative w-full max-w-[480px] rounded-[2.5rem] bg-[#111111]/40 backdrop-blur-[40px] border-[0.5px] border-white/20 shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] p-8 pt-14 flex flex-col items-center animate-in zoom-in-95 duration-500 overflow-hidden">
-            
             <div className="absolute top-[10%] right-[10%] w-[300px] h-[300px] bg-white/5 blur-[100px] rounded-full pointer-events-none z-0"></div>
-
-            <img 
-              src="https://i.ibb.co/gZgzZJ35/Dise-o-sin-t-tulo-6.png" 
-              className="absolute -top-[1%] -right-[16%] w-[103%] h-auto max-w-none z-0 object-contain pointer-events-none opacity-100" 
-              alt="Fondo Mascota" 
-            />
-
+            <img src="https://i.ibb.co/gZgzZJ35/Dise-o-sin-t-tulo-6.png" className="absolute -top-[1%] -right-[16%] w-[103%] h-auto max-w-none z-0 object-contain pointer-events-none opacity-100" alt="Fondo Mascota" />
             {!isSpinning && (
                 <button onClick={() => setShowRouletteModal(false)} className="absolute top-5 right-5 w-11 h-11 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center hover:bg-white/15 transition-all z-30 text-gray-500 hover:text-white shadow-xl">
                     <i className="fas fa-times text-lg"></i>
                 </button>
             )}
-            
             <div className="relative z-30 w-full h-[80px] flex items-center justify-center mb-6 mt-2 pointer-events-none">
-              <img 
-                src="https://i.ibb.co/whtCF6j3/Dise-o-sin-t-tulo-11.png" 
-                alt="Hot Sale 028" 
-                className="absolute top-1/2 left-1/9 -translate-x-1/3 -translate-y-[50%] w-[202px] md:w-[450px] max-w-none drop-shadow-xl" 
-              />
+              <img src="https://i.ibb.co/whtCF6j3/Dise-o-sin-t-tulo-11.png" alt="Hot Sale 028" className="absolute top-1/2 left-1/9 -translate-x-1/3 -translate-y-[50%] w-[202px] md:w-[450px] max-w-none drop-shadow-xl" />
             </div>
-            
             <div className="relative w-75 h-75 md:w-84 md:h-84 mb-4 mt-2 z-20 flex items-center justify-center">
               <div className="absolute inset-0 rounded-full shadow-[0_0_40px_rgba(255,215,0,0.15)] pointer-events-none z-0"></div>
-              
-              <div 
-                className="w-full h-full rounded-full relative overflow-hidden border-[2px] border-[rgba(255,215,0,0.2)] shadow-[inset_0_0_30px_rgba(0,0,0,0.6)] z-10"
+              <div className="w-full h-full rounded-full relative overflow-hidden border-[2px] border-[rgba(255,215,0,0.2)] shadow-[inset_0_0_30px_rgba(0,0,0,0.6)] z-10"
                 style={{ 
                   background: 'conic-gradient(#111111 0deg 60deg, #1a1a1a 60deg 120deg, #111111 120deg 180deg, #1a1a1a 180deg 240deg, #111111 240deg 300deg, #050505 300deg 360deg)',
                   transform: `rotate(${rouletteRotation}deg)`, 
@@ -1205,20 +1171,15 @@ export default function Home() {
                 }}
               >
                 <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.05)_0%,transparent_70%)] pointer-events-none z-0"></div>
-                
                 {[0, 60, 120, 180, 240, 300].map((deg, i) => (
                     <div key={`line-${i}`} className="absolute top-0 left-1/2 w-[1.5px] h-1/2 bg-[rgba(255,220,70,0.45)] origin-bottom z-10" style={{ transform: `translateX(-50%) rotate(${deg}deg)` }}></div>
                 ))}
-                
                 {ROULETTE_PRIZES.map((prize, idx) => {
                   const angle = 60 * idx; 
                   return (
                     <div key={idx} className="absolute inset-0 z-20" style={{ transform: `rotate(${angle + 30}deg)` }}>
                       <div className="absolute top-0 left-0 right-0 h-1/2 flex items-start justify-center pt-5 md:pt-6">
-                        <span 
-                          className={`font-bebas font-bold uppercase whitespace-nowrap text-center text-[#fcdb00] drop-shadow-md ${prize.text.length > 15 ? 'text-[13px] md:text-[15px] tracking-normal' : 'text-[15px] md:text-[17px] tracking-wider'}`}
-                          style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-                        >
+                        <span className={`font-bebas font-bold uppercase whitespace-nowrap text-center text-[#fcdb00] drop-shadow-md ${prize.text.length > 15 ? 'text-[13px] md:text-[15px] tracking-normal' : 'text-[15px] md:text-[17px] tracking-wider'}`} style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                           {prize.text}
                         </span>
                       </div>
@@ -1226,43 +1187,21 @@ export default function Home() {
                   );
                 })}
               </div>
-
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 md:w-20 md:h-20 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.8)] z-30 pointer-events-none border-[1.5px] border-[#cca300] bg-[#050505] flex items-center justify-center overflow-hidden">
-                  
-              </div>
-              
-              <img 
-                src="https://i.ibb.co/G4f7mmwn/converted.png" 
-                className="absolute top-[-60px] left-1/3 -translate-x-1/6 w-[87px] h-auto z-50 drop-shadow-[20px_20px_20px_rgba(0,0,0,0.7)] pointer-events-none" 
-                alt="Puntero Dedo" 
-              />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 md:w-20 md:h-20 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.8)] z-30 pointer-events-none border-[1.5px] border-[#cca300] bg-[#050505] flex items-center justify-center overflow-hidden"></div>
+              <img src="https://i.ibb.co/G4f7mmwn/converted.png" className="absolute top-[-60px] left-1/3 -translate-x-1/6 w-[87px] h-auto z-50 drop-shadow-[20px_20px_20px_rgba(0,0,0,0.7)] pointer-events-none" alt="Puntero Dedo" />
             </div>
-            
             <div className="relative w-full z-30 group active:scale-[0.98] transition-transform">
                 {(!user || user.isAnonymous) ? (
-                    <button 
-                      onClick={handleGoogleLogin} 
-                      className="w-full py-4 md:py-5 rounded-2xl font-bebas text-2xl md:text-3xl uppercase tracking-wider flex items-center justify-center gap-3 relative overflow-hidden transition-all duration-300 bg-[#1a1a1a] text-white border border-[#333] shadow-[0_8px_0_#0a0a0a] active:translate-y-[8px] active:shadow-[0_0px_0_#0a0a0a]"
-                    >
+                    <button onClick={handleGoogleLogin} className="w-full py-4 md:py-5 rounded-2xl font-bebas text-2xl md:text-3xl uppercase tracking-wider flex items-center justify-center gap-3 relative overflow-hidden transition-all duration-300 bg-[#1a1a1a] text-white border border-[#333] shadow-[0_8px_0_#0a0a0a] active:translate-y-[8px] active:shadow-[0_0px_0_#0a0a0a]">
                         <i className="fab fa-google text-[#fcdb00]"></i> INICIAR SESIÓN PARA GIRAR
                     </button>
                 ) : (
-                    <button 
-                      onClick={handleSpinRoulette} 
-                      disabled={isSpinning} 
-                      className={`w-full py-4 md:py-5 rounded-2xl font-bebas text-3xl md:text-4xl uppercase tracking-wider flex items-center justify-center gap-3 relative overflow-hidden transition-all duration-300
-                      ${isSpinning 
-                        ? 'bg-gray-800 text-gray-500 cursor-not-allowed shadow-none' 
-                        : 'bg-gradient-to-b from-[#ffea60] to-[#dfb411] text-[#111111] shadow-[0_8px_0_#9a7b0a,0_20px_40px_rgba(0,0,0,0.5),inset_0_2px_3px_rgba(255,255,255,0.6)] hover:brightness-110 active:translate-y-[8px] active:shadow-[0_0px_0_#9a7b0a,0_0px_0_rgba(0,0,0,0)]'}`}
-                    >
-                        {!isSpinning && (
-                            <div className="absolute top-0 left-0 w-[60px] h-full animate-shimmer-sweep bg-white/50 blur-[6px] pointer-events-none"></div>
-                        )}
+                    <button onClick={handleSpinRoulette} disabled={isSpinning} className={`w-full py-4 md:py-5 rounded-2xl font-bebas text-3xl md:text-4xl uppercase tracking-wider flex items-center justify-center gap-3 relative overflow-hidden transition-all duration-300 ${isSpinning ? 'bg-gray-800 text-gray-500 cursor-not-allowed shadow-none' : 'bg-gradient-to-b from-[#ffea60] to-[#dfb411] text-[#111111] shadow-[0_8px_0_#9a7b0a,0_20px_40px_rgba(0,0,0,0.5),inset_0_2px_3px_rgba(255,255,255,0.6)] hover:brightness-110 active:translate-y-[8px] active:shadow-[0_0px_0_#9a7b0a,0_0px_0_rgba(0,0,0,0)]'}`}>
+                        {!isSpinning && ( <div className="absolute top-0 left-0 w-[60px] h-full animate-shimmer-sweep bg-white/50 blur-[6px] pointer-events-none"></div> )}
                         {isSpinning ? <><i className="fas fa-circle-notch fa-spin text-2xl"></i> Girando...</> : '¡PROBA SUERTE!'}
                     </button>
                 )}
             </div>
-
             <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mt-5 text-center font-poppins relative z-30 opacity-80">
                 1 giro por cliente • premios limitados
             </p>
@@ -1276,13 +1215,11 @@ export default function Home() {
           <header className="relative w-full h-[35vh] md:h-[55vh] flex items-center justify-center bg-[#111111] overflow-hidden border-b border-[#111111]">
             <img src={CONFIG.bannerImage} alt="Banner 028" className="absolute inset-0 w-full h-full object-cover object-center" />
           </header>
-          
           <main className="flex-grow px-4 md:px-8 pt-10 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full">
             <div className="md:hidden relative mb-12 reveal-on-scroll">
                 <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i>
                 <input type="text" placeholder="Buscar productos, marcas..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] pl-12 pr-6 py-4 rounded-2xl text-sm font-bold outline-none focus:border-[#fcdb00] focus:bg-white transition-all placeholder:text-gray-400 font-poppins" />
             </div>
-            
             <div className="mb-16 reveal-on-scroll">
               <h3 className="font-bebas text-2xl text-[#111111] mb-4 pl-2">Explorar la tienda</h3>
               <div className="flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">
@@ -1297,7 +1234,6 @@ export default function Home() {
                 )})}
               </div>
             </div>
-            
              {homeSections.length === 0 ? (
                  <div className="text-center py-20">
                      <div className="w-12 h-12 border-4 border-[#f2f2f2] border-t-[#fcdb00] rounded-full animate-spin mx-auto mb-4"></div>
@@ -1425,21 +1361,27 @@ export default function Home() {
           </div>
       )}
 
-      {/* --- DRAWER DEL CARRITO --- */}
+      {/* --- DRAWER DEL CARRITO (BLINDADO ANTI-INSTAGRAM Y ANTI-TECLADO iOS) --- */}
       {isCartOpen && (
-          <div className="fixed inset-0 z-[60] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4">
+          <div className="fixed inset-0 z-[120] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4">
+              {/* Fondo oscuro para cerrar */}
               <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} />
-              <div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] h-[90vh] md:max-h-[85vh] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-500 flex flex-col pb-safe">
-                  <div className="p-6 border-b border-gray-300 flex justify-between items-center bg-white sticky top-0 z-10">
+              
+              {/* CAJA PRINCIPAL RÍGIDA: Exactamente 85% de alto (dinámico), flex column estricto */}
+              <div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] max-h-[85dvh] h-full flex flex-col overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-300">
+                  
+                  {/* HEADER (Fijo arriba, no se achica) */}
+                  <div className="p-5 md:p-6 border-b border-gray-300 flex justify-between items-center bg-white flex-shrink-0 z-10 shadow-sm">
                       <div>
-                          <h2 className="text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2>
+                          <h2 className="text-3xl md:text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2>
                           <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest font-poppins">{getTotalItems()} artículos seleccionados</p>
                       </div>
                       <button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-[#f2f2f2] rounded-full text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex items-center justify-center shadow-sm border border-gray-200"><i className="fas fa-times text-lg"></i></button>
                   </div>
                   
-                  <div className="overflow-y-auto p-4 md:p-6 flex-grow no-scrollbar">
-                      <div className="space-y-3 mb-10">
+                  {/* CUERPO (Acá es donde el usuario hace scroll, se estira para llenar el espacio medio) */}
+                  <div className="flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar relative">
+                      <div className="space-y-3 mb-4">
                           {cart.length === 0 && (
                               <div className="text-center py-20 bg-white/50 rounded-2xl border border-dashed border-gray-300">
                                   <div className="w-16 h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><i className="fas fa-shopping-bag text-2xl text-gray-400"></i></div>
@@ -1447,6 +1389,7 @@ export default function Home() {
                               </div>
                           )}
                           
+                          {/* PRODUCTOS */}
                           {cart.map(item => (
                               <div key={item.id} className="flex justify-between items-center bg-[#f9f9f9] p-3 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-gray-200">
                                   <div className="flex items-center gap-4">
@@ -1470,6 +1413,7 @@ export default function Home() {
                               </div>
                           ))}
         
+                          {/* UPSELLS */}
                           {upsellsList.length > 0 && upsellsList.some(u => u.active && !cart.find(c => c.id == u.productId)) && (
                               <div className="mt-8 mb-2 animate-in slide-in-from-bottom duration-500">
                                   <p className="font-bebas text-xl mb-3 uppercase tracking-wider text-[#111111] flex items-center gap-2">
@@ -1500,6 +1444,7 @@ export default function Home() {
                           )}
                       </div>
                       
+                      {/* FORMULARIOS */}
                       {cart.length > 0 && (
                           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
                               {localRoulettePrize && localRoulettePrize.type !== 'none' && (
@@ -1514,6 +1459,7 @@ export default function Home() {
                                   <i className="fas fa-check-circle text-2xl text-[#25D366]"></i>
                                 </div>
                               )}
+                              
                               <div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
                                   <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-user-circle text-[#fcdb00] text-xl"></i> Tus Datos</p>
                                   <div className="flex flex-col gap-3 font-poppins">
@@ -1521,6 +1467,7 @@ export default function Home() {
                                       <input type="tel" placeholder="Número de WhatsApp" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
                                   </div>
                               </div>
+                              
                               <div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
                                   <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-map-marked-alt text-[#fcdb00] text-xl"></i> Entrega</p>
                                   <div className="flex gap-2 mb-5 bg-[#f2f2f2] p-1.5 rounded-xl border border-gray-200 font-poppins">
@@ -1530,20 +1477,6 @@ export default function Home() {
                                   
                                   {deliveryMethod === 'retiro' && (
                                     <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-300 mt-4">
-                                      <div className="w-full h-[200px] rounded-xl overflow-hidden border border-gray-200 shadow-sm relative bg-[#f2f2f2] flex items-center justify-center">
-                                        <div className="absolute flex flex-col items-center justify-center text-gray-400 gap-2">
-                                          <i className="fas fa-circle-notch fa-spin text-[#fcdb00] text-2xl"></i>
-                                          <span className="text-[10px] font-bold uppercase tracking-widest">Cargando mapa...</span>
-                                        </div>
-                                        <iframe 
-                                          width="100%" 
-                                          height="100%" 
-                                          frameBorder="0" 
-                                          style={{ border: 0, position: 'relative', zIndex: 10 }}
-                                          src="https://maps.google.com/maps?q=Mi%C3%B1ones%20y%20Juramento,%20Belgrano,%20CABA&t=&z=16&ie=UTF8&iwloc=&output=embed" 
-                                          allowFullScreen
-                                        ></iframe>
-                                      </div>
                                       <div className="bg-[#fcdb00]/10 border border-[#fcdb00] p-4 rounded-xl flex items-center gap-3">
                                         <div className="w-10 h-10 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] flex-shrink-0"><i className="fas fa-store text-lg"></i></div>
                                         <div className="flex flex-col">
@@ -1565,7 +1498,7 @@ export default function Home() {
                                         </div>
                                         <div onClick={() => setShippingType('moto')} className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex gap-4 items-center ${shippingType === 'moto' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-200 bg-white hover:border-[#fcdb00]/50'}`}>
                                           <div className="w-10 h-10 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] shadow-md flex-shrink-0"><i className="fas fa-motorcycle text-lg"></i></div>
-                                          <div className="flex flex-col"><span className={`font-bebas text-xl tracking-wide leading-none mb-1.5 ${shippingType === 'moto' ? 'text-[#111111]' : 'text-gray-700'}`}>Vía Motomensajería</span><span className="text-[10px] font-bold text-gray-500 leading-relaxed">⏲️ Horarios fijos de recorrido: 13:00 y 18:00hs.</span></div>
+                                          <div className="flex flex-col"><span className={`font-bebas text-xl tracking-wide leading-none mb-1.5 ${shippingType === 'moto' ? 'text-[#111111]' : 'text-gray-700'}`}>Vía Motomensajería</span><span className="text-[10px] font-bold text-gray-500 leading-relaxed">⏲️ Horarios fijos: 13:00 y 18:00hs.</span></div>
                                           {shippingType === 'moto' && <div className="ml-auto text-[#fcdb00]"><i className="fas fa-check-circle text-xl"></i></div>}
                                         </div>
                                       </div>
@@ -1578,12 +1511,11 @@ export default function Home() {
                                           </div>
                                           <div className="relative">
                                             <i className="fas fa-city absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                                            <input type="text" placeholder="Barrio / Localidad / CP" value={zone} onChange={(e) => setZone(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
+                                            <input type="text" placeholder="Barrio / CP" value={zone} onChange={(e) => setZone(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
                                           </div>
-                                          
                                           <div className="relative mt-1">
                                             <i className="fas fa-building absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                                            <input type="text" placeholder="Piso / Depto / Torre (Opcional)" value={aptDetails} onChange={(e) => setAptDetails(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
+                                            <input type="text" placeholder="Piso / Depto (Opcional)" value={aptDetails} onChange={(e) => setAptDetails(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
                                           </div>
                                         </div>
                                       )}
@@ -1598,61 +1530,45 @@ export default function Home() {
                                             aptDetails={aptDetails}
                                             setAptDetails={setAptDetails}
                                           />
-                                          
                                           <div className="flex flex-col gap-3 mt-2">
                                             <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">¿Cuándo querés recibirlo?</label>
-                                            
                                             <div className="relative">
                                               <i className="fas fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                                              <select 
-                                                value={deliveryDate} 
-                                                onChange={(e) => setDeliveryDate(e.target.value)} 
-                                                className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-[11px] font-bold uppercase tracking-wider outline-none focus:border-[#fcdb00] transition-all appearance-none cursor-pointer text-[#111111]"
-                                              >
-                                                {next7Days.map(d => (
-                                                  <option key={d.value} value={d.value}>{d.label}</option>
-                                                ))}
+                                              <select value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-[11px] font-bold uppercase tracking-wider outline-none focus:border-[#fcdb00] transition-all appearance-none cursor-pointer text-[#111111]">
+                                                {next7Days.map(d => ( <option key={d.value} value={d.value}>{d.label}</option> ))}
                                               </select>
                                               <i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[10px]"></i>
                                             </div>
-
                                             <div className="flex gap-2 bg-[#f2f2f2] p-1.5 rounded-xl border border-gray-200">
-                                              <button onClick={() => setDeliveryTime('13:00')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${deliveryTime === '13:00' ? 'bg-white text-[#111111] shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}>
-                                                <i className="fas fa-sun"></i> Turno 13:00
-                                              </button>
-                                              <button onClick={() => setDeliveryTime('18:00')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${deliveryTime === '18:00' ? 'bg-white text-[#111111] shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}>
-                                                <i className="fas fa-moon"></i> Turno 18:00
-                                              </button>
+                                              <button onClick={() => setDeliveryTime('13:00')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${deliveryTime === '13:00' ? 'bg-white text-[#111111] shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-sun"></i> Turno 13:00</button>
+                                              <button onClick={() => setDeliveryTime('18:00')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${deliveryTime === '18:00' ? 'bg-white text-[#111111] shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-moon"></i> Turno 18:00</button>
                                             </div>
                                           </div>
 
                                           <div className="flex flex-col gap-2 mt-2">
                                             <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">¿Cómo querés abonar?</label>
                                             <div className="flex gap-2 bg-[#f2f2f2] p-1.5 rounded-xl border border-gray-200">
-                                              <button onClick={() => setPaymentMethod('transferencia')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${paymentMethod === 'transferencia' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
-                                                <i className="fas fa-university"></i> Transferencia
-                                              </button>
-                                              <button onClick={() => setPaymentMethod('efectivo')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${paymentMethod === 'efectivo' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
-                                                <i className="fas fa-money-bill-wave"></i> Efectivo
-                                              </button>
+                                              <button onClick={() => setPaymentMethod('transferencia')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${paymentMethod === 'transferencia' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-university"></i> Transferencia</button>
+                                              <button onClick={() => setPaymentMethod('efectivo')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${paymentMethod === 'efectivo' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-money-bill-wave"></i> Efectivo</button>
                                             </div>
                                           </div>
                                         </div>
                                       )}
-
                                     </div>
                                   )}
                               </div>
                           </div>
                       )}
                   </div>
+
+                  {/* FOOTER (Fijo abajo, NO se empuja por el scroll ni desaparece por la barra) */}
                   {cart.length > 0 && (
-                      <div className="p-6 bg-white border-t border-gray-200 sticky bottom-0 z-20">
+                      <div className="bg-white border-t border-gray-200 flex-shrink-0 z-20 pb-8 md:pb-6 pt-5 px-5 md:px-6 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
                           <div className="flex justify-between items-end mb-4">
                               <span className="font-bold text-gray-500 text-[10px] uppercase tracking-widest font-poppins">Total a Pagar</span>
                               <span className="font-bebas text-5xl text-[#111111] tracking-wide leading-none drop-shadow-sm"><span className="text-[#fcdb00] text-3xl mr-1.5">{CONFIG.currencySymbol}</span>{formatPrice(calculateTotal())}</span>
                           </div>
-                          <button onClick={handleCheckout} className={`w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)] active:scale-95 font-bebas py-4 rounded-xl uppercase tracking-wider text-xl flex justify-center items-center gap-3 transition-all duration-300`}>
+                          <button onClick={handleCheckout} className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] shadow-[0_10px_30px_rgba(0,0,0,0.2)] active:scale-95 font-bebas py-4 rounded-xl uppercase tracking-wider text-xl flex justify-center items-center gap-3 transition-all duration-300">
                               <i className="fas fa-check-circle text-2xl mb-0.5"></i> Confirmar Pedido
                           </button>
                       </div>
@@ -1660,46 +1576,24 @@ export default function Home() {
               </div>
           </div>
       )}
-      
-      {/* --- BOTONES FLOTANTES INDEPENDIENTES Y ALINEADOS A LA DERECHA --- */}
-      <div className="fixed bottom-25 md:bottom-6 right-4 md:right-6 z-[100] flex flex-col items-end gap-3 group">
-        
-        {/* Cartelito de ayuda */}
-        <div className={`bg-white text-[#111111] p-3 md:p-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] border border-gray-200 max-w-[180px] md:max-w-[200px] text-center transform transition-all duration-700 ease-out origin-bottom-right relative ${showTooltip ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-90 group-hover:translate-y-0 group-hover:opacity-100 group-hover:scale-100'}`}>
-          <p className="font-poppins font-bold text-[10px] md:text-xs">¿No sabés cuál elegir? Te ayudamos</p>
-          <div className="absolute bottom-[-6px] right-6 w-3 h-3 md:w-4 md:h-4 bg-white transform rotate-45 border-r border-b border-gray-200"></div>
+
+      {/* --- BOTONES FLOTANTES INDEPENDIENTES (Se esconden si el carrito se abre) --- */}
+      {!isCartOpen && !showRouletteModal && !selectedProduct && (
+        <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[100] flex flex-col items-end gap-3 group">
+          <div className={`bg-white text-[#111111] p-3 md:p-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] border border-gray-200 max-w-[180px] md:max-w-[200px] text-center transform transition-all duration-700 ease-out origin-bottom-right relative ${showTooltip ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-90 group-hover:translate-y-0 group-hover:opacity-100 group-hover:scale-100'}`}>
+            <p className="font-poppins font-bold text-[10px] md:text-xs">¿No sabés cuál elegir? Te ayudamos</p>
+            <div className="absolute bottom-[-6px] right-6 w-3 h-3 md:w-4 md:h-4 bg-white transform rotate-45 border-r border-b border-gray-200"></div>
+          </div>
+          
+          <button onClick={() => { if (!user || user.isAnonymous) { showToast("⚠️ Iniciá sesión para poder girar"); handleGoogleLogin(); return; } if (hasSpunLocal) { if (localRoulettePrize) setWonPrizeData(localRoulettePrize); setShowResultModal(true); } else { setShowRouletteModal(true); } }} className="pointer-events-auto w-24 md:w-36 h-auto hover:scale-105 transition-transform duration-300 drop-shadow-[0_5px_15px_rgba(252,219,0,0.3)] focus:outline-none origin-bottom-right md:translate-x-[20px] md:-translate-y-[10px]">
+             <img src="https://i.ibb.co/whtCF6j3/Dise-o-sin-t-tulo-11.png" className="w-full h-auto object-contain" alt="Hot Sale" />
+          </button>
+
+          <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noopener noreferrer" className="pointer-events-auto w-14 h-14 md:w-16 md:h-16 bg-[#25D366] rounded-full flex items-center justify-center text-white text-3xl shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform duration-300 origin-bottom-right md:translate-x-[5px]">
+            <i className="fab fa-whatsapp"></i>
+          </a>
         </div>
-
-        {/* BOTÓN HOT SALE */}
-        <button 
-          onClick={() => {
-            if (!user || user.isAnonymous) {
-                showToast("⚠️ Iniciá sesión para poder girar");
-                handleGoogleLogin();
-                return;
-            }
-            if (hasSpunLocal) {
-              if (localRoulettePrize) setWonPrizeData(localRoulettePrize);
-              setShowResultModal(true);
-            } else {
-              setShowRouletteModal(true);
-            }
-          }}
-          className="pointer-events-auto w-25 md:w-36 h-auto hover:scale-105 transition-transform duration-300 drop-shadow-[0_5px_15px_rgba(252,219,0,0.3)] focus:outline-none origin-bottom-right translate-x-[23px] -translate-y-[-10px] md:translate-x-[20px] md:-translate-y-[10px]"
-        >
-           <img src="https://i.ibb.co/whtCF6j3/Dise-o-sin-t-tulo-11.png" className="w-full h-auto object-contain" alt="Hot Sale" />
-        </button>
-
-        {/* BOTÓN WHATSAPP */}
-        <a 
-            href={`https://wa.me/${CONFIG.whatsappNumber}`} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="pointer-events-auto w-14 h-14 md:w-16 md:h-16 bg-[#25D366] rounded-full flex items-center justify-center text-white text-3xl shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform duration-300 origin-bottom-right translate-x-[-10px] translate-y-[8px] md:translate-x-[5px]"
-        >
-          <i className="fab fa-whatsapp"></i>
-        </a>
-      </div>
+      )}
 
       {/* --- MODAL DE PAGO OFFLINE --- */}
       {showPaymentModal && (
