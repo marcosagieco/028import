@@ -1159,7 +1159,7 @@ export default function Home() {
                 </button>
             )}
             <div className="relative z-30 w-full h-[80px] flex items-center justify-center mb-6 mt-2 pointer-events-none">
-              <img src="https://i.ibb.co/whtCF6j3/Dise-o-sin-t-tulo-11.png" alt="Hot Sale 028" className="absolute top-1/2 left-1/9 -translate-x-1/3 -translate-y-[50%] w-[202px] md:w-[450px] max-w-none drop-shadow-xl" />
+              <img src="https://i.ibb.co/whtCF6j3/Dise-o-sin-t-tulo-11.png" alt="Hot Sale 028" className="absolute top-1/2 left-1/9 -translate-x-1/3 -translate-y-[50%] w-[202px] md:w-[250px] max-w-none drop-shadow-xl" />
             </div>
             <div className="relative w-75 h-75 md:w-84 md:h-84 mb-4 mt-2 z-20 flex items-center justify-center">
               <div className="absolute inset-0 rounded-full shadow-[0_0_40px_rgba(255,215,0,0.15)] pointer-events-none z-0"></div>
