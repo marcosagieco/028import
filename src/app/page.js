@@ -38,7 +38,7 @@ const DEPT_ICONS = [
 const ROULETTE_PRIZES = [
   { id: 'off5', text: '5% OFF x MES', prob: 0.28, type: 'percent', value: 5, textC: '#fcdb00', description: '¡Activado! Tenés un 5% OFF extra y automático en CADA compra.' }, 
   { id: 'off10', text: '10% OFF', prob: 0.26, type: 'percent', value: 10, textC: '#fcdb00', description: '¡Felicidades! Ganaste un 10% de descuento DIRECTO en tu carrito para usar YA.' }, 
-  { id: 'off15', text: '15% +30K COMPRA', prob: 0.20, type: 'percent', value: 15, textC: '#fcdb00', description: '¡Activado! Llená tu carrito hasta $30.000 o más y te regalamos un 15% OFF en el TOTAL.' }, 
+  { id: 'off15', text: ' 15% +30K COMPRA', prob: 0.20, type: 'percent', value: 15, textC: '#fcdb00', description: '¡Activado! Llená tu carrito hasta $30.000 o más y te regalamos un 15% OFF en el TOTAL.' }, 
   { id: 'labubu', text: 'LABUBU GRATIS', prob: 0.14, type: 'none', value: 0, textC: '#fcdb00', description: '¡Increíble! Te enviamos un muñeco/llavero Labubu de regalo totalmente gratis.' }, 
   { id: 'off20', text: '2DO VAPE -20%', prob: 0.09, type: 'percent', value: 20, textC: '#fcdb00', description: '¡Oferta activada! Llevate 2 Vapes y el segundo tiene un 20% OFF automático.' }, 
   { id: 'sorpresa', text: '🎁 SORPRESA', prob: 0.03, type: 'sorpresa', value: 0, textC: '#fcdb00', description: '¡NO LO PUEDO CREER! Te ganaste EL PREMIO GORDO: Un Vaso Stanley 100% GRATIS superando los $60.000.' }, 
