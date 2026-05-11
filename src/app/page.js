@@ -1662,7 +1662,7 @@ export default function Home() {
       )}
       
       {/* --- BOTONES FLOTANTES INDEPENDIENTES Y ALINEADOS A LA DERECHA --- */}
-      <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[100] flex flex-col items-end gap-3 group">
+      <div className="fixed bottom-25 md:bottom-6 right-4 md:right-6 z-[100] flex flex-col items-end gap-3 group">
         
         {/* Cartelito de ayuda */}
         <div className={`bg-white text-[#111111] p-3 md:p-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] border border-gray-200 max-w-[180px] md:max-w-[200px] text-center transform transition-all duration-700 ease-out origin-bottom-right relative ${showTooltip ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-90 group-hover:translate-y-0 group-hover:opacity-100 group-hover:scale-100'}`}>
