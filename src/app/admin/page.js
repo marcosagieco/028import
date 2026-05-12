@@ -106,6 +106,7 @@ export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
+  const [spins, setSpins] = useState([]); // --- NUEVO ESTADO PARA LA RULETA ---
   
   // --- ESTADOS PARA CUPONES, USUARIOS Y OFERTAS (UPSELLS) ---
   const [coupons, setCoupons] = useState([]);
@@ -192,11 +193,17 @@ export default function AdminPage() {
         setUpsellsList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
       });
 
+      // --- LECTURA DE TIROS DE LA RULETA ---
+      onSnapshot(query(collection(firebaseRefs.db, 'spins'), orderBy('createdAt', 'desc')), (snap) => {
+        setSpins(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
+      });
+
       onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
         if (snap.exists()) { setDeptIcons(snap.data().icons || {}); }
       });
     });
   }, [firebaseRefs]);
+  
   const updatePrice = async (product, newPrice) => { const price = parseInt(newPrice); if(isNaN(price) || price < 0) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, price: price }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
   const updateName = async (product, newName) => { const name = newName.trim().toUpperCase(); if(!name) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, name: name }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
   const updateImage = async (product, newImageUrl) => { const url = newImageUrl.trim(); if(!url) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, image: url }, { merge: true }); } catch(err) { alert("Error al actualizar la imagen: " + err.message); } }
@@ -410,6 +417,7 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('cupones')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'cupones' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Cupones</button>
           <button onClick={() => setActiveTab('usuarios')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'usuarios' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Usuarios</button>
           <button onClick={() => setActiveTab('ofertas')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'ofertas' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Ofertas 🔥</button>
+          <button onClick={() => setActiveTab('ruleta')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'ruleta' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Ruleta 🎁</button>
         </div>
       </div>
       <main className="max-w-4xl mx-auto p-4 md:p-8">
@@ -521,7 +529,7 @@ export default function AdminPage() {
                       </div>
                     </div>
                     <div className="flex justify-between items-center mt-2 border-t pt-4 dark:border-[#333333]">
-                      <span className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Ruleta: <span className={usr.hasSpunRoulette ? 'text-green-500' : 'text-gray-400'}>{usr.hasSpunRoulette ? 'Ya giró 🎁' : 'No giró'}</span></span>
+                      <span className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Ruleta: <span className={usr.hasSpun ? 'text-green-500' : 'text-gray-400'}>{usr.hasSpun ? 'Ya giró 🎁' : 'No giró'}</span></span>
                       <span className="text-[9px] font-bold uppercase text-gray-400">{usr.createdAt?.seconds ? new Date(usr.createdAt.seconds * 1000).toLocaleDateString('es-AR') : 'Reciente'}</span>
                     </div>
                   </div>
@@ -577,6 +585,69 @@ export default function AdminPage() {
                 })
               )}
             </div>
+          </div>
+        )}
+
+        {/* --- NUEVA PESTAÑA: RULETA --- */}
+        {activeTab === 'ruleta' && (
+          <div className="animate-in fade-in duration-500">
+            <div className="flex justify-between items-end mb-8">
+              <div>
+                <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Tiros de Ruleta</h2>
+                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Registro de premios entregados</p>
+              </div>
+              <span className="bg-[#fcdb00] text-[#111111] text-[11px] font-bold px-4 py-2 rounded-lg shadow-sm">{spins.length} Tiros</span>
+            </div>
+
+            {/* ESTADÍSTICAS RÁPIDAS */}
+            {spins.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
+                    {Object.entries(
+                        spins.reduce((acc, spin) => {
+                            acc[spin.prizeText] = (acc[spin.prizeText] || 0) + 1;
+                            return acc;
+                        }, {})
+                    ).map(([prize, count], idx) => (
+                        <div key={idx} className={`${theme.card} p-4 rounded-xl shadow-sm border flex flex-col justify-center items-center text-center`}>
+                            <span className="text-3xl font-bebas text-[#fcdb00] leading-none mb-1">{count}</span>
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">{prize}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* LISTA DE RESULTADOS DE RULETA */}
+            {spins.length === 0 ? (
+              <div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}>
+                <i className="fas fa-gift text-gray-300 text-5xl mb-6"></i>
+                <p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">Nadie tiró la ruleta todavía</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {spins.map((spin, index) => (
+                  <div key={spin.id || index} className={`${theme.card} p-5 rounded-[1.5rem] shadow-sm border flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-[#fcdb00]/50 transition-all`}>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-[#111111] text-[#fcdb00] flex items-center justify-center text-xl shadow-md uppercase pt-1">
+                        <i className="fas fa-user"></i>
+                      </div>
+                      <div className="overflow-hidden">
+                        <h4 className="font-bebas tracking-wide text-2xl uppercase leading-none mb-1 truncate">{spin.userName || 'Sin Nombre'}</h4>
+                        <p className="text-gray-500 font-bold text-[10px] truncate"><i className="fas fa-envelope mr-1.5 text-[#fcdb00]"></i> {spin.userEmail || 'Sin Email'}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col md:items-end gap-1 border-t md:border-t-0 pt-3 md:pt-0 dark:border-[#333333]">
+                      <span className="bg-[#fcdb00]/10 border border-[#fcdb00]/30 text-[#b8952a] text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg flex items-center gap-2 w-fit md:w-auto">
+                         <i className="fas fa-gift"></i> {spin.prizeText}
+                      </span>
+                      <span className="text-[9px] font-bold uppercase text-gray-400 mt-1">
+                        {spin.createdAt?.seconds ? new Date(spin.createdAt.seconds * 1000).toLocaleString('es-AR') : 'Reciente'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

@@ -575,7 +575,7 @@ export default function Home() {
       
       setRouletteRotation(-30 + targetRotation);
 
-      setTimeout(() => {
+      setTimeout(async () => { // Agregamos el 'async' acá
           setIsSpinning(false);
           setWonPrizeData(wonPrize);
           setShowRouletteModal(false); 
@@ -584,7 +584,30 @@ export default function Home() {
           localStorage.setItem('hotSaleSpun', 'true');
           localStorage.setItem('pendingPrize', JSON.stringify(wonPrize));
           setHasSpunLocal(true);
-      }, 4000); 
+
+          // --- LOGICA PARA REGISTRAR EN EL ADMIN ---
+          if (firebaseRefs.db && user) {
+            try {
+              await addDoc(collection(firebaseRefs.db, 'spins'), {
+                userId: user.uid,
+                userName: dbUser?.name || user.displayName || 'Anónimo',
+                userEmail: user.email || '',
+                prizeId: wonPrize.id,
+                prizeText: wonPrize.text,
+                createdAt: serverTimestamp()
+              });
+              
+              // Opcional: También lo marcamos en su perfil de usuario
+              await setDoc(doc(firebaseRefs.db, 'users', user.uid), {
+                hasSpun: true,
+                wonPrize: wonPrize.text
+              }, { merge: true });
+
+            } catch (error) {
+              console.error("Error al guardar el tiro:", error);
+            }
+          }
+      }, 4000);
   };
 
   const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
