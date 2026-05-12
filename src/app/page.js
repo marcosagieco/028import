@@ -1288,7 +1288,7 @@ export default function Home() {
              {homeSections.length === 0 ? (
                  <div className="text-center py-20">
                      <div className="w-12 h-12 border-4 border-[#f2f2f2] border-t-[#fcdb00] rounded-full animate-spin mx-auto mb-4"></div>
-                     <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest font-poppins">Preparando vidriera...</p>
+                     <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest font-poppins"></p>
                  </div>
              ) : (
                  homeSections.map((sec, sectionIndex) => {
