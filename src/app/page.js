@@ -597,15 +597,33 @@ export default function Home() {
   const calculateTotal = (cartData = cart) => {
       let subtotal = cartData.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
       let discountAmount = 0;
-      if (localRoulettePrize && localRoulettePrize.type === 'percent') {
-          let maxPrice = 0;
-          cartData.forEach(item => { 
-            const price = item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item); 
-            if (price > maxPrice) maxPrice = price; 
-          });
-          discountAmount = maxPrice * (localRoulettePrize.value / 100);
+
+      if (localRoulettePrize) {
+          const totalItems = cartData.reduce((acc, item) => acc + item.qty, 0);
+
+          if (localRoulettePrize.id === 'off20') {
+              // Solo aplica si lleva 2 o más productos
+              if (totalItems >= 2) {
+                  // Comercial: El descuento del 2do se aplica al de menor o igual valor
+                  let minPrice = Infinity;
+                  cartData.forEach(item => { 
+                    const price = item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item); 
+                    if (price < minPrice) minPrice = price; 
+                  });
+                  discountAmount = minPrice * (localRoulettePrize.value / 100);
+              }
+          } else if (localRoulettePrize.id === 'off15') {
+              // Solo aplica si el subtotal llega a los 30.000
+              if (subtotal >= 30000) {
+                  discountAmount = subtotal * (localRoulettePrize.value / 100);
+              }
+          } else if (localRoulettePrize.type === 'percent') {
+              // Los premios off5 y off10 aplican al total del carrito
+              discountAmount = subtotal * (localRoulettePrize.value / 100);
+          }
           subtotal -= discountAmount;
       }
+
       let envio = (deliveryMethod === 'envio' && shippingType === 'moto') ? shippingCost : 0;
       if (localRoulettePrize && localRoulettePrize.type === 'shipping' && deliveryMethod === 'envio' && shippingType === 'moto') { envio = 0; }
       return subtotal + envio;
@@ -699,16 +717,26 @@ export default function Home() {
     let subtotalFinal = subtotalCalc;
 
     if (localRoulettePrize) {
-        if (localRoulettePrize.type === 'percent') {
-            msg += `\n🎰 *HOT SALE:* ${localRoulettePrize.text} aplicado al ítem más caro.\n`;
+        const totalItems = currentCart.reduce((acc, item) => acc + item.qty, 0);
+        
+        if (localRoulettePrize.id === 'off20') {
+            if (totalItems >= 2) {
+                msg += `\n🎁 *HOT SALE:* 20% OFF en 2do Vape aplicado.\n`;
+            }
+        } else if (localRoulettePrize.id === 'off15') {
+            if (subtotalCalc >= 30000) {
+                msg += `\n🎁 *HOT SALE:* 15% OFF (Superó $30.000) aplicado.\n`;
+            }
+        } else if (localRoulettePrize.type === 'percent') {
+            msg += `\n🎰 *HOT SALE:* ${localRoulettePrize.text} aplicado al total.\n`;
         } else if (localRoulettePrize.type === 'shipping') {
             msg += `\n🔥 *HOT SALE:* ¡ENVÍO GRATIS GANADO! 🔥\n`;
         } else if (localRoulettePrize.id === 'sorpresa') {
-            msg += `\n🎁 *HOT SALE:* ¡PREMIO SORPRESA! (Vaso Stanley sujeto a compra +$60k)\n`;
+            if (subtotalCalc >= 60000) {
+                msg += `\n🎁 *HOT SALE:* ¡PREMIO SORPRESA! (Vaso Stanley ganado por compra +$60k)\n`;
+            }
         } else if (localRoulettePrize.id === 'labubu') {
             msg += `\n🎁 *HOT SALE:* ¡LABUBU GRATIS EN TU COMPRA!\n`;
-        } else if (localRoulettePrize.id === 'off20') {
-            msg += `\n🎁 *HOT SALE:* 20% OFF en 2do Vape.\n`;
         }
     }
 
