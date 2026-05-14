@@ -247,78 +247,6 @@ const PAGE_CONTENT = {
   }
 };
 
-// COMPONENTE CONTADOR EXTRAÍDO PARA NO TRABAR LA PÁGINA
-const CountdownBanner = () => {
-  const calculateTimeToNextWednesday = () => {
-    if (typeof window === 'undefined') return null;
-    const now = new Date();
-    const target = new Date(now);
-    let daysUntilWednesday = 3 - now.getDay();
-    if (daysUntilWednesday < 0 || (daysUntilWednesday === 0 && now.getHours() >= 23)) {
-      daysUntilWednesday += 7;
-    }
-    target.setDate(now.getDate() + daysUntilWednesday);
-    target.setHours(23, 59, 59, 999);
-    const difference = target - now;
-    if (difference > 0) {
-      return {
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / 1000 / 60) % 60),
-        seconds: Math.floor((difference / 1000) % 60)
-      };
-    }
-    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-  };
-
-  const [timeLeft, setTimeLeft] = useState(null);
-
-  useEffect(() => {
-    setTimeLeft(calculateTimeToNextWednesday());
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeToNextWednesday());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <div className="bg-[#0E0E0E] text-white py-3 md:py-4 overflow-hidden m-0 relative z-30 flex flex-col items-center justify-center border-b border-white/[0.06] shadow-md">
-      <div className="w-full overflow-hidden mb-1.5 opacity-90">
-        <div className="animate-marquee whitespace-nowrap flex items-center">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="flex items-center gap-4 px-2 text-[#fcdb00] font-poppins font-bold text-[9px] md:text-[10px] uppercase tracking-[0.15em]">
-              <span> HOT 028 </span>
-              <span className="text-white/30 text-[8px]">•</span>
-              <span>DESCUENTOS EXCLUSIVOS POR TIEMPO LIMITADO</span>
-              <span className="text-white/30 text-[8px]">•</span>
-              <span>ENVÍOS EN 30 MIN</span>
-              <span className="text-white/30 text-[8px]">•</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="flex gap-6 md:gap-10 font-bebas tracking-wide items-baseline mt-0.5">
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-3xl md:text-4xl font-black drop-shadow-lg leading-none text-[#fcdb00]">{timeLeft?.days || 0}</span>
-          <span className="text-[10px] text-white opacity-50 uppercase tracking-[0.2em] font-poppins font-medium">DÍAS</span>
-        </div>
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-3xl md:text-4xl font-black drop-shadow-lg leading-none text-[#fcdb00]">{String(timeLeft?.hours || 0).padStart(2, '0')}</span>
-          <span className="text-[10px] text-white opacity-50 uppercase tracking-[0.2em] font-poppins font-medium">HS</span>
-        </div>
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-3xl md:text-4xl font-black drop-shadow-lg leading-none text-[#fcdb00]">{String(timeLeft?.minutes || 0).padStart(2, '0')}</span>
-          <span className="text-[10px] text-white opacity-50 uppercase tracking-[0.2em] font-poppins font-medium">MIN</span>
-        </div>
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-3xl md:text-4xl font-black drop-shadow-lg leading-none text-[#fcdb00]">{String(timeLeft?.seconds || 0).padStart(2, '0')}</span>
-          <span className="text-[10px] text-white opacity-50 uppercase tracking-[0.2em] font-poppins font-medium">SEG</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState(initialProducts);
@@ -415,8 +343,6 @@ export default function Home() {
 
         if (hasSpun === 'true') {
             setHasSpunLocal(true);
-        } else {
-            setTimeout(() => setShowRouletteModal(true), 1500);
         }
     }
   }, []);
@@ -554,7 +480,7 @@ export default function Home() {
       if (isSpinning) return;
       
       if (hasSpunLocal) {
-        showToast("¡Ya utilizaste tu tiro de Hot Sale!");
+        showToast("¡Ya utilizaste tu tiro de la ruleta!");
         return;
       }
       
@@ -575,7 +501,7 @@ export default function Home() {
       
       setRouletteRotation(-30 + targetRotation);
 
-      setTimeout(async () => { // Agregamos el 'async' acá
+      setTimeout(async () => {
           setIsSpinning(false);
           setWonPrizeData(wonPrize);
           setShowRouletteModal(false); 
@@ -585,7 +511,6 @@ export default function Home() {
           localStorage.setItem('pendingPrize', JSON.stringify(wonPrize));
           setHasSpunLocal(true);
 
-          // --- LOGICA PARA REGISTRAR EN EL ADMIN ---
           if (firebaseRefs.db && user) {
             try {
               await addDoc(collection(firebaseRefs.db, 'spins'), {
@@ -597,7 +522,6 @@ export default function Home() {
                 createdAt: serverTimestamp()
               });
               
-              // Opcional: También lo marcamos en su perfil de usuario
               await setDoc(doc(firebaseRefs.db, 'users', user.uid), {
                 hasSpun: true,
                 wonPrize: wonPrize.text
@@ -625,9 +549,7 @@ export default function Home() {
           const totalItems = cartData.reduce((acc, item) => acc + item.qty, 0);
 
           if (localRoulettePrize.id === 'off20') {
-              // Solo aplica si lleva 2 o más productos
               if (totalItems >= 2) {
-                  // Comercial: El descuento del 2do se aplica al de menor o igual valor
                   let minPrice = Infinity;
                   cartData.forEach(item => { 
                     const price = item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item); 
@@ -636,12 +558,10 @@ export default function Home() {
                   discountAmount = minPrice * (localRoulettePrize.value / 100);
               }
           } else if (localRoulettePrize.id === 'off15') {
-              // Solo aplica si el subtotal llega a los 30.000
               if (subtotal >= 30000) {
                   discountAmount = subtotal * (localRoulettePrize.value / 100);
               }
           } else if (localRoulettePrize.type === 'percent') {
-              // Los premios off5 y off10 aplican al total del carrito
               discountAmount = subtotal * (localRoulettePrize.value / 100);
           }
           subtotal -= discountAmount;
@@ -744,22 +664,22 @@ export default function Home() {
         
         if (localRoulettePrize.id === 'off20') {
             if (totalItems >= 2) {
-                msg += `\n🎁 *HOT SALE:* 20% OFF en 2do Vape aplicado.\n`;
+                msg += `\n🎁 *PROMO RULETA:* 20% OFF en 2do Vape aplicado.\n`;
             }
         } else if (localRoulettePrize.id === 'off15') {
             if (subtotalCalc >= 30000) {
-                msg += `\n🎁 *HOT SALE:* 15% OFF (Superó $30.000) aplicado.\n`;
+                msg += `\n🎁 *PROMO RULETA:* 15% OFF (Superó $30.000) aplicado.\n`;
             }
         } else if (localRoulettePrize.type === 'percent') {
-            msg += `\n🎰 *HOT SALE:* ${localRoulettePrize.text} aplicado al total.\n`;
+            msg += `\n🎰 *PROMO RULETA:* ${localRoulettePrize.text} aplicado al total.\n`;
         } else if (localRoulettePrize.type === 'shipping') {
-            msg += `\n🔥 *HOT SALE:* ¡ENVÍO GRATIS GANADO! 🔥\n`;
+            msg += `\n🔥 *PROMO RULETA:* ¡ENVÍO GRATIS GANADO! 🔥\n`;
         } else if (localRoulettePrize.id === 'sorpresa') {
             if (subtotalCalc >= 60000) {
-                msg += `\n🎁 *HOT SALE:* ¡PREMIO SORPRESA! (Vaso Stanley ganado por compra +$60k)\n`;
+                msg += `\n🎁 *PROMO RULETA:* ¡PREMIO SORPRESA! (Vaso Stanley ganado por compra +$60k)\n`;
             }
         } else if (localRoulettePrize.id === 'labubu') {
-            msg += `\n🎁 *HOT SALE:* ¡LABUBU GRATIS EN TU COMPRA!\n`;
+            msg += `\n🎁 *PROMO RULETA:* ¡LABUBU GRATIS EN TU COMPRA!\n`;
         }
     }
 
@@ -844,6 +764,7 @@ export default function Home() {
     showToast("✅ ALIAS copiado al portapapeles");
   };
 
+  // --- ACÁ EMPIEZA LA PARTE 2 QUE TE MANDO EN EL PRÓXIMO MENSAJE ---
   const renderProductCard = (p, index, isVidriera = false, layout = 'horizontal') => {
     const inCart = cart.find(i => i.id === p.id);
     const isOutOfStock = p.inStock === false;
@@ -1110,15 +1031,14 @@ export default function Home() {
         </div>
       </header>
 
-      {/* --- BARRA CONTADOR OPTIMIZADA --- */}
-      <CountdownBanner />
-
+      {/* NOTIFICACIONES TOAST */}
       {toastMessage && (
           <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[300] bg-[#111111]/90 backdrop-blur-xl text-white px-6 py-4 rounded-full shadow-[0_20px_40px_rgba(252,219,0,0.2)] border border-[#fcdb00]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">
               {toastMessage}
           </div>
       )}
       
+      {/* COMPRAS EN VIVO (FOMO) */}
       {fomoData && (
         <div className="fixed bottom-24 left-4 md:bottom-8 md:left-8 z-[100] bg-[#111111]/95 backdrop-blur-md text-white p-3 md:p-4 rounded-2xl shadow-2xl border border-[#fcdb00]/30 flex items-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-500 hover:scale-105 transition-transform cursor-default">
           <div className="w-10 h-10 bg-[#fcdb00] rounded-full flex items-center justify-center text-[#111111] text-lg shadow-inner"><i className="fas fa-fire"></i></div>
@@ -1191,30 +1111,33 @@ export default function Home() {
                {localRoulettePrize ? 'Cerrar' : 'Reclamar Premio'}
              </button>
              <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-5 font-bold relative z-10 font-poppins">
-                {wonPrizeData.id === 'off5' ? 'VÁLIDO POR 30 DÍAS' : 'PROMO VÁLIDA HASTA QUE TERMINE EL HOT 028'}
+                {wonPrizeData.id === 'off5' ? 'VÁLIDO POR 30 DÍAS' : 'PROMO VÁLIDA PARA TU PRÓXIMA COMPRA'}
              </p>
           </div>
         </div>
       )}
 
-      {/* --- MODAL RULETA HOT SALE --- */}
+      {/* --- MODAL RULETA ESTÁNDAR 028 --- */}
       {showRouletteModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 transition-opacity duration-500" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
-          <div className="relative w-full max-w-[480px] rounded-[2.5rem] bg-[#111111]/40 backdrop-blur-[40px] border-[0.5px] border-white/20 shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] p-8 pt-14 flex flex-col items-center animate-in zoom-in-95 duration-500 overflow-hidden">
-            <div className="absolute top-[10%] right-[10%] w-[300px] h-[300px] bg-white/5 blur-[100px] rounded-full pointer-events-none z-0"></div>
-            <img src="https://i.ibb.co/gZgzZJ35/Dise-o-sin-t-tulo-6.png" className="absolute -top-[1%] -right-[16%] w-[103%] h-auto max-w-none z-0 object-contain pointer-events-none opacity-100" alt="Fondo Mascota" />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-500" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
+          <div className="relative w-full max-w-[480px] rounded-[2.5rem] bg-[#111111] border-[0.5px] border-white/20 shadow-2xl p-8 flex flex-col items-center animate-in zoom-in-95 duration-500 overflow-hidden">
             {!isSpinning && (
                 <button onClick={() => setShowRouletteModal(false)} className="absolute top-5 right-5 w-11 h-11 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center hover:bg-white/15 transition-all z-30 text-gray-500 hover:text-white shadow-xl">
                     <i className="fas fa-times text-lg"></i>
                 </button>
             )}
-            <div className="relative z-30 w-full h-[80px] flex items-center justify-center mb-6 mt-2 pointer-events-none">
-              <img src="https://i.ibb.co/whtCF6j3/Dise-o-sin-t-tulo-11.png" alt="Hot Sale 028" className="absolute top-1/2 left-1/9 -translate-x-1/3 -translate-y-[50%] w-[202px] md:w-[250px] max-w-none drop-shadow-xl" />
+            
+            <div className="relative z-30 w-full flex flex-col items-center justify-center mb-6 mt-2">
+              <h2 className="text-4xl font-bebas text-white uppercase tracking-widest drop-shadow-lg text-center leading-none">
+                  RULETA <span className="text-[#fcdb00]">028</span>
+              </h2>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Girala y ganá premios</p>
             </div>
-            <div className="relative w-75 h-75 md:w-84 md:h-84 mb-4 mt-2 z-20 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full shadow-[0_0_40px_rgba(255,215,0,0.15)] pointer-events-none z-0"></div>
-              <div className="w-full h-full rounded-full relative overflow-hidden border-[2px] border-[rgba(255,215,0,0.2)] shadow-[inset_0_0_30px_rgba(0,0,0,0.6)] z-10"
+            
+            <div className="relative w-75 h-75 md:w-84 md:h-84 mb-4 z-20 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full shadow-[0_0_40px_rgba(252,219,0,0.15)] pointer-events-none z-0"></div>
+              <div className="w-full h-full rounded-full relative overflow-hidden border-[2px] border-[rgba(252,219,0,0.2)] shadow-[inset_0_0_30px_rgba(0,0,0,0.6)] z-10"
                 style={{ 
                   background: 'conic-gradient(#111111 0deg 60deg, #1a1a1a 60deg 120deg, #111111 120deg 180deg, #1a1a1a 180deg 240deg, #111111 240deg 300deg, #050505 300deg 360deg)',
                   transform: `rotate(${rouletteRotation}deg)`, 
@@ -1223,7 +1146,7 @@ export default function Home() {
               >
                 <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.05)_0%,transparent_70%)] pointer-events-none z-0"></div>
                 {[0, 60, 120, 180, 240, 300].map((deg, i) => (
-                    <div key={`line-${i}`} className="absolute top-0 left-1/2 w-[1.5px] h-1/2 bg-[rgba(255,220,70,0.45)] origin-bottom z-10" style={{ transform: `translateX(-50%) rotate(${deg}deg)` }}></div>
+                    <div key={`line-${i}`} className="absolute top-0 left-1/2 w-[1.5px] h-1/2 bg-[rgba(252,219,0,0.3)] origin-bottom z-10" style={{ transform: `translateX(-50%) rotate(${deg}deg)` }}></div>
                 ))}
                 {ROULETTE_PRIZES.map((prize, idx) => {
                   const angle = 60 * idx; 
@@ -1238,7 +1161,9 @@ export default function Home() {
                   );
                 })}
               </div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 md:w-20 md:h-20 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.8)] z-30 pointer-events-none border-[1.5px] border-[#cca300] bg-[#050505] flex items-center justify-center overflow-hidden"></div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 md:w-20 md:h-20 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.8)] z-30 pointer-events-none border-[1.5px] border-[#fcdb00] bg-[#050505] flex items-center justify-center overflow-hidden">
+                <i className="fas fa-gift text-[#fcdb00] hidden md:block text-2xl"></i>
+              </div>
               <img src="https://i.ibb.co/G4f7mmwn/converted.png" className="absolute top-[-60px] left-1/3 -translate-x-1/6 w-[87px] h-auto z-50 drop-shadow-[20px_20px_20px_rgba(0,0,0,0.7)] pointer-events-none" alt="Puntero Dedo" />
             </div>
             <div className="relative w-full z-30 group active:scale-[0.98] transition-transform">
@@ -1247,9 +1172,8 @@ export default function Home() {
                         <i className="fab fa-google text-[#fcdb00]"></i> INICIAR SESIÓN PARA GIRAR
                     </button>
                 ) : (
-                    <button onClick={handleSpinRoulette} disabled={isSpinning} className={`w-full py-4 md:py-5 rounded-2xl font-bebas text-3xl md:text-4xl uppercase tracking-wider flex items-center justify-center gap-3 relative overflow-hidden transition-all duration-300 ${isSpinning ? 'bg-gray-800 text-gray-500 cursor-not-allowed shadow-none' : 'bg-gradient-to-b from-[#ffea60] to-[#dfb411] text-[#111111] shadow-[0_8px_0_#9a7b0a,0_20px_40px_rgba(0,0,0,0.5),inset_0_2px_3px_rgba(255,255,255,0.6)] hover:brightness-110 active:translate-y-[8px] active:shadow-[0_0px_0_#9a7b0a,0_0px_0_rgba(0,0,0,0)]'}`}>
-                        {!isSpinning && ( <div className="absolute top-0 left-0 w-[60px] h-full animate-shimmer-sweep bg-white/50 blur-[6px] pointer-events-none"></div> )}
-                        {isSpinning ? <><i className="fas fa-circle-notch fa-spin text-2xl"></i> Girando...</> : '¡PROBA SUERTE!'}
+                    <button onClick={handleSpinRoulette} disabled={isSpinning} className={`w-full py-4 md:py-5 rounded-2xl font-bebas text-3xl md:text-4xl uppercase tracking-wider flex items-center justify-center gap-3 relative overflow-hidden transition-all duration-300 ${isSpinning ? 'bg-gray-800 text-gray-500 cursor-not-allowed shadow-none' : 'bg-[#fcdb00] text-[#111111] shadow-[0_8px_0_#b8952a,0_15px_30px_rgba(252,219,0,0.3)] hover:brightness-110 active:translate-y-[8px] active:shadow-[0_0px_0_#b8952a,0_0px_0_rgba(0,0,0,0)]'}`}>
+                        {isSpinning ? <><i className="fas fa-circle-notch fa-spin text-2xl"></i> Girando...</> : '¡PROBÁ SUERTE!'}
                     </button>
                 )}
             </div>
@@ -1308,6 +1232,49 @@ export default function Home() {
                      )
                  })
              )}
+
+             {/* --- SECCIÓN 028 COMMUNITY (ESTÁTICA POR AHORA PARA QUE PRUEBES) --- */}
+             <section className="mt-20 mb-20 reveal-on-scroll">
+               <div className="mb-8 flex justify-between items-end pl-2 border-b-2 border-[#f2f2f2] pb-3">
+                 <div>
+                   <h2 className="text-4xl md:text-6xl font-bebas text-[#111111] tracking-wide uppercase">
+                       028 <span className="text-[#fcdb00] drop-shadow-sm">COMMUNITY</span>
+                   </h2>
+                   <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Nuestros productos en acción</p>
+                 </div>
+               </div>
+
+               <div className="flex gap-4 overflow-x-auto no-scrollbar pb-8 snap-x mask-image-gradient pr-8">
+                 {/* Reemplazá este link con el tuyo de Cloudinary cuando lo tengas listo */}
+                 <div className="snap-start relative flex-shrink-0 w-[240px] h-[400px] md:w-[280px] md:h-[480px] rounded-[2.5rem] overflow-hidden border-2 border-white shadow-xl group cursor-pointer bg-[#111111]">
+                   <video 
+                     src="https://res.cloudinary.com/demo/video/upload/v1355483256/dog.mp4" 
+                     autoPlay loop muted playsInline 
+                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                   />
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
+                   <div className="absolute bottom-6 left-6 pointer-events-none">
+                     <p className="text-[#fcdb00] font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1.5"><i className="fas fa-play-circle text-[11px]"></i> Review</p>
+                     <p className="text-white font-bebas text-2xl tracking-wide leading-none">@cliente_028</p>
+                   </div>
+                 </div>
+
+                 {/* Otro video de prueba */}
+                 <div className="snap-start relative flex-shrink-0 w-[240px] h-[400px] md:w-[280px] md:h-[480px] rounded-[2.5rem] overflow-hidden border-2 border-white shadow-xl group cursor-pointer bg-[#111111]">
+                   <video 
+                     src="https://res.cloudinary.com/demo/video/upload/v1355483256/dog.mp4" 
+                     autoPlay loop muted playsInline 
+                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                   />
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
+                   <div className="absolute bottom-6 left-6 pointer-events-none">
+                     <p className="text-[#fcdb00] font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1.5"><i className="fas fa-fire text-[11px]"></i> Unboxing</p>
+                     <p className="text-white font-bebas text-2xl tracking-wide leading-none">@staff_028</p>
+                   </div>
+                 </div>
+               </div>
+             </section>
+
           </main>
         </>
       ) : currentView === 'catalog' ? (
@@ -1412,16 +1379,11 @@ export default function Home() {
           </div>
       )}
 
-      {/* --- DRAWER DEL CARRITO (BLINDADO ANTI-INSTAGRAM Y ANTI-TECLADO iOS) --- */}
+      {/* --- DRAWER DEL CARRITO --- */}
       {isCartOpen && (
           <div className="fixed inset-0 z-[120] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4">
-              {/* Fondo oscuro para cerrar */}
               <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} />
-              
-              {/* CAJA PRINCIPAL RÍGIDA: Exactamente 85% de alto (dinámico), flex column estricto */}
               <div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] max-h-[85dvh] h-full flex flex-col overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-300">
-                  
-                  {/* HEADER (Fijo arriba, no se achica) */}
                   <div className="p-5 md:p-6 border-b border-gray-300 flex justify-between items-center bg-white flex-shrink-0 z-10 shadow-sm">
                       <div>
                           <h2 className="text-3xl md:text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2>
@@ -1429,8 +1391,6 @@ export default function Home() {
                       </div>
                       <button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-[#f2f2f2] rounded-full text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex items-center justify-center shadow-sm border border-gray-200"><i className="fas fa-times text-lg"></i></button>
                   </div>
-                  
-                  {/* CUERPO (Acá es donde el usuario hace scroll, se estira para llenar el espacio medio) */}
                   <div className="flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar relative">
                       <div className="space-y-3 mb-4">
                           {cart.length === 0 && (
@@ -1503,7 +1463,7 @@ export default function Home() {
                                   <div className="flex items-center gap-4">
                                       <i className="fas fa-gift text-2xl"></i>
                                       <div className="flex flex-col">
-                                          <span className="font-bold text-[10px] uppercase text-white">Premio Hot Sale</span>
+                                          <span className="font-bold text-[10px] uppercase text-white">Premio Ruleta</span>
                                           <span className="font-bebas text-xl block leading-none mt-1">{localRoulettePrize.text}</span>
                                       </div>
                                   </div>
@@ -1612,7 +1572,7 @@ export default function Home() {
                       )}
                   </div>
 
-                  {/* FOOTER (Fijo abajo, NO se empuja por el scroll ni desaparece por la barra) */}
+                  {/* FOOTER DEL CARRITO */}
                   {cart.length > 0 && (
                       <div className="bg-white border-t border-gray-200 flex-shrink-0 z-20 pb-8 md:pb-6 pt-5 px-5 md:px-6 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
                           <div className="flex justify-between items-end mb-4">
@@ -1628,7 +1588,7 @@ export default function Home() {
           </div>
       )}
 
-      {/* --- BOTONES FLOTANTES INDEPENDIENTES (Se esconden si el carrito se abre) --- */}
+      {/* --- BOTONES FLOTANTES INDEPENDIENTES (Sin estética Hot Sale) --- */}
       {!isCartOpen && !showRouletteModal && !selectedProduct && (
         <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[100] flex flex-col items-end gap-3 group">
           <div className={`bg-white text-[#111111] p-3 md:p-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] border border-gray-200 max-w-[180px] md:max-w-[200px] text-center transform transition-all duration-700 ease-out origin-bottom-right relative ${showTooltip ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-90 group-hover:translate-y-0 group-hover:opacity-100 group-hover:scale-100'}`}>
@@ -1636,13 +1596,22 @@ export default function Home() {
             <div className="absolute bottom-[-6px] right-6 w-3 h-3 md:w-4 md:h-4 bg-white transform rotate-45 border-r border-b border-gray-200"></div>
           </div>
           
-          <button onClick={() => { if (!user || user.isAnonymous) { showToast("⚠️ Iniciá sesión para poder girar"); handleGoogleLogin(); return; } if (hasSpunLocal) { if (localRoulettePrize) setWonPrizeData(localRoulettePrize); setShowResultModal(true); } else { setShowRouletteModal(true); } }} className="pointer-events-auto w-24 md:w-36 h-auto hover:scale-105 transition-transform duration-300 drop-shadow-[0_5px_15px_rgba(252,219,0,0.3)] focus:outline-none origin-bottom-right md:translate-x-[20px] md:-translate-y-[10px]">
-             <img src="https://i.ibb.co/whtCF6j3/Dise-o-sin-t-tulo-11.png" className="w-full h-auto object-contain" alt="Hot Sale" />
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+                onClick={() => { 
+                    if (!user || user.isAnonymous) { showToast("⚠️ Iniciá sesión para poder girar"); handleGoogleLogin(); return; } 
+                    if (hasSpunLocal) { if (localRoulettePrize) setWonPrizeData(localRoulettePrize); setShowResultModal(true); } 
+                    else { setShowRouletteModal(true); } 
+                }} 
+                className="w-14 h-14 md:w-16 md:h-16 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] text-2xl shadow-[0_10px_30px_rgba(17,17,17,0.4)] hover:scale-110 hover:bg-[#fcdb00] hover:text-[#111111] transition-all duration-300 border border-[#fcdb00]/30"
+            >
+                <i className="fas fa-gift"></i>
+            </button>
 
-          <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noopener noreferrer" className="pointer-events-auto w-14 h-14 md:w-16 md:h-16 bg-[#25D366] rounded-full flex items-center justify-center text-white text-3xl shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform duration-300 origin-bottom-right md:translate-x-[5px]">
-            <i className="fab fa-whatsapp"></i>
-          </a>
+            <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noopener noreferrer" className="w-14 h-14 md:w-16 md:h-16 bg-[#25D366] rounded-full flex items-center justify-center text-white text-3xl shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform duration-300">
+              <i className="fab fa-whatsapp"></i>
+            </a>
+          </div>
         </div>
       )}
 
