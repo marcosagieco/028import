@@ -35,15 +35,6 @@ const DEPT_ICONS = [
   { id: 'fa-box', prefix: 'fas' }, { id: 'fa-wind', prefix: 'fas' }, { id: 'fa-leaf', prefix: 'fas' }, { id: 'fa-microchip', prefix: 'fas' }, { id: 'fa-star', prefix: 'fas' }, { id: 'fa-fire', prefix: 'fas' }, { id: 'fa-apple', prefix: 'fab' }, { id: 'fa-mobile-alt', prefix: 'fas' }, { id: 'fa-laptop', prefix: 'fas' }, { id: 'fa-gamepad', prefix: 'fas' }, { id: 'fa-headphones', prefix: 'fas' }, { id: 'fa-gem', prefix: 'fas' }, { id: 'fa-tag', prefix: 'fas' }, { id: 'fa-cannabis', prefix: 'fas' }, { id: 'fa-smoking', prefix: 'fas' }
 ];
 
-const ROULETTE_PRIZES = [
-  { id: 'off5', text: '5% OFF x MES', prob: 0.28, type: 'percent', value: 5, textC: '#fcdb00', description: '¡Activado! Tenés un 5% OFF extra y automático en CADA compra.' }, 
-  { id: 'off10', text: '10% OFF', prob: 0.26, type: 'percent', value: 10, textC: '#fcdb00', description: '¡Felicidades! Ganaste un 10% de descuento DIRECTO en tu carrito para usar YA.' }, 
-  { id: 'off15', text: ' 15% +30K COMPRA', prob: 0.20, type: 'percent', value: 15, textC: '#fcdb00', description: '¡Activado! Llená tu carrito hasta $30.000 o más y te regalamos un 15% OFF en el TOTAL.' }, 
-  { id: 'labubu', text: 'LABUBU GRATIS', prob: 0.14, type: 'none', value: 0, textC: '#fcdb00', description: '¡Increíble! Te enviamos un muñeco/llavero Labubu de regalo totalmente gratis.' }, 
-  { id: 'off20', text: '2DO VAPE -20%', prob: 0.09, type: 'percent', value: 20, textC: '#fcdb00', description: '¡Oferta activada! Llevate 2 Vapes y el segundo tiene un 20% OFF automático.' }, 
-  { id: 'sorpresa', text: '🎁 SORPRESA', prob: 0.03, type: 'sorpresa', value: 0, textC: '#fcdb00', description: '¡NO LO PUEDO CREER! Te ganaste EL PREMIO GORDO: Un Vaso Stanley 100% GRATIS superando los $60.000.' }, 
-];
-
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante.", cardSize: "normal" },
   { id: 2, name: "BLUE RAZZ ICE", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/s2Tmw67w/BLUE-RAZZ-ICE.webp", description: "El clásico e intenso sabor a frambuesa azul combinado con un golpe helado perfecto.", cardSize: "normal" },
@@ -266,7 +257,6 @@ export default function Home() {
   const [address, setAddress] = useState('');
   const [zone, setZone] = useState('');
   const [aptDetails, setAptDetails] = useState(''); 
-  const [showTooltip, setShowTooltip] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showShippingCalculatorModal, setShowShippingCalculatorModal] = useState(false);
   
@@ -283,15 +273,6 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const [upsellsList, setUpsellsList] = useState([]);
-
-  const [showRouletteModal, setShowRouletteModal] = useState(false);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [rouletteRotation, setRouletteRotation] = useState(-30);
-  const [showResultModal, setShowResultModal] = useState(false);
-  const [wonPrizeData, setWonPrizeData] = useState(null);
-  
-  const [localRoulettePrize, setLocalRoulettePrize] = useState(null);
-  const [hasSpunLocal, setHasSpunLocal] = useState(false);
 
   const next7Days = useMemo(() => {
     const days = [];
@@ -330,27 +311,6 @@ export default function Home() {
       const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
       return { auth: getAuth(app), db: getFirestore(app) };
     } catch (error) { return { auth: null, db: null }; }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-        const savedPrize = localStorage.getItem('hotSalePrize');
-        const pendingPrize = localStorage.getItem('pendingPrize');
-        const hasSpun = localStorage.getItem('hotSaleSpun');
-        
-        if (savedPrize) setLocalRoulettePrize(JSON.parse(savedPrize));
-        if (pendingPrize) setWonPrizeData(JSON.parse(pendingPrize)); 
-
-        if (hasSpun === 'true') {
-            setHasSpunLocal(true);
-        }
-    }
-  }, []);
-
-  useEffect(() => {
-    const showTimer = setTimeout(() => setShowTooltip(true), 2500);
-    const hideTimer = setTimeout(() => setShowTooltip(false), 9000);
-    return () => { clearTimeout(showTimer); clearTimeout(hideTimer); };
   }, []);
 
   useEffect(() => {
@@ -432,15 +392,6 @@ export default function Home() {
       return () => unsubscribe();
   }, [user, firebaseRefs.db]);
 
-  const claimPrize = (prize) => {
-    localStorage.removeItem('pendingPrize'); 
-    localStorage.setItem('hotSalePrize', JSON.stringify(prize));
-    setLocalRoulettePrize(prize);
-    setShowResultModal(false);
-    showToast(`¡PREMIO RECLAMADO! 🎉 ${prize.text}`);
-    fireConfetti();
-  };
-
   const handleGoogleLogin = async () => {
       if (!firebaseRefs.auth || !firebaseRefs.db) return;
       try {
@@ -453,85 +404,7 @@ export default function Home() {
               await setDoc(userRef, { name: u.displayName, email: u.email, photoURL: u.photoURL, createdAt: serverTimestamp() });
           }
           showToast("¡Sesión iniciada con éxito! 🎉");
-          
-          const pending = localStorage.getItem('pendingPrize');
-          if (pending) {
-              claimPrize(JSON.parse(pending));
-          } else if (wonPrizeData && !localRoulettePrize) {
-              claimPrize(wonPrizeData);
-          }
       } catch (error) { console.error(error); showToast("Error al iniciar con Google"); }
-  };
-  const fireConfetti = () => {
-    if (typeof window !== 'undefined' && window.confetti) {
-      const defaults = { origin: { y: 0.7 }, colors: ['#fcdb00', '#ffffff', '#111111', '#eab308'], zIndex: 9999, gravity: 0.5, scalar: 1.1, ticks: 200 };
-      window.confetti({ ...defaults, particleCount: 120, spread: 100, startVelocity: 35 });
-      setTimeout(() => { window.confetti({ ...defaults, particleCount: 60, spread: 120, startVelocity: 25 }); }, 150);
-    }
-  };
-
-  const handleSpinRoulette = async () => {
-      if (!user || user.isAnonymous) {
-          showToast("⚠️ Iniciá sesión para poder girar");
-          handleGoogleLogin();
-          return;
-      }
-
-      if (isSpinning) return;
-      
-      if (hasSpunLocal) {
-        showToast("¡Ya utilizaste tu tiro de la ruleta!");
-        return;
-      }
-      
-      setIsSpinning(true);
-      const rand = Math.random();
-      let sum = 0;
-      let wonPrize = ROULETTE_PRIZES[0];
-      
-      for (let p of ROULETTE_PRIZES) {
-          sum += p.prob;
-          if (rand <= sum) { wonPrize = p; break; }
-      }
-
-      const extraSpins = 5 * 360; 
-      const prizeIndex = ROULETTE_PRIZES.findIndex(p => p.id === wonPrize.id);
-      const sliceAngle = 360 / ROULETTE_PRIZES.length; 
-      const targetRotation = extraSpins + (360 - (prizeIndex * sliceAngle)) - (sliceAngle / 2);
-      
-      setRouletteRotation(-30 + targetRotation);
-
-      setTimeout(async () => {
-          setIsSpinning(false);
-          setWonPrizeData(wonPrize);
-          setShowRouletteModal(false); 
-          setShowResultModal(true);    
-          
-          localStorage.setItem('hotSaleSpun', 'true');
-          localStorage.setItem('pendingPrize', JSON.stringify(wonPrize));
-          setHasSpunLocal(true);
-
-          if (firebaseRefs.db && user) {
-            try {
-              await addDoc(collection(firebaseRefs.db, 'spins'), {
-                userId: user.uid,
-                userName: dbUser?.name || user.displayName || 'Anónimo',
-                userEmail: user.email || '',
-                prizeId: wonPrize.id,
-                prizeText: wonPrize.text,
-                createdAt: serverTimestamp()
-              });
-              
-              await setDoc(doc(firebaseRefs.db, 'users', user.uid), {
-                hasSpun: true,
-                wonPrize: wonPrize.text
-              }, { merge: true });
-
-            } catch (error) {
-              console.error("Error al guardar el tiro:", error);
-            }
-          }
-      }, 4000);
   };
 
   const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
@@ -543,32 +416,7 @@ export default function Home() {
   
   const calculateTotal = (cartData = cart) => {
       let subtotal = cartData.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
-      let discountAmount = 0;
-
-      if (localRoulettePrize) {
-          const totalItems = cartData.reduce((acc, item) => acc + item.qty, 0);
-
-          if (localRoulettePrize.id === 'off20') {
-              if (totalItems >= 2) {
-                  let minPrice = Infinity;
-                  cartData.forEach(item => { 
-                    const price = item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item); 
-                    if (price < minPrice) minPrice = price; 
-                  });
-                  discountAmount = minPrice * (localRoulettePrize.value / 100);
-              }
-          } else if (localRoulettePrize.id === 'off15') {
-              if (subtotal >= 30000) {
-                  discountAmount = subtotal * (localRoulettePrize.value / 100);
-              }
-          } else if (localRoulettePrize.type === 'percent') {
-              discountAmount = subtotal * (localRoulettePrize.value / 100);
-          }
-          subtotal -= discountAmount;
-      }
-
       let envio = (deliveryMethod === 'envio' && shippingType === 'moto') ? shippingCost : 0;
-      if (localRoulettePrize && localRoulettePrize.type === 'shipping' && deliveryMethod === 'envio' && shippingType === 'moto') { envio = 0; }
       return subtotal + envio;
   };
 
@@ -656,40 +504,10 @@ export default function Home() {
             msg += `- ${i.qty}x ${i.name} ($${formatPrice(price)} c/u)\n`; 
         }
     });
-    
-    let subtotalFinal = subtotalCalc;
 
-    if (localRoulettePrize) {
-        const totalItems = currentCart.reduce((acc, item) => acc + item.qty, 0);
-        
-        if (localRoulettePrize.id === 'off20') {
-            if (totalItems >= 2) {
-                msg += `\n🎁 *PROMO RULETA:* 20% OFF en 2do Vape aplicado.\n`;
-            }
-        } else if (localRoulettePrize.id === 'off15') {
-            if (subtotalCalc >= 30000) {
-                msg += `\n🎁 *PROMO RULETA:* 15% OFF (Superó $30.000) aplicado.\n`;
-            }
-        } else if (localRoulettePrize.type === 'percent') {
-            msg += `\n🎰 *PROMO RULETA:* ${localRoulettePrize.text} aplicado al total.\n`;
-        } else if (localRoulettePrize.type === 'shipping') {
-            msg += `\n🔥 *PROMO RULETA:* ¡ENVÍO GRATIS GANADO! 🔥\n`;
-        } else if (localRoulettePrize.id === 'sorpresa') {
-            if (subtotalCalc >= 60000) {
-                msg += `\n🎁 *PROMO RULETA:* ¡PREMIO SORPRESA! (Vaso Stanley ganado por compra +$60k)\n`;
-            }
-        } else if (localRoulettePrize.id === 'labubu') {
-            msg += `\n🎁 *PROMO RULETA:* ¡LABUBU GRATIS EN TU COMPRA!\n`;
-        }
-    }
-
-    msg += `\n*Subtotal:* ${CONFIG.currencySymbol}${formatPrice(subtotalFinal)}`;
+    msg += `\n*Subtotal:* ${CONFIG.currencySymbol}${formatPrice(subtotalCalc)}`;
     
     let costoEnvioAgregado = (deliveryMethod === 'envio' && shippingType === 'moto') ? shippingCost : 0;
-    
-    if (localRoulettePrize && localRoulettePrize.type === 'shipping' && deliveryMethod === 'envio' && shippingType === 'moto') {
-        costoEnvioAgregado = 0;
-    }
     
     if (costoEnvioAgregado > 0) {
         msg += `\n*Costo de Envío (Moto):* ${CONFIG.currencySymbol}${formatPrice(costoEnvioAgregado)}`;
@@ -744,7 +562,6 @@ export default function Home() {
                 deliveryDate: deliveryMethod === 'envio' && shippingType === 'moto' ? deliveryDate : null,
                 deliveryTime: deliveryMethod === 'envio' && shippingType === 'moto' ? deliveryTime : null,
                 shippingCost: costoEnvioAgregado,
-                couponUsed: localRoulettePrize ? localRoulettePrize.text : null,
                 status: (deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'transferencia') ? 'pending_verification' : 'pending', 
                 createdAt: serverTimestamp() 
             }).catch(e => console.error(e)); 
@@ -763,8 +580,6 @@ export default function Home() {
     navigator.clipboard.writeText(CONFIG.paymentAlias);
     showToast("✅ ALIAS copiado al portapapeles");
   };
-
-  // --- ACÁ EMPIEZA LA PARTE 2 QUE TE MANDO EN EL PRÓXIMO MENSAJE ---
   const renderProductCard = (p, index, isVidriera = false, layout = 'horizontal') => {
     const inCart = cart.find(i => i.id === p.id);
     const isOutOfStock = p.inStock === false;
@@ -940,6 +755,7 @@ export default function Home() {
         </div>
     );
   };
+
   return (
     <div className="bg-[#f2f2f2] text-[#111111] font-poppins flex flex-col relative pb-20 md:pb-0 min-h-screen selection:bg-[#fcdb00] selection:text-[#111111]">
       <style dangerouslySetInnerHTML={{__html: `
@@ -956,27 +772,6 @@ export default function Home() {
           opacity: 1;
           transform: translateY(0);
         }
-        @keyframes marquee {
-          0% { transform: translate3d(0, 0, 0); }
-          100% { transform: translate3d(-50%, 0, 0); }
-        }
-        .animate-marquee {
-          display: flex;
-          width: max-content;
-          animation: marquee 85s linear infinite;
-          will-change: transform;
-        }
-
-        /* --- ANIMACIÓN SHIMMER MEJORADA --- */
-        @keyframes shimmerFull {
-          0% { transform: translateX(-200px) skewX(-20deg); }
-          100% { transform: translateX(500px) skewX(-20deg); }
-        }
-        .animate-shimmer-sweep {
-          animation: shimmerFull 3s infinite linear;
-        }
-
-        /* --- SOLUCIÓN AL ZOOM MOLESTO EN CELULARES --- */
         @media screen and (max-width: 768px) {
           input, select, textarea {
             font-size: 16px !important;
@@ -984,7 +779,7 @@ export default function Home() {
         }
       `}} />
 
-      {/* --- HEADER PRINCIPAL (NEGRO PURO #050505) --- */}
+      {/* --- HEADER PRINCIPAL --- */}
       <header className="bg-[#050505] text-white h-[72px] sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 shadow-lg border-b border-white/[0.06] transition-all duration-300">
         <div className="flex items-center gap-4">
           <button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#fcdb00] transition-colors p-2 md:hidden">
@@ -1003,23 +798,6 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
-          <button 
-              onClick={() => {
-                if (!user || user.isAnonymous) {
-                    showToast("⚠️ Iniciá sesión para poder girar");
-                    handleGoogleLogin();
-                    return;
-                }
-                if (hasSpunLocal) {
-                    if (localRoulettePrize) { setWonPrizeData(localRoulettePrize); setShowResultModal(true); }
-                    else { showToast("Ya utilizaste tu tiro 🎁"); }
-                } else { setShowRouletteModal(true); }
-              }} 
-              className={`hidden md:flex text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full items-center gap-2 transition-all border ${hasSpunLocal && localRoulettePrize ? 'bg-[#fcdb00] text-[#111111] border-[#fcdb00]' : (hasSpunLocal ? 'bg-white/5 text-gray-500 border-transparent' : 'bg-[#fcdb00] text-[#111111] border-[#fcdb00] hover:bg-white animate-pulse')}`}
-          >
-              <i className="fas fa-gift text-sm"></i> {localRoulettePrize ? 'Mi Premio' : 'Ruleta'}
-          </button>
-          
           <button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#fcdb00] transition-colors">
               <i className="fas fa-shopping-bag text-2xl"></i>
               {getTotalItems() > 0 && (
@@ -1054,17 +832,7 @@ export default function Home() {
       {/* --- MENÚ MÓVIL (3 RAYITAS) --- */}
       {isMenuOpen && (<div className="fixed inset-0 z-[90] flex"><div className="absolute inset-0 bg-[#111111]/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div><div className="w-[85%] max-w-[380px] bg-[#f2f2f2] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden"><div className="p-8 bg-[#111111] flex justify-between items-center text-white border-b border-white/10"><span className="font-bebas text-3xl tracking-wide uppercase">028<span className="text-[#fcdb00]">MENU</span></span><button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times text-lg"></i></button></div><div className="flex-1 overflow-y-auto pb-8"><div className="flex flex-col p-4 space-y-2">
         
-        <div className="md:hidden mb-2">
-            {!user || user.isAnonymous ? (
-                <button onClick={handleGoogleLogin} className="w-full bg-[#111111] text-white p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#fcdb00] hover:text-[#111111] transition-all flex justify-center items-center gap-3"><i className="fab fa-google text-lg"></i> Iniciar sesión con Google</button>
-            ) : (
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-3">
-                    <p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest text-center">Hola, {dbUser?.name?.split(' ')[0] || 'Cliente'}</p>
-                </div>
-            )}
-        </div>
-        
-        <button onClick={() => { setShowShippingCalculatorModal(true); setIsMenuOpen(false); }} className="w-full bg-[#fcdb00] text-[#111111] p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#111111] hover:text-[#fcdb00] transition-all flex justify-center items-center gap-3 mb-2"><i className="fas fa-motorcycle text-lg"></i> Calcular Envío</button>
+        <button onClick={() => { setShowShippingCalculatorModal(true); setIsMenuOpen(false); }} className="w-full bg-[#fcdb00] text-[#111111] p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#111111] hover:text-[#fcdb00] transition-all flex justify-center items-center gap-3 mb-2 mt-2"><i className="fas fa-motorcycle text-lg"></i> Calcular Envío</button>
         
         <button onClick={() => { setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); }} className="text-left p-5 bg-white rounded-2xl shadow-sm border border-[#f2f2f2] font-black uppercase text-sm hover:border-[#fcdb00] hover:shadow-md flex justify-between items-center transition-all">Catálogo Completo <i className="fas fa-arrow-right text-[#fcdb00]"></i></button><div className="pt-6 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Departamentos</p></div>{departments.map(dept => { const isExpanded = expandedDept === dept; const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category))); return (<div key={dept} className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] overflow-hidden transition-all"><button onClick={() => setExpandedDept(isExpanded ? null : dept)} className="w-full text-left p-5 font-black uppercase text-sm flex justify-between items-center transition-colors group">{dept} <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-gray-300 group-hover:text-[#fcdb00] transition-colors`}></i></button><div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="bg-gray-50 flex flex-col pb-4 pt-2 border-t border-gray-100"><button onClick={() => { setActiveFilter({dept, cat: 'all'}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-black text-xs text-[#111111] uppercase hover:text-[#fcdb00] transition-colors flex items-center gap-2"><i className="fas fa-layer-group text-gray-400"></i> Ver todo en {dept}</button>{deptCats.map(cat => (<button key={cat} onClick={() => { setActiveFilter({dept, cat}); navigateTo('catalog'); setTimeout(() => { const target = document.getElementById(slugify(cat)); if(target) target.scrollIntoView({behavior: 'smooth'}); }, 300); }} className="text-left px-6 py-3 font-bold text-xs text-gray-500 uppercase hover:text-[#111111] transition-colors pl-12 relative before:content-[''] before:w-1.5 before:h-1.5 before:bg-gray-300 before:rounded-full before:absolute before:left-7 before:top-1/2 before:-translate-y-1/2 hover:before:bg-[#fcdb00]">{cat}</button>))}</div></div></div>); })}
         
@@ -1085,104 +853,6 @@ export default function Home() {
         </div>
 
         </div></div></div></div>)}
-
-      {/* --- MODAL NOTIFICACIÓN CENTRAL DE PREMIO --- */}
-      {showResultModal && wonPrizeData && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#111111]/95 backdrop-blur-xl" onClick={() => localRoulettePrize && setShowResultModal(false)}></div>
-          <div className="relative bg-[#111111] p-8 md:p-10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-[#cca300]/50 text-center max-w-sm w-full animate-in zoom-in-95 duration-500 flex flex-col items-center overflow-hidden">
-             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#cca300]/20 via-transparent to-transparent pointer-events-none"></div>
-             <div className="text-6xl mb-4 drop-shadow-[0_0_15px_rgba(252,219,0,0.5)] relative z-10">
-                {wonPrizeData.id === 'sorpresa' ? '🏆' : (wonPrizeData.id === 'labubu' ? '🎁' : '✨')}
-             </div>
-             <h3 className="font-bebas text-4xl md:text-5xl uppercase mb-4 text-white relative z-10 tracking-wide">
-                 ¡Felicidades!
-             </h3>
-             <div className="bg-[#1a1a1a] text-[#fcdb00] px-6 py-4 rounded-xl border border-[#cca300]/40 shadow-[inset_0_2px_10px_rgba(0,0,0,0.8)] mb-6 w-full relative overflow-hidden z-10">
-               <div className="absolute top-0 left-[-100%] w-[50%] h-full bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-[-20deg] animate-[shimmerFull_3s_infinite_linear]"></div>
-               <span className="font-bebas text-3xl tracking-wider block drop-shadow-md">{wonPrizeData.text}</span>
-             </div>
-             <div className="relative z-10 font-poppins mb-6">
-                 <p className="text-sm md:text-base font-medium text-gray-300 leading-relaxed px-2">
-                    {wonPrizeData.description}
-                 </p>
-             </div>
-             <button onClick={() => claimPrize(wonPrizeData)} className="w-full bg-gradient-to-b from-[#ffea60] to-[#dfb411] text-[#111111] py-4 rounded-xl font-bebas text-2xl uppercase tracking-wider shadow-[0_6px_0_#9a7b0a,0_10px_20px_rgba(0,0,0,0.5)] active:translate-y-[6px] active:shadow-[0_0px_0_#9a7b0a,0_0px_0_rgba(0,0,0,0)] transition-all relative z-10">
-               {localRoulettePrize ? 'Cerrar' : 'Reclamar Premio'}
-             </button>
-             <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-5 font-bold relative z-10 font-poppins">
-                {wonPrizeData.id === 'off5' ? 'VÁLIDO POR 30 DÍAS' : 'PROMO VÁLIDA PARA TU PRÓXIMA COMPRA'}
-             </p>
-          </div>
-        </div>
-      )}
-
-      {/* --- MODAL RULETA ESTÁNDAR 028 --- */}
-      {showRouletteModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-500" onClick={() => !isSpinning && setShowRouletteModal(false)}></div>
-          <div className="relative w-full max-w-[480px] rounded-[2.5rem] bg-[#111111] border-[0.5px] border-white/20 shadow-2xl p-8 flex flex-col items-center animate-in zoom-in-95 duration-500 overflow-hidden">
-            {!isSpinning && (
-                <button onClick={() => setShowRouletteModal(false)} className="absolute top-5 right-5 w-11 h-11 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center hover:bg-white/15 transition-all z-30 text-gray-500 hover:text-white shadow-xl">
-                    <i className="fas fa-times text-lg"></i>
-                </button>
-            )}
-            
-            <div className="relative z-30 w-full flex flex-col items-center justify-center mb-6 mt-2">
-              <h2 className="text-4xl font-bebas text-white uppercase tracking-widest drop-shadow-lg text-center leading-none">
-                  RULETA <span className="text-[#fcdb00]">028</span>
-              </h2>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Girala y ganá premios</p>
-            </div>
-            
-            <div className="relative w-75 h-75 md:w-84 md:h-84 mb-4 z-20 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full shadow-[0_0_40px_rgba(252,219,0,0.15)] pointer-events-none z-0"></div>
-              <div className="w-full h-full rounded-full relative overflow-hidden border-[2px] border-[rgba(252,219,0,0.2)] shadow-[inset_0_0_30px_rgba(0,0,0,0.6)] z-10"
-                style={{ 
-                  background: 'conic-gradient(#111111 0deg 60deg, #1a1a1a 60deg 120deg, #111111 120deg 180deg, #1a1a1a 180deg 240deg, #111111 240deg 300deg, #050505 300deg 360deg)',
-                  transform: `rotate(${rouletteRotation}deg)`, 
-                  transition: isSpinning ? 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none',
-                }}
-              >
-                <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.05)_0%,transparent_70%)] pointer-events-none z-0"></div>
-                {[0, 60, 120, 180, 240, 300].map((deg, i) => (
-                    <div key={`line-${i}`} className="absolute top-0 left-1/2 w-[1.5px] h-1/2 bg-[rgba(252,219,0,0.3)] origin-bottom z-10" style={{ transform: `translateX(-50%) rotate(${deg}deg)` }}></div>
-                ))}
-                {ROULETTE_PRIZES.map((prize, idx) => {
-                  const angle = 60 * idx; 
-                  return (
-                    <div key={idx} className="absolute inset-0 z-20" style={{ transform: `rotate(${angle + 30}deg)` }}>
-                      <div className="absolute top-0 left-0 right-0 h-1/2 flex items-start justify-center pt-5 md:pt-6">
-                        <span className={`font-bebas font-bold uppercase whitespace-nowrap text-center text-[#fcdb00] drop-shadow-md ${prize.text.length > 15 ? 'text-[13px] md:text-[15px] tracking-normal' : 'text-[15px] md:text-[17px] tracking-wider'}`} style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                          {prize.text}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 md:w-20 md:h-20 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.8)] z-30 pointer-events-none border-[1.5px] border-[#fcdb00] bg-[#050505] flex items-center justify-center overflow-hidden">
-                <i className="fas fa-gift text-[#fcdb00] hidden md:block text-2xl"></i>
-              </div>
-              <img src="https://i.ibb.co/G4f7mmwn/converted.png" className="absolute top-[-60px] left-1/3 -translate-x-1/6 w-[87px] h-auto z-50 drop-shadow-[20px_20px_20px_rgba(0,0,0,0.7)] pointer-events-none" alt="Puntero Dedo" />
-            </div>
-            <div className="relative w-full z-30 group active:scale-[0.98] transition-transform">
-                {(!user || user.isAnonymous) ? (
-                    <button onClick={handleGoogleLogin} className="w-full py-4 md:py-5 rounded-2xl font-bebas text-2xl md:text-3xl uppercase tracking-wider flex items-center justify-center gap-3 relative overflow-hidden transition-all duration-300 bg-[#1a1a1a] text-white border border-[#333] shadow-[0_8px_0_#0a0a0a] active:translate-y-[8px] active:shadow-[0_0px_0_#0a0a0a]">
-                        <i className="fab fa-google text-[#fcdb00]"></i> INICIAR SESIÓN PARA GIRAR
-                    </button>
-                ) : (
-                    <button onClick={handleSpinRoulette} disabled={isSpinning} className={`w-full py-4 md:py-5 rounded-2xl font-bebas text-3xl md:text-4xl uppercase tracking-wider flex items-center justify-center gap-3 relative overflow-hidden transition-all duration-300 ${isSpinning ? 'bg-gray-800 text-gray-500 cursor-not-allowed shadow-none' : 'bg-[#fcdb00] text-[#111111] shadow-[0_8px_0_#b8952a,0_15px_30px_rgba(252,219,0,0.3)] hover:brightness-110 active:translate-y-[8px] active:shadow-[0_0px_0_#b8952a,0_0px_0_rgba(0,0,0,0)]'}`}>
-                        {isSpinning ? <><i className="fas fa-circle-notch fa-spin text-2xl"></i> Girando...</> : '¡PROBÁ SUERTE!'}
-                    </button>
-                )}
-            </div>
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mt-5 text-center font-poppins relative z-30 opacity-80">
-                1 giro por cliente • premios limitados
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* --- INICIO CONTENIDO --- */}
       {currentView === 'home' ? (
@@ -1212,7 +882,6 @@ export default function Home() {
              {homeSections.length === 0 ? (
                  <div className="text-center py-20">
                      <div className="w-12 h-12 border-4 border-[#f2f2f2] border-t-[#fcdb00] rounded-full animate-spin mx-auto mb-4"></div>
-                     <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest font-poppins"></p>
                  </div>
              ) : (
                  homeSections.map((sec, sectionIndex) => {
@@ -1233,7 +902,7 @@ export default function Home() {
                  })
              )}
 
-             {/* --- SECCIÓN 028 COMMUNITY (ESTÁTICA POR AHORA PARA QUE PRUEBES) --- */}
+             {/* --- SECCIÓN 028 COMMUNITY CON CLOUDINARY --- */}
              <section className="mt-20 mb-20 reveal-on-scroll">
                <div className="mb-8 flex justify-between items-end pl-2 border-b-2 border-[#f2f2f2] pb-3">
                  <div>
@@ -1245,8 +914,8 @@ export default function Home() {
                </div>
 
                <div className="flex gap-4 overflow-x-auto no-scrollbar pb-8 snap-x mask-image-gradient pr-8">
-                 {/* Reemplazá este link con el tuyo de Cloudinary cuando lo tengas listo */}
-                 <div className="snap-start relative flex-shrink-0 w-[240px] h-[400px] md:w-[280px] md:h-[480px] rounded-[2.5rem] overflow-hidden border-2 border-white shadow-xl group cursor-pointer bg-[#111111]">
+                 {/* Reemplazá este link de Cloudinary con el tuyo de verdad cuando lo tengas */}
+                 <div className="snap-start relative flex-shrink-0 w-[240px] h-[400px] md:w-[280px] md:h-[480px] rounded-[2.5rem] overflow-hidden border border-gray-200 shadow-xl group cursor-pointer bg-[#111111]">
                    <video 
                      src="https://res.cloudinary.com/demo/video/upload/v1355483256/dog.mp4" 
                      autoPlay loop muted playsInline 
@@ -1259,8 +928,7 @@ export default function Home() {
                    </div>
                  </div>
 
-                 {/* Otro video de prueba */}
-                 <div className="snap-start relative flex-shrink-0 w-[240px] h-[400px] md:w-[280px] md:h-[480px] rounded-[2.5rem] overflow-hidden border-2 border-white shadow-xl group cursor-pointer bg-[#111111]">
+                 <div className="snap-start relative flex-shrink-0 w-[240px] h-[400px] md:w-[280px] md:h-[480px] rounded-[2.5rem] overflow-hidden border border-gray-200 shadow-xl group cursor-pointer bg-[#111111]">
                    <video 
                      src="https://res.cloudinary.com/demo/video/upload/v1355483256/dog.mp4" 
                      autoPlay loop muted playsInline 
@@ -1458,18 +1126,6 @@ export default function Home() {
                       {/* FORMULARIOS */}
                       {cart.length > 0 && (
                           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-                              {localRoulettePrize && localRoulettePrize.type !== 'none' && (
-                                <div className="bg-[#111111] text-[#fcdb00] p-4 rounded-xl flex items-center justify-between border border-[#fcdb00]/30 shadow-md">
-                                  <div className="flex items-center gap-4">
-                                      <i className="fas fa-gift text-2xl"></i>
-                                      <div className="flex flex-col">
-                                          <span className="font-bold text-[10px] uppercase text-white">Premio Ruleta</span>
-                                          <span className="font-bebas text-xl block leading-none mt-1">{localRoulettePrize.text}</span>
-                                      </div>
-                                  </div>
-                                  <i className="fas fa-check-circle text-2xl text-[#25D366]"></i>
-                                </div>
-                              )}
                               
                               <div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
                                   <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-user-circle text-[#fcdb00] text-xl"></i> Tus Datos</p>
@@ -1589,29 +1245,16 @@ export default function Home() {
       )}
 
       {/* --- BOTONES FLOTANTES INDEPENDIENTES (Sin estética Hot Sale) --- */}
-      {!isCartOpen && !showRouletteModal && !selectedProduct && (
+      {!isCartOpen && !selectedProduct && (
         <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[100] flex flex-col items-end gap-3 group">
           <div className={`bg-white text-[#111111] p-3 md:p-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] border border-gray-200 max-w-[180px] md:max-w-[200px] text-center transform transition-all duration-700 ease-out origin-bottom-right relative ${showTooltip ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-90 group-hover:translate-y-0 group-hover:opacity-100 group-hover:scale-100'}`}>
             <p className="font-poppins font-bold text-[10px] md:text-xs">¿No sabés cuál elegir? Te ayudamos</p>
             <div className="absolute bottom-[-6px] right-6 w-3 h-3 md:w-4 md:h-4 bg-white transform rotate-45 border-r border-b border-gray-200"></div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <button 
-                onClick={() => { 
-                    if (!user || user.isAnonymous) { showToast("⚠️ Iniciá sesión para poder girar"); handleGoogleLogin(); return; } 
-                    if (hasSpunLocal) { if (localRoulettePrize) setWonPrizeData(localRoulettePrize); setShowResultModal(true); } 
-                    else { setShowRouletteModal(true); } 
-                }} 
-                className="w-14 h-14 md:w-16 md:h-16 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] text-2xl shadow-[0_10px_30px_rgba(17,17,17,0.4)] hover:scale-110 hover:bg-[#fcdb00] hover:text-[#111111] transition-all duration-300 border border-[#fcdb00]/30"
-            >
-                <i className="fas fa-gift"></i>
-            </button>
-
-            <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noopener noreferrer" className="w-14 h-14 md:w-16 md:h-16 bg-[#25D366] rounded-full flex items-center justify-center text-white text-3xl shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform duration-300">
-              <i className="fab fa-whatsapp"></i>
-            </a>
-          </div>
+          <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noopener noreferrer" className="pointer-events-auto w-14 h-14 md:w-16 md:h-16 bg-[#25D366] rounded-full flex items-center justify-center text-white text-3xl shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform duration-300">
+            <i className="fab fa-whatsapp"></i>
+          </a>
         </div>
       )}
 
