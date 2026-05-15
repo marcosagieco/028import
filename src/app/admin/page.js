@@ -168,6 +168,26 @@ const initialCommunityVideos = [
   },
 ];
 
+
+const mergeCommunityVideosWithDefaults = (firebaseVideos = []) => {
+  const merged = new Map();
+
+  initialCommunityVideos.forEach((video) => {
+    merged.set(video.id, { ...video, isBaseVideo: true });
+  });
+
+  firebaseVideos.forEach((video) => {
+    const key = video.id || video.dbId;
+    if (!key) return;
+    const baseVideo = merged.get(key) || {};
+    merged.set(key, { ...baseVideo, ...video, isBaseVideo: !!baseVideo.id });
+  });
+
+  return Array.from(merged.values())
+    .filter(video => !video.isDeleted)
+    .sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+};
+
 const buildDefaultHomeLayout = (sections = []) => {
   const orderedSections = [...sections].sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
   if (!orderedSections.length) {
@@ -309,8 +329,11 @@ export default function AdminPage() {
       });
 
       // --- LECTURA DE VIDEOS 028 COMMUNITY ---
+      // Siempre mezcla Firebase con los 4 videos base.
+      // Así podés editarlos aunque todavía no estén creados/sincronizados en Firestore.
       onSnapshot(query(collection(firebaseRefs.db, 'community_videos'), orderBy('order', 'asc')), (snap) => {
-        setCommunityVideos(!snap.empty ? snap.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => (a.order || 99) - (b.order || 99)) : []);
+        const firebaseVideos = !snap.empty ? snap.docs.map(d => ({ dbId: d.id, ...d.data() })) : [];
+        setCommunityVideos(mergeCommunityVideosWithDefaults(firebaseVideos));
       });
 
       onSnapshot(doc(firebaseRefs.db, 'settings', 'home_layout'), (snap) => {
@@ -804,9 +827,9 @@ export default function AdminPage() {
             <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-5 mb-8">
               <div>
                 <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>028 Community</h2>
-                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Reels comprables, flip glass y productos editables por video</p>
+                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Reels comprables, flip glass y productos editables por video. Si los 4 base no existen en Firebase, igual aparecen acá para poder editarlos.</p>
               </div>
-              <div className="flex flex-col md:items-end gap-2"><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Compatible con la versión desktop UX premium clean wrapper</p><button type="button" onClick={seedCommunityVideos} className="bg-[#111111] text-[#fcdb00] px-5 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-[#fcdb00] hover:text-[#111111] transition-all shadow-sm">Cargar/actualizar videos base</button></div>
+              <div className="flex flex-col md:items-end gap-2"><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Compatible con la versión actual. Tocá cargar/actualizar para guardar los 4 base en Firebase.</p><button type="button" onClick={seedCommunityVideos} className="bg-[#111111] text-[#fcdb00] px-5 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-[#fcdb00] hover:text-[#111111] transition-all shadow-sm">Cargar/actualizar videos base</button></div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -891,7 +914,12 @@ export default function AdminPage() {
             ) : (
               <div className="space-y-5">
                 {communityVideos.map((video) => (
-                  <div key={video.dbId || video.id} className={`${theme.card} border rounded-[2rem] p-5 md:p-6 shadow-sm`}>
+                  <div key={video.dbId || video.id} className={`${theme.card} border rounded-[2rem] p-5 md:p-6 shadow-sm relative`}>
+                    {video.isBaseVideo && !video.dbId && (
+                      <span className="absolute right-5 top-5 z-10 bg-[#fcdb00]/15 text-[#b8952a] border border-[#fcdb00]/30 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest font-poppins">
+                        Base local
+                      </span>
+                    )}
                     <div className="grid grid-cols-1 xl:grid-cols-[260px_minmax(0,1fr)] gap-5">
                       <div className="rounded-[1.5rem] overflow-hidden bg-black border border-white/10 aspect-[9/16] shadow-[0_10px_30px_rgba(0,0,0,0.2)]">
                         <video src={video.videoUrl} className="w-full h-full object-cover" controls preload="metadata" playsInline />
