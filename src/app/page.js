@@ -701,6 +701,16 @@ export default function Home() {
 
   const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
 
+
+  const getCommunityVideoPoster = (videoUrl) => {
+    const url = String(videoUrl || '').trim();
+    if (!url) return '';
+    if (!url.includes('/video/upload/')) return '';
+    return url
+      .replace('/video/upload/', '/video/upload/f_jpg,so_0.6,q_auto/')
+      .replace(/\.(mp4|mov|webm)(\?.*)?$/i, '.jpg');
+  };
+
   const getCommunityDocId = (video) => video?.dbId || null;
 
   const trackCommunityView = (video) => {
@@ -1254,9 +1264,12 @@ export default function Home() {
                 <video
                   ref={(el) => { if (el) communityVideoRefs.current[cardId] = el; }}
                   src={video.videoUrl}
-                  className="w-full h-full object-cover cursor-pointer"
+                  poster={video.poster || getCommunityVideoPoster(video.videoUrl)}
+                  className="w-full h-full object-cover cursor-pointer bg-black"
                   playsInline
-                  preload="metadata"
+                  muted
+                  preload="auto"
+                  onLoadedMetadata={(e) => { try { e.currentTarget.currentTime = 0.05; } catch (_) {} }}
                   onPlay={() => trackCommunityView(video)}
                 />
 
@@ -1313,11 +1326,13 @@ export default function Home() {
               >
                 <video
                   src={video.videoUrl}
-                  className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-35"
+                  poster={video.poster || getCommunityVideoPoster(video.videoUrl)}
+                  className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-35 bg-black"
                   muted
                   loop
                   autoPlay
                   playsInline
+                  preload="auto"
                   aria-hidden="true"
                 />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(252,219,0,0.10),transparent_28%)]"></div>
