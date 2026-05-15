@@ -246,7 +246,7 @@ export default function AdminPage() {
   const uniqueCategories = useMemo(() => [...new Set(products.filter(p => !p.isDeleted).map(p => p.category))], [products]);
   const PREDEFINED_DEPARTMENTS = ["VAPES", "THC", "TECNOLOGÍA", "APPLE"];
   const availableDepartments = useMemo(() => Array.from(new Set([...PREDEFINED_DEPARTMENTS, ...products.filter(p => !p.isDeleted).map(p => p.department).filter(Boolean)])), [products]);
-  const availableCommunityProducts = useMemo(() => products.filter(p => !p.isDeleted && !p.isHidden).sort((a, b) => String(a.name).localeCompare(String(b.name))), [products]);
+  const availableCommunityProducts = useMemo(() => products.filter(p => !p.isDeleted).sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''))), [products]);
   const normalizedHomeLayout = useMemo(() => {
     const fallback = buildDefaultHomeLayout(homeSections);
     const incoming = Array.isArray(homeLayout) && homeLayout.length ? homeLayout : fallback;
@@ -298,18 +298,39 @@ export default function AdminPage() {
       onSnapshot(query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc')), (snap) => { setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); });
       
       onSnapshot(collection(firebaseRefs.db, 'products'), (snap) => {
-        if (!snap.empty) {
-          const dbProducts = snap.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
-          setProducts(prev => {
-             const updatedInitial = initialProducts.map(p => { 
-               const match = dbProducts.find(dbP => dbP.id === p.id); 
-               if (match && match.isDeleted) return null; 
-               return match ? { ...p, ...match } : { ...p, inStock: true, order: 99, isHidden: false, cardSize: 'normal', clicks: 0 }; 
-             }).filter(Boolean); 
-             const newFromDb = dbProducts.filter(dbP => !initialProducts.find(p => p.id === dbP.id) && !dbP.isDeleted).map(dbP => ({...dbP, isHidden: dbP.isHidden || false, cardSize: dbP.cardSize || 'normal', clicks: dbP.clicks || 0})); 
-             return [...updatedInitial, ...newFromDb].sort((a, b) => (a.order || 99) - (b.order || 99));
-          });
-        }
+        const normalizeProductId = (docId, data = {}) => {
+          const rawId = data.id ?? String(docId).replace(/^prod_/, '');
+          const numericId = Number(rawId);
+          return Number.isFinite(numericId) && String(rawId).trim() !== '' ? numericId : rawId;
+        };
+
+        const dbProducts = snap.docs.map(docSnap => {
+          const data = docSnap.data();
+          return {
+            dbId: docSnap.id,
+            ...data,
+            id: normalizeProductId(docSnap.id, data),
+            isHidden: data.isHidden === true,
+            isDeleted: data.isDeleted === true,
+            inStock: data.inStock === false ? false : true,
+            cardSize: data.cardSize || 'normal',
+            clicks: data.clicks || 0,
+            order: Number(data.order) || 99,
+          };
+        });
+
+        setProducts(() => {
+          const updatedInitial = initialProducts.map(p => {
+            const match = dbProducts.find(dbP => String(dbP.id) === String(p.id));
+            if (match && match.isDeleted) return null;
+            return match ? { ...p, ...match } : { ...p, inStock: true, order: 99, isHidden: false, isDeleted: false, cardSize: 'normal', clicks: 0 };
+          }).filter(Boolean);
+
+          const newFromDb = dbProducts
+            .filter(dbP => !initialProducts.find(p => String(p.id) === String(dbP.id)) && !dbP.isDeleted);
+
+          return [...updatedInitial, ...newFromDb].sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+        });
       });
       
       onSnapshot(collection(firebaseRefs.db, 'promos'), (snap) => setPromos(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []));
@@ -827,7 +848,7 @@ export default function AdminPage() {
             <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-5 mb-8">
               <div>
                 <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>028 Community</h2>
-                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Reels comprables, flip glass y productos editables por video. Si los 4 base no existen en Firebase, igual aparecen acá para poder editarlos.</p>
+                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Reels comprables, flip glass y productos editables por video. El selector muestra todos los productos no eliminados, incluyendo ocultos o agotados.</p>
               </div>
               <div className="flex flex-col md:items-end gap-2"><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Compatible con la versión actual. Tocá cargar/actualizar para guardar los 4 base en Firebase.</p><button type="button" onClick={seedCommunityVideos} className="bg-[#111111] text-[#fcdb00] px-5 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-[#fcdb00] hover:text-[#111111] transition-all shadow-sm">Cargar/actualizar videos base</button></div>
             </div>
@@ -876,7 +897,7 @@ export default function AdminPage() {
                 <select value={newCommunityVideo.productId} onChange={e => setNewCommunityVideo({...newCommunityVideo, productId: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}>
                   <option value="">Sin producto principal</option>
                   {availableCommunityProducts.map(product => (
-                    <option key={`new-community-product-${product.id}`} value={product.id}>{product.id} - {product.name}</option>
+                    <option key={`new-community-product-${product.dbId || product.id}`} value={product.id}>{product.id} - {product.name}{product.isHidden ? ' — OCULTO' : ''}{product.inStock === false ? ' — AGOTADO' : ''}</option>
                   ))}
                 </select>
               </div>
@@ -957,7 +978,7 @@ export default function AdminPage() {
                           <select value={video.productId || ''} onChange={(e) => updateCommunityVideo(video, 'productId', e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}>
                             <option value="">Sin producto principal</option>
                             {availableCommunityProducts.map(product => (
-                              <option key={`community-product-${video.id}-${product.id}`} value={product.id}>{product.id} - {product.name}</option>
+                              <option key={`community-product-${video.id}-${product.dbId || product.id}`} value={product.id}>{product.id} - {product.name}{product.isHidden ? ' — OCULTO' : ''}{product.inStock === false ? ' — AGOTADO' : ''}</option>
                             ))}
                           </select>
                         </div>
