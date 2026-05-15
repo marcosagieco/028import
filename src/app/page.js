@@ -21,8 +21,8 @@ const CONFIG = {
 const INITIAL_COMMUNITY_VIDEOS = [
   {
     id: 'community_video_1',
-    title: 'UNBOXING 028',
-    creator: '@hannimohamed',
+    title: 'Review real 028',
+    creator: '028 Community',
     type: 'Review',
     description: 'Contenido real de la comunidad 028 para generar confianza antes de comprar.',
     videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778708315/WhatsApp_Video_2026-05-13_at_17.48.35_fwssvz.mp4',
@@ -37,8 +37,8 @@ const INITIAL_COMMUNITY_VIDEOS = [
   },
   {
     id: 'community_video_2',
-    title: 'COLABORACIONES',
-    creator: '@martu_lalli',
+    title: 'Martu Lali x 028',
+    creator: '@martulali',
     type: 'Influencer',
     description: 'Contenido real de nuestra comunidad con productos destacados de la tienda.',
     videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778713679/Martulali_028_ldzttb.mp4',
@@ -53,8 +53,8 @@ const INITIAL_COMMUNITY_VIDEOS = [
   },
   {
     id: 'community_video_3',
-    title: 'COLABORACIONES',
-    creator: '@alessitalalli',
+    title: 'Alelali x 028',
+    creator: '@alelali',
     type: 'Referencia',
     description: 'Más referencias reales para mostrar productos vistos en el video y generar confianza.',
     videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778713678/alelali_028_ginzna.mp4',
@@ -69,8 +69,8 @@ const INITIAL_COMMUNITY_VIDEOS = [
   },
   {
     id: 'community_video_4',
-    title: 'COLABORACIONES',
-    creator: '@giuli.bellicoso',
+    title: 'GiuliAnny x 028',
+    creator: '@giulianny',
     type: 'Influencer',
     description: 'Nuevo contenido real para sumar prueba social y mostrar productos destacados.',
     videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778713680/GiuliAnny_028_gjnrdz.mp4',
@@ -334,6 +334,7 @@ const CountdownBanner = () => null;
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState(initialProducts);
+  const [allProducts, setAllProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
   const [homeSections, setHomeSections] = useState([]); 
   const [homeLayout, setHomeLayout] = useState([]);
@@ -518,18 +519,44 @@ export default function Home() {
         if (!u) { signInAnonymously(firebaseRefs.auth).catch(console.error); }
       });
       const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
-        if (!snapshot.empty) {
-          const dbProducts = snapshot.docs.map(doc => ({ dbId: doc.id, ...doc.data() }));
-          setProducts(prev => {
-             const combined = [...initialProducts];
-             dbProducts.forEach(dbItem => {
-                const index = combined.findIndex(p => p.id == dbItem.id);
-                if (dbItem.isHidden || dbItem.isDeleted) { if (index > -1) combined.splice(index, 1); }
-                else { if (index > -1) combined[index] = { ...combined[index], ...dbItem }; else combined.push(dbItem); }
-             });
-             return combined.sort((a, b) => (a.order || 99) - (b.order || 99));
-          });
-        }
+        const normalizeProductId = (docId, data = {}) => {
+          const rawId = data.id ?? String(docId).replace(/^prod_/, '');
+          const numericId = Number(rawId);
+          return Number.isSafeInteger(numericId) && String(rawId).trim() !== '' ? numericId : rawId;
+        };
+
+        const dbProducts = !snapshot.empty
+          ? snapshot.docs.map(docSnap => {
+              const data = docSnap.data();
+              return {
+                dbId: docSnap.id,
+                ...data,
+                id: normalizeProductId(docSnap.id, data),
+                isHidden: data.isHidden === true,
+                isDeleted: data.isDeleted === true,
+                inStock: data.inStock === false ? false : true,
+                cardSize: data.cardSize || 'normal',
+                clicks: data.clicks || 0,
+                order: Number(data.order) || 99,
+              };
+            })
+          : [];
+
+        const combined = [...initialProducts];
+
+        dbProducts.forEach(dbItem => {
+          const index = combined.findIndex(p => String(p.id) === String(dbItem.id));
+          if (dbItem.isDeleted) {
+            if (index > -1) combined.splice(index, 1);
+            return;
+          }
+          if (index > -1) combined[index] = { ...combined[index], ...dbItem };
+          else combined.push(dbItem);
+        });
+
+        const sortedAll = combined.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+        setAllProducts(sortedAll);
+        setProducts(sortedAll.filter(p => !p.isHidden));
       });
       const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
       const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (s) => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
@@ -698,14 +725,18 @@ export default function Home() {
   };
 
   const getProductsShownForVideo = (video) => {
-    const rawIds = Array.isArray(video?.productsShown) && video.productsShown.length
-      ? video.productsShown
-      : (video?.productId ? [video.productId] : []);
+    const rawIds = [
+      ...(video?.productId ? [video.productId] : []),
+      ...(Array.isArray(video?.productsShown) ? video.productsShown : [])
+    ];
 
-    return rawIds
-      .map(id => Number(id))
-      .filter((id, index, arr) => Number.isFinite(id) && arr.indexOf(id) === index)
-      .map(id => products.find(p => Number(p.id) === id && !p.isDeleted && p.inStock !== false && !p.isHidden))
+    const uniqueIds = rawIds
+      .map(id => String(id ?? '').trim())
+      .filter(Boolean)
+      .filter((id, index, arr) => arr.indexOf(id) === index);
+
+    return uniqueIds
+      .map(id => allProducts.find(p => String(p.id) === id && !p.isDeleted))
       .filter(Boolean);
   };
 
@@ -1269,7 +1300,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleCommunityCardFlip(cardId); }}
-                    className="pointer-events-auto w-[100%] mx-auto bg-white/90 text-[#111111] rounded-full py-2 text-[10px] font-black uppercase tracking-[0.18em] font-poppins hover:bg-white/78 transition-all flex items-center justify-center gap-2 shadow-[0_8px_18px_rgba(0,0,0,0.12)] backdrop-blur-xl border border-white/28"
+                    className="pointer-events-auto w-[84%] mx-auto bg-white/68 text-[#111111] rounded-full py-2 text-[9px] font-black uppercase tracking-[0.18em] font-poppins hover:bg-white/78 transition-all flex items-center justify-center gap-2 shadow-[0_8px_18px_rgba(0,0,0,0.12)] backdrop-blur-xl border border-white/28"
                   >
                     <i className="fas fa-box-open"></i> Ver productos {productsInVideo.length > 0 ? `(${productsInVideo.length})` : ''}
                   </button>
@@ -1358,9 +1389,9 @@ export default function Home() {
 
     return (
       <section id="community-section" className="community-clean-section mb-16 md:mb-20 reveal-on-scroll px-4 md:px-8">
-        <div className="max-w-[1400px] mx-auto flex items-end justify-between gap-4 mb-1 md:mb-8">
+        <div className="max-w-[1400px] mx-auto flex items-end justify-between gap-4 mb-6 md:mb-8">
           <div>
-            <span className="inline-flex items-center gap-2 bg-[#111111] text-white px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] font-poppins mb-4 shadow-none">
+            <span className="inline-flex items-center gap-2 bg-[#111111] text-white px-3.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] font-poppins mb-4 shadow-none">
               <i className="fas fa-users text-[#fcdb00]"></i> Comunidad real
             </span>
             <h2 className="font-bebas text-[48px] md:text-[68px] uppercase tracking-[0.01em] leading-[0.94] text-[#111111]" style={{ WebkitTextStroke: '0.25px #111111' }}>028 Community</h2>
