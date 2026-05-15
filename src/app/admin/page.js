@@ -465,6 +465,14 @@ export default function AdminPage() {
     order: ''
   });
 
+  const patchCommunityVideoLocal = (video, patch) => {
+    const targetId = String(video.dbId || video.id);
+    setCommunityVideos(prev => prev.map(item => {
+      const itemId = String(item.dbId || item.id);
+      return itemId === targetId ? { ...item, ...patch } : item;
+    }));
+  };
+
   const parseCommunityProductsInput = (value) => {
     const seen = new Set();
     return String(value || '')
@@ -524,10 +532,12 @@ export default function AdminPage() {
   const updateCommunityProductsShown = async (video, value) => {
     try {
       const parsed = parseCommunityProductsInput(value);
-      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), {
+      const patch = {
         productsShown: parsed,
         productId: parsed[0] || null,
-      }, { merge: true });
+      };
+      patchCommunityVideoLocal(video, patch);
+      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), patch, { merge: true });
     } catch(err) { alert('Error al actualizar productos mostrados: ' + err.message); }
   };
 
@@ -536,10 +546,9 @@ export default function AdminPage() {
       const selectedId = normalizeProductIdForSave(value);
       const currentIds = resolveCommunityProductIds(video).filter(id => !sameProductId(id, selectedId));
       const productsShown = selectedId ? [selectedId, ...currentIds] : currentIds;
-      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), {
-        productId: selectedId,
-        productsShown,
-      }, { merge: true });
+      const patch = { productId: selectedId, productsShown };
+      patchCommunityVideoLocal(video, patch);
+      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), patch, { merge: true });
     } catch(err) { alert('Error al cambiar producto principal: ' + err.message); }
   };
 
@@ -548,11 +557,14 @@ export default function AdminPage() {
       const selectedId = normalizeProductIdForSave(value);
       if (!selectedId) return;
       const currentIds = resolveCommunityProductIds(video);
-      const productsShown = currentIds.some(id => sameProductId(id, selectedId)) ? currentIds : [...currentIds, selectedId];
-      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), {
+      if (currentIds.some(id => sameProductId(id, selectedId))) return;
+      const productsShown = [...currentIds, selectedId];
+      const patch = {
         productsShown,
         productId: video.productId || productsShown[0] || null,
-      }, { merge: true });
+      };
+      patchCommunityVideoLocal(video, patch);
+      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), patch, { merge: true });
     } catch(err) { alert('Error al agregar producto mostrado: ' + err.message); }
   };
 
@@ -560,11 +572,22 @@ export default function AdminPage() {
     try {
       const productsShown = resolveCommunityProductIds(video).filter(id => !sameProductId(id, productId));
       const currentMainStillExists = productsShown.some(id => sameProductId(id, video.productId));
-      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), {
+      const patch = {
         productsShown,
         productId: currentMainStillExists ? video.productId : (productsShown[0] || null),
-      }, { merge: true });
+      };
+      patchCommunityVideoLocal(video, patch);
+      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), patch, { merge: true });
     } catch(err) { alert('Error al quitar producto mostrado: ' + err.message); }
+  };
+
+  const clearCommunityShownProducts = async (video) => {
+    if (!confirm('¿Quitar todos los productos mostrados de este video?')) return;
+    try {
+      const patch = { productsShown: [], productId: null };
+      patchCommunityVideoLocal(video, patch);
+      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), patch, { merge: true });
+    } catch(err) { alert('Error al limpiar productos mostrados: ' + err.message); }
   };
 
   const handleAddCommunityVideo = async (e) => {
@@ -1116,12 +1139,25 @@ export default function AdminPage() {
                           <input type="text" defaultValue={video.ctaText || 'Ver productos'} onBlur={(e) => e.target.value !== (video.ctaText || 'Ver productos') && updateCommunityVideo(video, 'ctaText', e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
                         </div>
                         <div className="md:col-span-2">
-                          <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Productos mostrados en el video</label>
+                          <div className="flex items-center justify-between gap-3 mb-2">
+                            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500">Productos mostrados en el video</label>
+                            {resolveCommunityProducts(video).length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => clearCommunityShownProducts(video)}
+                                className="text-[9px] font-black uppercase tracking-widest text-red-500 hover:text-white hover:bg-red-600 px-3 py-1.5 rounded-lg transition-all"
+                              >
+                                Quitar todos
+                              </button>
+                            )}
+                          </div>
+
                           <select
-                            value=""
+                            defaultValue=""
                             onChange={(e) => {
-                              addCommunityShownProduct(video, e.target.value);
-                              e.target.value = '';
+                              const selectedId = e.currentTarget.value;
+                              addCommunityShownProduct(video, selectedId);
+                              e.currentTarget.value = '';
                             }}
                             className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}
                           >
@@ -1130,19 +1166,41 @@ export default function AdminPage() {
                               <option key={`shown-product-${video.id}-${product.dbId || product.id}`} value={product.id}>{formatCommunityProductOption(product)}</option>
                             ))}
                           </select>
-                          <div className="flex flex-wrap gap-2 mt-3">
+
+                          <div className="grid gap-2 mt-3">
                             {resolveCommunityProducts(video).length ? resolveCommunityProducts(video).map(product => (
-                              <button
-                                type="button"
-                                key={`shown-chip-${video.id}-${product.id}`}
-                                onClick={() => removeCommunityShownProduct(video, product.id)}
-                                className={`px-3 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${sameProductId(product.id, video.productId) ? 'bg-[#fcdb00] text-[#111111]' : 'bg-[#111111] text-white hover:bg-red-600'}`}
-                                title={sameProductId(product.id, video.productId) ? 'Producto principal' : 'Quitar del video'}
+                              <div
+                                key={`shown-row-${video.id}-${product.id}`}
+                                className={`flex items-center justify-between gap-3 rounded-xl px-3 py-2 border ${sameProductId(product.id, video.productId) ? 'bg-[#fcdb00]/15 border-[#fcdb00]/40' : (darkMode ? 'bg-[#222] border-[#333]' : 'bg-gray-50 border-gray-200')}`}
                               >
-                                {product.name}{sameProductId(product.id, video.productId) ? ' · Principal' : ''} <i className={`fas ${sameProductId(product.id, video.productId) ? 'fa-star' : 'fa-times'} text-[9px]`}></i>
-                              </button>
+                                <div className="min-w-0">
+                                  <p className={`text-[11px] font-black uppercase tracking-wide truncate ${theme.text}`}>{product.name}</p>
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 mt-0.5">
+                                    {sameProductId(product.id, video.productId) ? 'Principal · ' : ''}{product.category || 'Sin categoría'} · ID {product.id}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  {!sameProductId(product.id, video.productId) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => updateCommunityMainProduct(video, product.id)}
+                                      className="px-3 py-2 rounded-lg bg-[#111111] text-[#fcdb00] text-[9px] font-black uppercase tracking-widest hover:bg-[#fcdb00] hover:text-[#111111] transition-all"
+                                    >
+                                      Principal
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => removeCommunityShownProduct(video, product.id)}
+                                    className="px-3 py-2 rounded-lg bg-red-50 text-red-600 text-[9px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all"
+                                  >
+                                    Quitar
+                                  </button>
+                                </div>
+                              </div>
                             )) : <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Sin productos vinculados.</p>}
                           </div>
+
                           <details className="mt-3">
                             <summary className="cursor-pointer text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-[#fcdb00]">Avanzado: editar IDs manualmente</summary>
                             <input type="text" defaultValue={getCommunityProductsInputValue(video)} onBlur={(e) => updateCommunityProductsShown(video, e.target.value)} className={`w-full mt-2 p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
