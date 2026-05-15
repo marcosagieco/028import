@@ -560,14 +560,13 @@ export default function Home() {
       });
       const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
       const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (s) => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
-      const unsubscribeCommunityVideos = onSnapshot(query(collection(firebaseRefs.db, 'community_videos'), orderBy('order', 'asc')), (snap) => {
-        const videosFromDb = !snap.empty
-          ? snap.docs
-              .map(d => ({ dbId: d.id, ...d.data() }))
-              .filter(video => !video.isHidden && video.videoUrl)
-              .sort((a, b) => (a.order || 99) - (b.order || 99))
+      const unsubscribeCommunityVideos = onSnapshot(doc(firebaseRefs.db, 'settings', 'community_videos'), (snap) => {
+        const videosFromSettings = snap.exists() && Array.isArray(snap.data()?.videos)
+          ? snap.data().videos
+              .filter(video => !video.isHidden && !video.isDeleted && video.videoUrl)
+              .sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99))
           : [];
-        setCommunityVideos(videosFromDb.length ? videosFromDb : INITIAL_COMMUNITY_VIDEOS);
+        setCommunityVideos(videosFromSettings.length ? videosFromSettings : INITIAL_COMMUNITY_VIDEOS);
       });
       const unsubscribeHomeLayout = onSnapshot(doc(firebaseRefs.db, 'settings', 'home_layout'), (snap) => {
         const sections = snap.exists() ? snap.data()?.sections : null;

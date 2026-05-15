@@ -379,11 +379,11 @@ export default function AdminPage() {
       });
 
       // --- LECTURA DE VIDEOS 028 COMMUNITY ---
-      // Siempre mezcla Firebase con los 4 videos base.
-      // Así podés editarlos aunque todavía no estén creados/sincronizados en Firestore.
-      onSnapshot(query(collection(firebaseRefs.db, 'community_videos'), orderBy('order', 'asc')), (snap) => {
-        const firebaseVideos = !snap.empty ? snap.docs.map(d => ({ dbId: d.id, ...d.data() })) : [];
-        setCommunityVideos(mergeCommunityVideosWithDefaults(firebaseVideos));
+      // Se guarda en settings/community_videos porque esa ruta ya se usa para configuración del inicio.
+      // Evita que se resetee al recargar si Firestore no permite la colección nueva community_videos.
+      onSnapshot(doc(firebaseRefs.db, 'settings', 'community_videos'), (snap) => {
+        const savedVideos = snap.exists() && Array.isArray(snap.data()?.videos) ? snap.data().videos : [];
+        setCommunityVideos(mergeCommunityVideosWithDefaults(savedVideos));
       });
 
       onSnapshot(doc(firebaseRefs.db, 'settings', 'home_layout'), (snap) => {
@@ -473,6 +473,52 @@ export default function AdminPage() {
     }));
   };
 
+  const cleanCommunityVideoForStorage = (video) => {
+    const { dbId, isBaseVideo, createdAt, ...rest } = video || {};
+    const id = rest.id || dbId || `community_${Date.now()}`;
+    return {
+      id,
+      title: String(rest.title || 'COLABORACIONES').trim(),
+      creator: String(rest.creator || '@influencer').trim(),
+      type: String(rest.type || 'Colaboración').trim(),
+      description: String(rest.description || 'Video visual mostrando productos 028.').trim(),
+      videoUrl: String(rest.videoUrl || '').trim(),
+      productId: rest.productId ?? null,
+      productsShown: Array.isArray(rest.productsShown) ? rest.productsShown : [],
+      ctaText: String(rest.ctaText || 'Ver productos').trim(),
+      featured: !!rest.featured,
+      order: Number(rest.order) || 99,
+      isHidden: !!rest.isHidden,
+      isDeleted: !!rest.isDeleted,
+      views: Number(rest.views) || 0,
+      clicks: Number(rest.clicks) || 0
+    };
+  };
+
+  const persistCommunityVideos = async (nextVideos) => {
+    const cleanVideos = mergeCommunityVideosWithDefaults(nextVideos)
+      .map(cleanCommunityVideoForStorage);
+
+    await setDoc(doc(firebaseRefs.db, 'settings', 'community_videos'), {
+      videos: cleanVideos,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    setCommunityVideos(mergeCommunityVideosWithDefaults(cleanVideos));
+  };
+
+  const buildCommunityVideosWithPatch = (video, patch) => {
+    const targetId = String(video.dbId || video.id);
+    const exists = communityVideos.some(item => String(item.dbId || item.id) === targetId);
+    const source = exists ? communityVideos : [...communityVideos, video];
+
+    return source.map(item => {
+      const itemId = String(item.dbId || item.id);
+      if (itemId !== targetId) return item;
+      return cleanCommunityVideoForStorage({ ...item, ...patch, id: item.id || item.dbId || video.id });
+    });
+  };
+
   const parseCommunityProductsInput = (value) => {
     const seen = new Set();
     return String(value || '')
@@ -536,8 +582,9 @@ export default function AdminPage() {
         productsShown: parsed,
         productId: parsed[0] || null,
       };
+      const nextVideos = buildCommunityVideosWithPatch(video, patch);
       patchCommunityVideoLocal(video, patch);
-      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), patch, { merge: true });
+      await persistCommunityVideos(nextVideos);
     } catch(err) { alert('Error al actualizar productos mostrados: ' + err.message); }
   };
 
@@ -547,8 +594,9 @@ export default function AdminPage() {
       const currentIds = resolveCommunityProductIds(video).filter(id => !sameProductId(id, selectedId));
       const productsShown = selectedId ? [selectedId, ...currentIds] : currentIds;
       const patch = { productId: selectedId, productsShown };
+      const nextVideos = buildCommunityVideosWithPatch(video, patch);
       patchCommunityVideoLocal(video, patch);
-      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), patch, { merge: true });
+      await persistCommunityVideos(nextVideos);
     } catch(err) { alert('Error al cambiar producto principal: ' + err.message); }
   };
 
@@ -563,8 +611,9 @@ export default function AdminPage() {
         productsShown,
         productId: video.productId || productsShown[0] || null,
       };
+      const nextVideos = buildCommunityVideosWithPatch(video, patch);
       patchCommunityVideoLocal(video, patch);
-      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), patch, { merge: true });
+      await persistCommunityVideos(nextVideos);
     } catch(err) { alert('Error al agregar producto mostrado: ' + err.message); }
   };
 
@@ -576,8 +625,9 @@ export default function AdminPage() {
         productsShown,
         productId: currentMainStillExists ? video.productId : (productsShown[0] || null),
       };
+      const nextVideos = buildCommunityVideosWithPatch(video, patch);
       patchCommunityVideoLocal(video, patch);
-      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), patch, { merge: true });
+      await persistCommunityVideos(nextVideos);
     } catch(err) { alert('Error al quitar producto mostrado: ' + err.message); }
   };
 
@@ -585,8 +635,9 @@ export default function AdminPage() {
     if (!confirm('¿Quitar todos los productos mostrados de este video?')) return;
     try {
       const patch = { productsShown: [], productId: null };
+      const nextVideos = buildCommunityVideosWithPatch(video, patch);
       patchCommunityVideoLocal(video, patch);
-      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), patch, { merge: true });
+      await persistCommunityVideos(nextVideos);
     } catch(err) { alert('Error al limpiar productos mostrados: ' + err.message); }
   };
 
@@ -596,15 +647,10 @@ export default function AdminPage() {
     if (!videoUrl) return alert("Pegá el link directo del video");
     try {
       const newId = `community_${Date.now()}`;
-
-      if (newCommunityVideo.featured) {
-        await Promise.all(communityVideos.map(v => setDoc(doc(firebaseRefs.db, 'community_videos', v.dbId || v.id), { featured: false }, { merge: true })));
-      }
-
       const parsedProducts = parseCommunityProductsInput(newCommunityVideo.productsShownText);
       const primaryProductId = parsedProducts[0] || normalizeProductIdForSave(newCommunityVideo.productId);
 
-      await setDoc(doc(firebaseRefs.db, 'community_videos', newId), {
+      const newVideo = cleanCommunityVideoForStorage({
         id: newId,
         title: (newCommunityVideo.title || 'COLABORACIONES').trim(),
         creator: (newCommunityVideo.creator || '@influencer').trim(),
@@ -618,9 +664,14 @@ export default function AdminPage() {
         order: Number(newCommunityVideo.order) || (communityVideos.length + 1),
         isHidden: false,
         views: 0,
-        clicks: 0,
-        createdAt: serverTimestamp()
+        clicks: 0
       });
+
+      const nextVideos = newCommunityVideo.featured
+        ? communityVideos.map(v => ({ ...v, featured: false })).concat(newVideo)
+        : communityVideos.concat(newVideo);
+
+      await persistCommunityVideos(nextVideos);
       resetCommunityForm();
       alert("Video agregado a 028 Community");
     } catch(err) { alert("Error al guardar video: " + err.message); }
@@ -629,36 +680,49 @@ export default function AdminPage() {
   const updateCommunityVideo = async (video, field, value) => {
     try {
       const cleanValue = normalizeCommunityField(field, value);
-      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), { [field]: cleanValue }, { merge: true });
+      const patch = { [field]: cleanValue };
+      const nextVideos = buildCommunityVideosWithPatch(video, patch);
+      patchCommunityVideoLocal(video, patch);
+      await persistCommunityVideos(nextVideos);
     } catch(err) { alert("Error al actualizar video: " + err.message); }
   };
 
   const toggleCommunityVideo = async (video) => {
     try {
-      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), { isHidden: !video.isHidden }, { merge: true });
+      const patch = { isHidden: !video.isHidden };
+      const nextVideos = buildCommunityVideosWithPatch(video, patch);
+      patchCommunityVideoLocal(video, patch);
+      await persistCommunityVideos(nextVideos);
     } catch(err) { alert("Error al cambiar visibilidad: " + err.message); }
   };
 
   const setFeaturedCommunityVideo = async (video) => {
     try {
-      await Promise.all(communityVideos.map(v => setDoc(doc(firebaseRefs.db, 'community_videos', v.dbId || v.id), { featured: (v.dbId || v.id) === (video.dbId || video.id) }, { merge: true })));
+      const targetId = String(video.dbId || video.id);
+      const nextVideos = communityVideos.map(v => ({
+        ...v,
+        featured: String(v.dbId || v.id) === targetId
+      }));
+      setCommunityVideos(mergeCommunityVideosWithDefaults(nextVideos));
+      await persistCommunityVideos(nextVideos);
     } catch(err) { alert("Error al destacar video: " + err.message); }
   };
 
   const deleteCommunityVideo = async (video) => {
     if(!confirm(`¿Eliminar el video "${video.title || video.creator || '028 Community'}"?`)) return;
     try {
-      await deleteDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id));
+      const patch = { isDeleted: true, isHidden: true };
+      const nextVideos = buildCommunityVideosWithPatch(video, patch);
+      setCommunityVideos(mergeCommunityVideosWithDefaults(nextVideos));
+      await persistCommunityVideos(nextVideos);
     } catch(err) { alert("Error al borrar video: " + err.message); }
   };
 
   const seedCommunityVideos = async () => {
-    if(!confirm("¿Cargar/actualizar los 4 videos base de 028 Community en Firebase? Esto puede pisar título, creador, link, orden y productos mostrados de esos videos base.")) return;
+    if(!confirm("¿Cargar/actualizar los 4 videos base de 028 Community? Esto pisa título, creador, link, orden y productos mostrados de esos videos base.")) return;
     try {
-      for (const video of initialCommunityVideos) {
-        await setDoc(doc(firebaseRefs.db, 'community_videos', video.id), { ...video, createdAt: serverTimestamp() }, { merge: true });
-      }
-      alert("Community sincronizado correctamente: 4 videos base cargados/actualizados.");
+      await persistCommunityVideos(initialCommunityVideos);
+      alert("Community sincronizado correctamente: 4 videos base guardados.");
     } catch(err) { alert("Error al sincronizar Community: " + err.message); }
   };
 
@@ -953,7 +1017,7 @@ export default function AdminPage() {
                 <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>028 Community</h2>
                 <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Reels comprables, flip glass y productos editables por video. El selector está ordenado por nombre y guarda el producto al elegirlo, sin tener que copiar IDs.</p>
               </div>
-              <div className="flex flex-col md:items-end gap-2"><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Compatible con la versión actual. Tocá cargar/actualizar para guardar los 4 base en Firebase.</p><button type="button" onClick={seedCommunityVideos} className="bg-[#111111] text-[#fcdb00] px-5 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-[#fcdb00] hover:text-[#111111] transition-all shadow-sm">Cargar/actualizar videos base</button></div>
+              <div className="flex flex-col md:items-end gap-2"><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Compatible con la versión actual. Los cambios se guardan en settings/community_videos.</p><button type="button" onClick={seedCommunityVideos} className="bg-[#111111] text-[#fcdb00] px-5 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-[#fcdb00] hover:text-[#111111] transition-all shadow-sm">Guardar videos base</button></div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
