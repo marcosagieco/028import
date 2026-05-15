@@ -21,8 +21,8 @@ const CONFIG = {
 const INITIAL_COMMUNITY_VIDEOS = [
   {
     id: 'community_video_1',
-    title: 'Review real 028',
-    creator: '028 Community',
+    title: 'UNBOXING 028',
+    creator: '@hannimohamed',
     type: 'Review',
     description: 'Contenido real de la comunidad 028 para generar confianza antes de comprar.',
     videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778708315/WhatsApp_Video_2026-05-13_at_17.48.35_fwssvz.mp4',
@@ -37,8 +37,8 @@ const INITIAL_COMMUNITY_VIDEOS = [
   },
   {
     id: 'community_video_2',
-    title: 'Martu Lali x 028',
-    creator: '@martulali',
+    title: 'COLABORACIONES',
+    creator: '@martu_lalli',
     type: 'Influencer',
     description: 'Contenido real de nuestra comunidad con productos destacados de la tienda.',
     videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778713679/Martulali_028_ldzttb.mp4',
@@ -53,8 +53,8 @@ const INITIAL_COMMUNITY_VIDEOS = [
   },
   {
     id: 'community_video_3',
-    title: 'Alelali x 028',
-    creator: '@alelali',
+    title: 'COLABORACIONES',
+    creator: '@alessitalalli',
     type: 'Referencia',
     description: 'Más referencias reales para mostrar productos vistos en el video y generar confianza.',
     videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778713678/alelali_028_ginzna.mp4',
@@ -69,8 +69,8 @@ const INITIAL_COMMUNITY_VIDEOS = [
   },
   {
     id: 'community_video_4',
-    title: 'GiuliAnny x 028',
-    creator: '@giulianny',
+    title: 'COLABORACIONES',
+    creator: '@giuli.bellicoso',
     type: 'Influencer',
     description: 'Nuevo contenido real para sumar prueba social y mostrar productos destacados.',
     videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778713680/GiuliAnny_028_gjnrdz.mp4',
