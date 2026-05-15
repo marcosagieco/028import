@@ -246,7 +246,36 @@ export default function AdminPage() {
   const uniqueCategories = useMemo(() => [...new Set(products.filter(p => !p.isDeleted).map(p => p.category))], [products]);
   const PREDEFINED_DEPARTMENTS = ["VAPES", "THC", "TECNOLOGÍA", "APPLE"];
   const availableDepartments = useMemo(() => Array.from(new Set([...PREDEFINED_DEPARTMENTS, ...products.filter(p => !p.isDeleted).map(p => p.department).filter(Boolean)])), [products]);
-  const availableCommunityProducts = useMemo(() => products.filter(p => !p.isDeleted).sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''))), [products]);
+  const availableCommunityProducts = useMemo(() => {
+    return products
+      .filter(p => !p.isDeleted)
+      .sort((a, b) => {
+        const nameCompare = String(a.name || '').localeCompare(String(b.name || ''));
+        if (nameCompare !== 0) return nameCompare;
+        return String(a.category || '').localeCompare(String(b.category || ''));
+      });
+  }, [products]);
+
+  const normalizeProductIdForSave = (value) => {
+    const clean = String(value ?? '').trim();
+    if (!clean) return null;
+    const numeric = Number(clean);
+    // Guardamos números como número cuando es seguro, pero preservamos strings raros si aparecen.
+    return Number.isSafeInteger(numeric) && String(numeric) === clean ? numeric : clean;
+  };
+
+  const sameProductId = (a, b) => String(a ?? '') === String(b ?? '');
+
+  const formatCommunityProductOption = (product) => {
+    if (!product) return 'Producto sin nombre';
+    const status = [
+      product.isHidden ? 'OCULTO' : '',
+      product.inStock === false ? 'AGOTADO' : ''
+    ].filter(Boolean).join(' · ');
+    const category = product.category ? ` · ${product.category}` : '';
+    const idText = product.id ? ` · ID ${product.id}` : '';
+    return `${product.name || 'Producto sin nombre'}${category}${status ? ` · ${status}` : ''}${idText}`;
+  };
   const normalizedHomeLayout = useMemo(() => {
     const fallback = buildDefaultHomeLayout(homeSections);
     const incoming = Array.isArray(homeLayout) && homeLayout.length ? homeLayout : fallback;
@@ -437,43 +466,58 @@ export default function AdminPage() {
   });
 
   const parseCommunityProductsInput = (value) => {
+    const seen = new Set();
     return String(value || '')
       .split(',')
-      .map(v => Number(String(v).trim()))
-      .filter((id, index, arr) => Number.isFinite(id) && arr.indexOf(id) === index);
+      .map(v => normalizeProductIdForSave(v))
+      .filter(id => id !== null && id !== '')
+      .filter(id => {
+        const key = String(id);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
   };
 
-  const resolveCommunityProducts = (video) => {
+  const resolveCommunityProductIds = (video) => {
     const ids = Array.isArray(video?.productsShown) && video.productsShown.length
       ? video.productsShown
       : (video?.productId ? [video.productId] : []);
+    const seen = new Set();
     return ids
-      .map(id => Number(id))
-      .filter((id, index, arr) => Number.isFinite(id) && arr.indexOf(id) === index)
-      .map(id => products.find(p => Number(p.id) === id))
+      .map(id => normalizeProductIdForSave(id))
+      .filter(id => id !== null && id !== '')
+      .filter(id => {
+        const key = String(id);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  };
+
+  const resolveCommunityProducts = (video) => {
+    return resolveCommunityProductIds(video)
+      .map(id => products.find(p => sameProductId(p.id, id)))
       .filter(Boolean);
   };
 
   const getCommunityProductName = (productId) => {
-    const prod = products.find(p => String(p.id) === String(productId));
+    const prod = products.find(p => sameProductId(p.id, productId));
     return prod ? prod.name : 'Sin producto vinculado';
   };
 
   const getCommunityProductsSummary = (video) => {
     const prods = resolveCommunityProducts(video);
-    return prods.length ? prods.map(p => `${p.id} - ${p.name}`).join(' • ') : 'Sin productos vinculados';
+    return prods.length ? prods.map(p => p.name).join(' • ') : 'Sin productos vinculados';
   };
 
   const getCommunityProductsInputValue = (video) => {
-    const ids = Array.isArray(video?.productsShown) && video.productsShown.length
-      ? video.productsShown
-      : (video?.productId ? [video.productId] : []);
-    return ids.join(', ');
+    return resolveCommunityProductIds(video).join(', ');
   };
 
   const normalizeCommunityField = (field, value) => {
     if (field === 'order') return Number(value) || 99;
-    if (field === 'productId') return value ? Number(value) : null;
+    if (field === 'productId') return normalizeProductIdForSave(value);
     return String(value || '').trim();
   };
 
@@ -485,6 +529,42 @@ export default function AdminPage() {
         productId: parsed[0] || null,
       }, { merge: true });
     } catch(err) { alert('Error al actualizar productos mostrados: ' + err.message); }
+  };
+
+  const updateCommunityMainProduct = async (video, value) => {
+    try {
+      const selectedId = normalizeProductIdForSave(value);
+      const currentIds = resolveCommunityProductIds(video).filter(id => !sameProductId(id, selectedId));
+      const productsShown = selectedId ? [selectedId, ...currentIds] : currentIds;
+      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), {
+        productId: selectedId,
+        productsShown,
+      }, { merge: true });
+    } catch(err) { alert('Error al cambiar producto principal: ' + err.message); }
+  };
+
+  const addCommunityShownProduct = async (video, value) => {
+    try {
+      const selectedId = normalizeProductIdForSave(value);
+      if (!selectedId) return;
+      const currentIds = resolveCommunityProductIds(video);
+      const productsShown = currentIds.some(id => sameProductId(id, selectedId)) ? currentIds : [...currentIds, selectedId];
+      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), {
+        productsShown,
+        productId: video.productId || productsShown[0] || null,
+      }, { merge: true });
+    } catch(err) { alert('Error al agregar producto mostrado: ' + err.message); }
+  };
+
+  const removeCommunityShownProduct = async (video, productId) => {
+    try {
+      const productsShown = resolveCommunityProductIds(video).filter(id => !sameProductId(id, productId));
+      const currentMainStillExists = productsShown.some(id => sameProductId(id, video.productId));
+      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), {
+        productsShown,
+        productId: currentMainStillExists ? video.productId : (productsShown[0] || null),
+      }, { merge: true });
+    } catch(err) { alert('Error al quitar producto mostrado: ' + err.message); }
   };
 
   const handleAddCommunityVideo = async (e) => {
@@ -499,7 +579,7 @@ export default function AdminPage() {
       }
 
       const parsedProducts = parseCommunityProductsInput(newCommunityVideo.productsShownText);
-      const primaryProductId = parsedProducts[0] || (newCommunityVideo.productId ? Number(newCommunityVideo.productId) : null);
+      const primaryProductId = parsedProducts[0] || normalizeProductIdForSave(newCommunityVideo.productId);
 
       await setDoc(doc(firebaseRefs.db, 'community_videos', newId), {
         id: newId,
@@ -848,7 +928,7 @@ export default function AdminPage() {
             <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-5 mb-8">
               <div>
                 <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>028 Community</h2>
-                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Reels comprables, flip glass y productos editables por video. El selector muestra todos los productos no eliminados, incluyendo ocultos o agotados.</p>
+                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Reels comprables, flip glass y productos editables por video. El selector está ordenado por nombre y guarda el producto al elegirlo, sin tener que copiar IDs.</p>
               </div>
               <div className="flex flex-col md:items-end gap-2"><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Compatible con la versión actual. Tocá cargar/actualizar para guardar los 4 base en Firebase.</p><button type="button" onClick={seedCommunityVideos} className="bg-[#111111] text-[#fcdb00] px-5 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-[#fcdb00] hover:text-[#111111] transition-all shadow-sm">Cargar/actualizar videos base</button></div>
             </div>
@@ -894,17 +974,66 @@ export default function AdminPage() {
               </div>
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Producto principal</label>
-                <select value={newCommunityVideo.productId} onChange={e => setNewCommunityVideo({...newCommunityVideo, productId: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}>
+                <select
+                  value={newCommunityVideo.productId}
+                  onChange={e => {
+                    const selectedId = e.target.value;
+                    setNewCommunityVideo(prev => ({
+                      ...prev,
+                      productId: selectedId,
+                      productsShownText: selectedId && !prev.productsShownText ? selectedId : prev.productsShownText
+                    }));
+                  }}
+                  className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}
+                >
                   <option value="">Sin producto principal</option>
                   {availableCommunityProducts.map(product => (
-                    <option key={`new-community-product-${product.dbId || product.id}`} value={product.id}>{product.id} - {product.name}{product.isHidden ? ' — OCULTO' : ''}{product.inStock === false ? ' — AGOTADO' : ''}</option>
+                    <option key={`new-community-product-${product.dbId || product.id}`} value={product.id}>{formatCommunityProductOption(product)}</option>
                   ))}
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Productos mostrados (IDs separados por coma)</label>
-                <input type="text" placeholder="Ej: 17, 26, 33" value={newCommunityVideo.productsShownText} onChange={e => setNewCommunityVideo({...newCommunityVideo, productsShownText: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2">Estos productos aparecen atrás de la card, en el flip con efecto glass.</p>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Productos mostrados en el video</label>
+                <select
+                  value=""
+                  onChange={e => {
+                    const selectedId = e.target.value;
+                    if (!selectedId) return;
+                    const current = parseCommunityProductsInput(newCommunityVideo.productsShownText);
+                    const next = current.some(id => sameProductId(id, selectedId)) ? current : [...current, normalizeProductIdForSave(selectedId)];
+                    setNewCommunityVideo(prev => ({
+                      ...prev,
+                      productId: prev.productId || selectedId,
+                      productsShownText: next.join(', ')
+                    }));
+                    e.target.value = '';
+                  }}
+                  className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}
+                >
+                  <option value="">Agregar producto mostrado...</option>
+                  {availableCommunityProducts.map(product => (
+                    <option key={`new-community-shown-${product.dbId || product.id}`} value={product.id}>{formatCommunityProductOption(product)}</option>
+                  ))}
+                </select>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {parseCommunityProductsInput(newCommunityVideo.productsShownText).length ? parseCommunityProductsInput(newCommunityVideo.productsShownText).map(id => {
+                    const product = products.find(p => sameProductId(p.id, id));
+                    return (
+                      <button
+                        type="button"
+                        key={`new-chip-${id}`}
+                        onClick={() => {
+                          const next = parseCommunityProductsInput(newCommunityVideo.productsShownText).filter(pid => !sameProductId(pid, id));
+                          setNewCommunityVideo(prev => ({ ...prev, productsShownText: next.join(', '), productId: sameProductId(prev.productId, id) ? (next[0] || '') : prev.productId }));
+                        }}
+                        className="px-3 py-2 rounded-full bg-[#111111] text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
+                      >
+                        {product?.name || `Producto ${id}`} <i className="fas fa-times text-[#fcdb00]"></i>
+                      </button>
+                    );
+                  }) : <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Todavía no agregaste productos al dorso del video.</p>}
+                </div>
+                <input type="hidden" value={newCommunityVideo.productsShownText} readOnly />
               </div>
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Texto CTA</label>
@@ -975,10 +1104,10 @@ export default function AdminPage() {
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Producto principal</label>
-                          <select value={video.productId || ''} onChange={(e) => updateCommunityVideo(video, 'productId', e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}>
+                          <select value={video.productId || ''} onChange={(e) => updateCommunityMainProduct(video, e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}>
                             <option value="">Sin producto principal</option>
                             {availableCommunityProducts.map(product => (
-                              <option key={`community-product-${video.id}-${product.dbId || product.id}`} value={product.id}>{product.id} - {product.name}{product.isHidden ? ' — OCULTO' : ''}{product.inStock === false ? ' — AGOTADO' : ''}</option>
+                              <option key={`community-product-${video.id}-${product.dbId || product.id}`} value={product.id}>{formatCommunityProductOption(product)}</option>
                             ))}
                           </select>
                         </div>
@@ -987,9 +1116,37 @@ export default function AdminPage() {
                           <input type="text" defaultValue={video.ctaText || 'Ver productos'} onBlur={(e) => e.target.value !== (video.ctaText || 'Ver productos') && updateCommunityVideo(video, 'ctaText', e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
                         </div>
                         <div className="md:col-span-2">
-                          <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Productos mostrados (IDs separados por coma)</label>
-                          <input type="text" defaultValue={getCommunityProductsInputValue(video)} onBlur={(e) => updateCommunityProductsShown(video, e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
-                          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2">{getCommunityProductsSummary(video)}</p>
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Productos mostrados en el video</label>
+                          <select
+                            value=""
+                            onChange={(e) => {
+                              addCommunityShownProduct(video, e.target.value);
+                              e.target.value = '';
+                            }}
+                            className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}
+                          >
+                            <option value="">Agregar producto al dorso...</option>
+                            {availableCommunityProducts.map(product => (
+                              <option key={`shown-product-${video.id}-${product.dbId || product.id}`} value={product.id}>{formatCommunityProductOption(product)}</option>
+                            ))}
+                          </select>
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {resolveCommunityProducts(video).length ? resolveCommunityProducts(video).map(product => (
+                              <button
+                                type="button"
+                                key={`shown-chip-${video.id}-${product.id}`}
+                                onClick={() => removeCommunityShownProduct(video, product.id)}
+                                className={`px-3 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${sameProductId(product.id, video.productId) ? 'bg-[#fcdb00] text-[#111111]' : 'bg-[#111111] text-white hover:bg-red-600'}`}
+                                title={sameProductId(product.id, video.productId) ? 'Producto principal' : 'Quitar del video'}
+                              >
+                                {product.name}{sameProductId(product.id, video.productId) ? ' · Principal' : ''} <i className={`fas ${sameProductId(product.id, video.productId) ? 'fa-star' : 'fa-times'} text-[9px]`}></i>
+                              </button>
+                            )) : <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Sin productos vinculados.</p>}
+                          </div>
+                          <details className="mt-3">
+                            <summary className="cursor-pointer text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-[#fcdb00]">Avanzado: editar IDs manualmente</summary>
+                            <input type="text" defaultValue={getCommunityProductsInputValue(video)} onBlur={(e) => updateCommunityProductsShown(video, e.target.value)} className={`w-full mt-2 p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+                          </details>
                         </div>
                         <div className="md:col-span-2">
                           <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Descripción</label>
