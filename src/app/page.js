@@ -1324,7 +1324,7 @@ export default function Home() {
                 <div className="absolute inset-0 bg-black/42"></div>
                 <div className="absolute inset-0 backdrop-blur-[18px] bg-white/[0.07]"></div>
                 <div className="absolute inset-[1px] rounded-[1.95rem] border border-white/10"></div>
-                <div className="relative h-full p-4 md:p-5 flex flex-col">
+                <div className="relative h-full p-4 md:p-5 flex flex-col min-h-0">
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <div className="min-w-0">
                       <p className="text-white/72 text-[10px] font-black uppercase tracking-[0.18em] font-poppins mb-2">Productos del video</p>
@@ -1341,14 +1341,19 @@ export default function Home() {
                     </button>
                   </div>
 
-                  <div className="grid gap-2.5 overflow-y-auto no-scrollbar pr-1 pb-2 flex-1 content-start overscroll-contain">
+                  <div
+                    className="grid gap-2.5 overflow-y-auto no-scrollbar pr-1 pb-2 flex-1 min-h-0 content-start overscroll-contain touch-pan-y"
+                    style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+                    onWheel={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                  >
                     {productsInVideo.length ? productsInVideo.map(product => (
-                      <div key={`flip-${cardId}-${product.id}`} className="bg-white/[0.11] backdrop-blur-2xl rounded-[1.15rem] p-2.5 grid grid-cols-[48px_minmax(0,1fr)_40px] items-center gap-2.5 border border-white/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_8px_22px_rgba(0,0,0,0.14)] min-w-0">
-                        <div className="w-12 h-12 bg-white/16 rounded-xl p-1.5 flex-shrink-0 backdrop-blur-xl border border-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
+                      <div key={`flip-${cardId}-${product.id}`} className="bg-white/[0.11] backdrop-blur-2xl rounded-[1.05rem] p-2 grid grid-cols-[44px_minmax(0,1fr)_40px] items-center gap-2.5 border border-white/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_8px_22px_rgba(0,0,0,0.14)] min-w-0">
+                        <div className="w-11 h-11 bg-white/16 rounded-xl p-1.5 flex-shrink-0 backdrop-blur-xl border border-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
                           <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
                         </div>
                         <div className="min-w-0 overflow-hidden">
-                          <p className="font-bebas text-[18px] uppercase leading-[0.95] text-white break-words" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.name}</p>
+                          <p className="font-bebas text-[17px] uppercase leading-[0.95] text-white break-words" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.name}</p>
                           <p className="text-[12px] font-black mt-1 text-white leading-none">{CONFIG.currencySymbol}{formatPrice(product.price)}</p>
                         </div>
                         <CommunityProductButton video={video} product={product} compact />
@@ -1362,7 +1367,7 @@ export default function Home() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 mt-3">
+                  <div className="grid grid-cols-2 gap-2 mt-3 flex-shrink-0">
                     <button
                       type="button"
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleCommunityCardFlip(cardId); }}
