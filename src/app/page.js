@@ -17,6 +17,87 @@ const CONFIG = {
   paymentName: "Lucio Bunge", 
 };
 
+
+const INITIAL_COMMUNITY_VIDEOS = [
+  {
+    id: 'community_video_1',
+    title: 'UNBOXING 028',
+    creator: '@hannimohamed',
+    type: 'Review',
+    description: 'Contenido real de la comunidad 028 para generar confianza antes de comprar.',
+    videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778708315/WhatsApp_Video_2026-05-13_at_17.48.35_fwssvz.mp4',
+    productId: 17,
+    productsShown: [17, 26, 33],
+    ctaText: 'Ver productos del video',
+    featured: true,
+    order: 1,
+    isHidden: false,
+    views: 0,
+    clicks: 0
+  },
+  {
+    id: 'community_video_2',
+    title: 'COLABORACIONES',
+    creator: '@martu_lalli',
+    type: 'Influencer',
+    description: 'Contenido real de nuestra comunidad con productos destacados de la tienda.',
+    videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778713679/Martulali_028_ldzttb.mp4',
+    productId: 17,
+    productsShown: [17, 25, 39],
+    ctaText: 'Ver productos del video',
+    featured: false,
+    order: 2,
+    isHidden: false,
+    views: 0,
+    clicks: 0
+  },
+  {
+    id: 'community_video_3',
+    title: 'COLABORACIONES',
+    creator: '@alessitalalli',
+    type: 'Referencia',
+    description: 'Más referencias reales para mostrar productos vistos en el video y generar confianza.',
+    videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778713678/alelali_028_ginzna.mp4',
+    productId: 33,
+    productsShown: [33, 31, 45],
+    ctaText: 'Ver productos del video',
+    featured: false,
+    order: 3,
+    isHidden: false,
+    views: 0,
+    clicks: 0
+  },
+  {
+    id: 'community_video_4',
+    title: 'COLABORACIONES',
+    creator: '@giuli.bellicoso',
+    type: 'Influencer',
+    description: 'Nuevo contenido real para sumar prueba social y mostrar productos destacados.',
+    videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778713680/GiuliAnny_028_gjnrdz.mp4',
+    productId: 17,
+    productsShown: [17, 26, 33],
+    ctaText: 'Ver productos del video',
+    featured: false,
+    order: 4,
+    isHidden: false,
+    views: 0,
+    clicks: 0
+  }
+];
+
+const buildDefaultHomeLayout = (sections = []) => {
+  const orderedSections = [...sections].sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+  if (!orderedSections.length) {
+    return [{ id: 'community', label: '028 Community', order: 1, active: true, type: 'community' }];
+  }
+  const [firstSection, ...restSections] = orderedSections;
+  return [
+    { id: firstSection.id, label: firstSection.title || 'Vidriera', order: 1, active: true, type: 'section' },
+    { id: 'community', label: '028 Community', order: 2, active: true, type: 'community' },
+    ...restSections.map((section, index) => ({ id: section.id, label: section.title || 'Vidriera', order: index + 3, active: true, type: 'section' })),
+  ];
+};
+
 const AVAILABLE_ICONS = [
   { id: 'fa-star', prefix: 'fas', color: 'text-[#fcdb00]' },     
   { id: 'fa-fire', prefix: 'fas', color: 'text-red-500' },       
@@ -33,6 +114,15 @@ const AVAILABLE_ICONS = [
 
 const DEPT_ICONS = [
   { id: 'fa-box', prefix: 'fas' }, { id: 'fa-wind', prefix: 'fas' }, { id: 'fa-leaf', prefix: 'fas' }, { id: 'fa-microchip', prefix: 'fas' }, { id: 'fa-star', prefix: 'fas' }, { id: 'fa-fire', prefix: 'fas' }, { id: 'fa-apple', prefix: 'fab' }, { id: 'fa-mobile-alt', prefix: 'fas' }, { id: 'fa-laptop', prefix: 'fas' }, { id: 'fa-gamepad', prefix: 'fas' }, { id: 'fa-headphones', prefix: 'fas' }, { id: 'fa-gem', prefix: 'fas' }, { id: 'fa-tag', prefix: 'fas' }, { id: 'fa-cannabis', prefix: 'fas' }, { id: 'fa-smoking', prefix: 'fas' }
+];
+
+const ROULETTE_PRIZES = [
+  { id: 'off5', text: '5% OFF x MES', prob: 0.28, type: 'percent', value: 5, textC: '#fcdb00', description: '¡Activado! Tenés un 5% OFF extra y automático en CADA compra.' }, 
+  { id: 'off10', text: '10% OFF', prob: 0.26, type: 'percent', value: 10, textC: '#fcdb00', description: '¡Felicidades! Ganaste un 10% de descuento DIRECTO en tu carrito para usar YA.' }, 
+  { id: 'off15', text: ' 15% +30K COMPRA', prob: 0.20, type: 'percent', value: 15, textC: '#fcdb00', description: '¡Activado! Llená tu carrito hasta $30.000 o más y te regalamos un 15% OFF en el TOTAL.' }, 
+  { id: 'labubu', text: 'LABUBU GRATIS', prob: 0.14, type: 'none', value: 0, textC: '#fcdb00', description: '¡Increíble! Te enviamos un muñeco/llavero Labubu de regalo totalmente gratis.' }, 
+  { id: 'off20', text: '2DO VAPE -20%', prob: 0.09, type: 'percent', value: 20, textC: '#fcdb00', description: '¡Oferta activada! Llevate 2 Vapes y el segundo tiene un 20% OFF automático.' }, 
+  { id: 'sorpresa', text: '🎁 SORPRESA', prob: 0.03, type: 'sorpresa', value: 0, textC: '#fcdb00', description: '¡NO LO PUEDO CREER! Te ganaste EL PREMIO GORDO: Un Vaso Stanley 100% GRATIS superando los $60.000.' }, 
 ];
 
 const initialProducts = [
@@ -238,11 +328,24 @@ const PAGE_CONTENT = {
   }
 };
 
+// Banner Hot Sale removido
+const CountdownBanner = () => null;
+
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
   const [homeSections, setHomeSections] = useState([]); 
+  const [homeLayout, setHomeLayout] = useState([]);
+  const [communityVideos, setCommunityVideos] = useState(INITIAL_COMMUNITY_VIDEOS);
+  const [activeCommunityVideoId, setActiveCommunityVideoId] = useState(null);
+  const [flippedCommunityCards, setFlippedCommunityCards] = useState({});
+  const [communityVideoFeedback, setCommunityVideoFeedback] = useState({});
+  const communityVideoRefs = useRef({});
+  const communityScrollRef = useRef(null);
+  const [hoveredCommunityCard, setHoveredCommunityCard] = useState(null);
+  const [communityProductsPanel, setCommunityProductsPanel] = useState(null);
+  const [activeStoryVideo, setActiveStoryVideo] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentView, setCurrentView] = useState('home'); 
   const [activeFilter, setActiveFilter] = useState({ dept: 'all', cat: 'all' });
@@ -250,6 +353,25 @@ export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState('retiro');
   const [shippingType, setShippingType] = useState('flash'); 
+  useEffect(() => {
+    const hideInlineVideoControls = () => {
+      const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
+      if (!fullscreenElement) {
+        Object.values(communityVideoRefs.current || {}).forEach((videoEl) => {
+          if (videoEl) videoEl.controls = false;
+        });
+      }
+    };
+
+    document.addEventListener('fullscreenchange', hideInlineVideoControls);
+    document.addEventListener('webkitfullscreenchange', hideInlineVideoControls);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', hideInlineVideoControls);
+      document.removeEventListener('webkitfullscreenchange', hideInlineVideoControls);
+    };
+  }, []);
+
   const [paymentMethod, setPaymentMethod] = useState('transferencia'); 
   const [shippingCost, setShippingCost] = useState(0); 
   const [clientName, setClientName] = useState('');
@@ -257,6 +379,7 @@ export default function Home() {
   const [address, setAddress] = useState('');
   const [zone, setZone] = useState('');
   const [aptDetails, setAptDetails] = useState(''); 
+  const [showTooltip, setShowTooltip] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showShippingCalculatorModal, setShowShippingCalculatorModal] = useState(false);
   
@@ -273,6 +396,16 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const [upsellsList, setUpsellsList] = useState([]);
+
+  const [showRouletteModal, setShowRouletteModal] = useState(false);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [rouletteRotation, setRouletteRotation] = useState(-30);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [wonPrizeData, setWonPrizeData] = useState(null);
+  
+  const [localRoulettePrize, setLocalRoulettePrize] = useState(null);
+  const [hasSpunLocal, setHasSpunLocal] = useState(false);
+  const communityViewedRef = useRef(new Set());
 
   const next7Days = useMemo(() => {
     const days = [];
@@ -302,6 +435,24 @@ export default function Home() {
     return [...new Set(products.map(p => p.category))];
   }, [products, activeFilter.dept]);
 
+  const normalizedHomeLayout = useMemo(() => {
+    const fallback = buildDefaultHomeLayout(homeSections);
+    const incoming = Array.isArray(homeLayout) && homeLayout.length ? homeLayout : fallback;
+    const mergedMap = new Map();
+
+    fallback.forEach(item => mergedMap.set(item.id, { ...item }));
+    incoming.forEach(item => {
+      const base = mergedMap.get(item.id) || {
+        id: item.id,
+        label: item.label || homeSections.find(section => section.id === item.id)?.title || 'Bloque',
+        type: item.id === 'community' ? 'community' : 'section',
+      };
+      mergedMap.set(item.id, { ...base, ...item, active: item.active !== false });
+    });
+
+    return Array.from(mergedMap.values()).sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+  }, [homeLayout, homeSections]);
+
   const slugify = (text) => text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');            
 
   const firebaseRefs = useMemo(() => {
@@ -314,6 +465,19 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    setLocalRoulettePrize(null);
+    setWonPrizeData(null);
+    setHasSpunLocal(false);
+    setShowRouletteModal(false);
+  }, []);
+
+  useEffect(() => {
+    const showTimer = setTimeout(() => setShowTooltip(true), 2500);
+    const hideTimer = setTimeout(() => setShowTooltip(false), 9000);
+    return () => { clearTimeout(showTimer); clearTimeout(hideTimer); };
+  }, []);
+
+  useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach((entry) => { if (entry.isIntersecting) entry.target.classList.add("is-visible"); });
       }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" } 
@@ -323,7 +487,7 @@ export default function Home() {
         elements.forEach((el) => observer.observe(el));
     }, 100);
     return () => { clearTimeout(timeoutId); observer.disconnect(); }
-  }, [currentView, activeFilter, products, searchTerm, homeSections]);
+  }, [currentView, activeFilter, products, searchTerm, homeSections, communityVideos, homeLayout]);
 
   const isFirstLoad = useRef(true);
   useEffect(() => {
@@ -369,6 +533,19 @@ export default function Home() {
       });
       const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
       const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (s) => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
+      const unsubscribeCommunityVideos = onSnapshot(query(collection(firebaseRefs.db, 'community_videos'), orderBy('order', 'asc')), (snap) => {
+        const videosFromDb = !snap.empty
+          ? snap.docs
+              .map(d => ({ dbId: d.id, ...d.data() }))
+              .filter(video => !video.isHidden && video.videoUrl)
+              .sort((a, b) => (a.order || 99) - (b.order || 99))
+          : [];
+        setCommunityVideos(videosFromDb.length ? videosFromDb : INITIAL_COMMUNITY_VIDEOS);
+      });
+      const unsubscribeHomeLayout = onSnapshot(doc(firebaseRefs.db, 'settings', 'home_layout'), (snap) => {
+        const sections = snap.exists() ? snap.data()?.sections : null;
+        setHomeLayout(Array.isArray(sections) ? sections : []);
+      });
       const unsubscribeDeptIcons = onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
         if (snap.exists()) { setDeptIcons(snap.data().icons || {}); }
       });
@@ -376,7 +553,7 @@ export default function Home() {
         setUpsellsList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
       });
 
-      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); unsubscribeDeptIcons(); unsubscribeUpsells(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
+      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); unsubscribeCommunityVideos(); unsubscribeHomeLayout(); unsubscribeDeptIcons(); unsubscribeUpsells(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
     }
   }, [firebaseRefs]);
 
@@ -392,6 +569,15 @@ export default function Home() {
       return () => unsubscribe();
   }, [user, firebaseRefs.db]);
 
+  const claimPrize = (prize) => {
+    localStorage.removeItem('pendingPrize'); 
+    localStorage.setItem('hotSalePrize', JSON.stringify(prize));
+    setLocalRoulettePrize(prize);
+    setShowResultModal(false);
+    showToast(`¡PREMIO RECLAMADO! 🎉 ${prize.text}`);
+    fireConfetti();
+  };
+
   const handleGoogleLogin = async () => {
       if (!firebaseRefs.auth || !firebaseRefs.db) return;
       try {
@@ -404,10 +590,235 @@ export default function Home() {
               await setDoc(userRef, { name: u.displayName, email: u.email, photoURL: u.photoURL, createdAt: serverTimestamp() });
           }
           showToast("¡Sesión iniciada con éxito! 🎉");
+          
+          const pending = localStorage.getItem('pendingPrize');
+          if (pending) {
+              claimPrize(JSON.parse(pending));
+          } else if (wonPrizeData && !localRoulettePrize) {
+              claimPrize(wonPrizeData);
+          }
       } catch (error) { console.error(error); showToast("Error al iniciar con Google"); }
+  };
+  const fireConfetti = () => {
+    if (typeof window !== 'undefined' && window.confetti) {
+      const defaults = { origin: { y: 0.7 }, colors: ['#fcdb00', '#ffffff', '#111111', '#eab308'], zIndex: 9999, gravity: 0.5, scalar: 1.1, ticks: 200 };
+      window.confetti({ ...defaults, particleCount: 120, spread: 100, startVelocity: 35 });
+      setTimeout(() => { window.confetti({ ...defaults, particleCount: 60, spread: 120, startVelocity: 25 }); }, 150);
+    }
+  };
+
+  const handleSpinRoulette = async () => {
+      if (!user || user.isAnonymous) {
+          showToast("⚠️ Iniciá sesión para poder girar");
+          handleGoogleLogin();
+          return;
+      }
+
+      if (isSpinning) return;
+      
+      if (hasSpunLocal) {
+        showToast("¡Ya utilizaste tu tiro de Hot Sale!");
+        return;
+      }
+      
+      setIsSpinning(true);
+      const rand = Math.random();
+      let sum = 0;
+      let wonPrize = ROULETTE_PRIZES[0];
+      
+      for (let p of ROULETTE_PRIZES) {
+          sum += p.prob;
+          if (rand <= sum) { wonPrize = p; break; }
+      }
+
+      const extraSpins = 5 * 360; 
+      const prizeIndex = ROULETTE_PRIZES.findIndex(p => p.id === wonPrize.id);
+      const sliceAngle = 360 / ROULETTE_PRIZES.length; 
+      const targetRotation = extraSpins + (360 - (prizeIndex * sliceAngle)) - (sliceAngle / 2);
+      
+      setRouletteRotation(-30 + targetRotation);
+
+      setTimeout(async () => { // Agregamos el 'async' acá
+          setIsSpinning(false);
+          setWonPrizeData(wonPrize);
+          setShowRouletteModal(false); 
+          setShowResultModal(true);    
+          
+          localStorage.setItem('hotSaleSpun', 'true');
+          localStorage.setItem('pendingPrize', JSON.stringify(wonPrize));
+          setHasSpunLocal(true);
+
+          // --- LOGICA PARA REGISTRAR EN EL ADMIN ---
+          if (firebaseRefs.db && user) {
+            try {
+              await addDoc(collection(firebaseRefs.db, 'spins'), {
+                userId: user.uid,
+                userName: dbUser?.name || user.displayName || 'Anónimo',
+                userEmail: user.email || '',
+                prizeId: wonPrize.id,
+                prizeText: wonPrize.text,
+                createdAt: serverTimestamp()
+              });
+              
+              // Opcional: También lo marcamos en su perfil de usuario
+              await setDoc(doc(firebaseRefs.db, 'users', user.uid), {
+                hasSpun: true,
+                wonPrize: wonPrize.text
+              }, { merge: true });
+
+            } catch (error) {
+              console.error("Error al guardar el tiro:", error);
+            }
+          }
+      }, 4000);
   };
 
   const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
+
+  const getCommunityDocId = (video) => video?.dbId || null;
+
+  const trackCommunityView = (video) => {
+    const docId = getCommunityDocId(video);
+    if (!docId || !firebaseRefs.db || communityViewedRef.current.has(docId)) return;
+    communityViewedRef.current.add(docId);
+    setDoc(doc(firebaseRefs.db, 'community_videos', docId), { views: increment(1) }, { merge: true }).catch(console.error);
+  };
+
+  const handleCommunityProductClick = (video, product, e) => {
+    if (e) e.stopPropagation();
+    const docId = getCommunityDocId(video);
+    if (docId && firebaseRefs.db) {
+      setDoc(doc(firebaseRefs.db, 'community_videos', docId), { clicks: increment(1) }, { merge: true }).catch(console.error);
+    }
+    if (product) {
+      addToCart(product, e);
+    } else {
+      navigateTo('catalog');
+    }
+  };
+
+  const getProductsShownForVideo = (video) => {
+    const rawIds = Array.isArray(video?.productsShown) && video.productsShown.length
+      ? video.productsShown
+      : (video?.productId ? [video.productId] : []);
+
+    return rawIds
+      .map(id => Number(id))
+      .filter((id, index, arr) => Number.isFinite(id) && arr.indexOf(id) === index)
+      .map(id => products.find(p => Number(p.id) === id && !p.isDeleted && p.inStock !== false && !p.isHidden))
+      .filter(Boolean);
+  };
+
+  const toggleCommunityCardFlip = (cardId) => {
+    setFlippedCommunityCards(prev => ({ ...prev, [cardId]: !prev[cardId] }));
+  };
+
+
+  const flashCommunityVideoIcon = (cardId, icon) => {
+    setCommunityVideoFeedback(prev => ({ ...prev, [cardId]: icon }));
+    setTimeout(() => {
+      setCommunityVideoFeedback(prev => {
+        const next = { ...prev };
+        delete next[cardId];
+        return next;
+      });
+    }, 650);
+  };
+
+  const handleCommunityVideoTap = (cardId, videoData, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const videoEl = communityVideoRefs.current[cardId];
+    if (!videoEl) return;
+
+    if (videoEl.paused) {
+      const playPromise = videoEl.play();
+      if (playPromise && typeof playPromise.then === 'function') {
+        playPromise.then(() => {
+          trackCommunityView(videoData);
+          flashCommunityVideoIcon(cardId, 'fa-pause');
+        }).catch(() => flashCommunityVideoIcon(cardId, 'fa-play'));
+      } else {
+        trackCommunityView(videoData);
+        flashCommunityVideoIcon(cardId, 'fa-pause');
+      }
+    } else {
+      videoEl.pause();
+      flashCommunityVideoIcon(cardId, 'fa-play');
+    }
+  };
+
+  const handleCommunityFullscreen = async (cardId, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const videoEl = communityVideoRefs.current[cardId];
+    if (!videoEl) return;
+
+    videoEl.controls = true;
+
+    try {
+      if (videoEl.requestFullscreen) {
+        await videoEl.requestFullscreen();
+      } else if (videoEl.webkitEnterFullscreen) {
+        videoEl.webkitEnterFullscreen();
+      } else if (videoEl.webkitRequestFullscreen) {
+        await videoEl.webkitRequestFullscreen();
+      }
+    } catch (err) {
+      videoEl.controls = true;
+    }
+  };
+
+
+  const isFinePointerDevice = () => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  };
+
+  const handleCommunityHoverStart = (cardId, videoData) => {
+    if (!isFinePointerDevice()) return;
+    setHoveredCommunityCard(cardId);
+    const videoEl = communityVideoRefs.current[cardId];
+    if (!videoEl) return;
+    videoEl.muted = true;
+    const playPromise = videoEl.play();
+    if (playPromise && typeof playPromise.then === 'function') {
+      playPromise.then(() => trackCommunityView(videoData)).catch(() => {});
+    } else {
+      trackCommunityView(videoData);
+    }
+  };
+
+  const handleCommunityHoverEnd = (cardId) => {
+    if (!isFinePointerDevice()) return;
+    setHoveredCommunityCard(null);
+    const videoEl = communityVideoRefs.current[cardId];
+    if (!videoEl) return;
+    videoEl.pause();
+  };
+
+  const scrollCommunityRail = (direction = 1) => {
+    const rail = communityScrollRef.current;
+    if (!rail) return;
+    const cardWidth = rail.querySelector('[data-community-card]')?.getBoundingClientRect?.().width || 320;
+    rail.scrollBy({ left: direction * (cardWidth + 24), behavior: 'smooth' });
+  };
+
+  const handleCommunityWheel = (e) => {
+    if (!isFinePointerDevice()) return;
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    e.currentTarget.scrollLeft += e.deltaY;
+  };
+
+  const openCommunityFeaturedVideo = (video) => {
+    setActiveCommunityVideoId(video.dbId || video.id);
+    setFlippedCommunityCards(prev => ({ ...prev, featured: false }));
+  };
+
   const navigateTo = (view, dept = null) => { setCurrentView(view); if(dept) setActiveFilter({dept, cat: 'all'}); setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
@@ -415,8 +826,8 @@ export default function Home() {
   const getUnitPromoPrice = (item) => { const promo = promos.find(p => p.category === item.category); if (promo) { const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0); if (catCount >= promo.minQty) return promo.totalPrice / promo.minQty; } return item.price; };
   
   const calculateTotal = (cartData = cart) => {
-      let subtotal = cartData.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
-      let envio = (deliveryMethod === 'envio' && shippingType === 'moto') ? shippingCost : 0;
+      const subtotal = cartData.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
+      const envio = (deliveryMethod === 'envio' && shippingType === 'moto') ? shippingCost : 0;
       return subtotal + envio;
   };
 
@@ -504,10 +915,40 @@ export default function Home() {
             msg += `- ${i.qty}x ${i.name} ($${formatPrice(price)} c/u)\n`; 
         }
     });
+    
+    let subtotalFinal = subtotalCalc;
 
-    msg += `\n*Subtotal:* ${CONFIG.currencySymbol}${formatPrice(subtotalCalc)}`;
+    if (localRoulettePrize) {
+        const totalItems = currentCart.reduce((acc, item) => acc + item.qty, 0);
+        
+        if (localRoulettePrize.id === 'off20') {
+            if (totalItems >= 2) {
+                msg += `\n🎁 *HOT SALE:* 20% OFF en 2do Vape aplicado.\n`;
+            }
+        } else if (localRoulettePrize.id === 'off15') {
+            if (subtotalCalc >= 30000) {
+                msg += `\n🎁 *HOT SALE:* 15% OFF (Superó $30.000) aplicado.\n`;
+            }
+        } else if (localRoulettePrize.type === 'percent') {
+            msg += `\n🎰 *HOT SALE:* ${localRoulettePrize.text} aplicado al total.\n`;
+        } else if (localRoulettePrize.type === 'shipping') {
+            msg += `\n🔥 *HOT SALE:* ¡ENVÍO GRATIS GANADO! 🔥\n`;
+        } else if (localRoulettePrize.id === 'sorpresa') {
+            if (subtotalCalc >= 60000) {
+                msg += `\n🎁 *HOT SALE:* ¡PREMIO SORPRESA! (Vaso Stanley ganado por compra +$60k)\n`;
+            }
+        } else if (localRoulettePrize.id === 'labubu') {
+            msg += `\n🎁 *HOT SALE:* ¡LABUBU GRATIS EN TU COMPRA!\n`;
+        }
+    }
+
+    msg += `\n*Subtotal:* ${CONFIG.currencySymbol}${formatPrice(subtotalFinal)}`;
     
     let costoEnvioAgregado = (deliveryMethod === 'envio' && shippingType === 'moto') ? shippingCost : 0;
+    
+    if (localRoulettePrize && localRoulettePrize.type === 'shipping' && deliveryMethod === 'envio' && shippingType === 'moto') {
+        costoEnvioAgregado = 0;
+    }
     
     if (costoEnvioAgregado > 0) {
         msg += `\n*Costo de Envío (Moto):* ${CONFIG.currencySymbol}${formatPrice(costoEnvioAgregado)}`;
@@ -562,6 +1003,7 @@ export default function Home() {
                 deliveryDate: deliveryMethod === 'envio' && shippingType === 'moto' ? deliveryDate : null,
                 deliveryTime: deliveryMethod === 'envio' && shippingType === 'moto' ? deliveryTime : null,
                 shippingCost: costoEnvioAgregado,
+                couponUsed: localRoulettePrize ? localRoulettePrize.text : null,
                 status: (deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'transferencia') ? 'pending_verification' : 'pending', 
                 createdAt: serverTimestamp() 
             }).catch(e => console.error(e)); 
@@ -580,6 +1022,7 @@ export default function Home() {
     navigator.clipboard.writeText(CONFIG.paymentAlias);
     showToast("✅ ALIAS copiado al portapapeles");
   };
+
   const renderProductCard = (p, index, isVidriera = false, layout = 'horizontal') => {
     const inCart = cart.find(i => i.id === p.id);
     const isOutOfStock = p.inStock === false;
@@ -726,6 +1169,275 @@ export default function Home() {
     );
   };
 
+
+
+
+  const renderCommunitySection = () => {
+    const visibleVideos = communityVideos
+      .filter(video => !video.isHidden && video.videoUrl)
+      .sort((a, b) => {
+        if (!!a.featured !== !!b.featured) return a.featured ? -1 : 1;
+        return (a.order || 99) - (b.order || 99);
+      });
+
+    if (!visibleVideos.length) return null;
+
+    const CommunityProductButton = ({ video, product, compact = false }) => (
+      <button
+        onClick={(e) => handleCommunityProductClick(video, product, e)}
+        className={`${compact ? 'w-10 h-10 rounded-xl text-sm' : 'w-full py-3 rounded-xl text-[10px]'} bg-[#fcdb00] text-[#111111] font-black uppercase tracking-widest hover:bg-[#f5d300] active:scale-95 transition-all font-poppins flex items-center justify-center gap-2`}
+        title={product ? `Agregar ${product.name}` : 'Ver catálogo'}
+      >
+        {compact ? <i className="fas fa-cart-plus"></i> : <>{product ? 'Agregar' : 'Catálogo'} <i className={`fas ${product ? 'fa-cart-plus' : 'fa-arrow-right'} text-[10px]`}></i></>}
+      </button>
+    );
+
+    const renderEditorialFlipCard = (video, index) => {
+      const productsInVideo = getProductsShownForVideo(video);
+      const mainProduct = productsInVideo[0] || null;
+      const cardId = video.dbId || video.id || `community-${index}`;
+      const isFlipped = !!flippedCommunityCards[cardId];
+
+      return (
+        <article
+          key={cardId}
+          data-community-card
+          onMouseEnter={() => handleCommunityHoverStart(cardId, video)}
+          onMouseLeave={() => handleCommunityHoverEnd(cardId)}
+          className="group/community snap-center flex-shrink-0 w-[84vw] max-w-[360px] sm:w-[300px] md:w-[300px] lg:w-[310px] xl:w-[320px] community-card-enter transition-[transform,opacity,filter] duration-500 ease-out md:hover:-translate-y-1 md:hover:z-10"
+          style={{ transitionDelay: `${index * 75}ms` }}
+        >
+          <div className="relative aspect-[9/16] community-card-depth" style={{ perspective: '1600px' }}>
+            <div
+              className="absolute inset-0"
+              style={{
+                transformStyle: 'preserve-3d',
+                transition: 'transform 720ms cubic-bezier(0.22, 0.82, 0.32, 1)',
+                transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+              }}
+            >
+              {/* FRENTE: REEL */}
+              <div
+                className="absolute inset-0 rounded-[2rem] overflow-hidden bg-black border border-black/8 shadow-[0_12px_28px_rgba(0,0,0,0.10)] group transition-all duration-500 ease-out md:group-hover/community:shadow-[0_26px_58px_rgba(0,0,0,0.22)]"
+                style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+              >
+                <video
+                  ref={(el) => { if (el) communityVideoRefs.current[cardId] = el; }}
+                  src={video.videoUrl}
+                  className="w-full h-full object-cover cursor-pointer"
+                  playsInline
+                  preload="metadata"
+                  onPlay={() => trackCommunityView(video)}
+                />
+
+                <button
+                  type="button"
+                  onClick={(e) => handleCommunityVideoTap(cardId, video, e)}
+                  className="absolute inset-0 z-[1] cursor-pointer touch-manipulation"
+                  aria-label="Reproducir o pausar video"
+                ></button>
+
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/70 to-transparent z-[2]"></div>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-52 bg-gradient-to-t from-black/84 via-black/36 to-transparent z-[2]"></div>
+
+                {communityVideoFeedback[cardId] && (
+                  <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-black/55 backdrop-blur-md border border-white/15 flex items-center justify-center text-white shadow-2xl animate-in zoom-in-95 fade-in duration-200">
+                      <i className={`fas ${communityVideoFeedback[cardId]} text-2xl`}></i>
+                    </div>
+                  </div>
+                )}
+
+                <div className="absolute top-3 left-3 right-3 z-[6] flex items-start justify-between gap-2 pointer-events-none">
+                  <div className="flex gap-2 flex-wrap">
+                    {video.featured && <span className="bg-[#fcdb00] text-[#111111] px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest font-poppins">Destacado</span>}
+                    <span className="bg-black/70 text-white px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest font-poppins border border-white/10">{video.type || 'Review'}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => handleCommunityFullscreen(cardId, e)}
+                    className="pointer-events-auto w-9 h-9 rounded-full bg-black/62 hover:bg-black/78 border border-white/15 backdrop-blur-md text-white flex items-center justify-center transition-all"
+                    aria-label="Ver video en pantalla completa"
+                  >
+                    <i className="fas fa-expand text-[12px]"></i>
+                  </button>
+                </div>
+
+                <div className="absolute left-4 right-4 bottom-3.5 z-[6] pointer-events-none">
+                  <h3 className="font-bebas text-[2rem] uppercase tracking-[0.01em] leading-none text-white drop-shadow-md mb-1 line-clamp-2">{video.title || 'Contenido real 028'}</h3>
+                  <p className="text-[12px] md:text-[13px] text-white/58 font-poppins font-medium mb-2.5 line-clamp-1">{video.creator || '@influencer'}</p>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleCommunityCardFlip(cardId); }}
+                    className="pointer-events-auto w-[100%] mx-auto bg-white/90 text-[#111111] rounded-full py-2 text-[10px] font-black uppercase tracking-[0.18em] font-poppins hover:bg-white/78 transition-all flex items-center justify-center gap-2 shadow-[0_8px_18px_rgba(0,0,0,0.12)] backdrop-blur-xl border border-white/28"
+                  >
+                    <i className="fas fa-box-open"></i> Ver productos {productsInVideo.length > 0 ? `(${productsInVideo.length})` : ''}
+                  </button>
+                </div>
+              </div>
+
+              {/* DORSO: PRODUCTOS */}
+              <div
+                className="absolute inset-0 rounded-[2rem] overflow-hidden text-white border border-white/12 shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
+                style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+              >
+                <video
+                  src={video.videoUrl}
+                  className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-35"
+                  muted
+                  loop
+                  autoPlay
+                  playsInline
+                  aria-hidden="true"
+                />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(252,219,0,0.10),transparent_28%)]"></div>
+                <div className="absolute inset-0 bg-black/42"></div>
+                <div className="absolute inset-0 backdrop-blur-[18px] bg-white/[0.07]"></div>
+                <div className="absolute inset-[1px] rounded-[1.95rem] border border-white/10"></div>
+                <div className="relative h-full p-4 md:p-5 flex flex-col">
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="min-w-0">
+                      <p className="text-white/72 text-[10px] font-black uppercase tracking-[0.18em] font-poppins mb-2">Productos del video</p>
+                      <h3 className="font-bebas text-3xl uppercase leading-none tracking-wide line-clamp-2 text-white">{video.title || '028 Community'}</h3>
+                      <p className="text-[12px] text-white/58 font-poppins mt-1 line-clamp-1">{video.creator || '@influencer'}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleCommunityCardFlip(cardId); }}
+                      className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/16 border border-white/18 backdrop-blur-xl text-white flex items-center justify-center flex-shrink-0 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+                      title="Volver al video"
+                    >
+                      <i className="fas fa-undo text-sm"></i>
+                    </button>
+                  </div>
+
+                  <div className="grid gap-3 overflow-y-auto no-scrollbar pr-1 flex-1 content-start">
+                    {productsInVideo.length ? productsInVideo.slice(0, 4).map(product => (
+                      <div key={`flip-${cardId}-${product.id}`} className="bg-white/[0.11] backdrop-blur-2xl rounded-[1.35rem] p-3 flex items-center gap-3 border border-white/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_8px_22px_rgba(0,0,0,0.14)]">
+                        <div className="w-14 h-14 bg-white/16 rounded-xl p-1.5 flex-shrink-0 backdrop-blur-xl border border-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
+                          <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bebas text-xl uppercase leading-none truncate text-white">{product.name}</p>
+                          <p className="text-sm font-black mt-1 text-white">{CONFIG.currencySymbol}{formatPrice(product.price)}</p>
+                        </div>
+                        <CommunityProductButton video={video} product={product} compact />
+                      </div>
+                    )) : (
+                      <div className="bg-white/[0.10] backdrop-blur-2xl border border-white/14 rounded-[1.35rem] p-5 text-center mt-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
+                        <i className="fas fa-box-open text-[#fcdb00] text-2xl mb-3"></i>
+                        <p className="text-sm font-black uppercase tracking-widest font-poppins">Sin productos cargados</p>
+                        <p className="text-white/50 text-xs mt-2 font-poppins">Agregalos desde el admin usando productos mostrados.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 mt-4">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleCommunityCardFlip(cardId); }}
+                      className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/16 backdrop-blur-xl border border-white/14 text-white text-[10px] font-black uppercase tracking-widest transition-all font-poppins shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
+                    >
+                      Volver
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleCommunityProductClick(video, mainProduct, e)}
+                      className="w-full py-3 rounded-xl bg-[#fcdb00] text-[#111111] text-[10px] font-black uppercase tracking-widest transition-all font-poppins hover:bg-[#f5d300]"
+                    >
+                      {mainProduct ? 'Agregar principal' : 'Catálogo'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      );
+    };
+
+    return (
+      <section id="community-section" className="community-clean-section mb-16 md:mb-20 reveal-on-scroll px-4 md:px-8">
+        <div className="max-w-[1400px] mx-auto flex items-end justify-between gap-4 mb-1 md:mb-8">
+          <div>
+            <span className="inline-flex items-center gap-2 bg-[#111111] text-white px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] font-poppins mb-4 shadow-none">
+              <i className="fas fa-users text-[#fcdb00]"></i> Comunidad real
+            </span>
+            <h2 className="font-bebas text-[48px] md:text-[68px] uppercase tracking-[0.01em] leading-[0.94] text-[#111111]" style={{ WebkitTextStroke: '0.25px #111111' }}>028 Community</h2>
+          </div>
+          <p className="hidden md:block max-w-sm text-right text-xs font-bold uppercase tracking-widest text-gray-400 font-poppins">Reels reales con productos comprables</p>
+        </div>
+
+        <div className="community-rail-shell relative group/communityRail max-w-[1400px] mx-auto overflow-visible">
+          <button
+            type="button"
+            onClick={() => scrollCommunityRail(-1)}
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 w-9 h-14 items-center justify-center rounded-full bg-black/8 hover:bg-black/22 text-white/45 hover:text-white border border-white/8 opacity-0 group-hover/communityRail:opacity-55 hover:!opacity-95 transition-all duration-300 backdrop-blur-sm"
+            aria-label="Video anterior"
+          >
+            <i className="fas fa-chevron-left text-xs"></i>
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollCommunityRail(1)}
+            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 w-9 h-14 items-center justify-center rounded-full bg-black/8 hover:bg-black/22 text-white/45 hover:text-white border border-white/8 opacity-0 group-hover/communityRail:opacity-55 hover:!opacity-95 transition-all duration-300 backdrop-blur-sm"
+            aria-label="Video siguiente"
+          >
+            <i className="fas fa-chevron-right text-xs"></i>
+          </button>
+          <div ref={communityScrollRef} onWheel={handleCommunityWheel} className="community-desktop-rail flex overflow-x-auto overflow-y-visible gap-2.5 md:gap-5 no-scrollbar snap-x snap-mandatory pt-8 -mt-6 pb-8 scroll-smooth -mx-4 md:-mx-6 px-4 md:px-6 scroll-px-4 md:scroll-px-6">
+            {visibleVideos.map((video, index) => renderEditorialFlipCard(video, index))}
+          </div>
+        </div>
+      </section>
+    );
+  };
+
+  
+const renderSingleHomeSection = (sec, sectionIndex = 0) => {
+    const secProducts = sec.productIds?.map(pid => products.find(p => p.id === pid)).filter(Boolean) || [];
+    if (secProducts.length === 0) return null;
+    return (
+      <div key={sec.id} className="mb-20 reveal-on-scroll">
+        <div className="flex justify-between items-end mb-6 pl-2 border-b-2 border-[#f2f2f2] pb-3">
+          <h2 className="text-4xl md:text-6xl font-bebas text-[#111111] tracking-wide uppercase">
+            <i className={`${AVAILABLE_ICONS.find(i => i.id === sec.icon)?.prefix || 'fas'} ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'} mr-3 drop-shadow-sm`}></i>{sec.title}
+          </h2>
+          <button onClick={() => navigateTo('catalog')} className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#111111] hover:text-[#fcdb00] transition-colors bg-white/50 px-5 py-2.5 rounded-full border border-white hover:border-[#f2f2f2]">Ver Catálogo <i className="fas fa-arrow-right"></i></button>
+        </div>
+        <div className={sec.layout === 'vertical' ? "flex flex-wrap gap-3 md:gap-5" : "flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-8 snap-x mask-image-gradient pr-8"}>{secProducts.map((p, index) => renderProductCard(p, index, true, sec.layout))}</div>
+        <button onClick={() => navigateTo('catalog')} className="md:hidden w-full mt-2 bg-white/70 backdrop-blur-xl border border-white shadow-sm text-[#111111] py-4 rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform font-poppins">ver todos los modelos <i className="fas fa-arrow-right text-[#fcdb00]"></i></button>
+      </div>
+    );
+  };
+
+  const renderHomeVidrieraSections = (onlySectionIds = null) => {
+    const idSet = Array.isArray(onlySectionIds) ? new Set(onlySectionIds) : null;
+    const sectionsToRender = idSet ? homeSections.filter(sec => idSet.has(sec.id)) : homeSections;
+    if (sectionsToRender.length === 0) {
+      return (
+        <div className="text-center py-20">
+          <div className="w-12 h-12 border-4 border-[#f2f2f2] border-t-[#fcdb00] rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest font-poppins"></p>
+        </div>
+      );
+    }
+    return sectionsToRender.map((sec, sectionIndex) => renderSingleHomeSection(sec, sectionIndex));
+  };
+
+  const renderOrderedHomeBlocks = () => {
+    return normalizedHomeLayout
+      .filter(block => block.active !== false)
+      .map((block) => {
+        if (block.id === 'community') {
+          return <React.Fragment key="home-block-community">{renderCommunitySection()}</React.Fragment>;
+        }
+        const sec = homeSections.find(section => section.id === block.id);
+        if (!sec) return null;
+        return <React.Fragment key={`home-block-${block.id}`}>{renderSingleHomeSection(sec)}</React.Fragment>;
+      });
+  };
+
   const renderLegalPage = () => {
     const pageData = PAGE_CONTENT[currentView]; 
     if (!pageData) return null;
@@ -755,9 +1467,8 @@ export default function Home() {
         </div>
     );
   };
-
   return (
-    <div className="bg-[#f2f2f2] text-[#111111] font-poppins flex flex-col relative pb-20 md:pb-0 min-h-screen selection:bg-[#fcdb00] selection:text-[#111111]">
+    <div className="bg-[#f8f8f8] text-[#111111] font-poppins flex flex-col relative min-h-screen selection:bg-[#fcdb00] selection:text-[#111111]">
       <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;700;900&display=swap');
         .font-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
@@ -772,6 +1483,120 @@ export default function Home() {
           opacity: 1;
           transform: translateY(0);
         }
+        @keyframes marquee {
+          0% { transform: translate3d(0, 0, 0); }
+          100% { transform: translate3d(-50%, 0, 0); }
+        }
+        .animate-marquee {
+          display: flex;
+          width: max-content;
+          animation: marquee 85s linear infinite;
+          will-change: transform;
+        }
+
+        /* --- ANIMACIÓN SHIMMER MEJORADA --- */
+        @keyframes shimmerFull {
+          0% { transform: translateX(-200px) skewX(-20deg); }
+          100% { transform: translateX(500px) skewX(-20deg); }
+        }
+        .animate-shimmer-sweep {
+          animation: shimmerFull 3s infinite linear;
+        }
+
+        .community-section-bleed {
+          width: 100vw;
+          margin-left: calc(50% - 50vw);
+          margin-right: calc(50% - 50vw);
+        }
+
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+          width: 0;
+          height: 0;
+          background: transparent;
+        }
+
+        .community-desktop-rail {
+          scroll-behavior: smooth;
+          overscroll-behavior-x: contain;
+        }
+
+        .community-card-enter {
+          animation: communityCardIn 0.7s cubic-bezier(0.22, 0.82, 0.32, 1) both;
+        }
+
+        @keyframes communityCardIn {
+          from { opacity: 0; transform: translateY(18px) scale(0.985); filter: blur(3px); }
+          to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+          .community-desktop-rail:hover [data-community-card] {
+            opacity: 0.78;
+            filter: saturate(0.92);
+          }
+          .community-desktop-rail:hover [data-community-card]:hover {
+            opacity: 1;
+            filter: saturate(1.05);
+          }
+          .community-card-depth {
+            transition: transform 0.45s cubic-bezier(0.22, 0.82, 0.32, 1);
+          }
+          [data-community-card]:hover .community-card-depth {
+            transform: perspective(1600px) rotateX(1.1deg) rotateY(-1deg) translateY(-2px) scale(1.01);
+          }
+        }
+
+
+
+        /* Community limpio: las cards quedan directas sobre el fondo del inicio */
+        .community-clean-section,
+        .community-rail-shell,
+        .community-desktop-rail {
+          background: transparent !important;
+          background-color: transparent !important;
+          box-shadow: none !important;
+          border: 0 !important;
+          outline: 0 !important;
+        }
+
+        .community-clean-section::before,
+        .community-clean-section::after,
+        .community-rail-shell::before,
+        .community-rail-shell::after,
+        .community-desktop-rail::before,
+        .community-desktop-rail::after {
+          content: none !important;
+          display: none !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          border: 0 !important;
+        }
+
+        .community-desktop-rail {
+          isolation: isolate;
+          overflow-y: visible !important;
+        }
+
+        /* Fullscreen: evitar que el video vertical se recorte en PC */
+        video:fullscreen {
+          object-fit: contain !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          background: #000 !important;
+        }
+        video:-webkit-full-screen {
+          object-fit: contain !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          background: #000 !important;
+        }
+
+        /* --- SOLUCIÓN AL ZOOM MOLESTO EN CELULARES --- */
         @media screen and (max-width: 768px) {
           input, select, textarea {
             font-size: 16px !important;
@@ -779,7 +1604,7 @@ export default function Home() {
         }
       `}} />
 
-      {/* --- HEADER PRINCIPAL --- */}
+      {/* --- HEADER PRINCIPAL (NEGRO PURO #050505) --- */}
       <header className="bg-[#050505] text-white h-[72px] sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 shadow-lg border-b border-white/[0.06] transition-all duration-300">
         <div className="flex items-center gap-4">
           <button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#fcdb00] transition-colors p-2 md:hidden">
@@ -798,6 +1623,7 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
+          
           <button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#fcdb00] transition-colors">
               <i className="fas fa-shopping-bag text-2xl"></i>
               {getTotalItems() > 0 && (
@@ -809,14 +1635,15 @@ export default function Home() {
         </div>
       </header>
 
-      {/* NOTIFICACIONES TOAST */}
+      {/* --- BARRA CONTADOR OPTIMIZADA --- */}
+      <CountdownBanner />
+
       {toastMessage && (
           <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[300] bg-[#111111]/90 backdrop-blur-xl text-white px-6 py-4 rounded-full shadow-[0_20px_40px_rgba(252,219,0,0.2)] border border-[#fcdb00]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">
               {toastMessage}
           </div>
       )}
       
-      {/* COMPRAS EN VIVO (FOMO) */}
       {fomoData && (
         <div className="fixed bottom-24 left-4 md:bottom-8 md:left-8 z-[100] bg-[#111111]/95 backdrop-blur-md text-white p-3 md:p-4 rounded-2xl shadow-2xl border border-[#fcdb00]/30 flex items-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-500 hover:scale-105 transition-transform cursor-default">
           <div className="w-10 h-10 bg-[#fcdb00] rounded-full flex items-center justify-center text-[#111111] text-lg shadow-inner"><i className="fas fa-fire"></i></div>
@@ -832,7 +1659,17 @@ export default function Home() {
       {/* --- MENÚ MÓVIL (3 RAYITAS) --- */}
       {isMenuOpen && (<div className="fixed inset-0 z-[90] flex"><div className="absolute inset-0 bg-[#111111]/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div><div className="w-[85%] max-w-[380px] bg-[#f2f2f2] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden"><div className="p-8 bg-[#111111] flex justify-between items-center text-white border-b border-white/10"><span className="font-bebas text-3xl tracking-wide uppercase">028<span className="text-[#fcdb00]">MENU</span></span><button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times text-lg"></i></button></div><div className="flex-1 overflow-y-auto pb-8"><div className="flex flex-col p-4 space-y-2">
         
-        <button onClick={() => { setShowShippingCalculatorModal(true); setIsMenuOpen(false); }} className="w-full bg-[#fcdb00] text-[#111111] p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#111111] hover:text-[#fcdb00] transition-all flex justify-center items-center gap-3 mb-2 mt-2"><i className="fas fa-motorcycle text-lg"></i> Calcular Envío</button>
+        <div className="md:hidden mb-2">
+            {!user || user.isAnonymous ? (
+                <button onClick={handleGoogleLogin} className="w-full bg-[#111111] text-white p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#fcdb00] hover:text-[#111111] transition-all flex justify-center items-center gap-3"><i className="fab fa-google text-lg"></i> Iniciar sesión con Google</button>
+            ) : (
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-3">
+                    <p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest text-center">Hola, {dbUser?.name?.split(' ')[0] || 'Cliente'}</p>
+                </div>
+            )}
+        </div>
+        
+        <button onClick={() => { setShowShippingCalculatorModal(true); setIsMenuOpen(false); }} className="w-full bg-[#fcdb00] text-[#111111] p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#111111] hover:text-[#fcdb00] transition-all flex justify-center items-center gap-3 mb-2"><i className="fas fa-motorcycle text-lg"></i> Calcular Envío</button>
         
         <button onClick={() => { setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); }} className="text-left p-5 bg-white rounded-2xl shadow-sm border border-[#f2f2f2] font-black uppercase text-sm hover:border-[#fcdb00] hover:shadow-md flex justify-between items-center transition-all">Catálogo Completo <i className="fas fa-arrow-right text-[#fcdb00]"></i></button><div className="pt-6 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Departamentos</p></div>{departments.map(dept => { const isExpanded = expandedDept === dept; const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category))); return (<div key={dept} className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] overflow-hidden transition-all"><button onClick={() => setExpandedDept(isExpanded ? null : dept)} className="w-full text-left p-5 font-black uppercase text-sm flex justify-between items-center transition-colors group">{dept} <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-gray-300 group-hover:text-[#fcdb00] transition-colors`}></i></button><div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="bg-gray-50 flex flex-col pb-4 pt-2 border-t border-gray-100"><button onClick={() => { setActiveFilter({dept, cat: 'all'}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-black text-xs text-[#111111] uppercase hover:text-[#fcdb00] transition-colors flex items-center gap-2"><i className="fas fa-layer-group text-gray-400"></i> Ver todo en {dept}</button>{deptCats.map(cat => (<button key={cat} onClick={() => { setActiveFilter({dept, cat}); navigateTo('catalog'); setTimeout(() => { const target = document.getElementById(slugify(cat)); if(target) target.scrollIntoView({behavior: 'smooth'}); }, 300); }} className="text-left px-6 py-3 font-bold text-xs text-gray-500 uppercase hover:text-[#111111] transition-colors pl-12 relative before:content-[''] before:w-1.5 before:h-1.5 before:bg-gray-300 before:rounded-full before:absolute before:left-7 before:top-1/2 before:-translate-y-1/2 hover:before:bg-[#fcdb00]">{cat}</button>))}</div></div></div>); })}
         
@@ -860,7 +1697,7 @@ export default function Home() {
           <header className="relative w-full h-[35vh] md:h-[55vh] flex items-center justify-center bg-[#111111] overflow-hidden border-b border-[#111111]">
             <img src={CONFIG.bannerImage} alt="Banner 028" className="absolute inset-0 w-full h-full object-cover object-center" />
           </header>
-          <main className="flex-grow px-4 md:px-8 pt-10 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full">
+          <main className="flex-grow px-4 md:px-8 pt-10 max-w-7xl mx-auto min-h-[50vh] pb-8 md:pb-16 w-full">
             <div className="md:hidden relative mb-12 reveal-on-scroll">
                 <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i>
                 <input type="text" placeholder="Buscar productos, marcas..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] pl-12 pr-6 py-4 rounded-2xl text-sm font-bold outline-none focus:border-[#fcdb00] focus:bg-white transition-all placeholder:text-gray-400 font-poppins" />
@@ -879,70 +1716,7 @@ export default function Home() {
                 )})}
               </div>
             </div>
-             {homeSections.length === 0 ? (
-                 <div className="text-center py-20">
-                     <div className="w-12 h-12 border-4 border-[#f2f2f2] border-t-[#fcdb00] rounded-full animate-spin mx-auto mb-4"></div>
-                 </div>
-             ) : (
-                 homeSections.map((sec, sectionIndex) => {
-                     const secProducts = sec.productIds?.map(pid => products.find(p => p.id === pid)).filter(Boolean) || [];
-                     if(secProducts.length === 0) return null;
-                     return (
-                         <div key={sec.id} className="mb-20 reveal-on-scroll">
-                             <div className="flex justify-between items-end mb-6 pl-2 border-b-2 border-[#f2f2f2] pb-3">
-                                 <h2 className="text-4xl md:text-6xl font-bebas text-[#111111] tracking-wide uppercase">
-                                     <i className={`${AVAILABLE_ICONS.find(i => i.id === sec.icon)?.prefix || 'fas'} ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'} mr-3 drop-shadow-sm`}></i>{sec.title}
-                                 </h2>
-                                 <button onClick={() => navigateTo('catalog')} className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#111111] hover:text-[#fcdb00] transition-colors bg-white/50 px-5 py-2.5 rounded-full border border-white hover:border-[#f2f2f2]">Ver Catálogo <i className="fas fa-arrow-right"></i></button>
-                             </div>
-                             <div className={sec.layout === 'vertical' ? "flex flex-wrap gap-3 md:gap-5" : "flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-8 snap-x mask-image-gradient pr-8"}>{secProducts.map((p, index) => renderProductCard(p, index, true, sec.layout))}</div>
-                             <button onClick={() => navigateTo('catalog')} className="md:hidden w-full mt-2 bg-white/70 backdrop-blur-xl border border-white shadow-sm text-[#111111] py-4 rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform font-poppins">ver todos los modelos <i className="fas fa-arrow-right text-[#fcdb00]"></i></button>
-                         </div>
-                     )
-                 })
-             )}
-
-             {/* --- SECCIÓN 028 COMMUNITY CON CLOUDINARY --- */}
-             <section className="mt-20 mb-20 reveal-on-scroll">
-               <div className="mb-8 flex justify-between items-end pl-2 border-b-2 border-[#f2f2f2] pb-3">
-                 <div>
-                   <h2 className="text-4xl md:text-6xl font-bebas text-[#111111] tracking-wide uppercase">
-                       028 <span className="text-[#fcdb00] drop-shadow-sm">COMMUNITY</span>
-                   </h2>
-                   <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Nuestros productos en acción</p>
-                 </div>
-               </div>
-
-               <div className="flex gap-4 overflow-x-auto no-scrollbar pb-8 snap-x mask-image-gradient pr-8">
-                 {/* Reemplazá este link de Cloudinary con el tuyo de verdad cuando lo tengas */}
-                 <div className="snap-start relative flex-shrink-0 w-[240px] h-[400px] md:w-[280px] md:h-[480px] rounded-[2.5rem] overflow-hidden border border-gray-200 shadow-xl group cursor-pointer bg-[#111111]">
-                   <video 
-                     src="https://res.cloudinary.com/demo/video/upload/v1355483256/dog.mp4" 
-                     autoPlay loop muted playsInline 
-                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                   />
-                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
-                   <div className="absolute bottom-6 left-6 pointer-events-none">
-                     <p className="text-[#fcdb00] font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1.5"><i className="fas fa-play-circle text-[11px]"></i> Review</p>
-                     <p className="text-white font-bebas text-2xl tracking-wide leading-none">@cliente_028</p>
-                   </div>
-                 </div>
-
-                 <div className="snap-start relative flex-shrink-0 w-[240px] h-[400px] md:w-[280px] md:h-[480px] rounded-[2.5rem] overflow-hidden border border-gray-200 shadow-xl group cursor-pointer bg-[#111111]">
-                   <video 
-                     src="https://res.cloudinary.com/demo/video/upload/v1355483256/dog.mp4" 
-                     autoPlay loop muted playsInline 
-                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                   />
-                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
-                   <div className="absolute bottom-6 left-6 pointer-events-none">
-                     <p className="text-[#fcdb00] font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1.5"><i className="fas fa-fire text-[11px]"></i> Unboxing</p>
-                     <p className="text-white font-bebas text-2xl tracking-wide leading-none">@staff_028</p>
-                   </div>
-                 </div>
-               </div>
-             </section>
-
+            {renderOrderedHomeBlocks()}
           </main>
         </>
       ) : currentView === 'catalog' ? (
@@ -964,7 +1738,7 @@ export default function Home() {
                   )}
               </div>
           </div>
-          <main className="flex-grow px-4 md:px-8 py-10 max-w-7xl mx-auto min-h-[50vh] pb-32 w-full">
+          <main className="flex-grow px-4 md:px-8 py-10 max-w-7xl mx-auto min-h-[50vh] pb-8 md:pb-16 w-full">
               {searchTerm && products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
                   <div className="text-center py-24 bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white shadow-sm"><div className="w-20 h-20 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-6"><i className="fas fa-ghost text-3xl text-gray-400"></i></div><h3 className="text-3xl font-bebas uppercase tracking-wide text-[#111111] mb-2">No encontramos nada</h3><p className="text-xs uppercase tracking-widest text-gray-500 font-poppins">Intenta buscar otro sabor o marca.</p></div>
               )}
@@ -977,24 +1751,14 @@ export default function Home() {
           </main> 
       )}
 
-      {/* --- BOTONES INFERIORES NAVEGACION (MOBILE) --- */}
-      <nav className="md:hidden fixed bottom-0 w-full bg-[#f2f2f2]/90 backdrop-blur-3xl border-t border-white shadow-[0_-20px_40px_rgba(0,0,0,0.06)] z-40 pb-safe pt-2 px-2">
-          <div className="flex justify-around items-center h-16 max-w-md mx-auto">
-              <button onClick={() => navigateTo('home')} className={`flex flex-col items-center justify-center gap-1 w-full h-full rounded-xl transition-all ${currentView==='home' ? 'text-[#111111]' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-home text-xl mb-0.5"></i><span className="text-[9px] font-bebas uppercase tracking-wider">Inicio</span></button>
-              <button onClick={() => navigateTo('catalog')} className={`flex flex-col items-center justify-center gap-1 w-full h-full rounded-xl transition-all ${currentView==='catalog' ? 'text-[#111111]' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-th-large text-xl mb-0.5"></i><span className="text-[9px] font-bebas uppercase tracking-wider">Catálogo</span></button>
-              <button onClick={() => setIsCartOpen(true)} className="flex flex-col items-center justify-center gap-1 w-full h-full text-[#111111] relative active:scale-95 transition-transform"><div className="relative bg-[#111111] w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"><i className="fas fa-shopping-bag text-lg text-white"></i>{getTotalItems() > 0 && (<span className="absolute -top-1.5 -right-1.5 bg-[#fcdb00] text-[#111111] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-sm border border-[#111111]">{getTotalItems()}</span>)}</div><span className="text-[9px] font-bebas uppercase tracking-wider mt-0.5">Bolsa</span></button>
-          </div>
-      </nav>
-
-      <footer className="hidden md:block bg-[#111111] text-white pt-20 pb-10 mt-auto relative z-30 rounded-t-[3rem] overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#fcdb00] to-transparent opacity-50"></div>
-          <div className="max-w-7xl mx-auto px-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-16 text-xs md:text-sm">
-                  <div className="space-y-6"><div className="flex items-center gap-3"><img src={CONFIG.logoImage} alt="028Import Logo" className="h-14 w-auto object-contain drop-shadow-[0_0_15px_rgba(252,219,0,0.4)]" /></div><p className="text-gray-400 font-medium leading-relaxed pr-4 font-poppins">Redefinimos la experiencia de compra priorizando tu tiempo y confianza.</p></div>
-                  <div><h4 className="font-bebas text-[#fcdb00] text-2xl uppercase tracking-wider mb-6">Contacto</h4><ul className="space-y-5 text-gray-300 font-poppins"><li className="flex items-center gap-4"><div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-[#fcdb00]"><i className="fab fa-whatsapp text-lg"></i></div><span className="text-base font-bold tracking-wider">11 5341 2358</span></li><li className="flex items-start gap-4 mt-2"><div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-[#fcdb00] flex-shrink-0"><i className="fas fa-location-dot text-lg"></i></div><span className="pt-1">Miñones & Juramento,<br/>Belgrano, CABA.</span></li></ul></div>
+      <footer className="block bg-[#111111] text-white pt-8 md:pt-12 pb-6 md:pb-8 mt-auto relative z-30 rounded-t-[2rem] overflow-hidden">
+          <div className="max-w-7xl mx-auto px-5 md:px-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 lg:gap-6 mb-6 md:mb-10 text-xs md:text-sm">
+                  <div className="space-y-6"><div className="flex items-center gap-3"><img src={CONFIG.logoImage} alt="028Import Logo" className="h-12 md:h-14 w-auto object-contain drop-shadow-[0_0_15px_rgba(252,219,0,0.25)]" /></div><p className="text-gray-400 font-medium leading-relaxed md:pr-4 font-poppins max-w-sm">Compra rápida, referencias reales y atención directa por WhatsApp.</p></div>
+                  <div><h4 className="font-bebas text-[#fcdb00] text-xl md:text-2xl uppercase tracking-wider mb-4 md:mb-6">Contacto</h4><ul className="space-y-3 md:space-y-5 text-gray-300 font-poppins"><li className="flex items-center gap-4"><div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-[#fcdb00]"><i className="fab fa-whatsapp text-lg"></i></div><span className="text-base font-bold tracking-wider">11 5341 2358</span></li><li className="flex items-start gap-4 mt-2"><div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-[#fcdb00] flex-shrink-0"><i className="fas fa-location-dot text-lg"></i></div><span className="pt-1">Miñones & Juramento,<br/>Belgrano, CABA.</span></li></ul></div>
                   <div>
-                    <h4 className="font-bebas text-[#fcdb00] text-2xl uppercase tracking-wider mb-6">Información Legal</h4>
-                    <ul className="space-y-4 text-gray-400 font-poppins font-medium">
+                    <h4 className="font-bebas text-[#fcdb00] text-xl md:text-2xl uppercase tracking-wider mb-4 md:mb-6">Información Legal</h4>
+                    <ul className="space-y-3 md:space-y-4 text-gray-400 font-poppins font-medium">
                       <li><button onClick={() => navigateTo('nosotros')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#fcdb00] text-[10px]"></i> Quiénes Somos</button></li>
                       <li><button onClick={() => navigateTo('envios')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#fcdb00] text-[10px]"></i> Logística de Envío</button></li>
                       <li><button onClick={() => navigateTo('pagos')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#fcdb00] text-[10px]"></i> Medios de Pago</button></li>
@@ -1003,11 +1767,11 @@ export default function Home() {
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-bebas text-[#fcdb00] text-2xl uppercase tracking-wider mb-6">Nuestras Redes</h4>
+                    <h4 className="font-bebas text-[#fcdb00] text-xl md:text-2xl uppercase tracking-wider mb-4 md:mb-6">Nuestras Redes</h4>
                     <div className="flex gap-4">
-                      <a href="https://www.tiktok.com/@028.import" target="_blank" rel="noreferrer" className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-[#fcdb00] hover:text-[#111111] transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(252,219,0,0.3)]"><i className="fab fa-tiktok text-2xl"></i></a>
-                      <a href="https://www.instagram.com/028.import" target="_blank" rel="noreferrer" className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-[#fcdb00] hover:text-[#111111] transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(252,219,0,0.3)]"><i className="fab fa-instagram text-2xl"></i></a>
-                      <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-[#25D366] hover:text-white transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(37,211,102,0.3)]"><i className="fab fa-whatsapp text-2xl"></i></a>
+                      <a href="https://www.tiktok.com/@028.import" target="_blank" rel="noreferrer" className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-[#fcdb00] hover:text-[#111111] transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(252,219,0,0.3)]"><i className="fab fa-tiktok text-2xl"></i></a>
+                      <a href="https://www.instagram.com/028.import" target="_blank" rel="noreferrer" className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-[#fcdb00] hover:text-[#111111] transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(252,219,0,0.3)]"><i className="fab fa-instagram text-2xl"></i></a>
+                      <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-[#25D366] hover:text-white transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(37,211,102,0.3)]"><i className="fab fa-whatsapp text-2xl"></i></a>
                     </div>
                   </div>
               </div>
@@ -1047,11 +1811,16 @@ export default function Home() {
           </div>
       )}
 
-      {/* --- DRAWER DEL CARRITO --- */}
+      {/* --- DRAWER DEL CARRITO (BLINDADO ANTI-INSTAGRAM Y ANTI-TECLADO iOS) --- */}
       {isCartOpen && (
           <div className="fixed inset-0 z-[120] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4">
+              {/* Fondo oscuro para cerrar */}
               <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} />
+              
+              {/* CAJA PRINCIPAL RÍGIDA: Exactamente 85% de alto (dinámico), flex column estricto */}
               <div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] max-h-[85dvh] h-full flex flex-col overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-300">
+                  
+                  {/* HEADER (Fijo arriba, no se achica) */}
                   <div className="p-5 md:p-6 border-b border-gray-300 flex justify-between items-center bg-white flex-shrink-0 z-10 shadow-sm">
                       <div>
                           <h2 className="text-3xl md:text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2>
@@ -1059,6 +1828,8 @@ export default function Home() {
                       </div>
                       <button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-[#f2f2f2] rounded-full text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex items-center justify-center shadow-sm border border-gray-200"><i className="fas fa-times text-lg"></i></button>
                   </div>
+                  
+                  {/* CUERPO (Acá es donde el usuario hace scroll, se estira para llenar el espacio medio) */}
                   <div className="flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar relative">
                       <div className="space-y-3 mb-4">
                           {cart.length === 0 && (
@@ -1126,6 +1897,18 @@ export default function Home() {
                       {/* FORMULARIOS */}
                       {cart.length > 0 && (
                           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+                              {localRoulettePrize && localRoulettePrize.type !== 'none' && (
+                                <div className="bg-[#111111] text-[#fcdb00] p-4 rounded-xl flex items-center justify-between border border-[#fcdb00]/30 shadow-md">
+                                  <div className="flex items-center gap-4">
+                                      <i className="fas fa-gift text-2xl"></i>
+                                      <div className="flex flex-col">
+                                          <span className="font-bold text-[10px] uppercase text-white">Premio Hot Sale</span>
+                                          <span className="font-bebas text-xl block leading-none mt-1">{localRoulettePrize.text}</span>
+                                      </div>
+                                  </div>
+                                  <i className="fas fa-check-circle text-2xl text-[#25D366]"></i>
+                                </div>
+                              )}
                               
                               <div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
                                   <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-user-circle text-[#fcdb00] text-xl"></i> Tus Datos</p>
@@ -1228,7 +2011,7 @@ export default function Home() {
                       )}
                   </div>
 
-                  {/* FOOTER DEL CARRITO */}
+                  {/* FOOTER (Fijo abajo, NO se empuja por el scroll ni desaparece por la barra) */}
                   {cart.length > 0 && (
                       <div className="bg-white border-t border-gray-200 flex-shrink-0 z-20 pb-8 md:pb-6 pt-5 px-5 md:px-6 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
                           <div className="flex justify-between items-end mb-4">
@@ -1244,19 +2027,7 @@ export default function Home() {
           </div>
       )}
 
-      {/* --- BOTONES FLOTANTES INDEPENDIENTES (Sin estética Hot Sale) --- */}
-      {!isCartOpen && !selectedProduct && (
-        <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[100] flex flex-col items-end gap-3 group">
-          <div className={`bg-white text-[#111111] p-3 md:p-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] border border-gray-200 max-w-[180px] md:max-w-[200px] text-center transform transition-all duration-700 ease-out origin-bottom-right relative ${showTooltip ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-90 group-hover:translate-y-0 group-hover:opacity-100 group-hover:scale-100'}`}>
-            <p className="font-poppins font-bold text-[10px] md:text-xs">¿No sabés cuál elegir? Te ayudamos</p>
-            <div className="absolute bottom-[-6px] right-6 w-3 h-3 md:w-4 md:h-4 bg-white transform rotate-45 border-r border-b border-gray-200"></div>
-          </div>
-          
-          <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noopener noreferrer" className="pointer-events-auto w-14 h-14 md:w-16 md:h-16 bg-[#25D366] rounded-full flex items-center justify-center text-white text-3xl shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform duration-300">
-            <i className="fab fa-whatsapp"></i>
-          </a>
-        </div>
-      )}
+      {/* --- BOTONES FLOTANTES INDEPENDIENTES (Se esconden si el carrito se abre) --- */}
 
       {/* --- MODAL DE PAGO OFFLINE --- */}
       {showPaymentModal && (

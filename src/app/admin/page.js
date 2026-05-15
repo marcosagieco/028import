@@ -101,12 +101,105 @@ const initialHomeSections = [
   { id: 'sec_nuevos_ingresos', title: "NUEVOS INGRESOS", icon: 'fa-bolt', iconColor: 'text-[#fcdb00]', productIds: [18, 28, 29], order: 2, layout: 'horizontal' }
 ];
 
+const initialCommunityVideos = [
+  {
+    id: 'community_video_1',
+    title: 'REVIEW REAL 028',
+    creator: '028 Community',
+    type: 'Review',
+    description: 'Video con referencia real y productos comprables.',
+    videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778708315/WhatsApp_Video_2026-05-13_at_17.48.35_fwssvz.mp4',
+    productId: 17,
+    productsShown: [17, 26, 33],
+    ctaText: 'Ver productos',
+    featured: true,
+    order: 1,
+    isHidden: false,
+    views: 0,
+    clicks: 0
+  },
+  {
+    id: 'community_video_2',
+    title: 'COLABORACIONES',
+    creator: '@martulali',
+    type: 'Colaboración',
+    description: 'Video visual mostrando productos 028.',
+    videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778713679/Martulali_028_ldzttb.mp4',
+    productId: 17,
+    productsShown: [17, 25, 39],
+    ctaText: 'Ver productos',
+    featured: false,
+    order: 2,
+    isHidden: false,
+    views: 0,
+    clicks: 0
+  },
+  {
+    id: 'community_video_3',
+    title: 'COLABORACIONES',
+    creator: '@alelali',
+    type: 'Colaboración',
+    description: 'Video visual mostrando productos 028.',
+    videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778713678/alelali_028_ginzna.mp4',
+    productId: 33,
+    productsShown: [33, 31, 45],
+    ctaText: 'Ver productos',
+    featured: false,
+    order: 3,
+    isHidden: false,
+    views: 0,
+    clicks: 0
+  },
+  {
+    id: 'community_video_4',
+    title: 'COLABORACIONES',
+    creator: '@giulianny',
+    type: 'Colaboración',
+    description: 'Video visual mostrando productos 028.',
+    videoUrl: 'https://res.cloudinary.com/dcdwnayy2/video/upload/v1778713680/GiuliAnny_028_gjnrdz.mp4',
+    productId: 17,
+    productsShown: [17, 26, 33],
+    ctaText: 'Ver productos',
+    featured: false,
+    order: 4,
+    isHidden: false,
+    views: 0,
+    clicks: 0
+  },
+];
+
+const buildDefaultHomeLayout = (sections = []) => {
+  const orderedSections = [...sections].sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+  if (!orderedSections.length) {
+    return [{ id: 'community', label: '028 Community', order: 1, active: true, type: 'community' }];
+  }
+  const [firstSection, ...restSections] = orderedSections;
+  return [
+    { id: firstSection.id, label: firstSection.title || 'Vidriera', order: 1, active: true, type: 'section' },
+    { id: 'community', label: '028 Community', order: 2, active: true, type: 'community' },
+    ...restSections.map((section, index) => ({ id: section.id, label: section.title || 'Vidriera', order: index + 3, active: true, type: 'section' })),
+  ];
+};
+
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('historial'); 
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
   const [spins, setSpins] = useState([]); // --- NUEVO ESTADO PARA LA RULETA ---
+  const [communityVideos, setCommunityVideos] = useState([]);
+  const [newCommunityVideo, setNewCommunityVideo] = useState({
+    title: '',
+    creator: '',
+    type: 'Colaboración',
+    description: '',
+    videoUrl: '',
+    productId: '',
+    productsShownText: '',
+    ctaText: 'Ver productos',
+    featured: false,
+    order: ''
+  });
   
   // --- ESTADOS PARA CUPONES, USUARIOS Y OFERTAS (UPSELLS) ---
   const [coupons, setCoupons] = useState([]);
@@ -117,6 +210,7 @@ export default function AdminPage() {
   const [newUpsell, setNewUpsell] = useState({ productId: '', price: '' });
 
   const [homeSections, setHomeSections] = useState([]);
+  const [homeLayout, setHomeLayout] = useState([]);
   const [newPromo, setNewPromo] = useState({ category: '', minQty: 2, totalPrice: '' });
   const [newSectionTitle, setNewSectionTitle] = useState('');
   const [newSectionIcon, setNewSectionIcon] = useState(AVAILABLE_ICONS[0]); 
@@ -132,6 +226,22 @@ export default function AdminPage() {
   const uniqueCategories = useMemo(() => [...new Set(products.filter(p => !p.isDeleted).map(p => p.category))], [products]);
   const PREDEFINED_DEPARTMENTS = ["VAPES", "THC", "TECNOLOGÍA", "APPLE"];
   const availableDepartments = useMemo(() => Array.from(new Set([...PREDEFINED_DEPARTMENTS, ...products.filter(p => !p.isDeleted).map(p => p.department).filter(Boolean)])), [products]);
+  const availableCommunityProducts = useMemo(() => products.filter(p => !p.isDeleted && !p.isHidden).sort((a, b) => String(a.name).localeCompare(String(b.name))), [products]);
+  const normalizedHomeLayout = useMemo(() => {
+    const fallback = buildDefaultHomeLayout(homeSections);
+    const incoming = Array.isArray(homeLayout) && homeLayout.length ? homeLayout : fallback;
+    const mergedMap = new Map();
+    fallback.forEach(item => mergedMap.set(item.id, { ...item }));
+    incoming.forEach(item => {
+      const base = mergedMap.get(item.id) || {
+        id: item.id,
+        label: item.label || homeSections.find(section => section.id === item.id)?.title || 'Bloque',
+        type: item.id === 'community' ? 'community' : 'section',
+      };
+      mergedMap.set(item.id, { ...base, ...item, active: item.active !== false });
+    });
+    return Array.from(mergedMap.values()).sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+  }, [homeLayout, homeSections]);
 
   const clientsList = useMemo(() => {
     const clientsMap = new Map();
@@ -198,6 +308,16 @@ export default function AdminPage() {
         setSpins(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
       });
 
+      // --- LECTURA DE VIDEOS 028 COMMUNITY ---
+      onSnapshot(query(collection(firebaseRefs.db, 'community_videos'), orderBy('order', 'asc')), (snap) => {
+        setCommunityVideos(!snap.empty ? snap.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => (a.order || 99) - (b.order || 99)) : []);
+      });
+
+      onSnapshot(doc(firebaseRefs.db, 'settings', 'home_layout'), (snap) => {
+        const sections = snap.exists() ? snap.data()?.sections : null;
+        setHomeLayout(Array.isArray(sections) ? sections : []);
+      });
+
       onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
         if (snap.exists()) { setDeptIcons(snap.data().icons || {}); }
       });
@@ -257,6 +377,205 @@ export default function AdminPage() {
       catch (err) { alert(err.message); }
     }
   };
+
+  // --- FUNCIONES PARA 028 COMMUNITY ---
+  const resetCommunityForm = () => setNewCommunityVideo({
+    title: '',
+    creator: '',
+    type: 'Colaboración',
+    description: '',
+    videoUrl: '',
+    productId: '',
+    productsShownText: '',
+    ctaText: 'Ver productos',
+    featured: false,
+    order: ''
+  });
+
+  const parseCommunityProductsInput = (value) => {
+    return String(value || '')
+      .split(',')
+      .map(v => Number(String(v).trim()))
+      .filter((id, index, arr) => Number.isFinite(id) && arr.indexOf(id) === index);
+  };
+
+  const resolveCommunityProducts = (video) => {
+    const ids = Array.isArray(video?.productsShown) && video.productsShown.length
+      ? video.productsShown
+      : (video?.productId ? [video.productId] : []);
+    return ids
+      .map(id => Number(id))
+      .filter((id, index, arr) => Number.isFinite(id) && arr.indexOf(id) === index)
+      .map(id => products.find(p => Number(p.id) === id))
+      .filter(Boolean);
+  };
+
+  const getCommunityProductName = (productId) => {
+    const prod = products.find(p => String(p.id) === String(productId));
+    return prod ? prod.name : 'Sin producto vinculado';
+  };
+
+  const getCommunityProductsSummary = (video) => {
+    const prods = resolveCommunityProducts(video);
+    return prods.length ? prods.map(p => `${p.id} - ${p.name}`).join(' • ') : 'Sin productos vinculados';
+  };
+
+  const getCommunityProductsInputValue = (video) => {
+    const ids = Array.isArray(video?.productsShown) && video.productsShown.length
+      ? video.productsShown
+      : (video?.productId ? [video.productId] : []);
+    return ids.join(', ');
+  };
+
+  const normalizeCommunityField = (field, value) => {
+    if (field === 'order') return Number(value) || 99;
+    if (field === 'productId') return value ? Number(value) : null;
+    return String(value || '').trim();
+  };
+
+  const updateCommunityProductsShown = async (video, value) => {
+    try {
+      const parsed = parseCommunityProductsInput(value);
+      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), {
+        productsShown: parsed,
+        productId: parsed[0] || null,
+      }, { merge: true });
+    } catch(err) { alert('Error al actualizar productos mostrados: ' + err.message); }
+  };
+
+  const handleAddCommunityVideo = async (e) => {
+    e.preventDefault();
+    const videoUrl = newCommunityVideo.videoUrl.trim();
+    if (!videoUrl) return alert("Pegá el link directo del video");
+    try {
+      const newId = `community_${Date.now()}`;
+
+      if (newCommunityVideo.featured) {
+        await Promise.all(communityVideos.map(v => setDoc(doc(firebaseRefs.db, 'community_videos', v.dbId || v.id), { featured: false }, { merge: true })));
+      }
+
+      const parsedProducts = parseCommunityProductsInput(newCommunityVideo.productsShownText);
+      const primaryProductId = parsedProducts[0] || (newCommunityVideo.productId ? Number(newCommunityVideo.productId) : null);
+
+      await setDoc(doc(firebaseRefs.db, 'community_videos', newId), {
+        id: newId,
+        title: (newCommunityVideo.title || 'COLABORACIONES').trim(),
+        creator: (newCommunityVideo.creator || '@influencer').trim(),
+        type: (newCommunityVideo.type || 'Colaboración').trim(),
+        description: (newCommunityVideo.description || 'Video visual mostrando productos 028.').trim(),
+        videoUrl,
+        productId: primaryProductId,
+        productsShown: parsedProducts.length ? parsedProducts : (primaryProductId ? [primaryProductId] : []),
+        ctaText: (newCommunityVideo.ctaText || 'Ver productos').trim(),
+        featured: !!newCommunityVideo.featured,
+        order: Number(newCommunityVideo.order) || (communityVideos.length + 1),
+        isHidden: false,
+        views: 0,
+        clicks: 0,
+        createdAt: serverTimestamp()
+      });
+      resetCommunityForm();
+      alert("Video agregado a 028 Community");
+    } catch(err) { alert("Error al guardar video: " + err.message); }
+  };
+
+  const updateCommunityVideo = async (video, field, value) => {
+    try {
+      const cleanValue = normalizeCommunityField(field, value);
+      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), { [field]: cleanValue }, { merge: true });
+    } catch(err) { alert("Error al actualizar video: " + err.message); }
+  };
+
+  const toggleCommunityVideo = async (video) => {
+    try {
+      await setDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id), { isHidden: !video.isHidden }, { merge: true });
+    } catch(err) { alert("Error al cambiar visibilidad: " + err.message); }
+  };
+
+  const setFeaturedCommunityVideo = async (video) => {
+    try {
+      await Promise.all(communityVideos.map(v => setDoc(doc(firebaseRefs.db, 'community_videos', v.dbId || v.id), { featured: (v.dbId || v.id) === (video.dbId || video.id) }, { merge: true })));
+    } catch(err) { alert("Error al destacar video: " + err.message); }
+  };
+
+  const deleteCommunityVideo = async (video) => {
+    if(!confirm(`¿Eliminar el video "${video.title || video.creator || '028 Community'}"?`)) return;
+    try {
+      await deleteDoc(doc(firebaseRefs.db, 'community_videos', video.dbId || video.id));
+    } catch(err) { alert("Error al borrar video: " + err.message); }
+  };
+
+  const seedCommunityVideos = async () => {
+    if(!confirm("¿Cargar/actualizar los 4 videos base de 028 Community en Firebase? Esto puede pisar título, creador, link, orden y productos mostrados de esos videos base.")) return;
+    try {
+      for (const video of initialCommunityVideos) {
+        await setDoc(doc(firebaseRefs.db, 'community_videos', video.id), { ...video, createdAt: serverTimestamp() }, { merge: true });
+      }
+      alert("Community sincronizado correctamente: 4 videos base cargados/actualizados.");
+    } catch(err) { alert("Error al sincronizar Community: " + err.message); }
+  };
+
+  const saveHomeLayout = async (sections) => {
+    try {
+      const normalized = sections
+        .map((item, index) => ({ ...item, order: index + 1, active: item.active !== false }))
+        .filter(item => item && item.id);
+      await setDoc(doc(firebaseRefs.db, 'settings', 'home_layout'), {
+        sections: normalized,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      setHomeLayout(normalized);
+    } catch(err) { alert('Error al guardar el orden del inicio: ' + err.message); }
+  };
+
+  const moveHomeBlock = (blockId, direction) => {
+    const current = [...normalizedHomeLayout];
+    const index = current.findIndex(item => item.id === blockId);
+    const targetIndex = index + direction;
+    if (index < 0 || targetIndex < 0 || targetIndex >= current.length) return;
+    const next = [...current];
+    [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+    saveHomeLayout(next);
+  };
+
+  const toggleHomeBlock = (blockId) => {
+    const next = normalizedHomeLayout.map(item => item.id === blockId ? { ...item, active: item.active === false } : item);
+    saveHomeLayout(next);
+  };
+
+  const resetHomeLayout = () => {
+    saveHomeLayout(buildDefaultHomeLayout(homeSections));
+  };
+
+  const renderHomeOrderControls = () => (
+    <div className={`${theme.card} p-6 rounded-[2rem] mb-8 shadow-sm border`}>
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-5">
+        <div>
+          <h3 className={`text-2xl font-bebas uppercase tracking-wide ${theme.text}`}>Orden del inicio</h3>
+          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Armá el orden real del inicio: podés poner una sección de vidriera, después Community, y abajo el resto. Por defecto queda: primera sección de vidriera, luego Community y después las demás.</p>
+        </div>
+        <button type="button" onClick={resetHomeLayout} className="w-full md:w-auto px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 hover:bg-[#111111] hover:text-[#fcdb00] text-[10px] font-bold uppercase tracking-widest transition-all">Restaurar default</button>
+      </div>
+      <div className="grid gap-3">
+        {normalizedHomeLayout.map((block, index) => (
+          <div key={block.id} className={`flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 rounded-2xl border ${darkMode ? 'bg-[#222] border-[#333]' : 'bg-gray-50 border-gray-200'}`}>
+            <div className="flex items-center gap-4">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bebas text-xl ${block.active === false ? 'bg-gray-200 text-gray-400' : 'bg-[#111111] text-[#fcdb00]'}`}>{index + 1}</div>
+              <div>
+                <p className={`font-bebas text-2xl uppercase tracking-wide leading-none ${theme.text}`}>{block.label}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mt-1">{block.id === 'community' ? 'Bloque 028 Community' : 'Sección de vidriera específica'}</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => moveHomeBlock(block.id, -1)} disabled={index === 0} className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${index === 0 ? 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-400' : 'bg-white text-[#111111] hover:bg-[#fcdb00]'}`}>Subir</button>
+              <button type="button" onClick={() => moveHomeBlock(block.id, 1)} disabled={index === normalizedHomeLayout.length - 1} className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${index === normalizedHomeLayout.length - 1 ? 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-400' : 'bg-white text-[#111111] hover:bg-[#fcdb00]'}`}>Bajar</button>
+              <button type="button" onClick={() => toggleHomeBlock(block.id)} className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${block.active === false ? 'bg-amber-100 text-amber-700 hover:bg-[#fcdb00] hover:text-[#111111]' : 'bg-green-100 text-green-700 hover:bg-green-600 hover:text-white'}`}>{block.active === false ? 'Mostrar' : 'Visible'}</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   const updateDeptIcon = async (dept, iconId) => {
     try {
@@ -430,13 +749,13 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('historial')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'historial' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Historial</button>
           <button onClick={() => setActiveTab('stock')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'stock' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Stock</button>
           <button onClick={() => setActiveTab('vidriera')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'vidriera' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Vidriera</button>
+          <button onClick={() => setActiveTab('community')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'community' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Community 🎥</button>
           <button onClick={() => setActiveTab('crear')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'crear' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Crear +</button>
           <button onClick={() => setActiveTab('clientes')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'clientes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Clientes</button>
           <button onClick={() => setActiveTab('promos')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'promos' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Promos %</button>
           <button onClick={() => setActiveTab('cupones')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'cupones' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Cupones</button>
           <button onClick={() => setActiveTab('usuarios')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'usuarios' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Usuarios</button>
           <button onClick={() => setActiveTab('ofertas')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'ofertas' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Ofertas 🔥</button>
-          <button onClick={() => setActiveTab('ruleta')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'ruleta' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Ruleta 🎁</button>
         </div>
       </div>
       <main className="max-w-4xl mx-auto p-4 md:p-8">
@@ -445,6 +764,7 @@ export default function AdminPage() {
 
         {activeTab === 'vidriera' && (<div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
           <div className="flex justify-between items-end mb-8"><div><h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Vidriera</h2><p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Armá las secciones del Inicio</p></div></div>
+          {renderHomeOrderControls()}
           
           <div className={`${theme.card} p-6 rounded-[2rem] mb-8 shadow-sm border`}>
             <div className="mb-4">
@@ -476,6 +796,191 @@ export default function AdminPage() {
           </div>
 
           <div className={`${theme.card} p-6 rounded-[2rem] mb-8 flex flex-col gap-4 shadow-sm border`}><div className="flex flex-col md:flex-row gap-4 items-end w-full"><div className="flex-1 w-full"><label className="text-[10px] font-bold uppercase text-gray-500 tracking-wider">Título de la nueva sección</label><input type="text" value={newSectionTitle} onChange={e=>setNewSectionTitle(e.target.value)} placeholder="Ej: Ofertas Relámpago..." className={`w-full mt-2 p-4 rounded-xl outline-none font-bold text-sm focus:ring-2 focus:ring-[#fcdb00] border-transparent ${theme.input}`}/></div><button onClick={createHomeSection} className="w-full md:w-auto bg-[#fcdb00] text-[#111111] font-bebas text-lg uppercase px-8 py-3.5 rounded-xl hover:bg-[#111111] hover:text-[#fcdb00] hover:shadow-xl transition-all">Crear Sección</button></div><div className="mt-2"><label className="text-[10px] font-bold uppercase text-gray-500 mb-3 block tracking-wider">Ícono</label><div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">{AVAILABLE_ICONS.map(iconObj => (<button key={iconObj.id} onClick={() => setNewSectionIcon(iconObj)} className={`w-12 h-12 flex-shrink-0 rounded-xl flex items-center justify-center text-xl transition-all ${newSectionIcon.id === iconObj.id ? 'bg-[#111111] shadow-md scale-110' : (darkMode ? 'bg-[#222] hover:bg-[#333]' : 'bg-gray-100 hover:bg-gray-200')}`}><i className={`${iconObj.prefix} ${iconObj.id} ${newSectionIcon.id === iconObj.id ? 'text-[#fcdb00]' : 'text-gray-400'}`}></i></button>))}</div></div><div className="mt-2 border-t border-gray-200 dark:border-[#333333] pt-4"><label className="text-[10px] font-bold uppercase text-gray-500 mb-3 block tracking-wider">Formato</label><div className="flex gap-2"><button onClick={() => setNewSectionLayout('horizontal')} className={`flex-1 py-3.5 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all ${newSectionLayout === 'horizontal' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : (darkMode ? 'bg-[#222] text-gray-400 hover:bg-[#333]' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')}`}><i className="fas fa-arrows-alt-h mr-2"></i> Carrusel</button><button onClick={() => setNewSectionLayout('vertical')} className={`flex-1 py-3.5 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all ${newSectionLayout === 'vertical' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : (darkMode ? 'bg-[#222] text-gray-400 hover:bg-[#333]' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')}`}><i className="fas fa-th-large mr-2"></i> Grilla</button></div></div></div>{homeSections.length === 0 && (<div className="text-center py-20 border-2 border-dashed border-gray-300 dark:border-[#333333] rounded-[2rem]"><i className="fas fa-magic text-4xl text-gray-300 mb-4"></i><p className="text-[11px] font-bold uppercase text-gray-500 tracking-widest">No hay secciones.</p></div>)}<div className="space-y-6">{homeSections.map(sec => (<div key={sec.id} className={`${theme.card} p-6 rounded-[2rem] shadow-sm border`}><div className="flex justify-between items-center mb-6 border-b border-gray-200 dark:border-[#333333] pb-4"><h3 className={`text-3xl font-bebas uppercase tracking-wide flex items-center gap-2 ${theme.text}`}><i className={`${AVAILABLE_ICONS.find(i => i.id === sec.icon)?.prefix || 'fas'} ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'}`}></i> {sec.title}</h3><div className="flex items-center gap-2"><button onClick={()=>toggleSectionLayout(sec)} className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-lg transition-colors ${darkMode ? 'bg-[#333] text-gray-300 hover:text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`} title="Cambiar el formato"><i className={`fas ${sec.layout === 'vertical' ? 'fa-th-large' : 'fa-arrows-alt-h'} mr-1.5`}></i> {sec.layout === 'vertical' ? 'Grilla' : 'Carrusel'}</button><button onClick={()=>deleteHomeSection(sec.dbId)} className="text-red-500 hover:text-white hover:bg-red-600 w-9 h-9 rounded-lg flex items-center justify-center transition-all bg-red-50 dark:bg-red-900/20"><i className="fas fa-trash text-sm"></i></button></div></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">{sec.productIds?.map(pid => { const prod = products.find(p => p.id === pid && !p.isDeleted); if(!prod) return null; return (<div key={pid} className={`relative rounded-xl p-4 flex flex-col gap-3 border ${darkMode ? 'bg-[#222] border-[#444]' : 'bg-[#f2f2f2] border-transparent shadow-sm'}`}><div className="flex items-center gap-3"><div className="w-12 h-12 bg-white rounded-lg p-1 shadow-sm"><img src={prod.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex-1 min-w-0"><p className={`text-[12px] font-bebas text-xl uppercase truncate tracking-wide ${theme.text}`}>{prod.name}</p><p className="text-gray-500 text-[9px] font-bold uppercase tracking-widest truncate mt-0.5">{prod.category}</p></div><button onClick={()=>removeProductFromSection(sec.dbId, pid)} className="w-8 h-8 bg-red-100 text-red-600 rounded-lg text-sm flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors shadow-sm"><i className="fas fa-times"></i></button></div><div className="flex items-center justify-between border-t border-gray-200 dark:border-[#444] pt-3 mt-1"><span className="text-[9px] font-bold uppercase text-gray-500 tracking-widest">Tamaño en Vidriera:</span><select value={prod.cardSize || 'normal'} onChange={(e) => updateCardSize(prod, e.target.value)} className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1.5 rounded-md border outline-none cursor-pointer ${darkMode ? 'bg-[#111] border-[#555] text-gray-300 focus:ring-1 focus:ring-[#fcdb00]' : 'bg-white border-gray-300 text-[#111111] focus:ring-1 focus:ring-[#fcdb00]'}`}><option value="normal">📏 Normal</option><option value="medium">🔲 Mediano</option><option value="large">⬜ Grande</option></select></div></div>) })} {(!sec.productIds || sec.productIds.length === 0) && (<p className="text-[11px] font-bold uppercase text-gray-400 italic col-span-full">Aún no agregaste productos a esta sección.</p>)} </div><div className="relative mb-3"><i className="fas fa-plus absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i><select onChange={(e) => { addProductToSection(sec.dbId, parseInt(e.target.value)); e.target.value = ''; }} className={`w-full p-4 pl-12 rounded-xl outline-none font-bold text-xs uppercase cursor-pointer appearance-none tracking-widest focus:ring-2 focus:ring-[#fcdb00] border-transparent ${theme.input}`}><option value="">AGREGAR PRODUCTO A "{sec.title}"...</option>{products.filter(p => !p.isDeleted && !sec.productIds?.includes(p.id)).map(p => (<option key={p.id} value={p.id}>{p.category} - {p.name} (${p.price})</option>))}</select></div><div className="flex flex-col gap-2 mt-3 border-t border-gray-200 dark:border-[#333333] pt-4"><p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest mb-1"><i className="fas fa-magic text-[#fcdb00]"></i> Autocompletar (10 Productos):</p><div className="flex flex-col sm:flex-row gap-2"><button onClick={() => autoFillSection(sec.dbId, 'newest')} className={`flex-1 py-2.5 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all flex justify-center items-center gap-2 border ${darkMode ? 'bg-[#222] border-[#fcdb00]/30 text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]' : 'bg-[#111111] border-transparent text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]'}`}><i className="fas fa-star"></i> + Nuevos</button><button onClick={() => autoFillSection(sec.dbId, 'most_clicked')} className={`flex-1 py-2.5 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all flex justify-center items-center gap-2 border ${darkMode ? 'bg-[#222] border-[#fcdb00]/30 text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]' : 'bg-[#111111] border-transparent text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]'}`}><i className="fas fa-fire"></i> + Clickeados</button><button onClick={() => autoFillSection(sec.dbId, 'least_clicked')} className={`flex-1 py-2.5 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all flex justify-center items-center gap-2 border ${darkMode ? 'bg-[#222] border-[#fcdb00]/30 text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]' : 'bg-[#111111] border-transparent text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]'}`}><i className="fas fa-arrow-down"></i> - Clickeados</button></div></div></div>))}</div></div>)}
+
+        {/* --- PESTAÑA: 028 COMMUNITY --- */}
+
+        {activeTab === 'community' && (
+          <div className="animate-in fade-in duration-500 max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-5 mb-8">
+              <div>
+                <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>028 Community</h2>
+                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Reels comprables, flip glass y productos editables por video</p>
+              </div>
+              <div className="flex flex-col md:items-end gap-2"><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Compatible con la versión desktop UX premium clean wrapper</p><button type="button" onClick={seedCommunityVideos} className="bg-[#111111] text-[#fcdb00] px-5 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-[#fcdb00] hover:text-[#111111] transition-all shadow-sm">Cargar/actualizar videos base</button></div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className={`${theme.card} border rounded-[1.75rem] p-5 shadow-sm`}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Videos visibles</p>
+                <p className="font-bebas text-4xl mt-1">{communityVideos.filter(v => !v.isHidden).length}</p>
+              </div>
+              <div className={`${theme.card} border rounded-[1.75rem] p-5 shadow-sm`}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Reproducciones</p>
+                <p className="font-bebas text-4xl mt-1">{communityVideos.reduce((acc, v) => acc + (Number(v.views) || 0), 0)}</p>
+              </div>
+              <div className={`${theme.card} border rounded-[1.75rem] p-5 shadow-sm`}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Clicks a producto</p>
+                <p className="font-bebas text-4xl mt-1">{communityVideos.reduce((acc, v) => acc + (Number(v.clicks) || 0), 0)}</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleAddCommunityVideo} className={`${theme.card} p-6 md:p-8 rounded-[2rem] shadow-sm border mb-8 grid grid-cols-1 md:grid-cols-2 gap-4`}>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Título</label>
+                <input type="text" placeholder="Ej: COLABORACIONES" value={newCommunityVideo.title} onChange={e => setNewCommunityVideo({...newCommunityVideo, title: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Subtítulo gris / influencer</label>
+                <input type="text" placeholder="Ej: @martulali / @giulianny" value={newCommunityVideo.creator} onChange={e => setNewCommunityVideo({...newCommunityVideo, creator: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Link del video</label>
+                <input type="url" required placeholder="https://res.cloudinary.com/.../video.mp4" value={newCommunityVideo.videoUrl} onChange={e => setNewCommunityVideo({...newCommunityVideo, videoUrl: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Tipo</label>
+                <select value={newCommunityVideo.type} onChange={e => setNewCommunityVideo({...newCommunityVideo, type: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}>
+                  <option value="Review">Review</option>
+                  <option value="Colaboración">Colaboración</option>
+                  <option value="Influencer">Influencer</option>
+                  <option value="Cliente real">Cliente real</option>
+                  <option value="Entrega">Entrega</option>
+                  <option value="Referencia">Referencia</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Producto principal</label>
+                <select value={newCommunityVideo.productId} onChange={e => setNewCommunityVideo({...newCommunityVideo, productId: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}>
+                  <option value="">Sin producto principal</option>
+                  {availableCommunityProducts.map(product => (
+                    <option key={`new-community-product-${product.id}`} value={product.id}>{product.id} - {product.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Productos mostrados (IDs separados por coma)</label>
+                <input type="text" placeholder="Ej: 17, 26, 33" value={newCommunityVideo.productsShownText} onChange={e => setNewCommunityVideo({...newCommunityVideo, productsShownText: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2">Estos productos aparecen atrás de la card, en el flip con efecto glass.</p>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Texto CTA</label>
+                <input type="text" placeholder="Ver productos" value={newCommunityVideo.ctaText} onChange={e => setNewCommunityVideo({...newCommunityVideo, ctaText: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Orden</label>
+                <input type="number" min="1" placeholder="1" value={newCommunityVideo.order} onChange={e => setNewCommunityVideo({...newCommunityVideo, order: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Descripción</label>
+                <textarea rows="2" placeholder="Uso interno. En la card visible se muestra el título y el subtítulo gris." value={newCommunityVideo.description} onChange={e => setNewCommunityVideo({...newCommunityVideo, description: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all resize-none ${theme.input}`}></textarea>
+              </div>
+              <div className="md:col-span-2 flex items-center justify-between gap-4 bg-[#fcdb00]/10 border border-[#fcdb00]/20 rounded-2xl p-4">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" checked={newCommunityVideo.featured} onChange={e => setNewCommunityVideo({...newCommunityVideo, featured: e.target.checked})} className="w-5 h-5 accent-[#fcdb00]" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#b8952a]">Marcar como destacado</span>
+                </label>
+                <button type="submit" className="bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase px-8 py-3 rounded-xl hover:bg-[#111111] hover:text-[#fcdb00] transition-all shadow-md">Agregar video</button>
+              </div>
+            </form>
+
+            {communityVideos.length === 0 ? (
+              <div className="text-center py-20 border-2 border-dashed border-gray-300 dark:border-[#333333] rounded-[2rem]">
+                <i className="fas fa-video text-4xl text-gray-300 mb-4"></i>
+                <p className="text-[11px] font-bold uppercase text-gray-500 tracking-widest">No hay videos cargados.</p>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {communityVideos.map((video) => (
+                  <div key={video.dbId || video.id} className={`${theme.card} border rounded-[2rem] p-5 md:p-6 shadow-sm`}>
+                    <div className="grid grid-cols-1 xl:grid-cols-[260px_minmax(0,1fr)] gap-5">
+                      <div className="rounded-[1.5rem] overflow-hidden bg-black border border-white/10 aspect-[9/16] shadow-[0_10px_30px_rgba(0,0,0,0.2)]">
+                        <video src={video.videoUrl} className="w-full h-full object-cover" controls preload="metadata" playsInline />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 content-start">
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Título</label>
+                          <input type="text" defaultValue={video.title || ''} onBlur={(e) => e.target.value !== (video.title || '') && updateCommunityVideo(video, 'title', e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Subtítulo gris / influencer</label>
+                          <input type="text" defaultValue={video.creator || ''} onBlur={(e) => e.target.value !== (video.creator || '') && updateCommunityVideo(video, 'creator', e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Link del video</label>
+                          <input type="url" defaultValue={video.videoUrl || ''} onBlur={(e) => e.target.value !== (video.videoUrl || '') && updateCommunityVideo(video, 'videoUrl', e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Tipo</label>
+                          <select value={video.type || 'Colaboración'} onChange={(e) => updateCommunityVideo(video, 'type', e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}>
+                            <option value="Review">Review</option>
+                            <option value="Colaboración">Colaboración</option>
+                            <option value="Influencer">Influencer</option>
+                            <option value="Cliente real">Cliente real</option>
+                            <option value="Entrega">Entrega</option>
+                            <option value="Referencia">Referencia</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Orden</label>
+                          <input type="number" defaultValue={video.order || 99} onBlur={(e) => Number(e.target.value) !== Number(video.order || 99) && updateCommunityVideo(video, 'order', e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Producto principal</label>
+                          <select value={video.productId || ''} onChange={(e) => updateCommunityVideo(video, 'productId', e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`}>
+                            <option value="">Sin producto principal</option>
+                            {availableCommunityProducts.map(product => (
+                              <option key={`community-product-${video.id}-${product.id}`} value={product.id}>{product.id} - {product.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Texto CTA</label>
+                          <input type="text" defaultValue={video.ctaText || 'Ver productos'} onBlur={(e) => e.target.value !== (video.ctaText || 'Ver productos') && updateCommunityVideo(video, 'ctaText', e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Productos mostrados (IDs separados por coma)</label>
+                          <input type="text" defaultValue={getCommunityProductsInputValue(video)} onBlur={(e) => updateCommunityProductsShown(video, e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+                          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2">{getCommunityProductsSummary(video)}</p>
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Descripción</label>
+                          <textarea rows="2" defaultValue={video.description || ''} onBlur={(e) => e.target.value !== (video.description || '') && updateCommunityVideo(video, 'description', e.target.value)} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all resize-none ${theme.input}`}></textarea>
+                        </div>
+                        <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-2">
+                          <div className={`${darkMode ? 'bg-[#222] border-[#333]' : 'bg-gray-50 border-gray-200'} border rounded-xl p-3`}>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Principal</p>
+                            <p className="text-[10px] font-black uppercase mt-1">{getCommunityProductName(video.productId)}</p>
+                          </div>
+                          <div className={`${darkMode ? 'bg-[#222] border-[#333]' : 'bg-gray-50 border-gray-200'} border rounded-xl p-3`}>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Views</p>
+                            <p className="font-bebas text-2xl">{Number(video.views) || 0}</p>
+                          </div>
+                          <div className={`${darkMode ? 'bg-[#222] border-[#333]' : 'bg-gray-50 border-gray-200'} border rounded-xl p-3`}>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Clicks</p>
+                            <p className="font-bebas text-2xl">{Number(video.clicks) || 0}</p>
+                          </div>
+                          <div className={`${darkMode ? 'bg-[#222] border-[#333]' : 'bg-gray-50 border-gray-200'} border rounded-xl p-3`}>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Estado</p>
+                            <p className={`text-[10px] font-black uppercase mt-1 ${video.isHidden ? 'text-amber-600' : 'text-green-600'}`}>{video.isHidden ? 'Oculto' : 'Visible'}</p>
+                          </div>
+                        </div>
+                        <div className="md:col-span-2 flex flex-col sm:flex-row gap-2 justify-between items-stretch sm:items-center border-t border-gray-200 dark:border-[#333333] pt-4">
+                          <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-lg text-center ${video.featured ? 'bg-[#fcdb00] text-[#111111]' : (video.isHidden ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700')}`}>{video.featured ? 'Video destacado' : (video.isHidden ? 'Oculto en la web' : 'Visible en la web')}</span>
+                          <div className="flex flex-wrap gap-2">
+                            <button type="button" onClick={() => setFeaturedCommunityVideo(video)} className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${video.featured ? 'bg-[#111111] text-[#fcdb00]' : 'bg-gray-100 text-gray-600 hover:bg-[#fcdb00] hover:text-[#111111]'}`}>{video.featured ? 'Destacado' : 'Destacar'}</button>
+                            <button type="button" onClick={() => toggleCommunityVideo(video)} className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${video.isHidden ? 'bg-green-600 text-white' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}>{video.isHidden ? 'Mostrar' : 'Ocultar'}</button>
+                            <button type="button" onClick={() => deleteCommunityVideo(video)} className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all">Borrar</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
 
         {activeTab === 'promos' && (<div className="animate-in fade-in duration-500 max-w-lg mx-auto"><div className="flex justify-between items-end mb-8"><div><h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Promociones</h2><p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Descuentos automáticos</p></div></div><form onSubmit={handleAddPromo} className={`${theme.card} p-8 rounded-[2rem] shadow-sm border mb-8 flex flex-col gap-5`}><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Categoría a bonificar</label><input list="promo-category-suggestions" placeholder="Ej: Ignite v400..." value={newPromo.category} onChange={e => setNewPromo({...newPromo, category: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} required/><datalist id="promo-category-suggestions">{uniqueCategories.map(cat => <option key={cat} value={cat} />)}</datalist></div><div className="flex gap-4"><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Cantidad Mínima</label><input type="number" required min="2" placeholder="Ej: 2" value={newPromo.minQty} onChange={e => setNewPromo({...newPromo, minQty: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Precio Total</label><input type="number" required placeholder="Ej: 49000" value={newPromo.totalPrice} onChange={e => setNewPromo({...newPromo, totalPrice: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div></div><p className="text-[11px] text-gray-500">Ejemplo: Llevando 2 o más, quedan a $24.500 c/u automáticamente.</p><button type="submit" className="bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all">Guardar Promoción</button></form><div className="grid gap-4">{promos.length === 0 ? (<p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest mt-10">No hay promos activas</p>) : (promos.map(promo => (<div key={promo.id} className={`${theme.card} p-6 rounded-[1.5rem] flex justify-between items-center shadow-sm border`}><div><h4 className="font-bebas text-2xl uppercase tracking-wide mb-1">{promo.category}</h4><p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase">Llevando {promo.minQty}+ : ${(promo.totalPrice / promo.minQty).toLocaleString('es-AR')} c/u</p></div><button onClick={() => handleDeletePromo(promo.id)} className="w-12 h-12 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition-all shadow-sm"><i className="fas fa-trash text-lg"></i></button></div>)))}</div></div>)}
 
@@ -548,7 +1053,7 @@ export default function AdminPage() {
                       </div>
                     </div>
                     <div className="flex justify-between items-center mt-2 border-t pt-4 dark:border-[#333333]">
-                      <span className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Ruleta: <span className={usr.hasSpun ? 'text-green-500' : 'text-gray-400'}>{usr.hasSpun ? 'Ya giró 🎁' : 'No giró'}</span></span>
+                      
                       <span className="text-[9px] font-bold uppercase text-gray-400">{usr.createdAt?.seconds ? new Date(usr.createdAt.seconds * 1000).toLocaleDateString('es-AR') : 'Reciente'}</span>
                     </div>
                   </div>
@@ -607,68 +1112,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* --- NUEVA PESTAÑA: RULETA --- */}
-        {activeTab === 'ruleta' && (
-          <div className="animate-in fade-in duration-500">
-            <div className="flex justify-between items-end mb-8">
-              <div>
-                <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Tiros de Ruleta</h2>
-                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Registro de premios entregados</p>
-              </div>
-              <span className="bg-[#fcdb00] text-[#111111] text-[11px] font-bold px-4 py-2 rounded-lg shadow-sm">{spins.length} Tiros</span>
-            </div>
-
-            {/* ESTADÍSTICAS RÁPIDAS */}
-            {spins.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
-                    {Object.entries(
-                        spins.reduce((acc, spin) => {
-                            acc[spin.prizeText] = (acc[spin.prizeText] || 0) + 1;
-                            return acc;
-                        }, {})
-                    ).map(([prize, count], idx) => (
-                        <div key={idx} className={`${theme.card} p-4 rounded-xl shadow-sm border flex flex-col justify-center items-center text-center`}>
-                            <span className="text-3xl font-bebas text-[#fcdb00] leading-none mb-1">{count}</span>
-                            <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">{prize}</span>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* LISTA DE RESULTADOS DE RULETA */}
-            {spins.length === 0 ? (
-              <div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}>
-                <i className="fas fa-gift text-gray-300 text-5xl mb-6"></i>
-                <p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">Nadie tiró la ruleta todavía</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {spins.map((spin, index) => (
-                  <div key={spin.id || index} className={`${theme.card} p-5 rounded-[1.5rem] shadow-sm border flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-[#fcdb00]/50 transition-all`}>
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-[#111111] text-[#fcdb00] flex items-center justify-center text-xl shadow-md uppercase pt-1">
-                        <i className="fas fa-user"></i>
-                      </div>
-                      <div className="overflow-hidden">
-                        <h4 className="font-bebas tracking-wide text-2xl uppercase leading-none mb-1 truncate">{spin.userName || 'Sin Nombre'}</h4>
-                        <p className="text-gray-500 font-bold text-[10px] truncate"><i className="fas fa-envelope mr-1.5 text-[#fcdb00]"></i> {spin.userEmail || 'Sin Email'}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col md:items-end gap-1 border-t md:border-t-0 pt-3 md:pt-0 dark:border-[#333333]">
-                      <span className="bg-[#fcdb00]/10 border border-[#fcdb00]/30 text-[#b8952a] text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg flex items-center gap-2 w-fit md:w-auto">
-                         <i className="fas fa-gift"></i> {spin.prizeText}
-                      </span>
-                      <span className="text-[9px] font-bold uppercase text-gray-400 mt-1">
-                        {spin.createdAt?.seconds ? new Date(spin.createdAt.seconds * 1000).toLocaleString('es-AR') : 'Reciente'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         {activeTab === 'crear' && (<div className="animate-in fade-in duration-500 max-w-lg mx-auto"><h2 className="text-4xl font-bebas uppercase tracking-wide mb-6 text-center">Nuevo Producto</h2><form onSubmit={handleAddProduct} className={`${theme.card} p-8 rounded-[2rem] shadow-sm border flex flex-col gap-5`}><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Nombre del Producto</label><input type="text" required placeholder="Ej: BLUE RAZZ ICE" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex gap-4"><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Precio</label><input type="number" required placeholder="26000" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Categoría / Marca</label><input list="category-suggestions" placeholder="Ej: Ignite v400 o Crear Nueva..." value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} /><datalist id="category-suggestions">{uniqueCategories.map(cat => <option key={cat} value={cat} />)}</datalist></div></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Departamento Principal</label><input list="dept-suggestions" placeholder="Elegí o escribí uno nuevo..." value={newProduct.department} onChange={e => setNewProduct({...newProduct, department: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} /><datalist id="dept-suggestions">{availableDepartments.map(d => <option key={d} value={d} />)}</datalist></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Link de Imagen (URL)</label><input type="url" required placeholder="https://i.postimg.cc/..." value={newProduct.image} onChange={e => setNewProduct({...newProduct, image: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />{newProduct.image && (<div className="mt-4 relative h-32 rounded-xl overflow-hidden border border-dashed border-gray-300 bg-[#f2f2f2]"><img src={newProduct.image} alt="Vista previa" className="w-full h-full object-contain mix-blend-multiply" /></div>)}</div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Etiqueta y Tamaño</label><div className="flex gap-4"><input type="text" placeholder="Ej: Destacado" value={newProduct.tag} onChange={e => setNewProduct({...newProduct, tag: e.target.value})} className={`flex-1 p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /><select value={newProduct.cardSize} onChange={e => setNewProduct({...newProduct, cardSize: e.target.value})} className={`flex-1 p-4 rounded-xl outline-none font-bold text-xs uppercase cursor-pointer border-transparent focus:ring-2 focus:ring-[#fcdb00] ${theme.input}`}><option value="normal">📏 Tamaño Normal</option><option value="medium">🔲 Tamaño Mediano</option><option value="large">⬜ Tamaño Grande</option></select></div></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Descripción (Biografía)</label><textarea rows="2" placeholder="Escribe aquí..." value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all resize-none ${theme.input}`}></textarea></div><button type="submit" disabled={isAdding} className="bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all disabled:opacity-50">{isAdding ? 'Guardando...' : 'Guardar Producto'}</button></form></div>)}
 
