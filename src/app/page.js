@@ -342,6 +342,7 @@ export default function Home() {
   const [activeCommunityVideoId, setActiveCommunityVideoId] = useState(null);
   const [flippedCommunityCards, setFlippedCommunityCards] = useState({});
   const [communityVideoFeedback, setCommunityVideoFeedback] = useState({});
+  const [communityVideoLoaded, setCommunityVideoLoaded] = useState({});
   const communityVideoRefs = useRef({});
   const communityScrollRef = useRef(null);
   const [hoveredCommunityCard, setHoveredCommunityCard] = useState(null);
@@ -1261,16 +1262,29 @@ export default function Home() {
                 className="absolute inset-0 rounded-[2rem] overflow-hidden bg-black border border-black/8 shadow-[0_12px_28px_rgba(0,0,0,0.10)] group transition-all duration-500 ease-out md:group-hover/community:shadow-[0_26px_58px_rgba(0,0,0,0.22)]"
                 style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
               >
+                <img
+                  src={video.poster || getCommunityVideoPoster(video.videoUrl)}
+                  alt={video.title || '028 Community'}
+                  className="absolute inset-0 w-full h-full object-cover bg-black"
+                  loading="eager"
+                  draggable="false"
+                />
+
                 <video
                   ref={(el) => { if (el) communityVideoRefs.current[cardId] = el; }}
                   src={video.videoUrl}
                   poster={video.poster || getCommunityVideoPoster(video.videoUrl)}
-                  className="w-full h-full object-cover cursor-pointer bg-black"
+                  className={`relative z-[1] w-full h-full object-cover cursor-pointer bg-black transition-opacity duration-300 ${communityVideoLoaded[cardId] ? 'opacity-100' : 'opacity-0'}`}
                   playsInline
                   muted
                   preload="auto"
+                  onLoadedData={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
+                  onCanPlay={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
                   onLoadedMetadata={(e) => { try { e.currentTarget.currentTime = 0.05; } catch (_) {} }}
-                  onPlay={() => trackCommunityView(video)}
+                  onPlay={() => {
+                    setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }));
+                    trackCommunityView(video);
+                  }}
                 />
 
                 <button
