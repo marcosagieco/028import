@@ -1215,7 +1215,7 @@ export default function Home() {
     const CommunityProductButton = ({ video, product, compact = false }) => (
       <button
         onClick={(e) => handleCommunityProductClick(video, product, e)}
-        className={`${compact ? 'w-10 h-10 rounded-xl text-sm' : 'w-full py-3 rounded-xl text-[10px]'} bg-[#fcdb00] text-[#111111] font-black uppercase tracking-widest hover:bg-[#f5d300] active:scale-95 transition-all font-poppins flex items-center justify-center gap-2`}
+        className={`${compact ? 'w-10 h-10 rounded-xl text-sm flex-shrink-0' : 'w-full py-3 rounded-xl text-[10px]'} bg-[#fcdb00] text-[#111111] font-black uppercase tracking-widest hover:bg-[#f5d300] active:scale-95 transition-all font-poppins flex items-center justify-center gap-2`}
         title={product ? `Agregar ${product.name}` : 'Ver catálogo'}
       >
         {compact ? <i className="fas fa-cart-plus"></i> : <>{product ? 'Agregar' : 'Catálogo'} <i className={`fas ${product ? 'fa-cart-plus' : 'fa-arrow-right'} text-[10px]`}></i></>}
@@ -1341,15 +1341,15 @@ export default function Home() {
                     </button>
                   </div>
 
-                  <div className="grid gap-3 overflow-y-auto no-scrollbar pr-1 flex-1 content-start">
-                    {productsInVideo.length ? productsInVideo.slice(0, 4).map(product => (
-                      <div key={`flip-${cardId}-${product.id}`} className="bg-white/[0.11] backdrop-blur-2xl rounded-[1.35rem] p-3 flex items-center gap-3 border border-white/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_8px_22px_rgba(0,0,0,0.14)]">
-                        <div className="w-14 h-14 bg-white/16 rounded-xl p-1.5 flex-shrink-0 backdrop-blur-xl border border-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
+                  <div className="grid gap-2.5 overflow-y-auto no-scrollbar pr-1 pb-2 flex-1 content-start overscroll-contain">
+                    {productsInVideo.length ? productsInVideo.map(product => (
+                      <div key={`flip-${cardId}-${product.id}`} className="bg-white/[0.11] backdrop-blur-2xl rounded-[1.15rem] p-2.5 grid grid-cols-[48px_minmax(0,1fr)_40px] items-center gap-2.5 border border-white/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_8px_22px_rgba(0,0,0,0.14)] min-w-0">
+                        <div className="w-12 h-12 bg-white/16 rounded-xl p-1.5 flex-shrink-0 backdrop-blur-xl border border-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
                           <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bebas text-xl uppercase leading-none truncate text-white">{product.name}</p>
-                          <p className="text-sm font-black mt-1 text-white">{CONFIG.currencySymbol}{formatPrice(product.price)}</p>
+                        <div className="min-w-0 overflow-hidden">
+                          <p className="font-bebas text-[18px] uppercase leading-[0.95] text-white break-words" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.name}</p>
+                          <p className="text-[12px] font-black mt-1 text-white leading-none">{CONFIG.currencySymbol}{formatPrice(product.price)}</p>
                         </div>
                         <CommunityProductButton video={video} product={product} compact />
                       </div>
@@ -1362,18 +1362,18 @@ export default function Home() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 mt-4">
+                  <div className="grid grid-cols-2 gap-2 mt-3">
                     <button
                       type="button"
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleCommunityCardFlip(cardId); }}
-                      className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/16 backdrop-blur-xl border border-white/14 text-white text-[10px] font-black uppercase tracking-widest transition-all font-poppins shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
+                      className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/16 backdrop-blur-xl border border-white/14 text-white text-[10px] font-black uppercase tracking-widest transition-all font-poppins shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
                     >
                       Volver
                     </button>
                     <button
                       type="button"
                       onClick={(e) => handleCommunityProductClick(video, mainProduct, e)}
-                      className="w-full py-3 rounded-xl bg-[#fcdb00] text-[#111111] text-[10px] font-black uppercase tracking-widest transition-all font-poppins hover:bg-[#f5d300]"
+                      className="w-full py-2.5 rounded-xl bg-[#fcdb00] text-[#111111] text-[10px] font-black uppercase tracking-widest transition-all font-poppins hover:bg-[#f5d300]"
                     >
                       {mainProduct ? 'Agregar principal' : 'Catálogo'}
                     </button>
