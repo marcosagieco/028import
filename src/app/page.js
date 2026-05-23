@@ -13,7 +13,7 @@ const CONFIG = {
   bannerImage: "https://i.ibb.co/2Yg9wM6x/image.png", 
   currencySymbol: "$",
   shippingText: "Pedime te llega en 30'⏰",
-  paymentAlias: "028import.bell", 
+  paymentAlias: "028import.lm", 
   paymentName: "Lucio Bunge", 
 };
 
