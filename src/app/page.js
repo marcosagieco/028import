@@ -1768,7 +1768,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                 <div key={i} className="flex items-center gap-8 px-4 text-[#fcdb00] font-poppins font-bold text-[10px] md:text-xs tracking-widest uppercase">
                   <span> ENVIOS 24HS CABA/AMBA </span><span className="text-white/30">•</span>
                   <span> 028 IMPORT </span><span className="text-white/30">•</span>
-                  <span> ATENCION PERSONALIZADA POR WHATSAPP </span><span className="text-white/30">•</span>
+                  <span> DESCUENTOS ABONANDO EN EFECTIVO </span><span className="text-white/30">•</span>
                   <span> PEDIME TE LLEGA EN 30'</span><span className="text-white/30">•</span>
                 </div>
               ))}
