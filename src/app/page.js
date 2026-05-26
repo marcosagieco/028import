@@ -257,7 +257,7 @@ const PAGE_CONTENT = {
 
         <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 my-6">
           <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mb-3 flex items-center gap-2"><i className="fas fa-motorcycle"></i> Motomensajería Programada</h3>
-          <p className="text-sm">Contamos con un servicio propio de motomensajería con salidas organizadas en dos turnos fijos (13:00hs y 18:00hs). Esto nos permite garantizar un tiempo de entrega predecible y seguro. Aboná con efectivo o transferencia.</p>
+          <p className="text-sm">Contamos con un servicio propio de motomensajería con salidas organizadas en tres turnos fijos (13:00hs - 16:00hs - 20:00hs). Esto nos permite garantizar un tiempo de entrega predecible y seguro. Aboná con efectivo o transferencia.</p>
         </div>
 
         <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 my-6">
@@ -869,7 +869,9 @@ export default function Home() {
   const calculateTotal = (cartData = cart) => {
       const subtotal = cartData.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
       const envio = (deliveryMethod === 'envio' && shippingType === 'moto') ? shippingCost : 0;
-      return subtotal + envio;
+      const cashDiscount = (deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'efectivo')
+        ? (subtotal >= 50000 ? 2500 : 1500) : 0;
+      return subtotal + envio - cashDiscount;
   };
 
   const addToCart = async (product, e) => { 
@@ -1016,7 +1018,9 @@ export default function Home() {
                 msg += `🏦 *Transferido al Alias:* ${CONFIG.paymentAlias}\n`;
                 msg += `\nAdjunto mi comprobante de pago a continuación 👇`;
             } else {
+                const cashDiscMsg = subtotalCalc >= 50000 ? 2500 : 1500;
                 msg += `💵 *Método de pago:* Efectivo contra entrega\n`;
+                msg += `💸 *Descuento efectivo aplicado:* -${CONFIG.currencySymbol}${formatPrice(cashDiscMsg)}\n`;
             }
         }
     }
@@ -1758,6 +1762,18 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
       {/* --- INICIO CONTENIDO --- */}
       {currentView === 'home' ? (
         <>
+          <div className="w-full bg-[#111111] py-2 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex">
+            <div className="animate-marquee whitespace-nowrap flex items-center">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex items-center gap-8 px-4 text-[#fcdb00] font-poppins font-bold text-[10px] md:text-xs tracking-widest uppercase">
+                  <span> ENVIOS 24HS CABA/AMBA </span><span className="text-white/30">•</span>
+                  <span> 028 IMPORT </span><span className="text-white/30">•</span>
+                  <span> ATENCION PERSONALIZADA POR WHATSAPP </span><span className="text-white/30">•</span>
+                  <span> PEDIME TE LLEGA EN 30'</span><span className="text-white/30">•</span>
+                </div>
+              ))}
+            </div>
+          </div>
           <header className="relative w-full h-[35vh] md:h-[55vh] flex items-center justify-center bg-[#111111] overflow-hidden border-b border-[#111111]">
             <img src={CONFIG.bannerImage} alt="Banner 028" className="absolute inset-0 w-full h-full object-cover object-center" />
           </header>
@@ -2012,7 +2028,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                                         </div>
                                         <div onClick={() => setShippingType('moto')} className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex gap-4 items-center ${shippingType === 'moto' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-200 bg-white hover:border-[#fcdb00]/50'}`}>
                                           <div className="w-10 h-10 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] shadow-md flex-shrink-0"><i className="fas fa-motorcycle text-lg"></i></div>
-                                          <div className="flex flex-col"><span className={`font-bebas text-xl tracking-wide leading-none mb-1.5 ${shippingType === 'moto' ? 'text-[#111111]' : 'text-gray-700'}`}>Vía Motomensajería</span><span className="text-[10px] font-bold text-gray-500 leading-relaxed">⏲️ Horarios fijos: 13:00 y 18:00hs.</span></div>
+                                          <div className="flex flex-col"><span className={`font-bebas text-xl tracking-wide leading-none mb-1.5 ${shippingType === 'moto' ? 'text-[#111111]' : 'text-gray-700'}`}>Vía Motomensajería</span><span className="text-[10px] font-bold text-gray-500 leading-relaxed">⏲️ Horarios fijos: 13:00hs - 16:00hs - 20:00hs.</span></div>
                                           {shippingType === 'moto' && <div className="ml-auto text-[#fcdb00]"><i className="fas fa-check-circle text-xl"></i></div>}
                                         </div>
                                       </div>
@@ -2055,7 +2071,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                                             </div>
                                             <div className="flex gap-2 bg-[#f2f2f2] p-1.5 rounded-xl border border-gray-200">
                                               <button onClick={() => setDeliveryTime('13:00')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${deliveryTime === '13:00' ? 'bg-white text-[#111111] shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-sun"></i> Turno 13:00</button>
-                                              <button onClick={() => setDeliveryTime('18:00')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${deliveryTime === '18:00' ? 'bg-white text-[#111111] shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-moon"></i> Turno 18:00</button>
+                                              <button onClick={() => setDeliveryTime('16:00')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${deliveryTime === '16:00' ? 'bg-white text-[#111111] shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-moon"></i> Turno 16:00</button>
+                                              <button onClick={() => setDeliveryTime('20:00')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${deliveryTime === '20:00' ? 'bg-white text-[#111111] shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}>🌙 Turno 20:00</button>
                                             </div>
                                           </div>
 
@@ -2065,6 +2082,11 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                                               <button onClick={() => setPaymentMethod('transferencia')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${paymentMethod === 'transferencia' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-university"></i> Transferencia</button>
                                               <button onClick={() => setPaymentMethod('efectivo')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${paymentMethod === 'efectivo' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-money-bill-wave"></i> Efectivo</button>
                                             </div>
+                                            {paymentMethod !== 'efectivo' && (
+                                              <p className="text-[10px] text-emerald-600 font-bold text-center font-poppins mt-0.5 flex items-center justify-center gap-1.5">
+                                                <i className="fas fa-tag text-[11px]"></i> Pagando en efectivo tenés descuento en el total
+                                              </p>
+                                            )}
                                           </div>
                                         </div>
                                       )}
@@ -2078,6 +2100,18 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   {/* FOOTER (Fijo abajo, NO se empuja por el scroll ni desaparece por la barra) */}
                   {cart.length > 0 && (
                       <div className="bg-white border-t border-gray-200 flex-shrink-0 z-20 pb-8 md:pb-6 pt-5 px-5 md:px-6 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+                          {(() => {
+                            const s = cart.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
+                            const disc = deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'efectivo' ? (s >= 50000 ? 2500 : 1500) : 0;
+                            if (!disc) return null;
+                            return (
+                              <div className="flex justify-end mb-2">
+                                <span className="bg-emerald-500 text-white font-bold text-[11px] px-3 py-1 rounded-full font-poppins uppercase tracking-wider flex items-center gap-1.5">
+                                  <i className="fas fa-tag text-[10px]"></i> -{CONFIG.currencySymbol}{formatPrice(disc)} descuento efectivo
+                                </span>
+                              </div>
+                            );
+                          })()}
                           <div className="flex justify-between items-end mb-4">
                               <span className="font-bold text-gray-500 text-[10px] uppercase tracking-widest font-poppins">Total a Pagar</span>
                               <span className="font-bebas text-5xl text-[#111111] tracking-wide leading-none drop-shadow-sm"><span className="text-[#fcdb00] text-3xl mr-1.5">{CONFIG.currencySymbol}</span>{formatPrice(calculateTotal())}</span>
