@@ -239,11 +239,22 @@ export default function AdminPage() {
   const [deptIcons, setDeptIcons] = useState({}); 
   
   const [loading, setLoading] = useState(true);
-  const [darkMode, setDarkMode] = useState(false); 
+  const [darkMode, setDarkMode] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '', cardSize: 'normal' });
   const [isAdding, setIsAdding] = useState(false);
+  const [activeCategory, setActiveCategory] = useState(null);
 
   const uniqueCategories = useMemo(() => [...new Set(products.filter(p => !p.isDeleted).map(p => p.category))], [products]);
+
+  const categoriesByDept = useMemo(() => {
+    const map = {};
+    products.filter(p => !p.isDeleted).forEach(p => {
+      const dept = p.department || 'SIN DEPTO';
+      if (!map[dept]) map[dept] = new Set();
+      map[dept].add(p.category);
+    });
+    return Object.entries(map).map(([dept, cats]) => ({ dept, categories: Array.from(cats) }));
+  }, [products]);
   const PREDEFINED_DEPARTMENTS = ["VAPES", "THC", "TECNOLOGÍA", "APPLE"];
   const availableDepartments = useMemo(() => Array.from(new Set([...PREDEFINED_DEPARTMENTS, ...products.filter(p => !p.isDeleted).map(p => p.department).filter(Boolean)])), [products]);
   const availableCommunityProducts = useMemo(() => {
@@ -396,7 +407,23 @@ export default function AdminPage() {
       });
     });
   }, [firebaseRefs]);
-  
+
+  useEffect(() => {
+    if (activeTab !== 'stock') return;
+    const observers = [];
+    uniqueCategories.forEach(cat => {
+      const el = document.getElementById('cat-' + cat);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveCategory(cat); },
+        { rootMargin: '-20% 0px -70% 0px', threshold: 0 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach(obs => obs.disconnect());
+  }, [activeTab, uniqueCategories]);
+
   const updatePrice = async (product, newPrice) => { const price = parseInt(newPrice); if(isNaN(price) || price < 0) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, price: price }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
   const updateName = async (product, newName) => { const name = newName.trim().toUpperCase(); if(!name) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, name: name }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
   const updateImage = async (product, newImageUrl) => { const url = newImageUrl.trim(); if(!url) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, image: url }, { merge: true }); } catch(err) { alert("Error al actualizar la imagen: " + err.message); } }
@@ -883,7 +910,7 @@ export default function AdminPage() {
     if (group.length === 0) return null;
     const currentDept = group[0]?.department || "SIN DEPTO";
     return (
-        <div className="mb-10" key={categoryFilter}>
+        <div id={'cat-' + categoryFilter} className="mb-10" key={categoryFilter}>
             <div className={`flex flex-col md:flex-row md:justify-between md:items-center gap-3 border-b pb-3 mb-4 ${darkMode ? 'border-[#333333]' : 'border-gray-200'}`}>
                <div className="flex items-center gap-4">
                    <h3 className={`text-2xl font-bebas uppercase tracking-wide ${theme.subText}`}>{categoryFilter}</h3>
@@ -971,7 +998,42 @@ export default function AdminPage() {
       </div>
       <main className="max-w-4xl mx-auto p-4 md:p-8">
         
-        {activeTab === 'stock' && (<div className="animate-in fade-in duration-500"><div className="flex justify-between items-center mb-8"><h2 className="text-4xl font-bebas uppercase tracking-wide">Gestión de Stock</h2><button onClick={syncAllProducts} className="text-[10px] bg-[#111111] text-[#fcdb00] px-4 py-2.5 rounded-lg font-bold uppercase tracking-widest shadow-md hover:bg-[#fcdb00] hover:text-[#111111] transition-all">Sincronizar DB</button></div>{uniqueCategories.map(cat => renderStockGroup(cat))}</div>)}
+        {activeTab === 'stock' && (
+          <div className="animate-in fade-in duration-500">
+            <div className="flex gap-6 items-start">
+              <aside className={`hidden lg:flex flex-col w-56 flex-shrink-0 sticky top-[136px] max-h-[calc(100vh-160px)] overflow-y-auto rounded-[1.5rem] border p-3 shadow-sm ${theme.card}`}>
+                <p className={`text-[9px] font-bold uppercase tracking-widest px-2 pb-2 mb-1 border-b ${theme.subText} ${darkMode ? 'border-[#333]' : 'border-gray-200'}`}>Navegación rápida</p>
+                <div className="flex flex-col gap-0.5">
+                  {categoriesByDept.map(({ dept, categories }) => (
+                    <div key={dept}>
+                      <p className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1.5 mt-2 ${theme.subText} opacity-60`}>{dept}</p>
+                      {categories.map(cat => (
+                        <button
+                          key={cat}
+                          onClick={() => document.getElementById('cat-' + cat)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                          className={`w-full text-left text-[10px] font-bold uppercase tracking-wide px-2 py-1.5 rounded-lg transition-all truncate ${
+                            activeCategory === cat
+                              ? 'bg-[#fcdb00] text-[#111111]'
+                              : (darkMode ? 'text-gray-400 hover:bg-[#222] hover:text-white' : 'text-gray-500 hover:bg-gray-100 hover:text-[#111111]')
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </aside>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-center mb-8">
+                  <h2 className="text-4xl font-bebas uppercase tracking-wide">Gestión de Stock</h2>
+                  <button onClick={syncAllProducts} className="text-[10px] bg-[#111111] text-[#fcdb00] px-4 py-2.5 rounded-lg font-bold uppercase tracking-widest shadow-md hover:bg-[#fcdb00] hover:text-[#111111] transition-all">Sincronizar DB</button>
+                </div>
+                {uniqueCategories.map(cat => renderStockGroup(cat))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {activeTab === 'vidriera' && (<div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
           <div className="flex justify-between items-end mb-8"><div><h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Vidriera</h2><p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Armá las secciones del Inicio</p></div></div>
