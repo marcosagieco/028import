@@ -243,6 +243,8 @@ export default function AdminPage() {
   const [newProduct, setNewProduct] = useState({ name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '', cardSize: 'normal' });
   const [isAdding, setIsAdding] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
+  const [stockOrder, setStockOrder] = useState({ depts: [], cats: {} });
+  const [editingStockOrder, setEditingStockOrder] = useState(false);
 
   const uniqueCategories = useMemo(() => [...new Set(products.filter(p => !p.isDeleted).map(p => p.category))], [products]);
 
@@ -255,6 +257,31 @@ export default function AdminPage() {
     });
     return Object.entries(map).map(([dept, cats]) => ({ dept, categories: Array.from(cats) }));
   }, [products]);
+
+  const orderedCategoriesByDept = useMemo(() => {
+    const allDepts = categoriesByDept.map(d => d.dept);
+    const savedDepts = stockOrder.depts || [];
+    const orderedDepts = [
+      ...savedDepts.filter(d => allDepts.includes(d)),
+      ...allDepts.filter(d => !savedDepts.includes(d))
+    ];
+    return orderedDepts.map(dept => {
+      const found = categoriesByDept.find(d => d.dept === dept);
+      if (!found) return null;
+      const allCats = found.categories;
+      const savedCats = stockOrder.cats?.[dept] || [];
+      const orderedCats = [
+        ...savedCats.filter(c => allCats.includes(c)),
+        ...allCats.filter(c => !savedCats.includes(c))
+      ];
+      return { dept, categories: orderedCats };
+    }).filter(Boolean);
+  }, [categoriesByDept, stockOrder]);
+
+  const orderedUniqueCategories = useMemo(
+    () => orderedCategoriesByDept.flatMap(d => d.categories),
+    [orderedCategoriesByDept]
+  );
   const PREDEFINED_DEPARTMENTS = ["VAPES", "THC", "TECNOLOGÍA", "APPLE"];
   const availableDepartments = useMemo(() => Array.from(new Set([...PREDEFINED_DEPARTMENTS, ...products.filter(p => !p.isDeleted).map(p => p.department).filter(Boolean)])), [products]);
   const availableCommunityProducts = useMemo(() => {
@@ -405,13 +432,17 @@ export default function AdminPage() {
       onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
         if (snap.exists()) { setDeptIcons(snap.data().icons || {}); }
       });
+
+      onSnapshot(doc(firebaseRefs.db, 'settings', 'stock_order'), (snap) => {
+        if (snap.exists()) setStockOrder(snap.data() || { depts: [], cats: {} });
+      });
     });
   }, [firebaseRefs]);
 
   useEffect(() => {
     if (activeTab !== 'stock') return;
     const observers = [];
-    uniqueCategories.forEach(cat => {
+    orderedUniqueCategories.forEach(cat => {
       const el = document.getElementById('cat-' + cat);
       if (!el) return;
       const obs = new IntersectionObserver(
@@ -422,7 +453,7 @@ export default function AdminPage() {
       observers.push(obs);
     });
     return () => observers.forEach(obs => obs.disconnect());
-  }, [activeTab, uniqueCategories]);
+  }, [activeTab, orderedUniqueCategories]);
 
   const updatePrice = async (product, newPrice) => { const price = parseInt(newPrice); if(isNaN(price) || price < 0) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, price: price }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
   const updateName = async (product, newName) => { const name = newName.trim().toUpperCase(); if(!name) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, name: name }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
@@ -889,6 +920,33 @@ export default function AdminPage() {
   };
 
   const deleteOrder = async (id) => { if (confirm("¿Eliminar pedido permanentemente?")) { try { await deleteDoc(doc(firebaseRefs.db, 'orders', id)); } catch (err) { alert("Error: " + err.message); } } };
+
+  const saveStockOrder = async (newOrder) => {
+    try {
+      await setDoc(doc(firebaseRefs.db, 'settings', 'stock_order'), newOrder);
+      setStockOrder(newOrder);
+    } catch(err) { alert('Error al guardar orden: ' + err.message); }
+  };
+
+  const moveDept = (dept, direction) => {
+    const depts = orderedCategoriesByDept.map(d => d.dept);
+    const idx = depts.indexOf(dept);
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= depts.length) return;
+    const newDepts = [...depts];
+    [newDepts[idx], newDepts[newIdx]] = [newDepts[newIdx], newDepts[idx]];
+    saveStockOrder({ depts: newDepts, cats: stockOrder.cats || {} });
+  };
+
+  const moveCat = (dept, cat, direction) => {
+    const cats = orderedCategoriesByDept.find(d => d.dept === dept)?.categories || [];
+    const idx = cats.indexOf(cat);
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= cats.length) return;
+    const newCats = [...cats];
+    [newCats[idx], newCats[newIdx]] = [newCats[newIdx], newCats[idx]];
+    saveStockOrder({ depts: orderedCategoriesByDept.map(d => d.dept), cats: { ...stockOrder.cats, [dept]: newCats } });
+  };
   
   // --- BRANDBOOK COLORS FOR ADMIN ---
   const theme = {
@@ -1002,23 +1060,43 @@ export default function AdminPage() {
           <div className="animate-in fade-in duration-500">
             <div className="flex gap-6 items-start">
               <aside className={`hidden lg:flex flex-col w-56 flex-shrink-0 sticky top-[136px] max-h-[calc(100vh-160px)] overflow-y-auto rounded-[1.5rem] border p-3 shadow-sm ${theme.card}`}>
-                <p className={`text-[9px] font-bold uppercase tracking-widest px-2 pb-2 mb-1 border-b ${theme.subText} ${darkMode ? 'border-[#333]' : 'border-gray-200'}`}>Navegación rápida</p>
+                <div className={`flex items-center justify-between pb-2 mb-1 border-b ${darkMode ? 'border-[#333]' : 'border-gray-200'}`}>
+                  <p className={`text-[9px] font-bold uppercase tracking-widest ${theme.subText}`}>Navegación</p>
+                  <button onClick={() => setEditingStockOrder(v => !v)} className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-md transition-all ${editingStockOrder ? 'bg-[#fcdb00] text-[#111111]' : (darkMode ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-[#111111]')}`}>
+                    {editingStockOrder ? 'Listo' : 'Ordenar'}
+                  </button>
+                </div>
                 <div className="flex flex-col gap-0.5">
-                  {categoriesByDept.map(({ dept, categories }) => (
+                  {orderedCategoriesByDept.map(({ dept, categories }, deptIdx) => (
                     <div key={dept}>
-                      <p className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1.5 mt-2 ${theme.subText} opacity-60`}>{dept}</p>
-                      {categories.map(cat => (
-                        <button
-                          key={cat}
-                          onClick={() => document.getElementById('cat-' + cat)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                          className={`w-full text-left text-[10px] font-bold uppercase tracking-wide px-2 py-1.5 rounded-lg transition-all truncate ${
-                            activeCategory === cat
-                              ? 'bg-[#fcdb00] text-[#111111]'
-                              : (darkMode ? 'text-gray-400 hover:bg-[#222] hover:text-white' : 'text-gray-500 hover:bg-gray-100 hover:text-[#111111]')
-                          }`}
-                        >
-                          {cat}
-                        </button>
+                      <div className="flex items-center gap-1 mt-2">
+                        {editingStockOrder && (
+                          <div className="flex flex-col gap-0.5 flex-shrink-0">
+                            <button onClick={() => moveDept(dept, -1)} disabled={deptIdx === 0} className={`w-4 h-4 flex items-center justify-center rounded text-[8px] transition-all ${deptIdx === 0 ? 'opacity-20 cursor-not-allowed' : (darkMode ? 'hover:bg-[#333] text-gray-500' : 'hover:bg-gray-200 text-gray-400')}`}>▲</button>
+                            <button onClick={() => moveDept(dept, 1)} disabled={deptIdx === orderedCategoriesByDept.length - 1} className={`w-4 h-4 flex items-center justify-center rounded text-[8px] transition-all ${deptIdx === orderedCategoriesByDept.length - 1 ? 'opacity-20 cursor-not-allowed' : (darkMode ? 'hover:bg-[#333] text-gray-500' : 'hover:bg-gray-200 text-gray-400')}`}>▼</button>
+                          </div>
+                        )}
+                        <p className={`text-[9px] font-bold uppercase tracking-widest px-1 py-1.5 flex-1 truncate ${theme.subText} opacity-60`}>{dept}</p>
+                      </div>
+                      {categories.map((cat, catIdx) => (
+                        <div key={cat} className="flex items-center gap-1">
+                          {editingStockOrder && (
+                            <div className="flex flex-col gap-0.5 flex-shrink-0">
+                              <button onClick={() => moveCat(dept, cat, -1)} disabled={catIdx === 0} className={`w-4 h-4 flex items-center justify-center rounded text-[8px] transition-all ${catIdx === 0 ? 'opacity-20 cursor-not-allowed' : (darkMode ? 'hover:bg-[#333] text-gray-500' : 'hover:bg-gray-200 text-gray-400')}`}>▲</button>
+                              <button onClick={() => moveCat(dept, cat, 1)} disabled={catIdx === categories.length - 1} className={`w-4 h-4 flex items-center justify-center rounded text-[8px] transition-all ${catIdx === categories.length - 1 ? 'opacity-20 cursor-not-allowed' : (darkMode ? 'hover:bg-[#333] text-gray-500' : 'hover:bg-gray-200 text-gray-400')}`}>▼</button>
+                            </div>
+                          )}
+                          <button
+                            onClick={() => document.getElementById('cat-' + cat)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                            className={`flex-1 min-w-0 text-left text-[10px] font-bold uppercase tracking-wide px-2 py-1.5 rounded-lg transition-all truncate ${
+                              activeCategory === cat
+                                ? 'bg-[#fcdb00] text-[#111111]'
+                                : (darkMode ? 'text-gray-400 hover:bg-[#222] hover:text-white' : 'text-gray-500 hover:bg-gray-100 hover:text-[#111111]')
+                            }`}
+                          >
+                            {cat}
+                          </button>
+                        </div>
                       ))}
                     </div>
                   ))}
@@ -1029,7 +1107,7 @@ export default function AdminPage() {
                   <h2 className="text-4xl font-bebas uppercase tracking-wide">Gestión de Stock</h2>
                   <button onClick={syncAllProducts} className="text-[10px] bg-[#111111] text-[#fcdb00] px-4 py-2.5 rounded-lg font-bold uppercase tracking-widest shadow-md hover:bg-[#fcdb00] hover:text-[#111111] transition-all">Sincronizar DB</button>
                 </div>
-                {uniqueCategories.map(cat => renderStockGroup(cat))}
+                {orderedUniqueCategories.map(cat => renderStockGroup(cat))}
               </div>
             </div>
           </div>
