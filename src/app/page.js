@@ -1864,28 +1864,30 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
 
       {/* --- MODAL PRODUCTO --- */}
       {selectedProduct && (
-          <div className="fixed inset-0 z-[80] flex items-end md:items-center justify-center p-4 sm:p-6">
-              <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-xl transition-opacity" onClick={() => setSelectedProduct(null)}></div>
-              <div className="relative bg-[#f2f2f2] w-full max-w-4xl rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-500 flex flex-col md:flex-row max-h-[90vh] border border-white/20">
-                  <button onClick={() => setSelectedProduct(null)} className="absolute top-6 right-6 z-10 w-10 h-10 bg-white/80 backdrop-blur-2xl border border-white text-[#111111] rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-lg">
+          <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6">
+              <div className="absolute inset-0 bg-black/75 backdrop-blur-xl transition-opacity" onClick={() => setSelectedProduct(null)}></div>
+              <div className="relative bg-[#111111]/90 backdrop-blur-2xl border border-white/10 w-full max-w-lg rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.7)] max-h-[92dvh] overflow-y-auto animate-in zoom-in-95 duration-500 md:max-w-4xl md:flex md:flex-row md:overflow-hidden md:max-h-[90vh]">
+                  <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-lg">
                       <i className="fas fa-times text-lg"></i>
                   </button>
-                  <div className="w-full md:w-1/2 bg-white p-8 flex items-center justify-center relative min-h-[350px] border-r border-[#f2f2f2]">
-                      {selectedProduct.tag && <span className="absolute top-8 left-8 bg-[#111111] text-[#fcdb00] font-bebas text-sm px-4 py-1.5 uppercase tracking-wider rounded-sm shadow-lg z-10">{selectedProduct.tag}</span>}
-                      <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full max-h-[450px] object-contain drop-shadow-2xl animate-in scale-95 duration-700 ease-out mix-blend-multiply" />
+                  <div className="bg-white/5 rounded-[1.5rem] mx-4 mt-4 h-[280px] flex items-center justify-center md:mx-0 md:mt-0 md:rounded-none md:rounded-l-[2rem] md:w-1/2 md:h-auto md:flex-shrink-0">
+                      <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-contain drop-shadow-2xl animate-in scale-95 duration-700 ease-out" />
                   </div>
-                  <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center overflow-y-auto bg-[#f2f2f2]">
-                      <p className="text-[#fcdb00] font-bebas uppercase tracking-wider text-xl mb-1 drop-shadow-sm">{selectedProduct.category}</p>
-                      <h2 className="text-5xl md:text-6xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-6">{selectedProduct.name}</h2>
-                      <p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed whitespace-pre-line font-poppins">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p>
-                      <div className="mt-auto border-t border-gray-300 pt-8">
-                          <p className="text-[#111111] font-bebas text-5xl md:text-6xl tracking-wide mb-8 drop-shadow-sm">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}</p>
-                          {selectedProduct.inStock === false ? ( 
-                              <button disabled className="w-full bg-gray-300 text-gray-500 py-4 text-lg font-bebas uppercase tracking-wider rounded-xl cursor-not-allowed border border-gray-400">Producto Agotado</button> 
-                          ) : ( 
-                              <button onClick={(e) => addToCart(selectedProduct, e)} className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] py-4 text-xl font-bebas uppercase tracking-wider rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95"><i className="fas fa-shopping-cart text-lg mb-0.5"></i> Agregar a la bolsa</button> 
-                          )}
-                      </div>
+                  <div className="px-6 pb-8 pt-4 md:w-1/2 md:p-12 md:flex md:flex-col md:justify-center md:overflow-y-auto">
+                      <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-2">{selectedProduct.category}</p>
+                      <h2 className="font-bebas text-5xl text-white uppercase leading-none mb-3">{selectedProduct.name}</h2>
+                      {selectedProduct.tag && (
+                          <span className="inline-block bg-white/10 text-white border border-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-4 w-fit">{selectedProduct.tag}</span>
+                      )}
+                      <div className="border-t border-white/10 my-4"></div>
+                      <p className="text-white/60 text-sm font-poppins leading-relaxed whitespace-pre-line">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p>
+                      <div className="border-t border-white/10 my-4"></div>
+                      <p className="font-bebas text-5xl text-[#fcdb00] mb-6">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}</p>
+                      {selectedProduct.inStock === false ? (
+                          <button disabled className="w-full bg-gray-700 text-gray-500 py-4 text-xl font-bebas uppercase tracking-wider rounded-xl cursor-not-allowed border border-gray-600">Producto Agotado</button>
+                      ) : (
+                          <button onClick={(e) => addToCart(selectedProduct, e)} className="w-full bg-white text-[#111111] hover:bg-[#fcdb00] py-4 text-xl font-bebas uppercase tracking-wider rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95"><i className="fas fa-shopping-cart text-lg mb-0.5"></i> Agregar a la bolsa</button>
+                      )}
                   </div>
               </div>
           </div>
