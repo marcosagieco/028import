@@ -1114,16 +1114,16 @@ export default function Home() {
       <div 
         key={p.id} 
         style={{ transitionDelay: `${(index % 4) * 75}ms`, ...cardStyle }} 
-        className={`reveal-on-scroll bg-white border border-[#f2f2f2] shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] overflow-hidden will-change-transform flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] snap-start group ${isOutOfStock ? 'opacity-0 grayscale' : ''} ${sizeClasses}`}
+        className={`reveal-on-scroll bg-white border border-[#f2f2f2] shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] snap-start group ${isOutOfStock ? 'opacity-70 grayscale' : ''} ${sizeClasses}`}
       >
         <div
-            className={`relative ${aspectClass} overflow-hidden rounded-t-[1.4rem] bg-[#f2f2f2]/50 cursor-pointer`}
+            className={`relative ${aspectClass} bg-[#f2f2f2]/50 cursor-pointer`}
             onClick={() => setSelectedProduct(p)}
         >
-          <img 
-            src={p.image} 
-            alt={p.name} 
-            className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-out" 
+          <img
+            src={p.image}
+            alt={p.name}
+            className="w-full h-full object-cover rounded-t-[1.4rem] mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-out"
           />
           {isOutOfStock ? ( 
               <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm flex items-center justify-center">
