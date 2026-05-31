@@ -952,10 +952,10 @@ export default function Home() {
     currentCart.forEach(i => { 
         const price = i.isUpsell ? i.upsellPrice : getUnitPromoPrice(i);
         subtotalCalc += (i.qty * price);
-        if (i.isUpsell) { 
-            msg += `- ${i.qty}x ${i.name} (OFERTA: $${formatPrice(price)})\n`; 
-        } else { 
-            msg += `- ${i.qty}x ${i.name} ($${formatPrice(price)} c/u)\n`; 
+        if (i.isUpsell) {
+            msg += `- ${i.qty}x ${i.category} - ${i.name} (OFERTA: $${formatPrice(price)})\n`;
+        } else {
+            msg += `- ${i.qty}x ${i.category} - ${i.name} ($${formatPrice(price)} c/u)\n`;
         }
     });
     
@@ -1051,9 +1051,12 @@ export default function Home() {
                 couponUsed: localRoulettePrize ? localRoulettePrize.text : null,
                 status: (deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'transferencia') ? 'pending_verification' : 'pending', 
                 createdAt: serverTimestamp() 
-            }).catch(e => console.error(e)); 
-        } 
-        setTimeout(() => { 
+            }).catch(e => console.error(e));
+            if (deliveryMethod === 'envio' && zone.trim()) {
+              setDoc(doc(firebaseRefs.db, 'stats', 'zones'), { [zone.trim()]: increment(1) }, { merge: true }).catch(console.error);
+            }
+        }
+        setTimeout(() => {
             window.location.href = whatsappUrl; 
             setIsSending(false); 
         }, 400); 
@@ -1111,10 +1114,10 @@ export default function Home() {
       <div 
         key={p.id} 
         style={{ transitionDelay: `${(index % 4) * 75}ms`, ...cardStyle }} 
-        className={`reveal-on-scroll bg-white border border-[#f2f2f2] shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] overflow-hidden flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] snap-start group ${isOutOfStock ? 'opacity-70 grayscale' : ''} ${sizeClasses}`}
+        className={`reveal-on-scroll bg-white border border-[#f2f2f2] shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] snap-start group ${isOutOfStock ? 'opacity-70 grayscale' : ''} ${sizeClasses}`}
       >
-        <div 
-            className={`relative ${aspectClass} overflow-hidden bg-[#f2f2f2]/50 cursor-pointer rounded-t-[1.5rem]`} 
+        <div
+            className={`relative ${aspectClass} overflow-hidden bg-[#f2f2f2]/50 cursor-pointer rounded-[1.5rem] -mx-[5px] -mt-[5px]`} 
             onClick={() => setSelectedProduct(p)}
         >
           <img 
@@ -1870,8 +1873,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-lg">
                       <i className="fas fa-times text-lg"></i>
                   </button>
-                  <div className="bg-white/5 rounded-[1.5rem] mx-4 mt-4 h-[280px] flex items-center justify-center md:mx-0 md:mt-0 md:rounded-none md:rounded-l-[2rem] md:w-1/2 md:h-auto md:flex-shrink-0">
-                      <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-contain drop-shadow-2xl animate-in scale-95 duration-700 ease-out" />
+                  <div className="bg-white/5 mx-3 mt-3 rounded-[1.5rem] overflow-hidden aspect-square w-full md:mx-0 md:mt-0 md:rounded-none md:rounded-l-[2rem] md:w-1/2 md:aspect-auto md:flex-shrink-0">
+                      <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="px-6 pb-8 pt-4 md:w-1/2 md:p-12 md:flex md:flex-col md:justify-center md:overflow-y-auto">
                       <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-2">{selectedProduct.category}</p>
@@ -2023,12 +2026,12 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                                     <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-300 font-poppins">
                                       <div className="flex flex-col gap-3 mb-2">
                                         <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Elegí tu opción de envío:</label>
-                                        <div onClick={() => setShippingType('flash')} className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex gap-4 items-center ${shippingType === 'flash' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-200 bg-white hover:border-[#fcdb00]/50'}`}>
+                                        <div onClick={() => { setShippingType('flash'); if (firebaseRefs.db) setDoc(doc(firebaseRefs.db, 'stats', 'shipping'), { flash: increment(1) }, { merge: true }).catch(console.error); }} className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex gap-4 items-center ${shippingType === 'flash' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-200 bg-white hover:border-[#fcdb00]/50'}`}>
                                           <div className="w-10 h-10 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] shadow-md flex-shrink-0"><i className="fas fa-bolt text-lg"></i></div>
                                           <div className="flex flex-col"><span className={`font-bebas text-xl tracking-wide leading-none mb-1.5 ${shippingType === 'flash' ? 'text-[#111111]' : 'text-gray-700'}`}>Envío Flash</span><span className="text-[10px] font-bold text-gray-500 leading-relaxed">⏱️ Te llega en menos de 30 minutos.<br/>💳 Abonando solo por transferencia.</span></div>
                                           {shippingType === 'flash' && <div className="ml-auto text-[#fcdb00]"><i className="fas fa-check-circle text-xl"></i></div>}
                                         </div>
-                                        <div onClick={() => setShippingType('moto')} className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex gap-4 items-center ${shippingType === 'moto' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-200 bg-white hover:border-[#fcdb00]/50'}`}>
+                                        <div onClick={() => { setShippingType('moto'); if (firebaseRefs.db) setDoc(doc(firebaseRefs.db, 'stats', 'shipping'), { moto: increment(1) }, { merge: true }).catch(console.error); }} className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex gap-4 items-center ${shippingType === 'moto' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-200 bg-white hover:border-[#fcdb00]/50'}`}>
                                           <div className="w-10 h-10 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] shadow-md flex-shrink-0"><i className="fas fa-motorcycle text-lg"></i></div>
                                           <div className="flex flex-col"><span className={`font-bebas text-xl tracking-wide leading-none mb-1.5 ${shippingType === 'moto' ? 'text-[#111111]' : 'text-gray-700'}`}>Vía Motomensajería</span><span className="text-[10px] font-bold text-gray-500 leading-relaxed">⏲️ Horarios fijos: 13:00hs - 16:00hs - 20:00hs.</span></div>
                                           {shippingType === 'moto' && <div className="ml-auto text-[#fcdb00]"><i className="fas fa-check-circle text-xl"></i></div>}

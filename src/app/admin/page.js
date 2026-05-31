@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { 
-  getFirestore, collection, onSnapshot, query, orderBy, updateDoc, deleteDoc, doc, setDoc, serverTimestamp 
+  getFirestore, collection, onSnapshot, query, orderBy, updateDoc, deleteDoc, doc, setDoc, serverTimestamp
 } from "firebase/firestore";
 
 const CONFIG = {
@@ -238,6 +238,8 @@ export default function AdminPage() {
   
   const [deptIcons, setDeptIcons] = useState({}); 
   
+  const [shippingStats, setShippingStats] = useState(null);
+  const [zoneStats, setZoneStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '', cardSize: 'normal' });
@@ -245,6 +247,7 @@ export default function AdminPage() {
   const [activeCategory, setActiveCategory] = useState(null);
   const [stockOrder, setStockOrder] = useState({ depts: [], cats: {} });
   const [editingStockOrder, setEditingStockOrder] = useState(false);
+  const [showAllClicks, setShowAllClicks] = useState(false);
 
   const uniqueCategories = useMemo(() => [...new Set(products.filter(p => !p.isDeleted).map(p => p.category))], [products]);
 
@@ -454,6 +457,13 @@ export default function AdminPage() {
     });
     return () => observers.forEach(obs => obs.disconnect());
   }, [activeTab, orderedUniqueCategories]);
+
+  useEffect(() => {
+    if (activeTab !== 'estadisticas' || !firebaseRefs.db) return;
+    const unsubShipping = onSnapshot(doc(firebaseRefs.db, 'stats', 'shipping'), snap => setShippingStats(snap.data() || {}));
+    const unsubZones = onSnapshot(doc(firebaseRefs.db, 'stats', 'zones'), snap => setZoneStats(snap.data() || {}));
+    return () => { unsubShipping(); unsubZones(); };
+  }, [activeTab, firebaseRefs.db]);
 
   const updatePrice = async (product, newPrice) => { const price = parseInt(newPrice); if(isNaN(price) || price < 0) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, price: price }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
   const updateName = async (product, newName) => { const name = newName.trim().toUpperCase(); if(!name) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, name: name }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
@@ -1052,6 +1062,7 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('cupones')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'cupones' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Cupones</button>
           <button onClick={() => setActiveTab('usuarios')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'usuarios' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Usuarios</button>
           <button onClick={() => setActiveTab('ofertas')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'ofertas' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Ofertas 🔥</button>
+          <button onClick={() => setActiveTab('estadisticas')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'estadisticas' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Stats 📊</button>
         </div>
       </div>
       <main className="max-w-4xl mx-auto p-4 md:p-8">
@@ -1584,6 +1595,122 @@ export default function AdminPage() {
         {activeTab === 'crear' && (<div className="animate-in fade-in duration-500 max-w-lg mx-auto"><h2 className="text-4xl font-bebas uppercase tracking-wide mb-6 text-center">Nuevo Producto</h2><form onSubmit={handleAddProduct} className={`${theme.card} p-8 rounded-[2rem] shadow-sm border flex flex-col gap-5`}><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Nombre del Producto</label><input type="text" required placeholder="Ej: BLUE RAZZ ICE" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex gap-4"><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Precio</label><input type="number" required placeholder="26000" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Categoría / Marca</label><input list="category-suggestions" placeholder="Ej: Ignite v400 o Crear Nueva..." value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} /><datalist id="category-suggestions">{uniqueCategories.map(cat => <option key={cat} value={cat} />)}</datalist></div></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Departamento Principal</label><input list="dept-suggestions" placeholder="Elegí o escribí uno nuevo..." value={newProduct.department} onChange={e => setNewProduct({...newProduct, department: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} /><datalist id="dept-suggestions">{availableDepartments.map(d => <option key={d} value={d} />)}</datalist></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Link de Imagen (URL)</label><input type="url" required placeholder="https://i.postimg.cc/..." value={newProduct.image} onChange={e => setNewProduct({...newProduct, image: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />{newProduct.image && (<div className="mt-4 relative h-32 rounded-xl overflow-hidden border border-dashed border-gray-300 bg-[#f2f2f2]"><img src={newProduct.image} alt="Vista previa" className="w-full h-full object-contain mix-blend-multiply" /></div>)}</div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Etiqueta y Tamaño</label><div className="flex gap-4"><input type="text" placeholder="Ej: Destacado" value={newProduct.tag} onChange={e => setNewProduct({...newProduct, tag: e.target.value})} className={`flex-1 p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /><select value={newProduct.cardSize} onChange={e => setNewProduct({...newProduct, cardSize: e.target.value})} className={`flex-1 p-4 rounded-xl outline-none font-bold text-xs uppercase cursor-pointer border-transparent focus:ring-2 focus:ring-[#fcdb00] ${theme.input}`}><option value="normal">📏 Tamaño Normal</option><option value="medium">🔲 Tamaño Mediano</option><option value="large">⬜ Tamaño Grande</option></select></div></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Descripción (Biografía)</label><textarea rows="2" placeholder="Escribe aquí..." value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all resize-none ${theme.input}`}></textarea></div><button type="submit" disabled={isAdding} className="bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all disabled:opacity-50">{isAdding ? 'Guardando...' : 'Guardar Producto'}</button></form></div>)}
 
         {activeTab === 'clientes' && (<div className="animate-in fade-in duration-500"><div className="flex justify-between items-end mb-8"><div><h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Tu Base</h2><p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Directorio CRM</p></div><span className="bg-[#fcdb00] text-[#111111] text-[11px] font-bold px-4 py-2 rounded-lg shadow-sm">{clientsList.length} Registros</span></div>{clientsList.length === 0 ? (<div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}><i className="fas fa-users text-gray-300 text-5xl mb-6"></i><p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">Aún no hay clientes registrados</p></div>) : (<div className="grid grid-cols-1 md:grid-cols-2 gap-4">{clientsList.map((client, index) => (<div key={index} className={`${theme.card} p-6 rounded-[1.5rem] shadow-sm border flex flex-col gap-4 hover:border-[#fcdb00]/50 transition-all`}><div className="flex items-center gap-4"><div className="w-14 h-14 rounded-full bg-[#111111] text-[#fcdb00] flex items-center justify-center text-2xl font-bebas shadow-md uppercase pt-1">{client.name.charAt(0)}</div><div><h4 className="font-bebas tracking-wide text-2xl uppercase leading-none mb-1">{client.name}</h4><p className="text-gray-500 font-bold text-xs"><i className="fas fa-phone text-[10px] mr-1.5 text-[#fcdb00]"></i> {client.phone}</p></div></div><div className="flex justify-between items-center mt-2 border-t pt-4 dark:border-[#333333]"><span className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">{client.orderCount} Pedido{client.orderCount > 1 ? 's' : ''}</span><a href={`https://wa.me/${client.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="bg-[#25D366] text-white text-[11px] font-bold px-5 py-2.5 rounded-lg uppercase tracking-widest flex items-center gap-2 hover:bg-[#1ebe5d] transition-all shadow-md"><i className="fab fa-whatsapp text-sm"></i> Escribir</a></div></div>))}</div>)}</div>)}
+
+        {/* --- PESTAÑA ESTADÍSTICAS --- */}
+        {activeTab === 'estadisticas' && (
+          <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
+            <div className="flex justify-between items-end mb-8">
+              <div>
+                <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Estadísticas</h2>
+                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Comportamiento de clientes</p>
+              </div>
+            </div>
+
+            {/* Clicks por producto */}
+            <div className={`${theme.card} p-6 rounded-[2rem] shadow-sm border mb-6`}>
+              <h3 className={`font-bebas text-2xl uppercase tracking-wide mb-1 ${theme.text}`}><i className="fas fa-fire text-[#fcdb00] mr-2"></i>Productos más agregados al carrito</h3>
+              <p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest mb-5">Ordenados por cantidad de veces agregados</p>
+              {(() => {
+                const all = [...products].filter(p => !p.isDeleted && (p.clicks || 0) > 0).sort((a, b) => (b.clicks || 0) - (a.clicks || 0));
+                const sorted = showAllClicks ? all : all.slice(0, 10);
+                const max = all[0]?.clicks || 1;
+                if (!all.length) return <p className="text-gray-400 text-sm font-bold text-center py-8">Aún no hay datos de clicks</p>;
+                return (
+                  <div className="flex flex-col gap-3">
+                    {sorted.map((p, i) => (
+                      <div key={p.id} className="flex items-center gap-3">
+                        <span className="text-[11px] font-black text-gray-400 w-5 text-right">{i + 1}</span>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-center mb-1">
+                            <div className="flex flex-col min-w-0">
+                              <span className={`text-[11px] font-bold uppercase truncate ${theme.text}`}>{p.name}</span>
+                              {p.category && <span className="text-[10px] font-semibold text-gray-400 uppercase truncate">{p.category}</span>}
+                            </div>
+                            <span className="text-[11px] font-black text-[#fcdb00] ml-2 flex-shrink-0">{p.clicks}</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-gray-200 dark:bg-[#333] overflow-hidden">
+                            <div className="h-full rounded-full bg-[#fcdb00]" style={{ width: `${Math.round((p.clicks / max) * 100)}%` }}></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {all.length > 10 && (
+                      <button onClick={() => setShowAllClicks(v => !v)} className="mt-2 w-full text-[11px] font-black uppercase tracking-widest text-gray-400 hover:text-[#fcdb00] transition-colors py-2 border border-dashed border-gray-300 dark:border-[#333] rounded-xl">
+                        {showAllClicks ? `Ver menos` : `Ver más (${all.length - 10} productos restantes)`}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Flash vs Moto */}
+            <div className={`${theme.card} p-6 rounded-[2rem] shadow-sm border mb-6`}>
+              <h3 className={`font-bebas text-2xl uppercase tracking-wide mb-1 ${theme.text}`}><i className="fas fa-motorcycle text-[#fcdb00] mr-2"></i>Elecciones de envío</h3>
+              <p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest mb-5">Flash vs Motomensajería</p>
+              {!shippingStats ? (
+                <p className="text-gray-400 text-sm font-bold text-center py-8">Cargando...</p>
+              ) : !shippingStats.flash && !shippingStats.moto ? (
+                <p className="text-gray-400 text-sm font-bold text-center py-8">Aún no hay datos de envío</p>
+              ) : (() => {
+                const flash = shippingStats.flash || 0;
+                const moto = shippingStats.moto || 0;
+                const total = flash + moto || 1;
+                return (
+                  <div className="flex flex-col gap-4">
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className={`text-[12px] font-bold ${theme.text}`}><i className="fas fa-bolt text-[#fcdb00] mr-1.5"></i>Flash</span>
+                        <span className="text-[12px] font-black text-[#fcdb00]">{flash} <span className="text-gray-400 font-bold">({Math.round(flash/total*100)}%)</span></span>
+                      </div>
+                      <div className="h-3 rounded-full bg-gray-200 dark:bg-[#333] overflow-hidden"><div className="h-full rounded-full bg-[#fcdb00]" style={{ width: `${Math.round(flash/total*100)}%` }}></div></div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className={`text-[12px] font-bold ${theme.text}`}><i className="fas fa-motorcycle text-[#111111] dark:text-gray-300 mr-1.5"></i>Moto</span>
+                        <span className="text-[12px] font-black text-[#fcdb00]">{moto} <span className="text-gray-400 font-bold">({Math.round(moto/total*100)}%)</span></span>
+                      </div>
+                      <div className="h-3 rounded-full bg-gray-200 dark:bg-[#333] overflow-hidden"><div className="h-full rounded-full bg-[#111111] dark:bg-white" style={{ width: `${Math.round(moto/total*100)}%` }}></div></div>
+                    </div>
+                    <p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest text-right">{total} selecciones totales</p>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Barrios frecuentes */}
+            <div className={`${theme.card} p-6 rounded-[2rem] shadow-sm border mb-6`}>
+              <h3 className={`font-bebas text-2xl uppercase tracking-wide mb-1 ${theme.text}`}><i className="fas fa-map-marker-alt text-[#fcdb00] mr-2"></i>Barrios frecuentes</h3>
+              <p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest mb-5">Zonas con más pedidos de envío</p>
+              {!zoneStats ? (
+                <p className="text-gray-400 text-sm font-bold text-center py-8">Cargando...</p>
+              ) : !Object.keys(zoneStats).length ? (
+                <p className="text-gray-400 text-sm font-bold text-center py-8">Aún no hay datos de barrios</p>
+              ) : (() => {
+                const sorted = Object.entries(zoneStats).sort((a, b) => b[1] - a[1]).slice(0, 10);
+                const max = sorted[0]?.[1] || 1;
+                return (
+                  <div className="flex flex-col gap-3">
+                    {sorted.map(([zone, count], i) => (
+                      <div key={zone} className="flex items-center gap-3">
+                        <span className="text-[11px] font-black text-gray-400 w-5 text-right">{i + 1}</span>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className={`text-[11px] font-bold uppercase truncate ${theme.text}`}>{zone}</span>
+                            <span className="text-[11px] font-black text-[#fcdb00] ml-2 flex-shrink-0">{count}</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-gray-200 dark:bg-[#333] overflow-hidden">
+                            <div className="h-full rounded-full bg-[#fcdb00]" style={{ width: `${Math.round((count / max) * 100)}%` }}></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
 
         {/* --- PESTAÑA HISTORIAL --- */}
         {activeTab === 'historial' && (<div className="animate-in fade-in duration-500">
