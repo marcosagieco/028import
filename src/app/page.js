@@ -1114,10 +1114,10 @@ export default function Home() {
       <div 
         key={p.id} 
         style={{ transitionDelay: `${(index % 4) * 75}ms`, ...cardStyle }} 
-        className={`reveal-on-scroll bg-white border border-[#f2f2f2] shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] snap-start group ${isOutOfStock ? 'opacity-70 grayscale' : ''} ${sizeClasses}`}
+        className={`reveal-on-scroll bg-white border border-[#f2f2f2] shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] overflow-hidden will-change-transform flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] snap-start group ${isOutOfStock ? 'opacity-0 grayscale' : ''} ${sizeClasses}`}
       >
         <div
-            className={`relative ${aspectClass} overflow-hidden bg-[#f2f2f2]/50 cursor-pointer rounded-[1.5rem] -mx-[5px] -mt-[5px]`} 
+            className={`relative ${aspectClass} overflow-hidden rounded-t-[1.4rem] bg-[#f2f2f2]/50 cursor-pointer`}
             onClick={() => setSelectedProduct(p)}
         >
           <img 
