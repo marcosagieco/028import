@@ -2215,6 +2215,25 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         </div>
       )}
 
+      {/* === BOTÓN FLOTANTE WHATSAPP === */}
+      <div className="fixed bottom-6 right-5 z-[200] flex flex-col items-end gap-3">
+        {showTooltip && (
+          <div className="bg-white text-[#111111] text-xs font-semibold font-poppins px-4 py-2.5 rounded-2xl shadow-xl border border-gray-100 max-w-[200px] text-center leading-snug animate-in fade-in slide-in-from-bottom-2 duration-300">
+            ¿Tenés dudas? <span className="text-[#25D366]">¡Escribinos por WhatsApp!</span> 💬
+            <div className="absolute bottom-[-6px] right-5 w-3 h-3 bg-white border-r border-b border-gray-100 rotate-45"></div>
+          </div>
+        )}
+        <a
+          href={`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent('Hola! Tengo una consulta sobre 028 Import 👋')}`}
+          target="_blank"
+          rel="noreferrer"
+          className="w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg shadow-[#25D366]/40 hover:scale-110 hover:shadow-[#25D366]/60 active:scale-95 transition-all duration-200"
+          aria-label="Contactar por WhatsApp"
+        >
+          <i className="fab fa-whatsapp text-3xl text-white"></i>
+        </a>
+      </div>
+
       <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     </div>
