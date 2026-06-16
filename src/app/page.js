@@ -1225,19 +1225,25 @@ export default function Home() {
         promoText = `${promo.minQty}+ un: $${formatPrice(promo.totalPrice / promo.minQty)} c/u`;
     }
     
+    const showSectionHeader = activeFilter.dept !== 'all';
+
     return (
       <section key={category} id={slugify(category)} className="mb-20 scroll-mt-40 reveal-on-scroll">
-        <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-3 border-b-2 border-[#f2f2f2] pb-4">
-            <h2 className="text-3xl md:text-5xl font-bebas text-[#111111] tracking-wide uppercase relative">
-                {category} 
-                <span className="absolute -bottom-[18px] left-0 w-16 h-1 bg-[#fcdb00] rounded-full"></span>
-            </h2>
-            {promoText && (
-                <div className="bg-[#fcdb00]/20 text-[#111111] px-4 py-2 font-bebas text-lg rounded-full uppercase tracking-wider flex items-center gap-2">
-                    <i className="fas fa-tag text-[#fcdb00] mb-0.5"></i> {promoText}
-                </div>
-            )}
-        </div>
+        {(showSectionHeader || promoText) && (
+          <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-3 border-b-2 border-[#f2f2f2] pb-4">
+              {showSectionHeader && (
+                <h2 className="text-3xl md:text-5xl font-bebas text-[#111111] tracking-wide uppercase relative">
+                    {category}
+                    <span className="absolute -bottom-[18px] left-0 w-16 h-1 bg-[#fcdb00] rounded-full"></span>
+                </h2>
+              )}
+              {promoText && (
+                  <div className="bg-[#fcdb00]/20 text-[#111111] px-4 py-2 font-bebas text-lg rounded-full uppercase tracking-wider flex items-center gap-2">
+                      <i className="fas fa-tag text-[#fcdb00] mb-0.5"></i> {promoText}
+                  </div>
+              )}
+          </div>
+        )}
         <div className="flex flex-wrap gap-3 md:gap-5">
             {sectionProducts.map((p, index) => renderProductCard(p, index, false, 'vertical'))}
         </div>
@@ -1839,7 +1845,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       <span className="text-gray-300 text-[10px]"><i className="fas fa-chevron-right"></i></span>
                       <span className="text-[#111111] font-bold uppercase tracking-widest text-[10px]">{activeFilter.dept !== 'all' ? activeFilter.dept : 'CATÁLOGO COMPLETO'}</span>
                   </div>
-                  {activeFilter.dept !== 'all' && uniqueCategories.length > 0 && (
+                  {uniqueCategories.length > 0 && (
                     <div className="flex overflow-x-auto gap-2.5 py-3 no-scrollbar pr-6 pl-1 -ml-1 mask-image-gradient">
                       <button onClick={() => {setActiveFilter({...activeFilter, cat: 'all'}); window.scrollTo({top: 0, behavior: 'smooth'});}} className={`flex-shrink-0 whitespace-nowrap px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeFilter.cat === 'all' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50 hover:border-[#fcdb00]'}`}>Todos</button>
                       {uniqueCategories.map(cat => (
@@ -1885,7 +1891,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
               {searchTerm && products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
                   <div className="text-center py-24 bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white shadow-sm"><div className="w-20 h-20 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-6"><i className="fas fa-ghost text-3xl text-gray-400"></i></div><h3 className="text-3xl font-bebas uppercase tracking-wide text-[#111111] mb-2">No encontramos nada</h3><p className="text-xs uppercase tracking-widest text-gray-500 font-poppins">Intenta buscar otro sabor o marca.</p></div>
               )}
-              {(activeFilter.dept !== 'all' && activeFilter.cat !== 'all'
+              {(activeFilter.cat !== 'all'
                 ? uniqueCategories.filter(cat => cat === activeFilter.cat)
                 : uniqueCategories
               ).map(cat => renderProductSection(cat))}
