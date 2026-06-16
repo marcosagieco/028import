@@ -335,8 +335,8 @@ const CountdownBanner = () => null;
 
 export default function Home() {
   const [cart, setCart] = useState([]);
-  const [products, setProducts] = useState(initialProducts);
-  const [allProducts, setAllProducts] = useState(initialProducts);
+  const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
   const [promos, setPromos] = useState([]);
   const [homeSections, setHomeSections] = useState([]); 
   const [homeLayout, setHomeLayout] = useState([]);
