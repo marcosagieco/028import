@@ -1169,8 +1169,9 @@ export default function Home() {
             </h3>
             
             <div className="mt-auto pt-3">
-                <p className={`text-[#fcdb00] font-bebas ${priceClass} mb-4 tracking-wide drop-shadow-sm`}>
+                <p className={`text-[#fcdb00] font-bebas ${priceClass} mb-4 tracking-wide drop-shadow-sm flex items-baseline gap-2`}>
                     {CONFIG.currencySymbol}{formatPrice(p.price)}
+                    {p.isUSD && <span className="text-[10px] font-black text-[#111111] bg-[#fcdb00] border border-[#e8c800] px-1.5 py-0.5 rounded font-poppins leading-none">USD</span>}
                 </p>
                 
                 {isOutOfStock ? ( 
@@ -1954,7 +1955,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       <div className="border-t border-white/10 my-4"></div>
                       <p className="text-white/60 text-sm font-poppins leading-relaxed whitespace-pre-line">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p>
                       <div className="border-t border-white/10 my-4"></div>
-                      <p className="font-bebas text-5xl text-[#fcdb00] mb-6">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}</p>
+                      <p className="font-bebas text-5xl text-[#fcdb00] mb-6 flex items-baseline gap-3">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}{selectedProduct.isUSD && <span className="text-[11px] font-black text-[#111111] bg-[#fcdb00] border border-[#e8c800] px-2 py-1 rounded font-poppins leading-none">USD</span>}</p>
                       {selectedProduct.inStock === false ? (
                           <button disabled className="w-full bg-gray-700 text-gray-500 py-4 text-xl font-bebas uppercase tracking-wider rounded-xl cursor-not-allowed border border-gray-600">Producto Agotado</button>
                       ) : (
