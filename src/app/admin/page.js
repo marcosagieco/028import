@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
-import { 
-  getFirestore, collection, onSnapshot, query, orderBy, updateDoc, deleteDoc, doc, setDoc, serverTimestamp
+import {
+  getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, deleteDoc, doc, setDoc, getDoc, serverTimestamp
 } from "firebase/firestore";
 
 const CONFIG = {
@@ -45,6 +45,8 @@ const DEPT_ICONS = [
   { id: 'fa-cannabis', prefix: 'fas' },
   { id: 'fa-smoking', prefix: 'fas' },
 ];
+
+const FLAVOR_OPTIONS = ['FRUTAL', 'MENTA', 'FRESCO', 'HELADO', 'DULCE', 'ÁCIDO', 'TROPICAL', 'CLÁSICO'];
 
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante.", cardSize: "normal" },
@@ -471,6 +473,7 @@ export default function AdminPage() {
   const updateOrder = async (product, newOrder) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, order: parseInt(newOrder) }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
   const updateDescription = async (product, newDesc) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, description: newDesc.trim() }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
   const updateCardSize = async (product, newSize) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, cardSize: newSize }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
+  const toggleProductFlavor = async (product, flavor) => { const current = Array.isArray(product.flavors) ? product.flavors : []; const next = current.includes(flavor) ? current.filter(f => f !== flavor) : [...current, flavor]; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, flavors: next }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const updateCategoryDepartment = async (categoryName, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept) return; try { const prods = products.filter(p => p.category === categoryName); await Promise.all(prods.map(p => setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, department: dept }, { merge: true }))); } catch (err) { alert("Error: " + err.message); } }
   const updateProductDepartment = async (product, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept || dept === product.department) return; try { await setDoc(doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`), { id: product.id, department: dept }, { merge: true }); } catch(err) { alert("Error al actualizar departamento: " + err.message); } };
   const toggleStock = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, inStock: product.inStock === false }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
@@ -1024,6 +1027,17 @@ export default function AdminPage() {
                                 <div className="flex items-center gap-2 mt-2 w-full">
                                     <i className="fas fa-link text-gray-400 text-[10px]"></i>
                                     <input type="url" defaultValue={p.image} placeholder="URL de la imagen (Ej: https://i.ibb.co/...)" className={`w-full text-[10px] p-2 rounded-lg outline-none transition-colors border focus:border-[#fcdb00] focus:ring-1 focus:ring-[#fcdb00] font-poppins ${darkMode ? 'bg-[#222222] border-[#333333] text-gray-300 placeholder-gray-500' : 'bg-[#f2f2f2] border-transparent text-gray-600 placeholder-gray-400'}`} onBlur={(e) => { if (e.target.value !== p.image) { updateImage(p, e.target.value); } }} onKeyDown={(e) => { if(e.key === 'Enter') { e.target.blur(); } }} title="Pegá acá el link directo de ImgBB y tocá afuera para guardar" />
+                                </div>
+                                <div className="flex flex-wrap items-center gap-1.5 mt-3">
+                                    <span className="text-gray-400 text-[10px] font-poppins mr-1">Gustos:</span>
+                                    {FLAVOR_OPTIONS.map(flavor => {
+                                        const selected = Array.isArray(p.flavors) && p.flavors.includes(flavor);
+                                        return (
+                                            <button key={flavor} type="button" onClick={() => toggleProductFlavor(p, flavor)} className={`px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest transition-all font-poppins ${selected ? 'bg-[#fcdb00] text-[#111111]' : (darkMode ? 'bg-[#222222] text-gray-400 hover:text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')}`}>
+                                                {flavor}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>

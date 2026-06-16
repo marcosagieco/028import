@@ -112,6 +112,8 @@ const AVAILABLE_ICONS = [
   { id: 'fa-apple', prefix: 'fab', color: 'text-gray-800' } 
 ];
 
+const FLAVOR_OPTIONS = ['FRUTAL', 'MENTA', 'FRESCO', 'HELADO', 'DULCE', 'ÁCIDO', 'TROPICAL', 'CLÁSICO'];
+
 const DEPT_ICONS = [
   { id: 'fa-box', prefix: 'fas' }, { id: 'fa-wind', prefix: 'fas' }, { id: 'fa-leaf', prefix: 'fas' }, { id: 'fa-microchip', prefix: 'fas' }, { id: 'fa-star', prefix: 'fas' }, { id: 'fa-fire', prefix: 'fas' }, { id: 'fa-apple', prefix: 'fab' }, { id: 'fa-mobile-alt', prefix: 'fas' }, { id: 'fa-laptop', prefix: 'fas' }, { id: 'fa-gamepad', prefix: 'fas' }, { id: 'fa-headphones', prefix: 'fas' }, { id: 'fa-gem', prefix: 'fas' }, { id: 'fa-tag', prefix: 'fas' }, { id: 'fa-cannabis', prefix: 'fas' }, { id: 'fa-smoking', prefix: 'fas' }
 ];
@@ -333,8 +335,8 @@ const CountdownBanner = () => null;
 
 export default function Home() {
   const [cart, setCart] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [allProducts, setAllProducts] = useState([]);
+  const [products, setProducts] = useState(initialProducts);
+  const [allProducts, setAllProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
   const [homeSections, setHomeSections] = useState([]); 
   const [homeLayout, setHomeLayout] = useState([]);
@@ -351,6 +353,9 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentView, setCurrentView] = useState('home'); 
   const [activeFilter, setActiveFilter] = useState({ dept: 'all', cat: 'all' });
+  const [activeFlavors, setActiveFlavors] = useState([]);
+  const [showFlavorMenu, setShowFlavorMenu] = useState(false);
+  const flavorMenuRef = useRef(null);
   const [expandedDept, setExpandedDept] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState('retiro');
@@ -455,7 +460,26 @@ export default function Home() {
     return Array.from(mergedMap.values()).sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
   }, [homeLayout, homeSections]);
 
-  const slugify = (text) => text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');            
+  const slugify = (text) => text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+
+  const flavorFilterVisible = activeFilter.dept === 'all' || activeFilter.dept === 'VAPES';
+
+  const toggleFlavorFilter = (flavor) => {
+    setActiveFlavors(prev => prev.includes(flavor) ? prev.filter(f => f !== flavor) : [...prev, flavor]);
+  };
+
+  useEffect(() => {
+    if (!flavorFilterVisible && activeFlavors.length) setActiveFlavors([]);
+  }, [flavorFilterVisible]);
+
+  useEffect(() => {
+    if (!showFlavorMenu) return;
+    const handleClickOutside = (e) => {
+      if (flavorMenuRef.current && !flavorMenuRef.current.contains(e.target)) setShowFlavorMenu(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showFlavorMenu]);
 
   const firebaseRefs = useMemo(() => {
     if (typeof window === "undefined") return { auth: null, db: null };
@@ -1183,7 +1207,11 @@ export default function Home() {
     if (activeFilter.dept !== 'all') {
         sectionProducts = sectionProducts.filter(p => p.department === activeFilter.dept);
     }
-    
+
+    if (flavorFilterVisible && activeFlavors.length > 0) {
+        sectionProducts = sectionProducts.filter(p => Array.isArray(p.flavors) && p.flavors.some(f => activeFlavors.includes(f)));
+    }
+
     if (searchTerm) {
         sectionProducts = sectionProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase()));
     }
@@ -1817,6 +1845,38 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       {uniqueCategories.map(cat => (
                         <button key={cat} onClick={() => { setActiveFilter({...activeFilter, cat: cat}); const target = document.getElementById(slugify(cat)); if(target) target.scrollIntoView({behavior: 'smooth'}); }} className={`flex-shrink-0 whitespace-nowrap px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeFilter.cat === cat ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50 hover:border-[#fcdb00]'}`}>{cat}</button>
                       ))}
+                    </div>
+                  )}
+                  {flavorFilterVisible && (
+                    <div className="relative inline-block mt-1" ref={flavorMenuRef}>
+                      <button
+                        onClick={() => setShowFlavorMenu(prev => !prev)}
+                        className={`flex-shrink-0 whitespace-nowrap px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${activeFlavors.length > 0 ? 'bg-[#fcdb00] text-[#111111] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50 hover:border-[#fcdb00]'}`}
+                      >
+                        <i className="fas fa-mortar-pestle"></i> Filtrar por gusto{activeFlavors.length > 0 ? ` (${activeFlavors.length})` : ''}
+                        <i className={`fas fa-chevron-${showFlavorMenu ? 'up' : 'down'} text-[9px]`}></i>
+                      </button>
+                      {showFlavorMenu && (
+                        <div className="absolute left-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-[#f2f2f2] p-3 z-50">
+                          <div className="grid grid-cols-2 gap-2">
+                            {FLAVOR_OPTIONS.map(flavor => {
+                              const selected = activeFlavors.includes(flavor);
+                              return (
+                                <button
+                                  key={flavor}
+                                  onClick={() => toggleFlavorFilter(flavor)}
+                                  className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${selected ? 'bg-[#111111] text-[#fcdb00]' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
+                                >
+                                  {flavor}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {activeFlavors.length > 0 && (
+                            <button onClick={() => setActiveFlavors([])} className="w-full mt-3 text-center text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-[#111111] transition-colors">Limpiar selección</button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
               </div>
