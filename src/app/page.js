@@ -394,6 +394,7 @@ export default function Home() {
   const [deliveryTime, setDeliveryTime] = useState('13:00');
 
   const [deptIcons, setDeptIcons] = useState({});
+  const [virtualDepts, setVirtualDepts] = useState([]);
   const [user, setUser] = useState(null);
   const [dbUser, setDbUser] = useState(null); 
   const [fomoData, setFomoData] = useState(null);
@@ -489,9 +490,11 @@ export default function Home() {
     if (filterPuffs.length > 0) filtered = filtered.filter(p => filterPuffs.some(pv => String(p.puffs) === String(pv)));
     if (priceRange !== null) filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
     if (searchTerm) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase()));
+    const USD_TO_ARS = 1450;
+    const arsPrice = (p) => p.tag === 'USD' ? p.price * USD_TO_ARS : p.price;
     const sorted = [...filtered];
-    if (sortBy === 'mayor_precio') sorted.sort((a, b) => b.price - a.price);
-    else if (sortBy === 'menor_precio') sorted.sort((a, b) => a.price - b.price);
+    if (sortBy === 'mayor_precio') sorted.sort((a, b) => arsPrice(b) - arsPrice(a));
+    else if (sortBy === 'menor_precio') sorted.sort((a, b) => arsPrice(a) - arsPrice(b));
     else if (sortBy === 'reciente') sorted.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     else sorted.sort((a, b) => (b.clicks || 0) - (a.clicks || 0));
     return sorted;
@@ -646,7 +649,7 @@ export default function Home() {
         setHomeLayout(Array.isArray(sections) ? sections : []);
       });
       const unsubscribeDeptIcons = onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
-        if (snap.exists()) { setDeptIcons(snap.data().icons || {}); }
+        if (snap.exists()) { setDeptIcons(snap.data().icons || {}); setVirtualDepts(snap.data().virtualDepts || []); }
       });
       const unsubscribeUpsells = onSnapshot(collection(firebaseRefs.db, 'upsells'), (snap) => {
         setUpsellsList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
@@ -1897,6 +1900,14 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
             <div className="mb-16 reveal-on-scroll">
               <h3 className="font-bebas text-2xl text-[#111111] mb-4 pl-2">Explorar la tienda</h3>
               <div className="flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">
+                {virtualDepts.map(vd => (
+                  <div key={`vd-${vd.name}`} onClick={() => { setActiveFilter({dept: 'all', cat: 'all'}); setFilterDepts([]); navigateTo('catalog'); }} className="snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-white/70 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-[#fcdb00] transition-all duration-500 group">
+                    <div className="w-14 h-14 md:w-16 md:h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center overflow-hidden group-hover:bg-[#fcdb00] transition-colors">
+                      {vd.icon?.startsWith('http') ? <img src={vd.icon} alt={vd.name} className="w-9 h-9 md:w-10 md:h-10 object-contain" /> : <i className={`fas ${vd.icon || 'fa-store'} text-2xl md:text-3xl text-[#111111]`}></i>}
+                    </div>
+                    <span className="font-bold text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-[#111111] group-hover:text-black transition-colors font-poppins">{vd.name}</span>
+                  </div>
+                ))}
                 {departments.map(dept => {
                   const iconId = deptIcons[dept] || 'fa-box';
                   const iconObj = DEPT_ICONS.find(i => i.id === iconId) || { id: 'fa-box', prefix: 'fas' };

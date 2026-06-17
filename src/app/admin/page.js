@@ -238,7 +238,9 @@ export default function AdminPage() {
   const [newSectionIcon, setNewSectionIcon] = useState(AVAILABLE_ICONS[0]); 
   const [newSectionLayout, setNewSectionLayout] = useState('horizontal'); 
   
-  const [deptIcons, setDeptIcons] = useState({}); 
+  const [deptIcons, setDeptIcons] = useState({});
+  const [virtualDepts, setVirtualDepts] = useState([]);
+  const [newVirtualDept, setNewVirtualDept] = useState({ name: '', icon: '' });
   
   const [shippingStats, setShippingStats] = useState(null);
   const [zoneStats, setZoneStats] = useState(null);
@@ -435,7 +437,7 @@ export default function AdminPage() {
       });
 
       onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
-        if (snap.exists()) { setDeptIcons(snap.data().icons || {}); }
+        if (snap.exists()) { setDeptIcons(snap.data().icons || {}); setVirtualDepts(snap.data().virtualDepts || []); }
       });
 
       onSnapshot(doc(firebaseRefs.db, 'settings', 'stock_order'), (snap) => {
@@ -866,6 +868,25 @@ export default function AdminPage() {
         await setDoc(doc(firebaseRefs.db, 'settings', 'departments'), { icons: { ...deptIcons, [dept]: iconId } }, { merge: true });
     } catch(err) { alert("Error al guardar ícono: " + err.message); }
   };
+
+  const saveVirtualDept = async () => {
+    const name = newVirtualDept.name.trim().toUpperCase();
+    const icon = newVirtualDept.icon.trim();
+    if (!name || !icon) return alert("Completá el nombre y la URL del ícono.");
+    const updated = [...virtualDepts.filter(v => v.name !== name), { name, icon }];
+    try {
+      await setDoc(doc(firebaseRefs.db, 'settings', 'departments'), { virtualDepts: updated }, { merge: true });
+      setNewVirtualDept({ name: '', icon: '' });
+    } catch(err) { alert("Error al guardar: " + err.message); }
+  };
+
+  const deleteVirtualDept = async (name) => {
+    if (!confirm(`¿Borrar "${name}"?`)) return;
+    const updated = virtualDepts.filter(v => v.name !== name);
+    try {
+      await setDoc(doc(firebaseRefs.db, 'settings', 'departments'), { virtualDepts: updated }, { merge: true });
+    } catch(err) { alert("Error al borrar: " + err.message); }
+  };
   const createHomeSection = async () => { if(!newSectionTitle.trim()) return; try { const newId = `sec_${Date.now()}`; await setDoc(doc(firebaseRefs.db, 'home_sections', newId), { id: newId, title: newSectionTitle.toUpperCase(), icon: newSectionIcon.id, iconColor: newSectionIcon.color, layout: newSectionLayout, productIds: [], order: homeSections.length + 1, createdAt: serverTimestamp() }); setNewSectionTitle(''); } catch(err) { alert("Error al crear sección: " + err.message); } };
   const deleteHomeSection = async (id) => { if(confirm("¿Borrar?")) { try { await deleteDoc(doc(firebaseRefs.db, 'home_sections', id)); } catch(err) { alert("Error al borrar sección: " + err.message); } } };
   const addProductToSection = async (sectionId, productId) => { try { const section = homeSections.find(s => s.dbId === sectionId); const current = section.productIds || []; if(current.includes(productId)) return; await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: [...current, productId] }, { merge: true }); } catch(err) { alert("Error al agregar producto: " + err.message); } };
@@ -1175,6 +1196,27 @@ export default function AdminPage() {
                    </div>
                 </div>
               )})}
+            </div>
+
+            <div className={`mt-6 pt-6 border-t ${darkMode ? 'border-[#333]' : 'border-gray-200'}`}>
+              <h4 className={`text-[11px] font-bold uppercase tracking-widest mb-3 ${theme.text}`}>Departamentos Virtuales (ej: Catálogo completo)</h4>
+              <div className="space-y-2 mb-4">
+                {virtualDepts.length === 0 && <p className="text-[10px] text-gray-400 italic">No hay departamentos virtuales.</p>}
+                {virtualDepts.map(vd => (
+                  <div key={vd.name} className={`flex items-center gap-3 p-3 border rounded-xl ${darkMode ? 'bg-[#222] border-[#333]' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="w-9 h-9 rounded-full bg-[#f2f2f2] flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {vd.icon?.startsWith('http') ? <img src={vd.icon} alt={vd.name} className="w-6 h-6 object-contain" /> : <i className={`fas ${vd.icon || 'fa-store'} text-[#fcdb00]`}></i>}
+                    </div>
+                    <span className={`font-bold text-[11px] uppercase tracking-widest flex-1 ${theme.text}`}>{vd.name}</span>
+                    <button onClick={() => deleteVirtualDept(vd.name)} className="w-8 h-8 bg-red-100 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"><i className="fas fa-trash text-xs"></i></button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input type="text" value={newVirtualDept.name} onChange={e => setNewVirtualDept(v => ({...v, name: e.target.value}))} placeholder="Nombre (ej: CATÁLOGO)" className={`flex-1 p-3 rounded-xl text-[11px] font-bold uppercase outline-none border focus:border-[#fcdb00] ${theme.input}`} />
+                <input type="text" value={newVirtualDept.icon} onChange={e => setNewVirtualDept(v => ({...v, icon: e.target.value}))} placeholder="URL del ícono (imagen)" className={`flex-1 p-3 rounded-xl text-[11px] font-bold outline-none border focus:border-[#fcdb00] ${theme.input}`} />
+                <button onClick={saveVirtualDept} className="bg-[#fcdb00] text-[#111111] font-bold text-[11px] uppercase tracking-widest px-5 py-3 rounded-xl hover:bg-[#111111] hover:text-[#fcdb00] transition-all">Guardar</button>
+              </div>
             </div>
           </div>
 
