@@ -46,7 +46,7 @@ const DEPT_ICONS = [
   { id: 'fa-smoking', prefix: 'fas' },
 ];
 
-const FLAVOR_OPTIONS = ['FRUTAL', 'MENTA', 'FRESCO', 'HELADO', 'DULCE', 'ÁCIDO', 'TROPICAL', 'CLÁSICO'];
+const FLAVOR_OPTIONS = ['FRUTAL', 'MENTA', 'FRESCO', 'DULCE', 'ÁCIDO', 'TROPICAL', 'CÍTRICO'];
 
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante.", cardSize: "normal" },
