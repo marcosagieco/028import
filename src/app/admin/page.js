@@ -241,6 +241,7 @@ export default function AdminPage() {
   const [deptIcons, setDeptIcons] = useState({});
   const [virtualDepts, setVirtualDepts] = useState([]);
   const [newVirtualDept, setNewVirtualDept] = useState({ name: '', icon: '' });
+  const [categoryPuffs, setCategoryPuffs] = useState({});
   
   const [shippingStats, setShippingStats] = useState(null);
   const [zoneStats, setZoneStats] = useState(null);
@@ -438,6 +439,9 @@ export default function AdminPage() {
 
       onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
         if (snap.exists()) { setDeptIcons(snap.data().icons || {}); setVirtualDepts(snap.data().virtualDepts || []); }
+      });
+      onSnapshot(doc(firebaseRefs.db, 'settings', 'category_puffs'), (snap) => {
+        if (snap.exists()) setCategoryPuffs(snap.data() || {});
       });
 
       onSnapshot(doc(firebaseRefs.db, 'settings', 'stock_order'), (snap) => {
@@ -887,6 +891,15 @@ export default function AdminPage() {
       await setDoc(doc(firebaseRefs.db, 'settings', 'departments'), { virtualDepts: updated }, { merge: true });
     } catch(err) { alert("Error al borrar: " + err.message); }
   };
+
+  const saveCategoryPuff = async (category, value) => {
+    const puff = value === '' ? null : Number(value);
+    try {
+      const updated = { ...categoryPuffs };
+      if (puff === null) { delete updated[category]; } else { updated[category] = puff; }
+      await setDoc(doc(firebaseRefs.db, 'settings', 'category_puffs'), updated);
+    } catch(err) { alert("Error al guardar puff: " + err.message); }
+  };
   const createHomeSection = async () => { if(!newSectionTitle.trim()) return; try { const newId = `sec_${Date.now()}`; await setDoc(doc(firebaseRefs.db, 'home_sections', newId), { id: newId, title: newSectionTitle.toUpperCase(), icon: newSectionIcon.id, iconColor: newSectionIcon.color, layout: newSectionLayout, productIds: [], order: homeSections.length + 1, createdAt: serverTimestamp() }); setNewSectionTitle(''); } catch(err) { alert("Error al crear sección: " + err.message); } };
   const deleteHomeSection = async (id) => { if(confirm("¿Borrar?")) { try { await deleteDoc(doc(firebaseRefs.db, 'home_sections', id)); } catch(err) { alert("Error al borrar sección: " + err.message); } } };
   const addProductToSection = async (sectionId, productId) => { try { const section = homeSections.find(s => s.dbId === sectionId); const current = section.productIds || []; if(current.includes(productId)) return; await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: [...current, productId] }, { merge: true }); } catch(err) { alert("Error al agregar producto: " + err.message); } };
@@ -1217,6 +1230,28 @@ export default function AdminPage() {
                 <input type="text" value={newVirtualDept.icon} onChange={e => setNewVirtualDept(v => ({...v, icon: e.target.value}))} placeholder="URL del ícono (imagen)" className={`flex-1 p-3 rounded-xl text-[11px] font-bold outline-none border focus:border-[#fcdb00] ${theme.input}`} />
                 <button onClick={saveVirtualDept} className="bg-[#fcdb00] text-[#111111] font-bold text-[11px] uppercase tracking-widest px-5 py-3 rounded-xl hover:bg-[#111111] hover:text-[#fcdb00] transition-all">Guardar</button>
               </div>
+            </div>
+          </div>
+
+          <div className={`${theme.card} p-6 rounded-[2rem] mb-8 shadow-sm border`}>
+            <div className="mb-4">
+              <h3 className={`text-2xl font-bebas uppercase tracking-wide ${theme.text}`}>Puff por Marca</h3>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Asigná la cantidad de puffs a cada marca para que aparezca en el filtro</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {uniqueCategories.map(cat => (
+                <div key={cat} className={`flex items-center gap-3 p-3 border rounded-2xl ${darkMode ? 'bg-[#222] border-[#333]' : 'bg-gray-50 border-gray-200'}`}>
+                  <span className={`font-bold text-[10px] uppercase tracking-widest flex-1 truncate ${theme.text}`}>{cat}</span>
+                  <input
+                    type="number"
+                    placeholder="Puffs"
+                    defaultValue={categoryPuffs[cat] ?? ''}
+                    key={`${cat}-${categoryPuffs[cat]}`}
+                    onBlur={(e) => saveCategoryPuff(cat, e.target.value)}
+                    className={`w-28 p-2 rounded-xl text-[11px] font-bold text-center outline-none border focus:border-[#fcdb00] ${theme.input}`}
+                  />
+                </div>
+              ))}
             </div>
           </div>
 

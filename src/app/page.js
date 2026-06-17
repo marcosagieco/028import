@@ -395,6 +395,7 @@ export default function Home() {
 
   const [deptIcons, setDeptIcons] = useState({});
   const [virtualDepts, setVirtualDepts] = useState([]);
+  const [categoryPuffs, setCategoryPuffs] = useState({});
   const [user, setUser] = useState(null);
   const [dbUser, setDbUser] = useState(null); 
   const [fomoData, setFomoData] = useState(null);
@@ -478,7 +479,8 @@ export default function Home() {
 
   const allUniqueCategories = useMemo(() => [...new Set(products.map(p => p.category).filter(Boolean))], [products]);
   const allDepartments = useMemo(() => [...new Set(products.map(p => p.department).filter(Boolean))], [products]);
-  const uniquePuffs = useMemo(() => [...new Set(products.map(p => p.puffs).filter(v => v !== undefined && v !== null && v !== ''))].map(Number).sort((a, b) => a - b), [products]);
+  const getPuffs = (p) => p.puffs ?? categoryPuffs[p.category];
+  const uniquePuffs = useMemo(() => [...new Set(products.map(p => p.puffs ?? categoryPuffs[p.category]).filter(v => v !== undefined && v !== null && v !== ''))].map(Number).sort((a, b) => a - b), [products, categoryPuffs]);
   const minPrice = useMemo(() => products.length ? Math.min(...products.map(p => p.price || 0)) : 0, [products]);
   const maxPrice = useMemo(() => products.length ? Math.max(...products.map(p => p.price || 0)) : 100000, [products]);
 
@@ -487,7 +489,7 @@ export default function Home() {
     if (filterDepts.length > 0) filtered = filtered.filter(p => filterDepts.includes(p.department));
     if (filterBrands.length > 0) filtered = filtered.filter(p => filterBrands.includes(p.category));
     if (activeFlavors.length > 0) filtered = filtered.filter(p => Array.isArray(p.flavors) && activeFlavors.every(f => p.flavors.includes(f)));
-    if (filterPuffs.length > 0) filtered = filtered.filter(p => filterPuffs.some(pv => String(p.puffs) === String(pv)));
+    if (filterPuffs.length > 0) filtered = filtered.filter(p => filterPuffs.some(pv => String(p.puffs ?? categoryPuffs[p.category]) === String(pv)));
     if (priceRange !== null) filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
     if (searchTerm) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase()));
     const USD_TO_ARS = 1450;
@@ -498,7 +500,7 @@ export default function Home() {
     else if (sortBy === 'reciente') sorted.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     else sorted.sort((a, b) => (b.clicks || 0) - (a.clicks || 0));
     return sorted;
-  }, [products, filterDepts, filterBrands, activeFlavors, filterPuffs, priceRange, searchTerm, sortBy]);
+  }, [products, filterDepts, filterBrands, activeFlavors, filterPuffs, priceRange, searchTerm, sortBy, categoryPuffs]);
 
   const activeFilterCount = activeFlavors.length + filterBrands.length + filterDepts.length + filterPuffs.length + (priceRange !== null ? 1 : 0);
 
@@ -658,11 +660,14 @@ export default function Home() {
       const unsubscribeDeptIcons = onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
         if (snap.exists()) { setDeptIcons(snap.data().icons || {}); setVirtualDepts(snap.data().virtualDepts || []); }
       });
+      const unsubscribeCategoryPuffs = onSnapshot(doc(firebaseRefs.db, 'settings', 'category_puffs'), (snap) => {
+        if (snap.exists()) setCategoryPuffs(snap.data() || {});
+      });
       const unsubscribeUpsells = onSnapshot(collection(firebaseRefs.db, 'upsells'), (snap) => {
         setUpsellsList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
       });
 
-      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); unsubscribeCommunityVideos(); unsubscribeHomeLayout(); unsubscribeDeptIcons(); unsubscribeUpsells(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
+      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); unsubscribeCommunityVideos(); unsubscribeHomeLayout(); unsubscribeDeptIcons(); unsubscribeCategoryPuffs(); unsubscribeUpsells(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
     }
   }, [firebaseRefs]);
 
