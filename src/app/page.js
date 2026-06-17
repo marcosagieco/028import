@@ -566,6 +566,13 @@ export default function Home() {
     return () => { clearTimeout(timeoutId); observer.disconnect(); }
   }, [currentView, activeFilter, products, searchTerm, homeSections, communityVideos, homeLayout]);
 
+  useEffect(() => {
+    const id = setTimeout(() => {
+      document.querySelectorAll('.reveal-on-scroll:not(.is-visible)').forEach(el => el.classList.add('is-visible'));
+    }, 50);
+    return () => clearTimeout(id);
+  }, [catalogProducts]);
+
   const isFirstLoad = useRef(true);
   useEffect(() => {
     if (!firebaseRefs.db) return;
