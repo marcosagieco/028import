@@ -112,7 +112,7 @@ const AVAILABLE_ICONS = [
   { id: 'fa-apple', prefix: 'fab', color: 'text-gray-800' } 
 ];
 
-const FLAVOR_OPTIONS = ['FRUTAL', 'MENTA', 'FRESCO', 'DULCE', 'ÁCIDO', 'TROPICAL', 'CÍTRICO'];
+const FLAVOR_OPTIONS = ['FRUTAL', 'MENTA', 'FRESCO', 'DULCE', 'ÁCIDO', 'TROPICAL', 'CÍTRICO', 'CAFÉ'];
 
 const DEPT_ICONS = [
   { id: 'fa-box', prefix: 'fas' }, { id: 'fa-wind', prefix: 'fas' }, { id: 'fa-leaf', prefix: 'fas' }, { id: 'fa-microchip', prefix: 'fas' }, { id: 'fa-star', prefix: 'fas' }, { id: 'fa-fire', prefix: 'fas' }, { id: 'fa-apple', prefix: 'fab' }, { id: 'fa-mobile-alt', prefix: 'fas' }, { id: 'fa-laptop', prefix: 'fas' }, { id: 'fa-gamepad', prefix: 'fas' }, { id: 'fa-headphones', prefix: 'fas' }, { id: 'fa-gem', prefix: 'fas' }, { id: 'fa-tag', prefix: 'fas' }, { id: 'fa-cannabis', prefix: 'fas' }, { id: 'fa-smoking', prefix: 'fas' }
