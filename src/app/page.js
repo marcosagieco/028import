@@ -486,7 +486,7 @@ export default function Home() {
     let filtered = [...products];
     if (filterDepts.length > 0) filtered = filtered.filter(p => filterDepts.includes(p.department));
     if (filterBrands.length > 0) filtered = filtered.filter(p => filterBrands.includes(p.category));
-    if (activeFlavors.length > 0) filtered = filtered.filter(p => Array.isArray(p.flavors) && p.flavors.some(f => activeFlavors.includes(f)));
+    if (activeFlavors.length > 0) filtered = filtered.filter(p => Array.isArray(p.flavors) && activeFlavors.every(f => p.flavors.includes(f)));
     if (filterPuffs.length > 0) filtered = filtered.filter(p => filterPuffs.some(pv => String(p.puffs) === String(pv)));
     if (priceRange !== null) filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
     if (searchTerm) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase()));
