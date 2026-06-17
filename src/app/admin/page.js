@@ -474,6 +474,7 @@ export default function AdminPage() {
   const updateDescription = async (product, newDesc) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, description: newDesc.trim() }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
   const updateCardSize = async (product, newSize) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, cardSize: newSize }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const toggleProductFlavor = async (product, flavor) => { const current = Array.isArray(product.flavors) ? product.flavors : []; const next = current.includes(flavor) ? current.filter(f => f !== flavor) : [...current, flavor]; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, flavors: next }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
+  const updatePuffs = async (product, val) => { const v = val.trim(); try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, puffs: v === '' ? null : Number(v) }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const updateCategoryDepartment = async (categoryName, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept) return; try { const prods = products.filter(p => p.category === categoryName); await Promise.all(prods.map(p => setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, department: dept }, { merge: true }))); } catch (err) { alert("Error: " + err.message); } }
   const updateProductDepartment = async (product, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept || dept === product.department) return; try { await setDoc(doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`), { id: product.id, department: dept }, { merge: true }); } catch(err) { alert("Error al actualizar departamento: " + err.message); } };
   const toggleStock = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, inStock: product.inStock === false }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
@@ -1040,6 +1041,10 @@ export default function AdminPage() {
                                             </button>
                                         );
                                     })}
+                                </div>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <span className="text-gray-400 text-[10px] font-poppins">Puff:</span>
+                                    <input type="number" key={`puffs-${p.id}`} defaultValue={p.puffs ?? ''} placeholder="ej: 8500" onBlur={(e) => updatePuffs(p, e.target.value)} className={`w-24 px-2 py-1 rounded-md text-[10px] font-poppins border outline-none ${darkMode ? 'bg-[#1a1a1a] border-[#333] text-white placeholder-gray-600' : 'bg-gray-100 border-gray-200 text-[#111111] placeholder-gray-400'}`} />
                                 </div>
                             </div>
                         </div>

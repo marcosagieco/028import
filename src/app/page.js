@@ -414,6 +414,21 @@ export default function Home() {
   const [hasSpunLocal, setHasSpunLocal] = useState(false);
   const communityViewedRef = useRef(new Set());
 
+  const [sortBy, setSortBy] = useState('relevante');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [showFilterDrawer, setShowFilterDrawer] = useState(false);
+  const [filterBrands, setFilterBrands] = useState([]);
+  const [filterDepts, setFilterDepts] = useState([]);
+  const [filterPuffs, setFilterPuffs] = useState([]);
+  const [priceRange, setPriceRange] = useState(null);
+  const [expandedFilterSection, setExpandedFilterSection] = useState(null);
+  const [pendingFlavors, setPendingFlavors] = useState([]);
+  const [pendingBrands, setPendingBrands] = useState([]);
+  const [pendingDepts, setPendingDepts] = useState([]);
+  const [pendingPuffs, setPendingPuffs] = useState([]);
+  const [pendingPriceRange, setPendingPriceRange] = useState([0, 100000]);
+  const sortDropdownRef = useRef(null);
+
   const next7Days = useMemo(() => {
     const days = [];
     const today = new Date();
@@ -460,6 +475,30 @@ export default function Home() {
     return Array.from(mergedMap.values()).sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
   }, [homeLayout, homeSections]);
 
+  const allUniqueCategories = useMemo(() => [...new Set(products.map(p => p.category).filter(Boolean))], [products]);
+  const allDepartments = useMemo(() => [...new Set(products.map(p => p.department).filter(Boolean))], [products]);
+  const uniquePuffs = useMemo(() => [...new Set(products.map(p => p.puffs).filter(v => v !== undefined && v !== null && v !== ''))].map(Number).sort((a, b) => a - b), [products]);
+  const minPrice = useMemo(() => products.length ? Math.min(...products.map(p => p.price || 0)) : 0, [products]);
+  const maxPrice = useMemo(() => products.length ? Math.max(...products.map(p => p.price || 0)) : 100000, [products]);
+
+  const catalogProducts = useMemo(() => {
+    let filtered = [...products];
+    if (filterDepts.length > 0) filtered = filtered.filter(p => filterDepts.includes(p.department));
+    if (filterBrands.length > 0) filtered = filtered.filter(p => filterBrands.includes(p.category));
+    if (activeFlavors.length > 0) filtered = filtered.filter(p => Array.isArray(p.flavors) && p.flavors.some(f => activeFlavors.includes(f)));
+    if (filterPuffs.length > 0) filtered = filtered.filter(p => filterPuffs.some(pv => String(p.puffs) === String(pv)));
+    if (priceRange !== null) filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
+    if (searchTerm) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase()));
+    const sorted = [...filtered];
+    if (sortBy === 'mayor_precio') sorted.sort((a, b) => b.price - a.price);
+    else if (sortBy === 'menor_precio') sorted.sort((a, b) => a.price - b.price);
+    else if (sortBy === 'reciente') sorted.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    else sorted.sort((a, b) => (b.clicks || 0) - (a.clicks || 0));
+    return sorted;
+  }, [products, filterDepts, filterBrands, activeFlavors, filterPuffs, priceRange, searchTerm, sortBy]);
+
+  const activeFilterCount = activeFlavors.length + filterBrands.length + filterDepts.length + filterPuffs.length + (priceRange !== null ? 1 : 0);
+
   const slugify = (text) => text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 
   const flavorFilterVisible = activeFilter.dept === 'all' || activeFilter.dept === 'VAPES';
@@ -480,6 +519,15 @@ export default function Home() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showFlavorMenu]);
+
+  useEffect(() => {
+    if (!showSortDropdown) return;
+    const handleClickOutside = (e) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(e.target)) setShowSortDropdown(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSortDropdown]);
 
   const firebaseRefs = useMemo(() => {
     if (typeof window === "undefined") return { auth: null, db: null };
@@ -884,7 +932,34 @@ export default function Home() {
     setFlippedCommunityCards(prev => ({ ...prev, featured: false }));
   };
 
-  const navigateTo = (view, dept = null) => { setCurrentView(view); if(dept) setActiveFilter({dept, cat: 'all'}); setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const navigateTo = (view, dept = null) => { setCurrentView(view); if(dept) { setActiveFilter({dept, cat: 'all'}); setFilterDepts([dept]); } setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+
+  const openFilterDrawer = () => {
+    setPendingFlavors([...activeFlavors]);
+    setPendingBrands([...filterBrands]);
+    setPendingDepts([...filterDepts]);
+    setPendingPuffs([...filterPuffs]);
+    setPendingPriceRange(priceRange || [minPrice, maxPrice]);
+    setShowFilterDrawer(true);
+  };
+
+  const applyFilters = () => {
+    setActiveFlavors(pendingFlavors);
+    setFilterBrands(pendingBrands);
+    setFilterDepts(pendingDepts);
+    setFilterPuffs(pendingPuffs);
+    const fullRange = pendingPriceRange[0] <= minPrice && pendingPriceRange[1] >= maxPrice;
+    setPriceRange(fullRange ? null : pendingPriceRange);
+    setShowFilterDrawer(false);
+  };
+
+  const clearPendingFilters = () => {
+    setPendingFlavors([]);
+    setPendingBrands([]);
+    setPendingDepts([]);
+    setPendingPuffs([]);
+    setPendingPriceRange([minPrice, maxPrice]);
+  };
   
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
@@ -1169,9 +1244,8 @@ export default function Home() {
             </h3>
             
             <div className="mt-auto pt-3">
-                <p className={`text-[#fcdb00] font-bebas ${priceClass} mb-4 tracking-wide drop-shadow-sm flex items-baseline gap-2`}>
-                    {CONFIG.currencySymbol}{formatPrice(p.price)}
-                    {p.isUSD && <span className="text-[10px] font-black text-[#111111] bg-[#fcdb00] border border-[#e8c800] px-1.5 py-0.5 rounded font-poppins leading-none">USD</span>}
+                <p className={`text-[#fcdb00] font-bebas ${priceClass} mb-4 tracking-wide drop-shadow-sm`}>
+                    {CONFIG.currencySymbol}{formatPrice(p.price)}{p.isUSD && <span className="text-gray-400 text-[11px] font-poppins font-bold ml-1">USD</span>}
                 </p>
                 
                 {isOutOfStock ? ( 
@@ -1839,64 +1913,170 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         </>
       ) : currentView === 'catalog' ? (
         <>
-          <div className="bg-white/80 backdrop-blur-2xl sticky top-[72px] z-40 border-b border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] pt-3 pb-3 transition-all duration-300">
-              <div className="max-w-7xl mx-auto px-4 md:px-8">
-                  <div className="flex items-center gap-3 mb-3">
-                      <button onClick={() => navigateTo('home')} className="text-gray-400 hover:text-[#111111] text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5"><i className="fas fa-home"></i> Inicio</button>
-                      <span className="text-gray-300 text-[10px]"><i className="fas fa-chevron-right"></i></span>
-                      <span className="text-[#111111] font-bold uppercase tracking-widest text-[10px]">{activeFilter.dept !== 'all' ? activeFilter.dept : 'CATÁLOGO COMPLETO'}</span>
+          {/* Barra de filtros */}
+          <div className="bg-white/80 backdrop-blur-2xl sticky top-[72px] z-40 border-b border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <div className="max-w-7xl mx-auto px-4 md:px-8">
+              <div className="flex items-center gap-3 pt-3 pb-1">
+                <button onClick={() => navigateTo('home')} className="text-gray-400 hover:text-[#111111] text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5"><i className="fas fa-home"></i> Inicio</button>
+                <span className="text-gray-300 text-[10px]"><i className="fas fa-chevron-right"></i></span>
+                <span className="text-[#111111] font-bold uppercase tracking-widest text-[10px]">CATÁLOGO COMPLETO</span>
+              </div>
+              <div className="flex items-center justify-between py-3 gap-3">
+                <span className="text-[11px] text-gray-400 font-poppins font-medium flex-shrink-0">{catalogProducts.length} producto{catalogProducts.length !== 1 ? 's' : ''}</span>
+                <div className="flex items-center gap-2">
+                  <div className="relative" ref={sortDropdownRef}>
+                    <button onClick={() => setShowSortDropdown(v => !v)} className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-xl text-[11px] font-bold text-[#111111] hover:border-gray-300 transition-all font-poppins">
+                      Ordenar <i className={`fas fa-chevron-${showSortDropdown ? 'up' : 'down'} text-[8px]`}></i>
+                    </button>
+                    {showSortDropdown && (
+                      <div className="absolute top-full mt-2 right-0 w-52 bg-white rounded-2xl shadow-xl border border-[#f2f2f2] z-50 overflow-hidden">
+                        {[{id:'relevante',label:'Más relevante'},{id:'reciente',label:'Más reciente'},{id:'mayor_precio',label:'Mayor precio'},{id:'menor_precio',label:'Menor precio'}].map(opt => (
+                          <button key={opt.id} onClick={() => { setSortBy(opt.id); setShowSortDropdown(false); }} className={`w-full text-left px-5 py-3.5 text-[11px] font-bold font-poppins transition-colors flex items-center justify-between ${sortBy === opt.id ? 'bg-[#111111] text-white' : 'hover:bg-gray-50 text-[#111111]'}`}>
+                            {opt.label}{sortBy === opt.id && <i className="fas fa-check text-[#fcdb00]"></i>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {uniqueCategories.length > 0 && (
-                    <div className="flex overflow-x-auto gap-2.5 py-3 no-scrollbar pr-6 pl-1 -ml-1 mask-image-gradient">
-                      <button onClick={() => {setActiveFilter({...activeFilter, cat: 'all'}); window.scrollTo({top: 0, behavior: 'smooth'});}} className={`flex-shrink-0 whitespace-nowrap px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeFilter.cat === 'all' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50 hover:border-[#fcdb00]'}`}>Todos</button>
-                      {uniqueCategories.map(cat => (
-                        <button key={cat} onClick={() => { setActiveFilter({...activeFilter, cat: cat}); window.scrollTo({top: 0, behavior: 'smooth'}); }} className={`flex-shrink-0 whitespace-nowrap px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeFilter.cat === cat ? 'bg-[#111111] text-[#fcdb00] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50 hover:border-[#fcdb00]'}`}>{cat}</button>
-                      ))}
-                    </div>
-                  )}
-                  {flavorFilterVisible && (
-                    <div className="relative inline-block mt-1" ref={flavorMenuRef}>
-                      <button
-                        onClick={() => setShowFlavorMenu(prev => !prev)}
-                        className={`flex-shrink-0 whitespace-nowrap px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${activeFlavors.length > 0 ? 'bg-[#fcdb00] text-[#111111] shadow-md' : 'bg-white border border-[#f2f2f2] text-gray-500 hover:bg-gray-50 hover:border-[#fcdb00]'}`}
-                      >
-                        <i className="fas fa-mortar-pestle"></i> Filtrar por gusto{activeFlavors.length > 0 ? ` (${activeFlavors.length})` : ''}
-                        <i className={`fas fa-chevron-${showFlavorMenu ? 'up' : 'down'} text-[9px]`}></i>
+                  <button onClick={openFilterDrawer} className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold transition-all font-poppins border ${activeFilterCount > 0 ? 'bg-[#111111] text-white border-[#111111]' : 'bg-white border-gray-200 text-[#111111] hover:border-gray-300'}`}>
+                    <i className="fas fa-sliders-h text-[10px]"></i> Filtrar{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Productos */}
+          <main className="flex-grow px-4 md:px-8 py-10 max-w-7xl mx-auto min-h-[50vh] pb-8 md:pb-16 w-full">
+            {catalogProducts.length === 0 && (
+              <div className="text-center py-24 bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white shadow-sm">
+                <div className="w-20 h-20 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-6"><i className="fas fa-ghost text-3xl text-gray-400"></i></div>
+                <h3 className="text-3xl font-bebas uppercase tracking-wide text-[#111111] mb-2">No encontramos nada</h3>
+                <p className="text-xs uppercase tracking-widest text-gray-500 font-poppins">Intentá con otros filtros o buscá otra cosa.</p>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-3 md:gap-5">
+              {catalogProducts.map((p, index) => renderProductCard(p, index, false, 'vertical'))}
+            </div>
+          </main>
+
+          {showSortDropdown && <div className="fixed inset-0 z-[39]" onClick={() => setShowSortDropdown(false)} />}
+
+          {/* Drawer de filtros */}
+          {showFilterDrawer && (
+            <>
+              <div className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm" onClick={() => setShowFilterDrawer(false)} />
+              <div className="fixed right-0 top-0 bottom-0 z-[100] w-full max-w-sm bg-white flex flex-col shadow-2xl">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 flex-shrink-0">
+                  <h2 className="text-2xl font-bebas uppercase tracking-wide text-[#111111]">Filtros</h2>
+                  <button onClick={() => setShowFilterDrawer(false)} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-[#111111]"><i className="fas fa-times"></i></button>
+                </div>
+                <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+
+                  {/* Gustos */}
+                  <div>
+                    <button onClick={() => setExpandedFilterSection(expandedFilterSection === 'gustos' ? null : 'gustos')} className="w-full flex items-center justify-between px-6 py-4">
+                      <span className="text-[12px] font-bold uppercase tracking-widest text-[#111111] font-poppins flex items-center gap-2">Gustos{pendingFlavors.length > 0 && <span className="text-[9px] bg-[#111111] text-white rounded-full w-4 h-4 flex items-center justify-center">{pendingFlavors.length}</span>}</span>
+                      <i className={`fas fa-chevron-${expandedFilterSection === 'gustos' ? 'up' : 'down'} text-[10px] text-gray-400`}></i>
+                    </button>
+                    {expandedFilterSection === 'gustos' && (
+                      <div className="px-6 pb-5 grid grid-cols-2 gap-2">
+                        {FLAVOR_OPTIONS.map(flavor => { const sel = pendingFlavors.includes(flavor); return (
+                          <button key={flavor} onClick={() => setPendingFlavors(prev => sel ? prev.filter(f => f !== flavor) : [...prev, flavor])} className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all text-left ${sel ? 'bg-[#111111] border-[#111111] text-white' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${sel ? 'bg-white' : 'border border-gray-300'}`}>{sel && <i className="fas fa-check text-[#111111] text-[8px]"></i>}</div>
+                            <span className="text-[10px] font-bold uppercase tracking-widest font-poppins">{flavor}</span>
+                          </button>
+                        );})}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Marcas */}
+                  <div>
+                    <button onClick={() => setExpandedFilterSection(expandedFilterSection === 'marcas' ? null : 'marcas')} className="w-full flex items-center justify-between px-6 py-4">
+                      <span className="text-[12px] font-bold uppercase tracking-widest text-[#111111] font-poppins flex items-center gap-2">Marcas{pendingBrands.length > 0 && <span className="text-[9px] bg-[#111111] text-white rounded-full w-4 h-4 flex items-center justify-center">{pendingBrands.length}</span>}</span>
+                      <i className={`fas fa-chevron-${expandedFilterSection === 'marcas' ? 'up' : 'down'} text-[10px] text-gray-400`}></i>
+                    </button>
+                    {expandedFilterSection === 'marcas' && (
+                      <div className="px-6 pb-5 flex flex-col gap-0.5">
+                        {allUniqueCategories.map(cat => { const sel = pendingBrands.includes(cat); return (
+                          <button key={cat} onClick={() => setPendingBrands(prev => sel ? prev.filter(c => c !== cat) : [...prev, cat])} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${sel ? 'bg-[#111111] border-[#111111] text-white' : 'border-transparent text-gray-600 hover:bg-gray-50'}`}>
+                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${sel ? 'bg-white' : 'border border-gray-300'}`}>{sel && <i className="fas fa-check text-[#111111] text-[8px]"></i>}</div>
+                            <span className="text-[11px] font-bold uppercase tracking-widest font-poppins">{cat}</span>
+                          </button>
+                        );})}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tipo de producto */}
+                  <div>
+                    <button onClick={() => setExpandedFilterSection(expandedFilterSection === 'tipo' ? null : 'tipo')} className="w-full flex items-center justify-between px-6 py-4">
+                      <span className="text-[12px] font-bold uppercase tracking-widest text-[#111111] font-poppins flex items-center gap-2">Tipo de producto{pendingDepts.length > 0 && <span className="text-[9px] bg-[#111111] text-white rounded-full w-4 h-4 flex items-center justify-center">{pendingDepts.length}</span>}</span>
+                      <i className={`fas fa-chevron-${expandedFilterSection === 'tipo' ? 'up' : 'down'} text-[10px] text-gray-400`}></i>
+                    </button>
+                    {expandedFilterSection === 'tipo' && (
+                      <div className="px-6 pb-5 flex flex-col gap-0.5">
+                        {allDepartments.map(dept => { const sel = pendingDepts.includes(dept); return (
+                          <button key={dept} onClick={() => setPendingDepts(prev => sel ? prev.filter(d => d !== dept) : [...prev, dept])} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${sel ? 'bg-[#111111] border-[#111111] text-white' : 'border-transparent text-gray-600 hover:bg-gray-50'}`}>
+                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${sel ? 'bg-white' : 'border border-gray-300'}`}>{sel && <i className="fas fa-check text-[#111111] text-[8px]"></i>}</div>
+                            <span className="text-[11px] font-bold uppercase tracking-widest font-poppins">{dept}</span>
+                          </button>
+                        );})}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Puff */}
+                  {uniquePuffs.length > 0 && (
+                    <div>
+                      <button onClick={() => setExpandedFilterSection(expandedFilterSection === 'puff' ? null : 'puff')} className="w-full flex items-center justify-between px-6 py-4">
+                        <span className="text-[12px] font-bold uppercase tracking-widest text-[#111111] font-poppins flex items-center gap-2">Puff{pendingPuffs.length > 0 && <span className="text-[9px] bg-[#111111] text-white rounded-full w-4 h-4 flex items-center justify-center">{pendingPuffs.length}</span>}</span>
+                        <i className={`fas fa-chevron-${expandedFilterSection === 'puff' ? 'up' : 'down'} text-[10px] text-gray-400`}></i>
                       </button>
-                      {showFlavorMenu && (
-                        <div className="absolute left-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-[#f2f2f2] p-3 z-50">
-                          <div className="grid grid-cols-2 gap-2">
-                            {FLAVOR_OPTIONS.map(flavor => {
-                              const selected = activeFlavors.includes(flavor);
-                              return (
-                                <button
-                                  key={flavor}
-                                  onClick={() => toggleFlavorFilter(flavor)}
-                                  className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${selected ? 'bg-[#111111] text-[#fcdb00]' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
-                                >
-                                  {flavor}
-                                </button>
-                              );
-                            })}
-                          </div>
-                          {activeFlavors.length > 0 && (
-                            <button onClick={() => setActiveFlavors([])} className="w-full mt-3 text-center text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-[#111111] transition-colors">Limpiar selección</button>
-                          )}
+                      {expandedFilterSection === 'puff' && (
+                        <div className="px-6 pb-5 flex flex-col gap-0.5">
+                          {uniquePuffs.map(puff => { const sel = pendingPuffs.includes(puff); return (
+                            <button key={puff} onClick={() => setPendingPuffs(prev => sel ? prev.filter(p => p !== puff) : [...prev, puff])} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${sel ? 'bg-[#111111] border-[#111111] text-white' : 'border-transparent text-gray-600 hover:bg-gray-50'}`}>
+                              <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${sel ? 'bg-white' : 'border border-gray-300'}`}>{sel && <i className="fas fa-check text-[#111111] text-[8px]"></i>}</div>
+                              <span className="text-[11px] font-bold uppercase tracking-widest font-poppins">{Number(puff).toLocaleString('es-AR')} puffs</span>
+                            </button>
+                          );})}
                         </div>
                       )}
                     </div>
                   )}
+
+                  {/* Precio */}
+                  <div>
+                    <button onClick={() => setExpandedFilterSection(expandedFilterSection === 'precio' ? null : 'precio')} className="w-full flex items-center justify-between px-6 py-4">
+                      <span className="text-[12px] font-bold uppercase tracking-widest text-[#111111] font-poppins">Precio</span>
+                      <i className={`fas fa-chevron-${expandedFilterSection === 'precio' ? 'up' : 'down'} text-[10px] text-gray-400`}></i>
+                    </button>
+                    {expandedFilterSection === 'precio' && (
+                      <div className="px-6 pb-6">
+                        <div className="flex justify-between mb-4">
+                          <span className="text-[13px] font-bold font-poppins text-[#111111]">${formatPrice(pendingPriceRange[0])}</span>
+                          <span className="text-[13px] font-bold font-poppins text-[#111111]">${formatPrice(pendingPriceRange[1])}</span>
+                        </div>
+                        <div className="relative flex items-center h-6">
+                          <div className="absolute left-0 right-0 h-1 bg-gray-200 rounded-full pointer-events-none">
+                            <div className="absolute h-full bg-[#111111] rounded-full" style={{left:`${((pendingPriceRange[0]-minPrice)/((maxPrice-minPrice)||1))*100}%`,right:`${100-((pendingPriceRange[1]-minPrice)/((maxPrice-minPrice)||1))*100}%`}} />
+                          </div>
+                          <input type="range" min={minPrice} max={maxPrice} step={Math.max(500,Math.floor((maxPrice-minPrice)/100))} value={pendingPriceRange[0]} onChange={(e) => { const v=Number(e.target.value); if(v<pendingPriceRange[1]) setPendingPriceRange([v,pendingPriceRange[1]]); }} className="absolute w-full appearance-none bg-transparent outline-none cursor-pointer [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#111111] [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-runnable-track]:bg-transparent [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#111111] [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-track]:bg-transparent" />
+                          <input type="range" min={minPrice} max={maxPrice} step={Math.max(500,Math.floor((maxPrice-minPrice)/100))} value={pendingPriceRange[1]} onChange={(e) => { const v=Number(e.target.value); if(v>pendingPriceRange[0]) setPendingPriceRange([pendingPriceRange[0],v]); }} className="absolute w-full appearance-none bg-transparent outline-none cursor-pointer [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#111111] [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-runnable-track]:bg-transparent [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#111111] [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-track]:bg-transparent" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="px-6 py-4 border-t border-gray-100 flex gap-3 bg-white flex-shrink-0">
+                  <button onClick={clearPendingFilters} className="flex-1 py-3.5 rounded-xl bg-gray-100 text-[#111111] text-[11px] font-black uppercase tracking-widest font-poppins hover:bg-gray-200 transition-colors">Limpiar</button>
+                  <button onClick={applyFilters} className="flex-1 py-3.5 rounded-xl bg-[#111111] text-white text-[11px] font-black uppercase tracking-widest font-poppins hover:bg-[#333] transition-colors">Aplicar</button>
+                </div>
               </div>
-          </div>
-          <main className="flex-grow px-4 md:px-8 py-10 max-w-7xl mx-auto min-h-[50vh] pb-8 md:pb-16 w-full">
-              {searchTerm && products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
-                  <div className="text-center py-24 bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white shadow-sm"><div className="w-20 h-20 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-6"><i className="fas fa-ghost text-3xl text-gray-400"></i></div><h3 className="text-3xl font-bebas uppercase tracking-wide text-[#111111] mb-2">No encontramos nada</h3><p className="text-xs uppercase tracking-widest text-gray-500 font-poppins">Intenta buscar otro sabor o marca.</p></div>
-              )}
-              {(activeFilter.cat !== 'all'
-                ? uniqueCategories.filter(cat => cat === activeFilter.cat)
-                : uniqueCategories
-              ).map(cat => renderProductSection(cat))}
-          </main>
+            </>
+          )}
         </>
       ) : ( 
           <main className="flex-grow">
@@ -1955,7 +2135,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       <div className="border-t border-white/10 my-4"></div>
                       <p className="text-white/60 text-sm font-poppins leading-relaxed whitespace-pre-line">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p>
                       <div className="border-t border-white/10 my-4"></div>
-                      <p className="font-bebas text-5xl text-[#fcdb00] mb-6 flex items-baseline gap-3">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}{selectedProduct.isUSD && <span className="text-[11px] font-black text-[#111111] bg-[#fcdb00] border border-[#e8c800] px-2 py-1 rounded font-poppins leading-none">USD</span>}</p>
+                      <p className="font-bebas text-5xl text-[#fcdb00] mb-6">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}{selectedProduct.isUSD && <span className="text-white/50 text-base font-poppins font-bold ml-2">USD</span>}</p>
                       {selectedProduct.inStock === false ? (
                           <button disabled className="w-full bg-gray-700 text-gray-500 py-4 text-xl font-bebas uppercase tracking-wider rounded-xl cursor-not-allowed border border-gray-600">Producto Agotado</button>
                       ) : (
