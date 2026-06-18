@@ -19,7 +19,17 @@ export default function RootLayout({ children }) {
         <link rel="icon" href={CONFIG.logoImage} />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
       </head>
-      <body className="text-[#1a1a1a] font-sans flex flex-col relative min-h-screen">
+      <body
+        className="text-[#1a1a1a] font-sans flex flex-col relative min-h-screen"
+        style={{
+          background: [
+            'radial-gradient(circle at 18% 8%, rgba(255, 210, 0, 0.18) 0%, transparent 32%)',
+            'radial-gradient(circle at 88% 28%, rgba(0, 0, 0, 0.09) 0%, transparent 26%)',
+            'radial-gradient(circle at 52% 88%, rgba(255, 195, 0, 0.09) 0%, transparent 38%)',
+            '#f6f6f4',
+          ].join(', '),
+        }}
+      >
 
         {/* Grain noise overlay for premium texture */}
         <div className="noise-overlay" aria-hidden="true" />
