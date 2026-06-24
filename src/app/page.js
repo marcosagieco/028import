@@ -366,6 +366,7 @@ export default function Home() {
   const [flippedCommunityCards, setFlippedCommunityCards] = useState({});
   const [communityVideoFeedback, setCommunityVideoFeedback] = useState({});
   const [communityVideoLoaded, setCommunityVideoLoaded] = useState({});
+  const [communityVideoBuffering, setCommunityVideoBuffering] = useState({});
   const communityVideoRefs = useRef({});
   const communityScrollRef = useRef(null);
   const [hoveredCommunityCard, setHoveredCommunityCard] = useState(null);
@@ -1020,19 +1021,22 @@ export default function Home() {
     videoEl.muted = true;
 
     if (videoEl.paused) {
-      // Pausar todos los otros videos antes de reproducir
       Object.entries(communityVideoRefs.current).forEach(([id, el]) => {
         if (id !== cardId && el && !el.paused) {
           el.pause();
           el.currentTime = 0;
         }
       });
+      setCommunityVideoBuffering(prev => ({ ...prev, [cardId]: true }));
       const playPromise = videoEl.play();
       if (playPromise && typeof playPromise.then === 'function') {
         playPromise.then(() => {
           trackCommunityView(videoData);
           flashCommunityVideoIcon(cardId, 'fa-pause');
-        }).catch(() => flashCommunityVideoIcon(cardId, 'fa-play'));
+        }).catch(() => {
+          setCommunityVideoBuffering(prev => ({ ...prev, [cardId]: false }));
+          flashCommunityVideoIcon(cardId, 'fa-play');
+        });
       } else {
         trackCommunityView(videoData);
         flashCommunityVideoIcon(cardId, 'fa-pause');
@@ -1585,12 +1589,15 @@ export default function Home() {
                   preload="metadata"
                   x-webkit-airplay="deny"
                   onLoadedData={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
-                  onCanPlay={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
+                  onCanPlay={() => { setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true })); setCommunityVideoBuffering(prev => ({ ...prev, [cardId]: false })); }}
                   onLoadedMetadata={(e) => { try { e.currentTarget.currentTime = 0.05; } catch (_) {} }}
                   onPlay={() => {
                     setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }));
+                    setCommunityVideoBuffering(prev => ({ ...prev, [cardId]: false }));
                     trackCommunityView(video);
                   }}
+                  onWaiting={() => setCommunityVideoBuffering(prev => ({ ...prev, [cardId]: true }))}
+                  onPlaying={() => setCommunityVideoBuffering(prev => ({ ...prev, [cardId]: false }))}
                 />
 
                 <button
@@ -1602,6 +1609,12 @@ export default function Home() {
 
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/70 to-transparent z-[2]"></div>
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-52 bg-gradient-to-t from-black/84 via-black/36 to-transparent z-[2]"></div>
+
+                {communityVideoBuffering[cardId] && (
+                  <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-full border-[3px] border-white/20 border-t-white animate-spin" />
+                  </div>
+                )}
 
                 {communityVideoFeedback[cardId] && (
                   <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center">
