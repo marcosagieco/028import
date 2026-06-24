@@ -1011,6 +1011,7 @@ export default function Home() {
 
   const handleCommunityVideoTap = (cardId, videoData, e) => {
     if (e) {
+      e.preventDefault();
       e.stopPropagation();
     }
     const videoEl = communityVideoRefs.current[cardId];
@@ -1563,10 +1564,11 @@ export default function Home() {
                   ref={(el) => { if (el) { communityVideoRefs.current[cardId] = el; el.muted = true; } }}
                   src={video.videoUrl}
                   poster={video.poster || getCommunityVideoPoster(video.videoUrl)}
-                  className={`relative z-[1] w-full h-full object-cover cursor-pointer bg-black transition-opacity duration-300 ${communityVideoLoaded[cardId] ? 'opacity-100' : 'opacity-0'}`}
+                  className={`absolute inset-0 z-[1] w-full h-full object-cover bg-black transition-opacity duration-300 pointer-events-none ${communityVideoLoaded[cardId] ? 'opacity-100' : 'opacity-0'}`}
                   playsInline
                   muted
                   preload="metadata"
+                  x-webkit-airplay="deny"
                   onLoadedData={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
                   onCanPlay={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
                   onLoadedMetadata={(e) => { try { e.currentTarget.currentTime = 0.05; } catch (_) {} }}
@@ -1579,7 +1581,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={(e) => handleCommunityVideoTap(cardId, video, e)}
-                  className="absolute inset-0 z-[1] cursor-pointer touch-manipulation"
+                  className="absolute inset-0 z-[3] cursor-pointer touch-manipulation"
                   aria-label="Reproducir o pausar video"
                 ></button>
 
