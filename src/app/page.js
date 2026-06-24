@@ -761,8 +761,8 @@ export default function Home() {
   }, [firebaseRefs]);
 
   useEffect(() => {
-    const upsellItems = upsellsList.filter(u => u.active && !cart.find(c => c.id == u.productId));
-    const carritoItems = carritoDestacados.filter(u => u.active && !cart.find(c => c.id == u.productId));
+    const upsellItems = upsellsList.filter(u => u.active !== false && !cart.find(c => String(c.id) === String(u.productId)));
+    const carritoItems = carritoDestacados.filter(u => u.active !== false && !cart.find(c => String(c.id) === String(u.productId)));
     const activeUpsells = [...upsellItems, ...carritoItems];
     if (activeUpsells.length <= 1) return;
     const interval = setInterval(() => {
@@ -1169,7 +1169,7 @@ export default function Home() {
   };
 
   const handleAddUpsellToCart = (upsell) => {
-      const prod = products.find(p => p.id == upsell.productId);
+      const prod = products.find(p => String(p.id) === String(upsell.productId));
       if (!prod) return;
       const effectivePrice = upsell.price ? Number(upsell.price) : Number(prod.price);
       setCart(prev => {
@@ -2832,15 +2832,15 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
 
                 {/* Upsells — muestra uno a la vez, rota cada 1.5s */}
                 {(() => {
-                  const upsellItems = upsellsList.filter(u => u.active && !cart.find(c => c.id == u.productId));
-                  const carritoItems = carritoDestacados.filter(u => u.active && !cart.find(c => c.id == u.productId));
+                  const upsellItems = upsellsList.filter(u => u.active !== false && !cart.find(c => String(c.id) === String(u.productId)));
+                  const carritoItems = carritoDestacados.filter(u => u.active !== false && !cart.find(c => String(c.id) === String(u.productId)));
                   const activeUpsells = [...upsellItems, ...carritoItems];
                   const upsell = activeUpsells[upsellIndex % (activeUpsells.length || 1)];
                   if (!upsell) return null;
-                  const prod = products.find(p => p.id == upsell.productId);
+                  const prod = products.find(p => String(p.id) === String(upsell.productId));
                   if (!prod || prod.inStock === false || prod.isDeleted) return null;
                   const prevUpsell = prevUpsellIndex !== null ? activeUpsells[prevUpsellIndex % activeUpsells.length] : null;
-                  const prevProd = prevUpsell ? products.find(p => p.id == prevUpsell.productId) : null;
+                  const prevProd = prevUpsell ? products.find(p => String(p.id) === String(prevUpsell.productId)) : null;
                   return (
                     <div className="px-4 pt-3 pb-2 border-b border-gray-100 overflow-hidden relative" style={{minHeight: '60px'}}>
                       {/* Saliente */}
