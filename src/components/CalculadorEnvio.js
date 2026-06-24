@@ -151,7 +151,7 @@ export default function CalculadorEnvio({ address, setAddress, zone, setZone, ap
             {markerPos && <Marker position={markerPos} />}
           </GoogleMap>
 
-          <div className="mt-4 p-4 bg-[#fcdb00]/10 border border-[#fcdb00] rounded-xl flex justify-between items-center shadow-sm">
+          <div className="mt-4 p-4 bg-[#fcdb00]/10 border border-[#fcdb00] rounded-none flex justify-between items-center shadow-sm">
             <div>
               <p className="text-[9px] font-black uppercase text-gray-500 tracking-widest mb-1">
                 <i className="fas fa-route mr-1"></i> Recorrido: {datosEnvio.km} km

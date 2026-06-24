@@ -231,14 +231,24 @@ export default function AdminPage() {
   const [upsellsList, setUpsellsList] = useState([]);
   const [newUpsell, setNewUpsell] = useState({ productId: '', price: '' });
 
+  const [carritoList, setCarritoList] = useState([]);
+  const [newCarrito, setNewCarrito] = useState({ productId: '' });
+
   const [homeSections, setHomeSections] = useState([]);
   const [homeLayout, setHomeLayout] = useState([]);
   const [newPromo, setNewPromo] = useState({ category: '', minQty: 2, totalPrice: '' });
   const [newSectionTitle, setNewSectionTitle] = useState('');
-  const [newSectionIcon, setNewSectionIcon] = useState(AVAILABLE_ICONS[0]); 
-  const [newSectionLayout, setNewSectionLayout] = useState('horizontal'); 
+  const [editingSectionId, setEditingSectionId] = useState(null);
+  const [editingSectionTitle, setEditingSectionTitle] = useState('');
+  const [newSectionIcon, setNewSectionIcon] = useState(AVAILABLE_ICONS[0]);
+  const [newSectionLayout, setNewSectionLayout] = useState('horizontal');
+  const [newSectionBrand, setNewSectionBrand] = useState('');
   
   const [deptIcons, setDeptIcons] = useState({});
+  const [vidreiraCardRadius, setVidreiraCardRadius] = useState('rounded');
+  const [vidreiraShowIcons, setVidreiraShowIcons] = useState(true);
+  const [vape3dPosition, setVape3dPosition] = useState('banner');
+  const [logosBarPosition, setLogosBarPosition] = useState('banner');
   const [virtualDepts, setVirtualDepts] = useState([]);
   const [newVirtualDept, setNewVirtualDept] = useState({ name: '', icon: '' });
   const [categoryPuffs, setCategoryPuffs] = useState({});
@@ -419,6 +429,11 @@ export default function AdminPage() {
         setUpsellsList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
       });
 
+      // LECTURA DE PRODUCTOS DESTACADOS DEL CARRITO
+      onSnapshot(collection(firebaseRefs.db, 'carritoDestacados'), (snap) => {
+        setCarritoList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
+      });
+
       // --- LECTURA DE TIROS DE LA RULETA ---
       onSnapshot(query(collection(firebaseRefs.db, 'spins'), orderBy('createdAt', 'desc')), (snap) => {
         setSpins(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
@@ -446,6 +461,18 @@ export default function AdminPage() {
 
       onSnapshot(doc(firebaseRefs.db, 'settings', 'stock_order'), (snap) => {
         if (snap.exists()) setStockOrder(snap.data() || { depts: [], cats: {} });
+      });
+      onSnapshot(doc(firebaseRefs.db, 'settings', 'vape3d_position'), (snap) => {
+        if (snap.exists()) setVape3dPosition(snap.data().afterSectionId || 'banner');
+      });
+      onSnapshot(doc(firebaseRefs.db, 'settings', 'logos_bar_position'), (snap) => {
+        if (snap.exists()) setLogosBarPosition(snap.data().afterSectionId || 'banner');
+      });
+      onSnapshot(doc(firebaseRefs.db, 'settings', 'vidriera_style'), (snap) => {
+        if (snap.exists()) {
+          setVidreiraCardRadius(snap.data().cardRadius || 'rounded');
+          setVidreiraShowIcons(snap.data().showIcons !== false);
+        }
       });
     });
   }, [firebaseRefs]);
@@ -482,6 +509,11 @@ export default function AdminPage() {
   const toggleProductFlavor = async (product, flavor) => { const current = Array.isArray(product.flavors) ? product.flavors : []; const next = current.includes(flavor) ? current.filter(f => f !== flavor) : [...current, flavor]; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, flavors: next }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const updatePuffs = async (product, val) => { const v = val.trim(); try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, puffs: v === '' ? null : Number(v) }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const updateCategoryDepartment = async (categoryName, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept) return; try { const prods = products.filter(p => p.category === categoryName); await Promise.all(prods.map(p => setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, department: dept }, { merge: true }))); } catch (err) { alert("Error: " + err.message); } }
+  const saveVidreiraCardRadius = async (val) => { try { await setDoc(doc(firebaseRefs.db, 'settings', 'vidriera_style'), { cardRadius: val }, { merge: true }); } catch(err) { alert('Error al guardar: ' + err.message); } };
+  const saveVidreiraShowIcons = async (val) => { try { await setDoc(doc(firebaseRefs.db, 'settings', 'vidriera_style'), { showIcons: val }, { merge: true }); } catch(err) { alert('Error al guardar: ' + err.message); } };
+  const saveVape3dPosition = async (val) => { try { await setDoc(doc(firebaseRefs.db, 'settings', 'vape3d_position'), { afterSectionId: val }, { merge: true }); } catch(err) { alert('Error al guardar: ' + err.message); } };
+  const saveLogosBarPosition = async (val) => { try { await setDoc(doc(firebaseRefs.db, 'settings', 'logos_bar_position'), { afterSectionId: val }, { merge: true }); } catch(err) { alert('Error al guardar: ' + err.message); } };
+  const handleRenameCategory = async (oldName, newName) => { const trimmed = newName.trim(); if (!trimmed || trimmed === oldName) return; if (!confirm(`¿Renombrar la marca "${oldName}" a "${trimmed}"?`)) return; try { const prods = products.filter(p => p.category === oldName); await Promise.all(prods.map(p => setDoc(doc(firebaseRefs.db, 'products', p.dbId || `prod_${p.id}`), { category: trimmed }, { merge: true }))); } catch (err) { alert("Error al renombrar: " + err.message); } };
   const updateProductDepartment = async (product, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept || dept === product.department) return; try { await setDoc(doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`), { id: product.id, department: dept }, { merge: true }); } catch(err) { alert("Error al actualizar departamento: " + err.message); } };
   const toggleStock = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, inStock: product.inStock === false }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const toggleVisibility = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, isHidden: !product.isHidden }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
@@ -526,6 +558,28 @@ export default function AdminPage() {
   const handleDeleteUpsell = async (id) => {
     if(confirm("¿Eliminar esta oferta?")) {
       try { await deleteDoc(doc(firebaseRefs.db, 'upsells', id)); }
+      catch (err) { alert(err.message); }
+    }
+  };
+
+  const handleAddCarrito = async (e) => {
+    e.preventDefault();
+    if (!newCarrito.productId) return;
+    try {
+      await setDoc(doc(firebaseRefs.db, 'carritoDestacados', String(newCarrito.productId)), {
+        id: String(newCarrito.productId),
+        productId: Number(newCarrito.productId),
+        active: true,
+        createdAt: serverTimestamp()
+      });
+      setNewCarrito({ productId: '' });
+      alert("¡Producto agregado al carrito!");
+    } catch (err) { alert("Error: " + err.message); }
+  };
+
+  const handleDeleteCarrito = async (id) => {
+    if(confirm("¿Eliminar este producto del carrito?")) {
+      try { await deleteDoc(doc(firebaseRefs.db, 'carritoDestacados', id)); }
       catch (err) { alert(err.message); }
     }
   };
@@ -900,11 +954,13 @@ export default function AdminPage() {
       await setDoc(doc(firebaseRefs.db, 'settings', 'category_puffs'), updated);
     } catch(err) { alert("Error al guardar puff: " + err.message); }
   };
-  const createHomeSection = async () => { if(!newSectionTitle.trim()) return; try { const newId = `sec_${Date.now()}`; await setDoc(doc(firebaseRefs.db, 'home_sections', newId), { id: newId, title: newSectionTitle.toUpperCase(), icon: newSectionIcon.id, iconColor: newSectionIcon.color, layout: newSectionLayout, productIds: [], order: homeSections.length + 1, createdAt: serverTimestamp() }); setNewSectionTitle(''); } catch(err) { alert("Error al crear sección: " + err.message); } };
+  const createHomeSection = async () => { if(!newSectionTitle.trim()) return; try { const newId = `sec_${Date.now()}`; const brandProductIds = newSectionBrand ? products.filter(p => p.category === newSectionBrand && !p.isDeleted).map(p => p.id) : []; await setDoc(doc(firebaseRefs.db, 'home_sections', newId), { id: newId, title: newSectionTitle.toUpperCase(), icon: newSectionIcon.id, iconColor: newSectionIcon.color, layout: newSectionLayout, productIds: brandProductIds, order: homeSections.length + 1, createdAt: serverTimestamp() }); setNewSectionTitle(''); setNewSectionBrand(''); } catch(err) { alert("Error al crear sección: " + err.message); } };
+  const fillSectionByCategory = async (sectionId, category) => { if (!category) return; if (!confirm(`¿Rellenar la sección con todos los productos de "${category}"?`)) return; try { const ids = products.filter(p => p.category === category && !p.isDeleted).map(p => p.id); await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: ids }, { merge: true }); alert(`¡${ids.length} productos de ${category} agregados!`); } catch(err) { alert("Error al rellenar por marca: " + err.message); } };
   const deleteHomeSection = async (id) => { if(confirm("¿Borrar?")) { try { await deleteDoc(doc(firebaseRefs.db, 'home_sections', id)); } catch(err) { alert("Error al borrar sección: " + err.message); } } };
   const addProductToSection = async (sectionId, productId) => { try { const section = homeSections.find(s => s.dbId === sectionId); const current = section.productIds || []; if(current.includes(productId)) return; await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: [...current, productId] }, { merge: true }); } catch(err) { alert("Error al agregar producto: " + err.message); } };
   const removeProductFromSection = async (sectionId, productId) => { try { const section = homeSections.find(s => s.dbId === sectionId); await setDoc(doc(firebaseRefs.db, 'home_sections', sectionId), { productIds: (section.productIds || []).filter(id => id !== productId) }, { merge: true }); } catch(err) { alert("Error al quitar producto: " + err.message); } };
   const toggleSectionLayout = async (section) => { try { await setDoc(doc(firebaseRefs.db, 'home_sections', section.dbId), { layout: section.layout === 'vertical' ? 'horizontal' : 'vertical' }, { merge: true }); } catch(err) { alert("Error al cambiar formato: " + err.message); } };
+  const renameSection = async (dbId, newTitle) => { if (!newTitle.trim()) return; try { await setDoc(doc(firebaseRefs.db, 'home_sections', dbId), { title: newTitle.trim().toUpperCase() }, { merge: true }); setEditingSectionId(null); } catch(err) { alert("Error al renombrar: " + err.message); } };
 
   // --- NUEVA LÓGICA DE AUTOCOMPLETADO (Nuevos, +Clickeados, -Clickeados) ---
   const autoFillSection = async (sectionId, type) => {
@@ -1020,7 +1076,7 @@ export default function AdminPage() {
         <div id={'cat-' + categoryFilter} className="mb-10" key={categoryFilter}>
             <div className={`flex flex-col md:flex-row md:justify-between md:items-center gap-3 border-b pb-3 mb-4 ${darkMode ? 'border-[#333333]' : 'border-gray-200'}`}>
                <div className="flex items-center gap-4">
-                   <h3 className={`text-2xl font-bebas uppercase tracking-wide ${theme.subText}`}>{categoryFilter}</h3>
+                   <input defaultValue={categoryFilter} key={categoryFilter} className={`text-2xl font-bebas uppercase tracking-wide bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#fcdb00] outline-none transition-colors pb-0.5 ${theme.subText}`} title="Haz clic para renombrar la marca" onKeyDown={(e) => { if(e.key === 'Enter') e.target.blur(); }} onBlur={(e) => handleRenameCategory(categoryFilter, e.target.value)} />
                    <div className="flex items-center gap-2 bg-[#fcdb00]/10 px-3 py-1.5 rounded-lg border border-[#fcdb00]/30">
                        <span className="text-[10px] font-bold uppercase text-[#b8952a] tracking-widest font-poppins">Depto:</span>
                        <input list="dept-suggestions-stock" defaultValue={currentDept} onBlur={(e) => { if(e.target.value.toUpperCase() !== currentDept.toUpperCase()) { updateCategoryDepartment(categoryFilter, e.target.value); } }} onKeyDown={(e) => { if(e.key === 'Enter') e.target.blur(); }} className={`bg-transparent text-[10px] font-bold uppercase outline-none w-28 md:w-32 border-b border-transparent hover:border-[#fcdb00] focus:border-[#fcdb00] transition-colors font-poppins ${darkMode ? 'text-white' : 'text-[#111111]'}`} placeholder="Escribí..." title="Cambiá el departamento de toda esta categoría" />
@@ -1117,6 +1173,7 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('cupones')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'cupones' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Cupones</button>
           <button onClick={() => setActiveTab('usuarios')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'usuarios' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Usuarios</button>
           <button onClick={() => setActiveTab('ofertas')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'ofertas' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Ofertas 🔥</button>
+          <button onClick={() => setActiveTab('carrito')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'carrito' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Carrito 🛒</button>
           <button onClick={() => setActiveTab('estadisticas')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'estadisticas' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Stats 📊</button>
         </div>
       </div>
@@ -1181,6 +1238,75 @@ export default function AdminPage() {
 
         {activeTab === 'vidriera' && (<div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
           <div className="flex justify-between items-end mb-8"><div><h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Vidriera</h2><p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Armá las secciones del Inicio</p></div></div>
+
+          {/* Estilo de cards */}
+          <div className={`${theme.card} p-6 rounded-[2rem] mb-8 shadow-sm border`}>
+            <h3 className={`text-2xl font-bebas uppercase tracking-wide mb-1 ${theme.text}`}>Marco de los productos</h3>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-5">Elegí la forma de las cards en la vidriera</p>
+            <div className="flex gap-4">
+              {[{val:'rounded',label:'Redondeado',icon:'fa-circle'},{val:'squared',label:'Esquinado',icon:'fa-square'}].map(opt => (
+                <button key={opt.val} onClick={() => saveVidreiraCardRadius(opt.val)} className={`flex-1 flex flex-col items-center gap-3 py-5 border-2 transition-all font-poppins ${vidreiraCardRadius === opt.val ? 'border-[#fcdb00] bg-[#fcdb00]/10' : (darkMode ? 'border-[#333] hover:border-[#555]' : 'border-gray-200 hover:border-gray-400')}`} style={{borderRadius: opt.val === 'rounded' ? '1.5rem' : '4px'}}>
+                  <div className={`w-14 h-14 flex items-center justify-center ${darkMode ? 'bg-[#222]' : 'bg-gray-100'}`} style={{borderRadius: opt.val === 'rounded' ? '0.75rem' : '2px'}}>
+                    <i className={`fas ${opt.icon} text-2xl ${vidreiraCardRadius === opt.val ? 'text-[#fcdb00]' : 'text-gray-400'}`}></i>
+                  </div>
+                  <span className={`text-[11px] font-bold uppercase tracking-widest ${vidreiraCardRadius === opt.val ? 'text-[#fcdb00]' : theme.subText}`}>{opt.label}</span>
+                  {vidreiraCardRadius === opt.val && <span className="text-[9px] font-bold uppercase tracking-widest text-[#fcdb00]">✓ Activo</span>}
+                </button>
+              ))}
+            </div>
+
+            {/* Toggle íconos */}
+            <div className="mt-6 flex items-center justify-between">
+              <div>
+                <p className={`text-sm font-bold uppercase tracking-widest ${theme.text}`}>Íconos en títulos</p>
+                <p className="text-[10px] text-gray-500 mt-0.5">Mostrá o ocultá el ícono al lado del nombre de cada sección</p>
+              </div>
+              <button
+                onClick={() => { const next = !vidreiraShowIcons; setVidreiraShowIcons(next); saveVidreiraShowIcons(next); }}
+                className={`w-14 h-7 rounded-full transition-colors duration-300 flex items-center px-1 ${vidreiraShowIcons ? 'bg-[#fcdb00]' : 'bg-gray-300'}`}
+              >
+                <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${vidreiraShowIcons ? 'translate-x-7' : 'translate-x-0'}`} />
+              </button>
+            </div>
+          </div>
+
+          {/* Posición del showcase 3D */}
+          <div className={`${theme.card} p-6 rounded-[2rem] mb-8 shadow-sm border`}>
+            <h3 className={`text-2xl font-bebas uppercase tracking-wide mb-1 ${theme.text}`}>Posición del Showcase 3D</h3>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-5">Elegí dónde aparece la sección del Elfbar Ice King</p>
+            <div className="flex flex-col gap-2">
+              {[{ id: 'banner', label: 'Después del banner (inicio)' }, ...homeSections.map(s => ({ id: s.id, label: `Después de "${s.title || s.id}"` }))].map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => { setVape3dPosition(opt.id); saveVape3dPosition(opt.id); }}
+                  className={`flex items-center gap-3 px-5 py-3 rounded-xl border-2 text-left transition-all font-poppins text-[11px] font-bold uppercase tracking-widest ${vape3dPosition === opt.id ? 'border-[#fcdb00] bg-[#fcdb00]/10 text-[#fcdb00]' : (darkMode ? 'border-[#333] text-gray-400 hover:border-[#555]' : 'border-gray-200 text-gray-500 hover:border-gray-400')}`}
+                >
+                  <i className={`fas fa-cube text-sm ${vape3dPosition === opt.id ? 'text-[#fcdb00]' : 'text-gray-400'}`}></i>
+                  {opt.label}
+                  {vape3dPosition === opt.id && <span className="ml-auto text-[9px]">✓ Activo</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={`${theme.card} p-6 rounded-[2rem] mb-8 shadow-sm border`}>
+            <h3 className={`text-2xl font-bebas uppercase tracking-wide mb-1 ${theme.text}`}>Posición de la Barra de Marcas</h3>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-5">Elegí dónde aparece la barra con los logos de marcas</p>
+            <div className="flex flex-col gap-2">
+              {[{ id: 'banner', label: 'Después del banner (inicio)' }, ...homeSections.map(s => ({ id: s.id, label: `Después de "${s.title || s.id}"` }))].map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => { setLogosBarPosition(opt.id); saveLogosBarPosition(opt.id); }}
+                  className={`flex items-center gap-3 px-5 py-3 rounded-xl border-2 text-left transition-all font-poppins text-[11px] font-bold uppercase tracking-widest ${logosBarPosition === opt.id ? 'border-[#fcdb00] bg-[#fcdb00]/10 text-[#fcdb00]' : (darkMode ? 'border-[#333] text-gray-400 hover:border-[#555]' : 'border-gray-200 text-gray-500 hover:border-gray-400')}`}
+                >
+                  <i className={`fas fa-images text-sm ${logosBarPosition === opt.id ? 'text-[#fcdb00]' : 'text-gray-400'}`}></i>
+                  {opt.label}
+                  {logosBarPosition === opt.id && <span className="ml-auto text-[9px]">✓ Activo</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {renderHomeOrderControls()}
           
           <div className={`${theme.card} p-6 rounded-[2rem] mb-8 shadow-sm border`}>
@@ -1255,7 +1381,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className={`${theme.card} p-6 rounded-[2rem] mb-8 flex flex-col gap-4 shadow-sm border`}><div className="flex flex-col md:flex-row gap-4 items-end w-full"><div className="flex-1 w-full"><label className="text-[10px] font-bold uppercase text-gray-500 tracking-wider">Título de la nueva sección</label><input type="text" value={newSectionTitle} onChange={e=>setNewSectionTitle(e.target.value)} placeholder="Ej: Ofertas Relámpago..." className={`w-full mt-2 p-4 rounded-xl outline-none font-bold text-sm focus:ring-2 focus:ring-[#fcdb00] border-transparent ${theme.input}`}/></div><button onClick={createHomeSection} className="w-full md:w-auto bg-[#fcdb00] text-[#111111] font-bebas text-lg uppercase px-8 py-3.5 rounded-xl hover:bg-[#111111] hover:text-[#fcdb00] hover:shadow-xl transition-all">Crear Sección</button></div><div className="mt-2"><label className="text-[10px] font-bold uppercase text-gray-500 mb-3 block tracking-wider">Ícono</label><div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">{AVAILABLE_ICONS.map(iconObj => (<button key={iconObj.id} onClick={() => setNewSectionIcon(iconObj)} className={`w-12 h-12 flex-shrink-0 rounded-xl flex items-center justify-center text-xl transition-all ${newSectionIcon.id === iconObj.id ? 'bg-[#111111] shadow-md scale-110' : (darkMode ? 'bg-[#222] hover:bg-[#333]' : 'bg-gray-100 hover:bg-gray-200')}`}><i className={`${iconObj.prefix} ${iconObj.id} ${newSectionIcon.id === iconObj.id ? 'text-[#fcdb00]' : 'text-gray-400'}`}></i></button>))}</div></div><div className="mt-2 border-t border-gray-200 dark:border-[#333333] pt-4"><label className="text-[10px] font-bold uppercase text-gray-500 mb-3 block tracking-wider">Formato</label><div className="flex gap-2"><button onClick={() => setNewSectionLayout('horizontal')} className={`flex-1 py-3.5 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all ${newSectionLayout === 'horizontal' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : (darkMode ? 'bg-[#222] text-gray-400 hover:bg-[#333]' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')}`}><i className="fas fa-arrows-alt-h mr-2"></i> Carrusel</button><button onClick={() => setNewSectionLayout('vertical')} className={`flex-1 py-3.5 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all ${newSectionLayout === 'vertical' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : (darkMode ? 'bg-[#222] text-gray-400 hover:bg-[#333]' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')}`}><i className="fas fa-th-large mr-2"></i> Grilla</button></div></div></div>{homeSections.length === 0 && (<div className="text-center py-20 border-2 border-dashed border-gray-300 dark:border-[#333333] rounded-[2rem]"><i className="fas fa-magic text-4xl text-gray-300 mb-4"></i><p className="text-[11px] font-bold uppercase text-gray-500 tracking-widest">No hay secciones.</p></div>)}<div className="space-y-6">{homeSections.map(sec => (<div key={sec.id} className={`${theme.card} p-6 rounded-[2rem] shadow-sm border`}><div className="flex justify-between items-center mb-6 border-b border-gray-200 dark:border-[#333333] pb-4"><h3 className={`text-3xl font-bebas uppercase tracking-wide flex items-center gap-2 ${theme.text}`}><i className={`${AVAILABLE_ICONS.find(i => i.id === sec.icon)?.prefix || 'fas'} ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'}`}></i> {sec.title}</h3><div className="flex items-center gap-2"><button onClick={()=>toggleSectionLayout(sec)} className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-lg transition-colors ${darkMode ? 'bg-[#333] text-gray-300 hover:text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`} title="Cambiar el formato"><i className={`fas ${sec.layout === 'vertical' ? 'fa-th-large' : 'fa-arrows-alt-h'} mr-1.5`}></i> {sec.layout === 'vertical' ? 'Grilla' : 'Carrusel'}</button><button onClick={()=>deleteHomeSection(sec.dbId)} className="text-red-500 hover:text-white hover:bg-red-600 w-9 h-9 rounded-lg flex items-center justify-center transition-all bg-red-50 dark:bg-red-900/20"><i className="fas fa-trash text-sm"></i></button></div></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">{sec.productIds?.map(pid => { const prod = products.find(p => p.id === pid && !p.isDeleted); if(!prod) return null; return (<div key={pid} className={`relative rounded-xl p-4 flex flex-col gap-3 border ${darkMode ? 'bg-[#222] border-[#444]' : 'bg-[#f2f2f2] border-transparent shadow-sm'}`}><div className="flex items-center gap-3"><div className="w-12 h-12 bg-white rounded-lg p-1 shadow-sm"><img src={prod.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex-1 min-w-0"><p className={`text-[12px] font-bebas text-xl uppercase truncate tracking-wide ${theme.text}`}>{prod.name}</p><p className="text-gray-500 text-[9px] font-bold uppercase tracking-widest truncate mt-0.5">{prod.category}</p></div><button onClick={()=>removeProductFromSection(sec.dbId, pid)} className="w-8 h-8 bg-red-100 text-red-600 rounded-lg text-sm flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors shadow-sm"><i className="fas fa-times"></i></button></div><div className="flex items-center justify-between border-t border-gray-200 dark:border-[#444] pt-3 mt-1"><span className="text-[9px] font-bold uppercase text-gray-500 tracking-widest">Tamaño en Vidriera:</span><select value={prod.cardSize || 'normal'} onChange={(e) => updateCardSize(prod, e.target.value)} className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1.5 rounded-md border outline-none cursor-pointer ${darkMode ? 'bg-[#111] border-[#555] text-gray-300 focus:ring-1 focus:ring-[#fcdb00]' : 'bg-white border-gray-300 text-[#111111] focus:ring-1 focus:ring-[#fcdb00]'}`}><option value="normal">📏 Normal</option><option value="medium">🔲 Mediano</option><option value="large">⬜ Grande</option></select></div></div>) })} {(!sec.productIds || sec.productIds.length === 0) && (<p className="text-[11px] font-bold uppercase text-gray-400 italic col-span-full">Aún no agregaste productos a esta sección.</p>)} </div><div className="relative mb-3"><i className="fas fa-plus absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i><select onChange={(e) => { addProductToSection(sec.dbId, parseInt(e.target.value)); e.target.value = ''; }} className={`w-full p-4 pl-12 rounded-xl outline-none font-bold text-xs uppercase cursor-pointer appearance-none tracking-widest focus:ring-2 focus:ring-[#fcdb00] border-transparent ${theme.input}`}><option value="">AGREGAR PRODUCTO A "{sec.title}"...</option>{products.filter(p => !p.isDeleted && !sec.productIds?.includes(p.id)).map(p => (<option key={p.id} value={p.id}>{p.category} - {p.name} (${p.price})</option>))}</select></div><div className="flex flex-col gap-2 mt-3 border-t border-gray-200 dark:border-[#333333] pt-4"><p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest mb-1"><i className="fas fa-magic text-[#fcdb00]"></i> Autocompletar (10 Productos):</p><div className="flex flex-col sm:flex-row gap-2"><button onClick={() => autoFillSection(sec.dbId, 'newest')} className={`flex-1 py-2.5 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all flex justify-center items-center gap-2 border ${darkMode ? 'bg-[#222] border-[#fcdb00]/30 text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]' : 'bg-[#111111] border-transparent text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]'}`}><i className="fas fa-star"></i> + Nuevos</button><button onClick={() => autoFillSection(sec.dbId, 'most_clicked')} className={`flex-1 py-2.5 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all flex justify-center items-center gap-2 border ${darkMode ? 'bg-[#222] border-[#fcdb00]/30 text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]' : 'bg-[#111111] border-transparent text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]'}`}><i className="fas fa-fire"></i> + Clickeados</button><button onClick={() => autoFillSection(sec.dbId, 'least_clicked')} className={`flex-1 py-2.5 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all flex justify-center items-center gap-2 border ${darkMode ? 'bg-[#222] border-[#fcdb00]/30 text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]' : 'bg-[#111111] border-transparent text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]'}`}><i className="fas fa-arrow-down"></i> - Clickeados</button></div></div></div>))}</div></div>)}
+          <div className={`${theme.card} p-6 rounded-[2rem] mb-8 flex flex-col gap-4 shadow-sm border`}><div className="flex flex-col md:flex-row gap-4 items-end w-full"><div className="flex-1 w-full"><label className="text-[10px] font-bold uppercase text-gray-500 tracking-wider">Título de la nueva sección</label><input type="text" value={newSectionTitle} onChange={e=>setNewSectionTitle(e.target.value)} placeholder="Ej: Ofertas Relámpago..." className={`w-full mt-2 p-4 rounded-xl outline-none font-bold text-sm focus:ring-2 focus:ring-[#fcdb00] border-transparent ${theme.input}`}/></div><button onClick={createHomeSection} className="w-full md:w-auto bg-[#fcdb00] text-[#111111] font-bebas text-lg uppercase px-8 py-3.5 rounded-xl hover:bg-[#111111] hover:text-[#fcdb00] hover:shadow-xl transition-all">Crear Sección</button></div><div className="mt-2"><label className="text-[10px] font-bold uppercase text-gray-500 mb-3 block tracking-wider">Ícono</label><div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">{AVAILABLE_ICONS.map(iconObj => (<button key={iconObj.id} onClick={() => setNewSectionIcon(iconObj)} className={`w-12 h-12 flex-shrink-0 rounded-xl flex items-center justify-center text-xl transition-all ${newSectionIcon.id === iconObj.id ? 'bg-[#111111] shadow-md scale-110' : (darkMode ? 'bg-[#222] hover:bg-[#333]' : 'bg-gray-100 hover:bg-gray-200')}`}><i className={`${iconObj.prefix} ${iconObj.id} ${newSectionIcon.id === iconObj.id ? 'text-[#fcdb00]' : 'text-gray-400'}`}></i></button>))}</div></div><div className="mt-2 border-t border-gray-200 dark:border-[#333333] pt-4"><label className="text-[10px] font-bold uppercase text-gray-500 mb-3 block tracking-wider">Formato</label><div className="flex gap-2"><button onClick={() => setNewSectionLayout('horizontal')} className={`flex-1 py-3.5 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all ${newSectionLayout === 'horizontal' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : (darkMode ? 'bg-[#222] text-gray-400 hover:bg-[#333]' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')}`}><i className="fas fa-arrows-alt-h mr-2"></i> Carrusel</button><button onClick={() => setNewSectionLayout('vertical')} className={`flex-1 py-3.5 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all ${newSectionLayout === 'vertical' ? 'bg-[#111111] text-[#fcdb00] shadow-md' : (darkMode ? 'bg-[#222] text-gray-400 hover:bg-[#333]' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')}`}><i className="fas fa-th-large mr-2"></i> Grilla</button></div></div><div className="mt-2 border-t border-gray-200 dark:border-[#333333] pt-4"><label className="text-[10px] font-bold uppercase text-gray-500 mb-3 block tracking-wider"><i className="fas fa-tag mr-1.5 text-[#fcdb00]"></i> Rellenar con Marca (opcional)</label><div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">{uniqueCategories.map(cat => (<button key={cat} type="button" onClick={() => setNewSectionBrand(newSectionBrand === cat ? '' : cat)} className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-1.5 border ${newSectionBrand === cat ? 'bg-[#fcdb00] text-[#111111] border-[#fcdb00]' : (darkMode ? 'bg-[#222] text-gray-400 hover:bg-[#333] hover:text-white border-[#444]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border-gray-200')}`}>{newSectionBrand === cat && <i className="fas fa-check text-[8px]"></i>}{cat} <span className="opacity-50 text-[8px]">({products.filter(p => p.category === cat && !p.isDeleted).length})</span></button>))}</div>{newSectionBrand && <p className="text-[9px] font-bold uppercase text-[#b8952a] tracking-widest mt-2 flex items-center gap-1"><i className="fas fa-info-circle"></i> Se crearán con {products.filter(p => p.category === newSectionBrand && !p.isDeleted).length} productos de {newSectionBrand}</p>}</div></div>{homeSections.length === 0 && (<div className="text-center py-20 border-2 border-dashed border-gray-300 dark:border-[#333333] rounded-[2rem]"><i className="fas fa-magic text-4xl text-gray-300 mb-4"></i><p className="text-[11px] font-bold uppercase text-gray-500 tracking-widest">No hay secciones.</p></div>)}<div className="space-y-6">{homeSections.map(sec => (<div key={sec.id} className={`${theme.card} p-6 rounded-[2rem] shadow-sm border`}><div className="flex justify-between items-center mb-6 border-b border-gray-200 dark:border-[#333333] pb-4"><div className="flex items-center gap-2 flex-1 min-w-0">{editingSectionId === sec.id ? (<form onSubmit={(e)=>{e.preventDefault();renameSection(sec.dbId,editingSectionTitle);}} className="flex items-center gap-2 flex-1"><input autoFocus value={editingSectionTitle} onChange={e=>setEditingSectionTitle(e.target.value)} className={`font-bebas text-3xl uppercase tracking-wide px-3 py-1 rounded-xl outline-none border-2 border-[#fcdb00] flex-1 min-w-0 ${theme.input}`}/><button type="submit" className="bg-[#fcdb00] text-[#111111] px-4 py-1.5 rounded-xl font-bold text-xs uppercase">OK</button><button type="button" onClick={()=>setEditingSectionId(null)} className="text-gray-400 hover:text-gray-600 px-2 py-1.5 text-xs">✕</button></form>) : (<><h3 className={`text-3xl font-bebas uppercase tracking-wide flex items-center gap-2 ${theme.text}`}><i className={`${AVAILABLE_ICONS.find(i => i.id === sec.icon)?.prefix || 'fas'} ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'}`}></i>{sec.title}</h3><button onClick={()=>{setEditingSectionId(sec.id);setEditingSectionTitle(sec.title);}} className="text-gray-400 hover:text-[#fcdb00] transition-colors ml-1" title="Renombrar"><i className="fas fa-pencil-alt text-sm"></i></button></>)}</div><div className="flex items-center gap-2"><button onClick={()=>toggleSectionLayout(sec)} className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-lg transition-colors ${darkMode ? 'bg-[#333] text-gray-300 hover:text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`} title="Cambiar el formato"><i className={`fas ${sec.layout === 'vertical' ? 'fa-th-large' : 'fa-arrows-alt-h'} mr-1.5`}></i> {sec.layout === 'vertical' ? 'Grilla' : 'Carrusel'}</button><button onClick={()=>deleteHomeSection(sec.dbId)} className="text-red-500 hover:text-white hover:bg-red-600 w-9 h-9 rounded-lg flex items-center justify-center transition-all bg-red-50 dark:bg-red-900/20"><i className="fas fa-trash text-sm"></i></button></div></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">{sec.productIds?.map(pid => { const prod = products.find(p => p.id === pid && !p.isDeleted); if(!prod) return null; return (<div key={pid} className={`relative rounded-xl p-4 flex flex-col gap-3 border ${darkMode ? 'bg-[#222] border-[#444]' : 'bg-[#f2f2f2] border-transparent shadow-sm'}`}><div className="flex items-center gap-3"><div className="w-12 h-12 bg-white rounded-lg p-1 shadow-sm"><img src={prod.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/></div><div className="flex-1 min-w-0"><p className={`text-[12px] font-bebas text-xl uppercase truncate tracking-wide ${theme.text}`}>{prod.name}</p><p className="text-gray-500 text-[9px] font-bold uppercase tracking-widest truncate mt-0.5">{prod.category}</p></div><button onClick={()=>removeProductFromSection(sec.dbId, pid)} className="w-8 h-8 bg-red-100 text-red-600 rounded-lg text-sm flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors shadow-sm"><i className="fas fa-times"></i></button></div><div className="flex items-center justify-between border-t border-gray-200 dark:border-[#444] pt-3 mt-1"><span className="text-[9px] font-bold uppercase text-gray-500 tracking-widest">Tamaño en Vidriera:</span><select value={prod.cardSize || 'normal'} onChange={(e) => updateCardSize(prod, e.target.value)} className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1.5 rounded-md border outline-none cursor-pointer ${darkMode ? 'bg-[#111] border-[#555] text-gray-300 focus:ring-1 focus:ring-[#fcdb00]' : 'bg-white border-gray-300 text-[#111111] focus:ring-1 focus:ring-[#fcdb00]'}`}><option value="normal">📏 Normal</option><option value="medium">🔲 Mediano</option><option value="large">⬜ Grande</option></select></div></div>) })} {(!sec.productIds || sec.productIds.length === 0) && (<p className="text-[11px] font-bold uppercase text-gray-400 italic col-span-full">Aún no agregaste productos a esta sección.</p>)} </div><div className="relative mb-3"><i className="fas fa-plus absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i><select onChange={(e) => { addProductToSection(sec.dbId, parseInt(e.target.value)); e.target.value = ''; }} className={`w-full p-4 pl-12 rounded-xl outline-none font-bold text-xs uppercase cursor-pointer appearance-none tracking-widest focus:ring-2 focus:ring-[#fcdb00] border-transparent ${theme.input}`}><option value="">AGREGAR PRODUCTO A "{sec.title}"...</option>{products.filter(p => !p.isDeleted && !sec.productIds?.includes(p.id)).map(p => (<option key={p.id} value={p.id}>{p.category} - {p.name} (${p.price})</option>))}</select></div><div className="flex flex-col gap-2 mt-3 border-t border-gray-200 dark:border-[#333333] pt-4"><p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest mb-1"><i className="fas fa-magic text-[#fcdb00]"></i> Autocompletar (10 Productos):</p><div className="flex flex-col sm:flex-row gap-2"><button onClick={() => autoFillSection(sec.dbId, 'newest')} className={`flex-1 py-2.5 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all flex justify-center items-center gap-2 border ${darkMode ? 'bg-[#222] border-[#fcdb00]/30 text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]' : 'bg-[#111111] border-transparent text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]'}`}><i className="fas fa-star"></i> + Nuevos</button><button onClick={() => autoFillSection(sec.dbId, 'most_clicked')} className={`flex-1 py-2.5 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all flex justify-center items-center gap-2 border ${darkMode ? 'bg-[#222] border-[#fcdb00]/30 text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]' : 'bg-[#111111] border-transparent text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]'}`}><i className="fas fa-fire"></i> + Clickeados</button><button onClick={() => autoFillSection(sec.dbId, 'least_clicked')} className={`flex-1 py-2.5 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all flex justify-center items-center gap-2 border ${darkMode ? 'bg-[#222] border-[#fcdb00]/30 text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]' : 'bg-[#111111] border-transparent text-[#fcdb00] hover:bg-[#fcdb00] hover:text-[#111111]'}`}><i className="fas fa-arrow-down"></i> - Clickeados</button></div></div><div className="mt-3 pt-3 border-t border-gray-200 dark:border-[#333333]"><p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest mb-2"><i className="fas fa-tag text-[#fcdb00] mr-1.5"></i> Rellenar por Marca:</p><div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">{uniqueCategories.map(cat => (<button key={cat} type="button" onClick={() => fillSectionByCategory(sec.dbId, cat)} className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-1.5 border ${darkMode ? 'bg-[#222] border-[#444] text-gray-300 hover:bg-[#fcdb00] hover:text-[#111111] hover:border-[#fcdb00]' : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-[#fcdb00] hover:text-[#111111] hover:border-[#fcdb00]'}`}>{cat} <span className="opacity-50 text-[8px]">({products.filter(p => p.category === cat && !p.isDeleted).length})</span></button>))}</div></div></div>))}</div></div>)}
 
         {/* --- PESTAÑA: 028 COMMUNITY --- */}
 
@@ -1689,6 +1815,58 @@ export default function AdminPage() {
           </div>
         )}
 
+
+        {/* --- PESTAÑA CARRITO DESTACADOS --- */}
+        {activeTab === 'carrito' && (
+          <div className="animate-in fade-in duration-500 max-w-lg mx-auto">
+            <div className="flex justify-between items-end mb-8">
+              <div>
+                <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Carrito Destacados</h2>
+                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Productos que aparecen en el carrusel del carrito</p>
+              </div>
+              <span className="bg-[#fcdb00] text-[#111111] text-[11px] font-bold px-4 py-2 rounded-lg shadow-sm">{carritoList.length} Activos</span>
+            </div>
+
+            <form onSubmit={handleAddCarrito} className={`${theme.card} p-8 rounded-[2rem] shadow-sm border mb-8 flex flex-col gap-6`}>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Producto a Mostrar</label>
+                <select value={newCarrito.productId} onChange={e => setNewCarrito({...newCarrito, productId: e.target.value})} className={`w-full p-4 rounded-xl font-bold text-xs outline-none uppercase appearance-none focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} required>
+                  <option value="">Seleccioná un producto...</option>
+                  {products.filter(p => !p.isDeleted && !carritoList.find(c => c.productId == p.id)).map(p => (
+                    <option key={p.id} value={p.id}>{p.category} - {p.name} (${Number(p.price).toLocaleString('es-AR')})</option>
+                  ))}
+                </select>
+              </div>
+              <button type="submit" className="bg-[#fcdb00] text-[#111111] font-bebas text-2xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all">Agregar al Carrito</button>
+            </form>
+
+            <div className="grid gap-4">
+              {carritoList.length === 0 ? (
+                <p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest mt-10">No hay productos destacados en el carrito</p>
+              ) : (
+                carritoList.map(item => {
+                  const prod = products.find(p => p.id == item.productId);
+                  return (
+                    <div key={item.id} className={`${theme.card} p-5 rounded-[1.5rem] flex items-center gap-4 shadow-sm border`}>
+                      {prod?.image && (
+                        <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden p-1">
+                          <img src={prod.image} alt="" className="w-full h-full object-contain" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bebas text-xl uppercase tracking-wide leading-none">{prod?.name || 'Producto Eliminado'}</h4>
+                        <p className="text-[11px] font-bold text-gray-400 mt-0.5">${Number(prod?.price || 0).toLocaleString('es-AR')}</p>
+                      </div>
+                      <button onClick={() => handleDeleteCarrito(item.id)} className="w-12 h-12 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition-all shadow-sm flex-shrink-0">
+                        <i className="fas fa-trash text-lg"></i>
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
 
         {activeTab === 'crear' && (<div className="animate-in fade-in duration-500 max-w-lg mx-auto"><h2 className="text-4xl font-bebas uppercase tracking-wide mb-6 text-center">Nuevo Producto</h2><form onSubmit={handleAddProduct} className={`${theme.card} p-8 rounded-[2rem] shadow-sm border flex flex-col gap-5`}><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Nombre del Producto</label><input type="text" required placeholder="Ej: BLUE RAZZ ICE" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex gap-4"><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Precio</label><input type="number" required placeholder="26000" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Categoría / Marca</label><input list="category-suggestions" placeholder="Ej: Ignite v400 o Crear Nueva..." value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} /><datalist id="category-suggestions">{uniqueCategories.map(cat => <option key={cat} value={cat} />)}</datalist></div></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Departamento Principal</label><input list="dept-suggestions" placeholder="Elegí o escribí uno nuevo..." value={newProduct.department} onChange={e => setNewProduct({...newProduct, department: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} /><datalist id="dept-suggestions">{availableDepartments.map(d => <option key={d} value={d} />)}</datalist></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Link de Imagen (URL)</label><input type="url" required placeholder="https://i.postimg.cc/..." value={newProduct.image} onChange={e => setNewProduct({...newProduct, image: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />{newProduct.image && (<div className="mt-4 relative h-32 rounded-xl overflow-hidden border border-dashed border-gray-300 bg-[#f2f2f2]"><img src={newProduct.image} alt="Vista previa" className="w-full h-full object-contain mix-blend-multiply" /></div>)}</div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Etiqueta y Tamaño</label><div className="flex gap-4"><input type="text" placeholder="Ej: Destacado" value={newProduct.tag} onChange={e => setNewProduct({...newProduct, tag: e.target.value})} className={`flex-1 p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /><select value={newProduct.cardSize} onChange={e => setNewProduct({...newProduct, cardSize: e.target.value})} className={`flex-1 p-4 rounded-xl outline-none font-bold text-xs uppercase cursor-pointer border-transparent focus:ring-2 focus:ring-[#fcdb00] ${theme.input}`}><option value="normal">📏 Tamaño Normal</option><option value="medium">🔲 Tamaño Mediano</option><option value="large">⬜ Tamaño Grande</option></select></div></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Descripción (Biografía)</label><textarea rows="2" placeholder="Escribe aquí..." value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all resize-none ${theme.input}`}></textarea></div><button type="submit" disabled={isAdding} className="bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all disabled:opacity-50">{isAdding ? 'Guardando...' : 'Guardar Producto'}</button></form></div>)}
 

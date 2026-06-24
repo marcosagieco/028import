@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import CalculadorEnvio from '@/components/CalculadorEnvio';
+import CalculadorEnvioSimple from '@/components/CalculadorEnvioSimple';
+import VapeSpecs3D from '@/components/VapeSpecs3D';
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, setDoc, getDoc, increment, query, orderBy, limit } from "firebase/firestore";
 
 const CONFIG = {
@@ -333,6 +335,24 @@ const PAGE_CONTENT = {
 // Banner Hot Sale removido
 const CountdownBanner = () => null;
 
+function HorizontalScroll({ children, className }) {
+  const ref = React.useRef(null);
+  const scroll = (dir) => ref.current?.scrollBy({ left: dir * 320, behavior: 'smooth' });
+  return (
+    <div className="relative group/hscroll">
+      <button
+        onClick={() => scroll(-1)}
+        className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 items-center justify-center rounded-full bg-gray-100 border border-gray-200 text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] hover:border-[#fcdb00] transition-all opacity-0 group-hover/hscroll:opacity-100 backdrop-blur-xl shadow-lg"
+      ><i className="fas fa-chevron-left text-xs" /></button>
+      <div ref={ref} className={className}>{children}</div>
+      <button
+        onClick={() => scroll(1)}
+        className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10 items-center justify-center rounded-full bg-gray-100 border border-gray-200 text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] hover:border-[#fcdb00] transition-all opacity-0 group-hover/hscroll:opacity-100 backdrop-blur-xl shadow-lg"
+      ><i className="fas fa-chevron-right text-xs" /></button>
+    </div>
+  );
+}
+
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState([]);
@@ -351,13 +371,40 @@ export default function Home() {
   const [communityProductsPanel, setCommunityProductsPanel] = useState(null);
   const [activeStoryVideo, setActiveStoryVideo] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [currentView, setCurrentView] = useState('home'); 
+  const googleSigningIn = useRef(false);
+  const headerRef = useRef(null);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [currentView, setCurrentView] = useState('home');
   const [activeFilter, setActiveFilter] = useState({ dept: 'all', cat: 'all' });
   const [activeFlavors, setActiveFlavors] = useState([]);
   const [showFlavorMenu, setShowFlavorMenu] = useState(false);
   const flavorMenuRef = useRef(null);
   const [expandedDept, setExpandedDept] = useState(null);
+  const [hoveredNavDept, setHoveredNavDept] = useState(null);
+  const [vidreiraCardRadius, setVidreiraCardRadius] = useState('rounded');
+  const [vidreiraShowIcons, setVidreiraShowIcons] = useState(true);
+  const [vape3dPosition, setVape3dPosition] = useState('banner');
+  const [logosBarPosition, setLogosBarPosition] = useState('banner');
+  const [showAyudaMenu, setShowAyudaMenu] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCartVisible, setIsCartVisible] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [showDiscountBreakdown, setShowDiscountBreakdown] = useState(false);
+  const [coupons, setCoupons] = useState([]);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState('');
+
+  const openCart = () => {
+    setIsCartOpen(true);
+    requestAnimationFrame(() => requestAnimationFrame(() => setIsCartVisible(true)));
+  };
+  const closeCart = (cb) => {
+    setIsCartVisible(false);
+    setTimeout(() => { setIsCartOpen(false); if (cb) cb(); }, 300);
+  };
+  const [upsellIndex, setUpsellIndex] = useState(0);
+  const [prevUpsellIndex, setPrevUpsellIndex] = useState(null);
   const [deliveryMethod, setDeliveryMethod] = useState('retiro');
   const [shippingType, setShippingType] = useState('flash'); 
   useEffect(() => {
@@ -397,7 +444,15 @@ export default function Home() {
   const [virtualDepts, setVirtualDepts] = useState([]);
   const [categoryPuffs, setCategoryPuffs] = useState({});
   const [user, setUser] = useState(null);
-  const [dbUser, setDbUser] = useState(null); 
+  const [dbUser, setDbUser] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authName, setAuthName] = useState('');
+  const [authConfirmPassword, setAuthConfirmPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
   const [fomoData, setFomoData] = useState(null);
   const [isSending, setIsSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -405,6 +460,7 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const [upsellsList, setUpsellsList] = useState([]);
+  const [carritoDestacados, setCarritoDestacados] = useState([]);
 
   const [showRouletteModal, setShowRouletteModal] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
@@ -454,6 +510,7 @@ export default function Home() {
   }, [next7Days, deliveryDate]);
 
   const departments = useMemo(() => [...new Set(products.map(p => p.department).filter(Boolean))], [products]);
+  const brandsByDept = useMemo(() => { const map = {}; departments.forEach(d => { map[d] = [...new Set(products.filter(p => p.department === d && !p.isDeleted && p.inStock !== false).map(p => p.category).filter(Boolean))]; }); return map; }, [products, departments]);
   const uniqueCategories = useMemo(() => {
     if (activeFilter.dept !== 'all') return [...new Set(products.filter(p => p.department === activeFilter.dept).map(p => p.category))];
     return [...new Set(products.map(p => p.category))];
@@ -551,6 +608,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const handleScroll = () => setHeaderScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
     const showTimer = setTimeout(() => setShowTooltip(true), 2500);
     const hideTimer = setTimeout(() => setShowTooltip(false), 9000);
     return () => { clearTimeout(showTimer); clearTimeout(hideTimer); };
@@ -596,12 +659,23 @@ export default function Home() {
   }, [firebaseRefs.db]);
 
   useEffect(() => {
+    const handleOpenProduct = (e) => {
+      const name = e.detail?.name?.toLowerCase();
+      if (!name) return;
+      const found = products.find(p => p.name?.toLowerCase() === name);
+      if (found) setSelectedProduct(found);
+    };
+    window.addEventListener('openProduct', handleOpenProduct);
+    return () => window.removeEventListener('openProduct', handleOpenProduct);
+  }, [products]);
+
+  useEffect(() => {
     const handleFocus = () => setIsSending(false);
     window.addEventListener('focus', handleFocus); window.addEventListener('pageshow', handleFocus);
     if (firebaseRefs.auth && firebaseRefs.db) {
       const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (u) => {
         setUser(u);
-        if (!u) { signInAnonymously(firebaseRefs.auth).catch(console.error); }
+        if (!u && !googleSigningIn.current) { signInAnonymously(firebaseRefs.auth).catch(console.error); }
       });
       const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         const normalizeProductId = (docId, data = {}) => {
@@ -663,13 +737,44 @@ export default function Home() {
       const unsubscribeCategoryPuffs = onSnapshot(doc(firebaseRefs.db, 'settings', 'category_puffs'), (snap) => {
         if (snap.exists()) setCategoryPuffs(snap.data() || {});
       });
+      const unsubscribeVidreiraStyle = onSnapshot(doc(firebaseRefs.db, 'settings', 'vidriera_style'), (snap) => {
+        if (snap.exists()) { setVidreiraCardRadius(snap.data().cardRadius || 'rounded'); setVidreiraShowIcons(snap.data().showIcons !== false); }
+      });
+      onSnapshot(doc(firebaseRefs.db, 'settings', 'vape3d_position'), (snap) => {
+        if (snap.exists()) setVape3dPosition(snap.data().afterSectionId || 'banner');
+      });
+      onSnapshot(doc(firebaseRefs.db, 'settings', 'logos_bar_position'), (snap) => {
+        if (snap.exists()) setLogosBarPosition(snap.data().afterSectionId || 'banner');
+      });
       const unsubscribeUpsells = onSnapshot(collection(firebaseRefs.db, 'upsells'), (snap) => {
         setUpsellsList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
       });
+      const unsubscribeCarritoDestacados = onSnapshot(collection(firebaseRefs.db, 'carritoDestacados'), (snap) => {
+        setCarritoDestacados(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
+      });
+      const unsubscribeCoupons = onSnapshot(collection(firebaseRefs.db, 'coupons'), (snap) => {
+        setCoupons(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
+      });
 
-      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); unsubscribeCommunityVideos(); unsubscribeHomeLayout(); unsubscribeDeptIcons(); unsubscribeCategoryPuffs(); unsubscribeUpsells(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
+      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); unsubscribeCommunityVideos(); unsubscribeHomeLayout(); unsubscribeDeptIcons(); unsubscribeCategoryPuffs(); unsubscribeUpsells(); unsubscribeCarritoDestacados(); unsubscribeCoupons(); unsubscribeVidreiraStyle(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
     }
   }, [firebaseRefs]);
+
+  useEffect(() => {
+    const upsellItems = upsellsList.filter(u => u.active && !cart.find(c => c.id == u.productId));
+    const carritoItems = carritoDestacados.filter(u => u.active && !cart.find(c => c.id == u.productId));
+    const activeUpsells = [...upsellItems, ...carritoItems];
+    if (activeUpsells.length <= 1) return;
+    const interval = setInterval(() => {
+      setUpsellIndex(i => {
+        setPrevUpsellIndex(i);
+        const next = (i + 1) % activeUpsells.length;
+        setTimeout(() => setPrevUpsellIndex(null), 500);
+        return next;
+      });
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [upsellsList, carritoDestacados, cart]);
 
   useEffect(() => {
       if (!user || user.isAnonymous || !firebaseRefs.db) return;
@@ -694,6 +799,7 @@ export default function Home() {
 
   const handleGoogleLogin = async () => {
       if (!firebaseRefs.auth || !firebaseRefs.db) return;
+      googleSigningIn.current = true;
       try {
           const provider = new GoogleAuthProvider();
           const result = await signInWithPopup(firebaseRefs.auth, provider);
@@ -704,15 +810,63 @@ export default function Home() {
               await setDoc(userRef, { name: u.displayName, email: u.email, photoURL: u.photoURL, createdAt: serverTimestamp() });
           }
           showToast("¡Sesión iniciada con éxito! 🎉");
-          
+
           const pending = localStorage.getItem('pendingPrize');
           if (pending) {
               claimPrize(JSON.parse(pending));
           } else if (wonPrizeData && !localRoulettePrize) {
               claimPrize(wonPrizeData);
           }
-      } catch (error) { console.error(error); showToast("Error al iniciar con Google"); }
+      } catch (error) {
+          if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+              console.error(error);
+          }
+      } finally {
+          googleSigningIn.current = false;
+      }
   };
+  const handleEmailAuth = async (e) => {
+    e.preventDefault();
+    if (!firebaseRefs.auth || !firebaseRefs.db) return;
+    setAuthError('');
+    if (authMode === 'register' && authPassword !== authConfirmPassword) {
+      setAuthError('Las contraseñas no coinciden.');
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      if (authMode === 'register') {
+        const result = await createUserWithEmailAndPassword(firebaseRefs.auth, authEmail, authPassword);
+        const u = result.user;
+        const displayName = authName.trim() || authEmail.split('@')[0];
+        await updateProfile(u, { displayName });
+        await setDoc(doc(firebaseRefs.db, 'users', u.uid), { name: displayName, email: u.email, photoURL: null, createdAt: serverTimestamp() });
+        showToast("¡Cuenta creada con éxito! Bienvenido/a 🎉");
+      } else {
+        await signInWithEmailAndPassword(firebaseRefs.auth, authEmail, authPassword);
+        showToast("¡Sesión iniciada con éxito! 🎉");
+      }
+      setShowAuthModal(false);
+      setAuthEmail('');
+      setAuthPassword('');
+      setAuthConfirmPassword('');
+      setAuthName('');
+    } catch (error) {
+      const msgs = {
+        'auth/email-already-in-use': 'Ese email ya está registrado.',
+        'auth/invalid-email': 'El email no es válido.',
+        'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres.',
+        'auth/user-not-found': 'No existe una cuenta con ese email.',
+        'auth/wrong-password': 'Contraseña incorrecta.',
+        'auth/invalid-credential': 'Email o contraseña incorrectos.',
+        'auth/too-many-requests': 'Demasiados intentos. Intentá más tarde.',
+      };
+      setAuthError(msgs[error.code] || 'Ocurrió un error. Intentá de nuevo.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   const fireConfetti = () => {
     if (typeof window !== 'undefined' && window.confetti) {
       const defaults = { origin: { y: 0.7 }, colors: ['#fcdb00', '#ffffff', '#111111', '#eab308'], zIndex: 9999, gravity: 0.5, scalar: 1.1, ticks: 200 };
@@ -724,7 +878,9 @@ export default function Home() {
   const handleSpinRoulette = async () => {
       if (!user || user.isAnonymous) {
           showToast("⚠️ Iniciá sesión para poder girar");
-          handleGoogleLogin();
+          setAuthMode('login');
+          setAuthError('');
+          setShowAuthModal(true);
           return;
       }
 
@@ -985,7 +1141,8 @@ export default function Home() {
       const envio = (deliveryMethod === 'envio' && shippingType === 'moto') ? shippingCost : 0;
       const cashDiscount = (deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'efectivo')
         ? (subtotal >= 50000 ? 2500 : 1500) : 0;
-      return subtotal + envio - cashDiscount;
+      const couponDiscount = appliedCoupon ? Math.round(subtotal * appliedCoupon.discount / 100) : 0;
+      return subtotal + envio - cashDiscount - couponDiscount;
   };
 
   const addToCart = async (product, e) => { 
@@ -1014,12 +1171,13 @@ export default function Home() {
   const handleAddUpsellToCart = (upsell) => {
       const prod = products.find(p => p.id == upsell.productId);
       if (!prod) return;
+      const effectivePrice = upsell.price ? Number(upsell.price) : Number(prod.price);
       setCart(prev => {
           const existing = prev.find(item => item.id === prod.id);
-          if (existing) return prev.map(item => item.id === prod.id ? { ...item, qty: item.qty + 1, isUpsell: true, upsellPrice: Number(upsell.price) } : item);
-          return [...prev, { ...prod, qty: 1, isUpsell: true, upsellPrice: Number(upsell.price) }];
+          if (existing) return prev.map(item => item.id === prod.id ? { ...item, qty: item.qty + 1, isUpsell: !!upsell.price, upsellPrice: effectivePrice } : item);
+          return [...prev, { ...prod, qty: 1, isUpsell: !!upsell.price, upsellPrice: effectivePrice }];
       });
-      showToast(`✅ Oferta agregada: ${prod.name}`);
+      showToast(`✅ ${upsell.price ? 'Oferta agregada' : 'Producto agregado'}: ${prod.name}`);
   };
 
   const handleCheckout = () => {
@@ -1192,35 +1350,35 @@ export default function Home() {
 
     let cardStyle = {}; 
     let sizeClasses = ''; 
-    let aspectClass = 'aspect-[4/5]'; 
-    let titleClass = 'text-[13px] md:text-[16px] leading-tight'; 
+    let aspectClass = 'aspect-square';
+    let titleClass = 'text-[13px] md:text-[16px] leading-tight';
     let priceClass = 'text-xl md:text-2xl';
 
     if (layout === 'vertical') {
-        if (effectiveSize === 'normal') { 
-            sizeClasses = 'w-[calc(50%-6px)] md:w-[calc(33.333%-14px)] lg:w-[calc(25%-15px)] flex-shrink-0'; 
-        } else if (effectiveSize === 'medium') { 
-            sizeClasses = 'w-full md:w-[calc(66.666%-14px)] lg:w-[calc(50%-10px)] flex-shrink-0'; 
-            titleClass = 'text-[15px] md:text-lg leading-tight'; 
-            priceClass = 'text-2xl md:text-3xl'; 
-        } else if (effectiveSize === 'large') { 
-            sizeClasses = 'w-full flex-shrink-0'; 
-            aspectClass = 'aspect-[16/9] md:aspect-[21/9]'; 
-            titleClass = 'text-xl md:text-3xl leading-tight'; 
-            priceClass = 'text-3xl md:text-4xl'; 
+        if (effectiveSize === 'normal') {
+            sizeClasses = 'w-[calc(50%-6px)] md:w-[calc(33.333%-14px)] lg:w-[calc(25%-15px)] flex-shrink-0';
+        } else if (effectiveSize === 'medium') {
+            sizeClasses = 'w-full md:w-[calc(66.666%-14px)] lg:w-[calc(50%-10px)] flex-shrink-0';
+            titleClass = 'text-[15px] md:text-lg leading-tight';
+            priceClass = 'text-2xl md:text-3xl';
+        } else if (effectiveSize === 'large') {
+            sizeClasses = 'w-full flex-shrink-0';
+            aspectClass = 'aspect-[16/9] md:aspect-[21/9]';
+            titleClass = 'text-xl md:text-3xl leading-tight';
+            priceClass = 'text-3xl md:text-4xl';
         }
     } else {
-        if (effectiveSize === 'normal') { 
-            sizeClasses = 'w-[160px] md:w-[200px] flex-shrink-0'; 
-        } else if (effectiveSize === 'medium') { 
-            sizeClasses = 'w-[230px] md:w-[280px] flex-shrink-0'; 
-            titleClass = 'text-[15px] md:text-lg leading-tight'; 
-            priceClass = 'text-2xl md:text-3xl'; 
-        } else if (effectiveSize === 'large') { 
-            sizeClasses = 'w-[320px] md:w-[480px] flex-shrink-0'; 
-            aspectClass = 'aspect-[16/9]'; 
-            titleClass = 'text-xl md:text-3xl leading-tight'; 
-            priceClass = 'text-3xl md:text-4xl'; 
+        if (effectiveSize === 'normal') {
+            sizeClasses = 'w-[180px] md:w-[225px] lg:w-[290px] flex-shrink-0';
+        } else if (effectiveSize === 'medium') {
+            sizeClasses = 'w-[230px] md:w-[280px] flex-shrink-0';
+            titleClass = 'text-[15px] md:text-lg leading-tight';
+            priceClass = 'text-2xl md:text-3xl';
+        } else if (effectiveSize === 'large') {
+            sizeClasses = 'w-[320px] md:w-[480px] flex-shrink-0';
+            aspectClass = 'aspect-[16/9]';
+            titleClass = 'text-xl md:text-3xl leading-tight';
+            priceClass = 'text-3xl md:text-4xl';
         }
     }
 
@@ -1228,16 +1386,16 @@ export default function Home() {
       <div 
         key={p.id} 
         style={{ transitionDelay: `${(index % 4) * 75}ms`, ...cardStyle }} 
-        className={`reveal-on-scroll bg-white border border-[#f2f2f2] shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] snap-start group ${isOutOfStock ? 'opacity-70 grayscale' : ''} ${sizeClasses}`}
+        className={`card-shimmer reveal-on-scroll relative bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col hover:-translate-y-2 hover:shadow-[0_24px_48px_rgb(0,0,0,0.12)] hover:border-gray-300 ${isVidriera && layout !== 'vertical' ? 'snap-center md:snap-start' : 'snap-start'} group transition-all duration-500 ${isVidriera && vidreiraCardRadius === 'squared' ? 'rounded-none' : 'rounded-[1.5rem]'} ${isOutOfStock ? 'opacity-50 grayscale' : ''} ${sizeClasses}`}
       >
         <div
-            className={`relative ${aspectClass} bg-[#f2f2f2]/50 cursor-pointer`}
+            className={`relative ${aspectClass} bg-gray-50 cursor-pointer`}
             onClick={() => setSelectedProduct(p)}
         >
           <img
             src={p.image}
             alt={p.name}
-            className="w-full h-full object-cover rounded-t-[1.4rem] mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-out"
+            className={`w-full h-full object-cover mix-blend-normal group-hover:scale-105 transition-transform duration-700 ease-out ${isVidriera && vidreiraCardRadius === 'squared' ? '' : 'rounded-t-[1.4rem]'}`}
           />
           {isOutOfStock ? ( 
               <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm flex items-center justify-center">
@@ -1251,22 +1409,22 @@ export default function Home() {
         </div>
         
         <div className="p-4 flex-grow flex flex-col">
-            <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-1.5 font-poppins">
+            <p className="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-1.5 font-poppins">
                 {p.category}
             </p>
             <h3 className={`font-bebas ${titleClass} uppercase mb-1 text-[#111111] line-clamp-2 tracking-wide`}>
                 {p.name}
             </h3>
-            
+
             <div className="mt-auto pt-3">
-                <p className={`text-[#fcdb00] font-bebas ${priceClass} mb-4 tracking-wide drop-shadow-sm`}>
-                    {CONFIG.currencySymbol}{formatPrice(p.price)}{p.isUSD && <span className="text-gray-400 text-[11px] font-poppins font-bold ml-1">USD</span>}
+                <p className={`text-[#111111] font-bebas ${priceClass} mb-4 tracking-wide`}>
+                    {CONFIG.currencySymbol}{formatPrice(p.price)}{p.isUSD && <span className="text-gray-500 text-[11px] font-poppins font-bold ml-1">USD</span>}
                 </p>
                 
-                {isOutOfStock ? ( 
-                    <button disabled className="w-full bg-[#f2f2f2] text-gray-400 py-3 font-bebas text-[14px] uppercase tracking-wider rounded-xl cursor-not-allowed">
+                {isOutOfStock ? (
+                    <button disabled className="w-full bg-gray-100 text-gray-500 py-3 font-bebas text-[14px] uppercase tracking-wider rounded-xl cursor-not-allowed">
                         Agotado
-                    </button> 
+                    </button>
                 ) : inCart ? (
                     <div className="flex items-center justify-between bg-[#fcdb00] text-[#111111] h-11 rounded-xl font-bold px-1.5 shadow-md">
                         <button className="w-12 h-full flex items-center justify-center hover:text-black transition-colors" onClick={() => changeQty(p.id, -1)}>
@@ -1280,7 +1438,7 @@ export default function Home() {
                 ) : ( 
                     <button 
                         onClick={(e) => addToCart(p, e)} 
-                        className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] py-3 font-bebas text-[16px] uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
+                        className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] py-3 font-bebas text-[16px] uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
                     >
                         <i className="fas fa-shopping-bag text-xs mb-0.5"></i> comprar ahora
                     </button> 
@@ -1320,7 +1478,7 @@ export default function Home() {
     return (
       <section key={category} id={slugify(category)} className="mb-20 scroll-mt-40 reveal-on-scroll">
         {(showSectionHeader || promoText) && (
-          <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-3 border-b-2 border-[#f2f2f2] pb-4">
+          <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-3 border-b border-gray-200 pb-4">
               {showSectionHeader && (
                 <h2 className="text-3xl md:text-5xl font-bebas text-[#111111] tracking-wide uppercase relative">
                     {category}
@@ -1328,13 +1486,13 @@ export default function Home() {
                 </h2>
               )}
               {promoText && (
-                  <div className="bg-[#fcdb00]/20 text-[#111111] px-4 py-2 font-bebas text-lg rounded-full uppercase tracking-wider flex items-center gap-2">
+                  <div className="bg-[#fcdb00]/20 text-[#fcdb00] px-4 py-2 font-bebas text-lg rounded-full uppercase tracking-wider flex items-center gap-2">
                       <i className="fas fa-tag text-[#fcdb00] mb-0.5"></i> {promoText}
                   </div>
               )}
           </div>
         )}
-        <div className="flex flex-wrap gap-3 md:gap-5">
+        <div className="flex flex-wrap gap-1.5 md:gap-2">
             {sectionProducts.map((p, index) => renderProductCard(p, index, false, 'vertical'))}
         </div>
       </section>
@@ -1552,18 +1710,18 @@ export default function Home() {
     };
 
     return (
-      <section id="community-section" className="community-clean-section mb-16 md:mb-20 reveal-on-scroll px-4 md:px-8">
-        <div className="max-w-[1400px] mx-auto flex items-end justify-between gap-4 mb-6 md:mb-8">
+      <section id="community-section" className="community-clean-section mb-16 md:mb-20 reveal-on-scroll">
+        <div className="flex items-end justify-between gap-4 mb-6 md:mb-8">
           <div>
             <span className="inline-flex items-center gap-2 bg-[#111111] text-white px-3.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] font-poppins mb-4 shadow-none">
               <i className="fas fa-users text-[#fcdb00]"></i> Comunidad real
             </span>
-            <h2 className="font-bebas text-[48px] md:text-[68px] uppercase tracking-[0.01em] leading-[0.94] text-[#111111]" style={{ WebkitTextStroke: '0.25px #111111' }}>028 Community</h2>
+            <h2 className="font-bebas text-[48px] md:text-[68px] uppercase tracking-[0.01em] leading-[0.94] text-[#111111] reveal-title reveal-on-scroll" style={{ WebkitTextStroke: '0.25px rgba(17,17,17,0.15)' }}>028 Community</h2>
           </div>
-          <p className="hidden md:block max-w-sm text-right text-xs font-bold uppercase tracking-widest text-gray-400 font-poppins">Reels reales con productos comprables</p>
+          <p className="hidden md:block max-w-sm text-right text-xs font-bold uppercase tracking-widest text-gray-600 font-poppins">Reels reales con productos comprables</p>
         </div>
 
-        <div className="community-rail-shell relative group/communityRail max-w-[1400px] mx-auto overflow-visible">
+        <div className="community-rail-shell relative group/communityRail overflow-visible">
           <button
             type="button"
             onClick={() => scrollCommunityRail(-1)}
@@ -1594,14 +1752,17 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
     if (secProducts.length === 0) return null;
     return (
       <div key={sec.id} className="mb-20 reveal-on-scroll">
-        <div className="flex justify-between items-end mb-6 pl-2 border-b-2 border-[#f2f2f2] pb-3">
+        <div className="flex justify-between items-end mb-6 pl-2 border-b border-gray-200 pb-3">
           <h2 className="text-4xl md:text-6xl font-bebas text-[#111111] tracking-wide uppercase">
-            <i className={`${AVAILABLE_ICONS.find(i => i.id === sec.icon)?.prefix || 'fas'} ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'} mr-3 drop-shadow-sm`}></i>{sec.title}
+            {vidreiraShowIcons && <i className={`${AVAILABLE_ICONS.find(i => i.id === sec.icon)?.prefix || 'fas'} ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'} mr-3 drop-shadow-sm`}></i>}{sec.title}
           </h2>
-          <button onClick={() => navigateTo('catalog')} className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#111111] hover:text-[#fcdb00] transition-colors bg-white/50 px-5 py-2.5 rounded-full border border-white hover:border-[#f2f2f2]">Ver Catálogo <i className="fas fa-arrow-right"></i></button>
+          <button onClick={() => navigateTo('catalog')} className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#111111]/60 hover:text-[#fcdb00] transition-colors bg-gray-100 px-5 py-2.5 rounded-full border border-gray-200 hover:border-[#fcdb00]/30">Ver Catálogo <i className="fas fa-arrow-right"></i></button>
         </div>
-        <div className={sec.layout === 'vertical' ? "flex flex-wrap gap-3 md:gap-5" : "flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-8 snap-x mask-image-gradient pr-8"}>{secProducts.map((p, index) => renderProductCard(p, index, true, sec.layout))}</div>
-        <button onClick={() => navigateTo('catalog')} className="md:hidden w-full mt-2 bg-white/70 backdrop-blur-xl border border-white shadow-sm text-[#111111] py-4 rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform font-poppins">ver todos los modelos <i className="fas fa-arrow-right text-[#fcdb00]"></i></button>
+        {sec.layout === 'vertical'
+          ? <div className="flex flex-wrap gap-1.5 md:gap-2">{secProducts.map((p, index) => renderProductCard(p, index, true, sec.layout))}</div>
+          : <HorizontalScroll className="flex overflow-x-auto gap-3 no-scrollbar pb-8 snap-x snap-mandatory -mx-4 md:mx-0 px-4 md:px-0 pr-4 md:pr-8">{secProducts.map((p, index) => renderProductCard(p, index, true, sec.layout))}</HorizontalScroll>
+        }
+        <button onClick={() => navigateTo('catalog')} className="md:hidden w-full mt-2 bg-gray-100 backdrop-blur-xl border border-gray-200 text-[#111111]/80 py-4 rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform font-poppins">ver todos los modelos <i className="fas fa-arrow-right text-[#fcdb00]"></i></button>
       </div>
     );
   };
@@ -1612,7 +1773,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
     if (sectionsToRender.length === 0) {
       return (
         <div className="text-center py-20">
-          <div className="w-12 h-12 border-4 border-[#f2f2f2] border-t-[#fcdb00] rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-gray-200 border-t-[#fcdb00] rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest font-poppins"></p>
         </div>
       );
@@ -1620,17 +1781,42 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
     return sectionsToRender.map((sec, sectionIndex) => renderSingleHomeSection(sec, sectionIndex));
   };
 
+  const LogosBar = () => (
+    <div style={{width:'100vw', marginLeft:'calc(-50vw + 50%)'}} className="relative bg-[#d0d0d0] h-64 flex items-center justify-evenly px-6 mb-10 -mt-6">
+      <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-[#f5f5f5] to-transparent pointer-events-none z-10" />
+      <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#f5f5f5] to-transparent pointer-events-none z-10" />
+      {[
+        "https://i.ibb.co/svyNs2PL/1.png",
+        "https://i.ibb.co/XrFnc1Lg/2.png",
+        "https://i.ibb.co/Psj9FpN3/3.png",
+        "https://i.ibb.co/j9jJNgfN/4.png",
+        "https://i.ibb.co/rKkcpVqz/5.png",
+        "https://i.ibb.co/20nZ2zVW/6.png",
+      ].map((src, i) => (
+        <img key={i} src={src} alt={`brand-${i+1}`} className="logo-float h-28 md:h-40 w-auto object-contain" style={{ animationDelay: `${i * 0.4}s` }} />
+      ))}
+    </div>
+  );
+
   const renderOrderedHomeBlocks = () => {
-    return normalizedHomeLayout
+    const result = [];
+    normalizedHomeLayout
       .filter(block => block.active !== false)
-      .map((block) => {
+      .forEach((block) => {
         if (block.id === 'community') {
-          return <React.Fragment key="home-block-community">{renderCommunitySection()}</React.Fragment>;
+          result.push(<React.Fragment key="home-block-community">{renderCommunitySection()}</React.Fragment>);
+        } else {
+          const sec = homeSections.find(section => section.id === block.id);
+          if (sec) result.push(<React.Fragment key={`home-block-${block.id}`}>{renderSingleHomeSection(sec)}</React.Fragment>);
         }
-        const sec = homeSections.find(section => section.id === block.id);
-        if (!sec) return null;
-        return <React.Fragment key={`home-block-${block.id}`}>{renderSingleHomeSection(sec)}</React.Fragment>;
+        if (vape3dPosition === block.id) {
+          result.push(<React.Fragment key="vape3d-showcase"><VapeSpecs3D /></React.Fragment>);
+        }
+        if (logosBarPosition === block.id) {
+          result.push(<React.Fragment key="logos-bar"><LogosBar /></React.Fragment>);
+        }
       });
+    return result;
   };
 
   const renderLegalPage = () => {
@@ -1639,9 +1825,9 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
     
     return (
         <div className="min-h-screen py-16 px-4 md:py-24">
-            <div className="max-w-3xl mx-auto bg-white/70 backdrop-blur-2xl p-8 md:p-16 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-white animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <button 
-                    onClick={() => navigateTo('home')} 
+            <div className="max-w-3xl mx-auto bg-white/90 backdrop-blur-2xl p-8 md:p-16 rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.12)] border border-gray-200 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <button
+                    onClick={() => navigateTo('home')}
                     className="mb-10 text-[#111111] hover:text-[#fcdb00] transition-colors flex items-center gap-2 font-bold text-xs uppercase tracking-widest font-poppins"
                 >
                     <i className="fas fa-arrow-left"></i> Volver a la Tienda
@@ -1663,9 +1849,9 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
     );
   };
   return (
-    <div className="bg-[#f8f8f8] text-[#111111] font-poppins flex flex-col relative min-h-screen selection:bg-[#fcdb00] selection:text-[#111111]">
+    <div style={{backgroundColor: '#f5f5f5'}} className="text-[#111111] font-poppins flex flex-col relative min-h-screen selection:bg-[#fcdb00] selection:text-[#111111]">
       <style dangerouslySetInnerHTML={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;700;900&family=Syncopate:wght@400;700&display=swap');
         .font-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
         .font-poppins { font-family: 'Poppins', sans-serif; }
         .reveal-on-scroll {
@@ -1797,35 +1983,326 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
             font-size: 16px !important;
           }
         }
+
+        /* ===== ANIMACIONES PREMIUM ===== */
+
+        /* Cart scrollbar */
+        .cart-scroll::-webkit-scrollbar { width: 6px; }
+        .cart-scroll::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 99px; }
+        .cart-scroll::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 99px; }
+        .cart-scroll::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .checkout-grid { display: flex; flex-direction: column; align-items: stretch; }
+        @media (min-width: 768px) {
+          .checkout-grid { display: grid; grid-template-columns: 65% 35%; height: 100%; align-items: start; }
+          .checkout-left { height: 100%; overflow-y: auto; }
+          .checkout-right { height: calc(100vh - 73px); }
+        }
+        @media (max-width: 767px) {
+          .checkout-total { position: sticky; bottom: 0; z-index: 10; }
+        }
+
+        /* Upsell carousel slide */
+        @keyframes upsellEnter {
+          from { transform: translateX(105%); }
+          to   { transform: translateX(0); }
+        }
+        @keyframes upsellExit {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-105%); }
+        }
+        .upsell-enter {
+          animation: upsellEnter 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+        }
+        .upsell-exit {
+          animation: upsellExit 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+          position: absolute;
+          top: 0; left: 1rem; right: 1rem;
+        }
+
+        /* Logo bar float */
+        @keyframes logoFloat {
+          0%, 100% { transform: translateY(0px); opacity: 0.7; }
+          50%       { transform: translateY(-5px); opacity: 1; }
+        }
+        .logo-float {
+          animation: logoFloat 10s ease-in-out infinite;
+        }
+
+        /* Ken Burns: hero image slow zoom-out */
+        @keyframes kenBurns {
+          from { transform: scale(1.09) translateY(-2%); }
+          to   { transform: scale(1)    translateY(0); }
+        }
+        .animate-ken-burns {
+          animation: kenBurns 14s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+        }
+
+        /* View enter: suave fade+slide al cambiar de vista */
+        @keyframes fadeInView {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-view-enter {
+          animation: fadeInView 0.55s cubic-bezier(0.22, 0.82, 0.32, 1) both;
+        }
+
+        /* Badge pop: rebota al agregar al carrito */
+        @keyframes badgePop {
+          0%   { transform: scale(1); }
+          28%  { transform: scale(1.55); }
+          55%  { transform: scale(0.82); }
+          78%  { transform: scale(1.18); }
+          100% { transform: scale(1); }
+        }
+        .animate-badge-pop {
+          animation: badgePop 0.5s cubic-bezier(0.22, 0.82, 0.32, 1);
+        }
+
+        /* Dropdown nav: entrada suave hacia abajo */
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-down {
+          animation: fadeInDown 0.18s ease-out both;
+        }
+
+        /* Bounce-in: entrada de dept cards */
+        @keyframes bounceIn {
+          0%   { opacity: 0; transform: scale(0.68) translateY(22px); }
+          55%  { opacity: 1; transform: scale(1.07) translateY(-5px); }
+          78%  { transform: scale(0.96) translateY(2px); }
+          100% { transform: scale(1) translateY(0); }
+        }
+        .animate-bounce-in {
+          animation: bounceIn 0.72s cubic-bezier(0.22, 0.82, 0.32, 1) both;
+        }
+
+        /* Stagger delays para dept cards */
+        .stagger-0  { animation-delay:   0ms; }
+        .stagger-1  { animation-delay:  65ms; }
+        .stagger-2  { animation-delay: 130ms; }
+        .stagger-3  { animation-delay: 195ms; }
+        .stagger-4  { animation-delay: 260ms; }
+        .stagger-5  { animation-delay: 325ms; }
+        .stagger-6  { animation-delay: 390ms; }
+        .stagger-7  { animation-delay: 455ms; }
+        .stagger-8  { animation-delay: 520ms; }
+        .stagger-9  { animation-delay: 585ms; }
+
+        /* Shimmer sweep en hover de product cards */
+        @keyframes cardShimmerAnim {
+          from { transform: translateX(-120%) skewX(-14deg); }
+          to   { transform: translateX(220%)  skewX(-14deg); }
+        }
+        .card-shimmer {
+          overflow: hidden;
+        }
+        .card-shimmer::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255,255,255,0.045) 50%,
+            transparent 100%
+          );
+          transform: translateX(-120%) skewX(-14deg);
+          pointer-events: none;
+          z-index: 2;
+        }
+        .card-shimmer:hover::after {
+          animation: cardShimmerAnim 0.7s ease-out forwards;
+        }
+
+        /* Price glow: pulseo suave en precio amarillo */
+        @keyframes priceGlow {
+          0%, 100% { text-shadow: 0 0 8px rgba(252,219,0,0.12); }
+          50%       { text-shadow: 0 0 18px rgba(252,219,0,0.45), 0 0 36px rgba(252,219,0,0.18); }
+        }
+        .animate-price-glow {
+          animation: priceGlow 3.2s ease-in-out infinite;
+        }
+
+        /* CTA glow: glow pulse en botón comprar */
+        @keyframes ctaGlow {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(252,219,0,0); }
+          50%       { box-shadow: 0 4px 24px 2px rgba(252,219,0,0.18); }
+        }
+        .animate-cta-glow {
+          animation: ctaGlow 2.8s ease-in-out infinite;
+        }
+
+        /* WhatsApp ring pulse */
+        @keyframes waRing {
+          0%   { transform: scale(1);   opacity: 0.55; }
+          100% { transform: scale(1.9); opacity: 0; }
+        }
+        .wa-ring-1 { animation: waRing 2s ease-out infinite; }
+        .wa-ring-2 { animation: waRing 2s ease-out 0.75s infinite; }
+
+        /* Reveal-title: slide from left (override del reveal-on-scroll vertical) */
+        .reveal-title {
+          transform: translateX(-22px) !important;
+          opacity: 0 !important;
+          transition: opacity 0.75s cubic-bezier(0.22, 0.82, 0.32, 1),
+                      transform 0.75s cubic-bezier(0.22, 0.82, 0.32, 1) !important;
+        }
+        .reveal-title.is-visible {
+          opacity: 1 !important;
+          transform: translateX(0) !important;
+        }
+
+        /* Hover icon bounce en dept cards */
+        @keyframes iconBounce {
+          0%, 100% { transform: scale(1) rotate(0deg); }
+          40%       { transform: scale(1.2) rotate(-6deg); }
+          70%       { transform: scale(0.94) rotate(3deg); }
+        }
+        .group:hover .icon-bounce {
+          animation: iconBounce 0.55s cubic-bezier(0.22, 0.82, 0.32, 1);
+        }
+
+        /* Gradient bottom fade en hero */
+        .hero-gradient-bottom {
+          background: linear-gradient(to top, #f5f5f5 0%, rgba(245,245,245,0.35) 40%, transparent 100%);
+        }
+
+        /* Underline slide-in para nav links activos */
+        @keyframes underlineSlide {
+          from { transform: scaleX(0); }
+          to   { transform: scaleX(1); }
+        }
       `}} />
 
-      {/* --- HEADER PRINCIPAL (NEGRO PURO #050505) --- */}
-      <header className="bg-[#050505] text-white h-[72px] sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 shadow-lg border-b border-white/[0.06] transition-all duration-300">
+      {/* --- HEADER PRINCIPAL --- */}
+      {/* BARRA SUPERIOR */}
+      <div className="hidden md:block w-full bg-[#050505] border-b border-white/[0.06]">
+        <div className="w-full px-4 md:px-8 h-8 flex items-center justify-between">
+
+          {/* Izquierda: Login */}
+          {user && !user.isAnonymous ? (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white">{(dbUser?.name || user.displayName)?.split(' ')[0]}</span>
+            </div>
+          ) : (
+            <button
+              onClick={() => { setAuthMode('login'); setAuthError(''); setShowAuthModal(true); }}
+              className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors flex items-center gap-1.5"
+            >
+              <i className="fas fa-user text-[9px]"></i> Registrate / Login
+            </button>
+          )}
+
+          {/* Derecha: Buscar tienda + Ayuda */}
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => navigateTo('envios')}
+              className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors flex items-center gap-1.5"
+            >
+              <i className="fas fa-store text-[9px]"></i> Buscar tienda
+            </button>
+
+            <div className="relative" onMouseEnter={() => setShowAyudaMenu(true)} onMouseLeave={() => setShowAyudaMenu(false)}>
+              <button className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors flex items-center gap-1.5">
+                <i className="fas fa-question-circle text-[9px]"></i> Ayuda
+                <i className={`fas fa-chevron-down text-[8px] transition-transform duration-200 ${showAyudaMenu ? 'rotate-180' : ''}`}></i>
+              </button>
+              {showAyudaMenu && (
+                <div className="absolute right-0 top-full mt-1 bg-[#050505] border border-white/10 rounded-xl shadow-lg py-2 w-52 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <a
+                    href={`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent('Hola! Necesito ayuda con mi pedido en 028 Import 👋')}`}
+                    target="_blank" rel="noreferrer"
+                    className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <i className="fab fa-whatsapp text-[#25D366]"></i> Contactar por WhatsApp
+                  </a>
+                  <button
+                    onClick={() => navigateTo('envios')}
+                    className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <i className="fas fa-truck text-gray-500"></i> Envíos y entregas
+                  </button>
+                  <button
+                    onClick={() => navigateTo('arrepentimiento')}
+                    className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <i className="fas fa-undo text-gray-500"></i> Arrepentimiento
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <header className={`text-white h-[72px] sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 border-b transition-all duration-500 ${headerScrolled ? 'bg-[#050505]/95 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.9)] border-white/[0.1]' : 'bg-[#050505] shadow-lg border-white/[0.06]'}`}>
         <div className="flex items-center gap-4">
-          <button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#fcdb00] transition-colors p-2 md:hidden">
-              <i className="fas fa-bars"></i>
+          {/* carrito — solo móvil, lado izquierdo */}
+          <button onClick={() => openCart()} className="relative p-2 hover:text-[#fcdb00] transition-colors md:hidden">
+            <i className="fas fa-shopping-bag text-2xl"></i>
+            {getTotalItems() > 0 && (
+              <span key={getTotalItems()} className="absolute top-1.5 -right-1 bg-[#fcdb00] text-[#111111] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-[#111111] animate-badge-pop">
+                {getTotalItems()}
+              </span>
+            )}
           </button>
-          
+
           <div className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 flex items-center gap-3 cursor-pointer group" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}>
             <img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" />
           </div>
 
           <div className="hidden md:flex items-center gap-6 ml-8 font-poppins text-xs font-bold uppercase tracking-widest">
             <button onClick={() => navigateTo('home')} className={`transition-colors ${currentView === 'home' ? 'text-[#fcdb00]' : 'text-gray-300 hover:text-white'}`}>Inicio</button>
-            <button onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); navigateTo('catalog');}} className={`transition-colors ${currentView === 'catalog' ? 'text-[#fcdb00]' : 'text-gray-300 hover:text-white'}`}>Catálogo</button>
             <button onClick={() => setShowShippingCalculatorModal(true)} className="bg-white/10 text-white px-4 py-2 rounded-full hover:bg-[#fcdb00] hover:text-[#111111] transition-all flex items-center gap-2"><i className="fas fa-motorcycle text-sm"></i> Calcular Envío</button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-4">
-          
-          <button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:text-[#fcdb00] transition-colors">
-              <i className="fas fa-shopping-bag text-2xl"></i>
-              {getTotalItems() > 0 && (
-                  <span className="absolute top-1.5 -right-1 bg-[#fcdb00] text-[#111111] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-[#111111]">
-                      {getTotalItems()}
-                  </span>
+        {/* Departamentos centrados — solo desktop */}
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-6 font-poppins text-xs font-bold uppercase tracking-widest">
+          {departments.map(dept => (
+            <div key={dept} className="relative" onMouseEnter={() => setHoveredNavDept(dept)} onMouseLeave={() => setHoveredNavDept(null)}>
+              <button onClick={() => navigateTo('catalog', dept)} className={`relative pb-1 transition-all duration-200 ${hoveredNavDept === dept ? 'text-white scale-[1.12]' : currentView === 'catalog' && filterDepts.includes(dept) ? 'text-[#fcdb00]' : 'text-gray-400'}`}>
+                {dept}
+                <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-[#fcdb00] transition-all duration-200 ${hoveredNavDept === dept ? 'opacity-100' : 'opacity-0'}`} />
+              </button>
+              {hoveredNavDept === dept && brandsByDept[dept]?.length > 0 && (
+                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 min-w-[240px] z-50" style={{filter:'none'}}>
+                <div className="bg-[#111111] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden animate-fade-in-down">
+                  <div className="px-5 py-3 border-b border-white/10">
+                    <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Marcas en {dept}</span>
+                  </div>
+                  {brandsByDept[dept].map(brand => (
+                    <button key={brand} onClick={() => { setFilterBrands([brand]); setFilterDepts([]); setCurrentView('catalog'); window.scrollTo({top:0,behavior:'smooth'}); setHoveredNavDept(null); }} className="w-full text-left px-5 py-3.5 text-[12px] text-gray-300 hover:bg-[#fcdb00] hover:text-[#111111] transition-colors tracking-widest normal-case font-bold font-poppins">
+                      {brand}
+                    </button>
+                  ))}
+                </div>
+                </div>
               )}
+            </div>
+          ))}
+          <button onClick={() => { setFilterDepts([]); setFilterBrands([]); setActiveFilter({dept:'all',cat:'all'}); setCurrentView('catalog'); window.scrollTo({top:0,behavior:'smooth'}); }} className={`relative pb-1 transition-all duration-200 ${currentView === 'catalog' && filterDepts.length === 0 ? 'text-[#fcdb00]' : 'text-gray-400 hover:text-white'}`}>
+            CATÁLOGO
+            <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-[#fcdb00] transition-all duration-200 ${currentView === 'catalog' && filterDepts.length === 0 ? 'opacity-100' : 'opacity-0'}`} />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* carrito — solo desktop, lado derecho */}
+          <button onClick={() => openCart()} className="relative p-2 hover:text-[#fcdb00] transition-colors hidden md:flex">
+            <i className="fas fa-shopping-bag text-2xl"></i>
+            {getTotalItems() > 0 && (
+              <span key={getTotalItems()} className="absolute top-1.5 -right-1 bg-[#fcdb00] text-[#111111] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-[#111111] animate-badge-pop">
+                {getTotalItems()}
+              </span>
+            )}
+          </button>
+          {/* hamburguesa — solo móvil, lado derecho */}
+          <button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#fcdb00] transition-colors p-2 md:hidden">
+            <i className="fas fa-bars"></i>
           </button>
         </div>
       </header>
@@ -1840,8 +2317,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
       )}
       
       {fomoData && (
-        <div className="fixed bottom-24 left-4 md:bottom-8 md:left-8 z-[100] bg-[#111111]/95 backdrop-blur-md text-white p-3 md:p-4 rounded-2xl shadow-2xl border border-[#fcdb00]/30 flex items-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-500 hover:scale-105 transition-transform cursor-default">
-          <div className="w-10 h-10 bg-[#fcdb00] rounded-full flex items-center justify-center text-[#111111] text-lg shadow-inner"><i className="fas fa-fire"></i></div>
+        <div className="fixed bottom-24 left-4 md:bottom-8 md:left-8 z-[100] bg-[#111111]/95 backdrop-blur-md text-white p-3 md:p-4 rounded-2xl shadow-[0_8px_32px_rgba(252,219,0,0.12)] border border-[#fcdb00]/30 flex items-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-500 hover:scale-105 hover:shadow-[0_8px_40px_rgba(252,219,0,0.22)] transition-all cursor-default">
+          <div className="w-10 h-10 bg-[#fcdb00] rounded-full flex items-center justify-center text-[#111111] text-lg shadow-inner animate-cta-glow"><i className="fas fa-fire"></i></div>
           <div className="flex flex-col">
             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest font-poppins">¡Venta en Vivo!</span>
             <span className="font-bebas text-lg md:text-xl tracking-wide uppercase leading-none mt-0.5 text-[#fcdb00]">
@@ -1852,84 +2329,188 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
       )}
 
       {/* --- MENÚ MÓVIL (3 RAYITAS) --- */}
-      {isMenuOpen && (<div className="fixed inset-0 z-[90] flex"><div className="absolute inset-0 bg-[#111111]/60 backdrop-blur-md transition-opacity" onClick={() => setIsMenuOpen(false)}></div><div className="w-[85%] max-w-[380px] bg-[#f2f2f2] h-full relative z-10 animate-in slide-in-from-left duration-500 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden"><div className="p-8 bg-[#111111] flex justify-between items-center text-white border-b border-white/10"><span className="font-bebas text-3xl tracking-wide uppercase">028<span className="text-[#fcdb00]">MENU</span></span><button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times text-lg"></i></button></div><div className="flex-1 overflow-y-auto pb-8"><div className="flex flex-col p-4 space-y-2">
-        
-        <div className="md:hidden mb-2">
-            {!user || user.isAnonymous ? (
-                <button onClick={handleGoogleLogin} className="w-full bg-[#111111] text-white p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#fcdb00] hover:text-[#111111] transition-all flex justify-center items-center gap-3"><i className="fab fa-google text-lg"></i> Iniciar sesión con Google</button>
-            ) : (
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-3">
-                    <p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest text-center">Hola, {dbUser?.name?.split(' ')[0] || 'Cliente'}</p>
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-[90] flex justify-end">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)} />
+          <div className="w-[88%] max-w-[360px] bg-white h-full relative z-10 animate-in slide-in-from-right duration-300 flex flex-col shadow-2xl">
+
+            {/* X fija arriba a la derecha */}
+            <button onClick={() => setIsMenuOpen(false)} className="absolute top-5 right-4 z-20 w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-[#111111] active:bg-gray-200 transition-colors">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="1" y1="1" x2="15" y2="15" stroke="#111111" strokeWidth="2" strokeLinecap="round"/>
+                <line x1="15" y1="1" x2="1" y2="15" stroke="#111111" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
+
+            {/* CONTENIDO SCROLLEABLE (todo junto) */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="px-5 pb-10">
+
+                {/* HEADER con logo */}
+                <div className="pt-6 pb-4 flex items-center justify-center border-b border-gray-300 mb-2">
+                  <img src={CONFIG.logoImage} alt="028" className="h-14 w-auto object-contain" />
                 </div>
-            )}
-        </div>
-        
-        <button onClick={() => { setShowShippingCalculatorModal(true); setIsMenuOpen(false); }} className="w-full bg-[#fcdb00] text-[#111111] p-4 rounded-2xl shadow-md font-black uppercase text-xs hover:bg-[#111111] hover:text-[#fcdb00] transition-all flex justify-center items-center gap-3 mb-2"><i className="fas fa-motorcycle text-lg"></i> Calcular Envío</button>
-        
-        <button onClick={() => { setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); }} className="text-left p-5 bg-white rounded-2xl shadow-sm border border-[#f2f2f2] font-black uppercase text-sm hover:border-[#fcdb00] hover:shadow-md flex justify-between items-center transition-all">Catálogo Completo <i className="fas fa-arrow-right text-[#fcdb00]"></i></button><div className="pt-6 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Departamentos</p></div>{departments.map(dept => { const isExpanded = expandedDept === dept; const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category))); return (<div key={dept} className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] overflow-hidden transition-all"><button onClick={() => setExpandedDept(isExpanded ? null : dept)} className="w-full text-left p-5 font-black uppercase text-sm flex justify-between items-center transition-colors group">{dept} <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-gray-300 group-hover:text-[#fcdb00] transition-colors`}></i></button><div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="bg-gray-50 flex flex-col pb-4 pt-2 border-t border-gray-100"><button onClick={() => { setActiveFilter({dept, cat: 'all'}); navigateTo('catalog'); }} className="text-left px-6 py-3 font-black text-xs text-[#111111] uppercase hover:text-[#fcdb00] transition-colors flex items-center gap-2"><i className="fas fa-layer-group text-gray-400"></i> Ver todo en {dept}</button>{deptCats.map(cat => (<button key={cat} onClick={() => { setActiveFilter({dept, cat}); navigateTo('catalog'); setTimeout(() => { const target = document.getElementById(slugify(cat)); if(target) target.scrollIntoView({behavior: 'smooth'}); }, 300); }} className="text-left px-6 py-3 font-bold text-xs text-gray-500 uppercase hover:text-[#111111] transition-colors pl-12 relative before:content-[''] before:w-1.5 before:h-1.5 before:bg-gray-300 before:rounded-full before:absolute before:left-7 before:top-1/2 before:-translate-y-1/2 hover:before:bg-[#fcdb00]">{cat}</button>))}</div></div></div>); })}
-        
-        <div className="pt-8 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins">Información Útil</p></div>
-        <div className="bg-white rounded-2xl shadow-sm border border-[#f2f2f2] p-2 space-y-1">
-          <button onClick={() => { navigateTo('nosotros'); }} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-users"></i></div> Quiénes Somos</button>
-          <button onClick={() => { navigateTo('envios'); }} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-truck"></i></div> Envíos y Logística</button>
-          <button onClick={() => { navigateTo('pagos'); }} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-[#fcdb00]"><i className="fas fa-credit-card"></i></div> Medios de Pago</button>
-          <button onClick={() => { navigateTo('terminos'); }} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-gray-400"><i className="fas fa-file-contract"></i></div> Legales y Términos</button>
-          <button onClick={() => { navigateTo('arrepentimiento'); }} className="w-full text-left p-4 font-bold text-xs text-gray-600 uppercase hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f2f2f2] flex items-center justify-center text-gray-400"><i className="fas fa-undo"></i></div> Botón de Arrepentimiento</button>
-        </div>
 
-        <div className="pt-8 pb-2 px-2"><p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest font-poppins text-center">Nuestras Redes</p></div>
-        <div className="flex gap-4 justify-center pb-4">
-          <a href="https://www.tiktok.com/@028.import" target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center text-[#111111] hover:bg-[#fcdb00] hover:border-[#fcdb00] transition-all"><i className="fab fa-tiktok text-xl"></i></a>
-          <a href="https://www.instagram.com/028.import" target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center text-[#111111] hover:bg-[#fcdb00] hover:border-[#fcdb00] transition-all"><i className="fab fa-instagram text-xl"></i></a>
-          <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center text-[#111111] hover:bg-[#fcdb00] hover:border-[#fcdb00] transition-all"><i className="fab fa-whatsapp text-xl"></i></a>
-        </div>
+                {/* USUARIO */}
+                <div className="py-2">
+              {!user || user.isAnonymous ? (
+                <button
+                  onClick={() => { setAuthMode('login'); setAuthError(''); setShowAuthModal(true); setIsMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 py-2 active:opacity-60 transition-opacity"
+                >
+                  <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                    <i className="fas fa-user text-gray-400 text-sm"></i>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[#111111] font-medium text-sm">Iniciá sesión</p>
+                    <p className="text-gray-400 text-[11px]">o creá tu cuenta</p>
+                  </div>
+                  <i className="fas fa-chevron-right text-gray-500 ml-auto text-xs"></i>
+                </button>
+              ) : (
+                <div className="flex items-center gap-3 py-1">
+                  <span style={{display:'inline-block', overflow:'hidden', height:'22px', width:'23px', verticalAlign:'middle'}}><i className="far fa-user text-2xl text-[#111111]" style={{display:'block', lineHeight:'1'}}></i></span>
+                  <p className="text-[#111111] font-bold text-base translate-y-1">{(dbUser?.name || user.displayName)?.split(' ')[0]}!</p>
+                </div>
+              )}
+                </div>
 
-        </div></div></div></div>)}
+                {/* Nav principal */}
+                <div className="py-2">
+                  <button
+                    onClick={() => { setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); setIsMenuOpen(false); }}
+                    className="w-full text-left py-3.5 text-base text-[#111111] flex items-center justify-between active:opacity-60 transition-opacity border-b border-gray-100" style={{fontWeight:510}}
+                  >
+                    Catálogo Completo <i className="fas fa-arrow-right text-gray-300 text-sm"></i>
+                  </button>
+
+                  {departments.map(dept => {
+                    const isExpanded = expandedDept === dept;
+                    const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category)));
+                    return (
+                      <div key={dept} className="border-b border-gray-100">
+                        <button
+                          onClick={() => setExpandedDept(isExpanded ? null : dept)}
+                          className="w-full text-left py-3.5 text-base text-[#111111] flex items-center justify-between active:opacity-60 transition-opacity" style={{fontWeight:510}}
+                        >
+                          {dept}
+                          <i className={`fas fa-chevron-down text-gray-500 text-sm transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}></i>
+                        </button>
+                        <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                          <div className="pb-3 flex flex-col gap-0.5">
+                            <button
+                              onClick={() => { setActiveFilter({dept, cat: 'all'}); navigateTo('catalog'); setIsMenuOpen(false); }}
+                              className="text-left py-2 pl-4 text-sm font-medium text-[#111111] active:opacity-60 transition-opacity"
+                            >
+                              Ver todo en {dept}
+                            </button>
+                            {deptCats.map(cat => (
+                              <button
+                                key={cat}
+                                onClick={() => { setActiveFilter({dept, cat}); navigateTo('catalog'); setIsMenuOpen(false); setTimeout(() => { const target = document.getElementById(slugify(cat)); if(target) target.scrollIntoView({behavior:'smooth'}); }, 300); }}
+                                className="text-left py-2 pl-4 text-sm font-medium text-[#111111] active:opacity-60 transition-opacity"
+                              >
+                                {cat}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* CTA Calcular Envío */}
+                <button
+                  onClick={() => { setShowShippingCalculatorModal(true); setIsMenuOpen(false); }}
+                  className="w-full bg-[#fcdb00] text-[#111111] py-3.5 px-4 rounded-2xl font-semibold uppercase text-xs mt-4 mb-2 active:brightness-90 transition-all flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <i className="fas fa-motorcycle"></i> Calcular Envío
+                </button>
+
+                {/* Info */}
+                <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 font-poppins mt-20 mb-1">Información</p>
+                <div className="flex flex-col">
+                  {[
+                    { label: 'Quiénes Somos',            icon: 'fa-store',           action: () => { navigateTo('nosotros'); setIsMenuOpen(false); } },
+                    { label: 'Envíos y Logística',        icon: 'fa-motorcycle',      action: () => { navigateTo('envios'); setIsMenuOpen(false); } },
+                    { label: 'Medios de Pago',            icon: 'fa-credit-card',     action: () => { navigateTo('pagos'); setIsMenuOpen(false); } },
+                    { label: 'Legales y Términos',        icon: 'fa-file-contract',   action: () => { navigateTo('terminos'); setIsMenuOpen(false); } },
+                    { label: 'Botón de Arrepentimiento',  icon: 'fa-rotate-left',     action: () => { navigateTo('arrepentimiento'); setIsMenuOpen(false); } },
+                  ].map(item => (
+                    <button key={item.label} onClick={item.action} className="text-left py-3 text-sm font-normal text-[#111111] border-b border-gray-100 active:opacity-60 transition-opacity last:border-0 flex items-center gap-3">
+                      <i className={`fas ${item.icon} text-gray-600 text-sm w-4 text-center`}></i>
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Redes */}
+                <div className="pt-6 flex items-center gap-3">
+                  <a href="https://www.tiktok.com/@028.import" target="_blank" rel="noreferrer" className="flex-1 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-[#111111] active:bg-[#fcdb00] transition-all">
+                    <i className="fab fa-tiktok text-lg"></i>
+                  </a>
+                  <a href="https://www.instagram.com/028.import" target="_blank" rel="noreferrer" className="flex-1 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-[#111111] active:bg-[#fcdb00] transition-all">
+                    <i className="fab fa-instagram text-lg"></i>
+                  </a>
+                  <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="flex-1 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-[#111111] active:bg-[#25D366] active:text-white transition-all">
+                    <i className="fab fa-whatsapp text-lg"></i>
+                  </a>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- INICIO CONTENIDO --- */}
       {currentView === 'home' ? (
         <>
-          <div className="w-full bg-[#111111] py-2 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex">
+          <div className="w-full bg-[#111111] h-8 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex items-center">
             <div className="animate-marquee whitespace-nowrap flex items-center">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="flex items-center gap-8 px-4 text-[#fcdb00] font-poppins font-bold text-[10px] md:text-xs tracking-widest uppercase">
-                  <span> ENVIOS 24HS CABA/AMBA </span><span className="text-white/30">•</span>
-                  <span> 028 IMPORT </span><span className="text-white/30">•</span>
-                  <span> DESCUENTOS ABONANDO EN EFECTIVO </span><span className="text-white/30">•</span>
-                  <span> PEDIME TE LLEGA EN 30'</span><span className="text-white/30">•</span>
+                <div key={i} style={{color: '#f5d000', fontFamily: "'Bebas Neue', sans-serif"}} className="flex items-center gap-8 px-4 font-bold italic text-[13px] md:text-[15px] tracking-widest uppercase">
+                  <span> ENVIOS 24HS CABA/AMBA </span><span style={{color: '#787878'}}>•</span>
+                  <span> 028 IMPORT </span><span style={{color: '#787878'}}>•</span>
+                  <span> DESCUENTOS ABONANDO EN EFECTIVO </span><span style={{color: '#787878'}}>•</span>
+                  <span> PEDIME TE LLEGA EN 30'</span><span style={{color: '#787878'}}>•</span>
                 </div>
               ))}
             </div>
           </div>
-          <header className="relative w-full h-[35vh] md:h-[55vh] flex items-center justify-center bg-[#111111] overflow-hidden border-b border-[#111111]">
-            <img src={CONFIG.bannerImage} alt="Banner 028" className="absolute inset-0 w-full h-full object-cover object-center" />
-          </header>
-          <main className="flex-grow px-4 md:px-8 pt-10 max-w-7xl mx-auto min-h-[50vh] pb-8 md:pb-16 w-full">
-            <div className="md:hidden relative mb-12 reveal-on-scroll">
-                <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input type="text" placeholder="Buscar productos, marcas..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentView('catalog');}} className="w-full bg-white/70 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] pl-12 pr-6 py-4 rounded-2xl text-sm font-bold outline-none focus:border-[#fcdb00] focus:bg-white transition-all placeholder:text-gray-400 font-poppins" />
-            </div>
-            <div className="mb-16 reveal-on-scroll">
-              <h3 className="font-bebas text-2xl text-[#111111] mb-4 pl-2">Explorar la tienda</h3>
-              <div className="flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">
-                {virtualDepts.map(vd => (
-                  <div key={`vd-${vd.name}`} onClick={() => { setActiveFilter({dept: 'all', cat: 'all'}); setFilterDepts([]); navigateTo('catalog'); }} className="snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-white/70 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-[#fcdb00] transition-all duration-500 group">
-                    <div className="w-14 h-14 md:w-16 md:h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center overflow-hidden group-hover:bg-[#fcdb00] transition-colors">
-                      {vd.icon?.startsWith('http') ? <img src={vd.icon} alt={vd.name} className="w-9 h-9 md:w-10 md:h-10 object-contain" /> : <i className={`fas ${vd.icon || 'fa-store'} text-2xl md:text-3xl text-[#111111]`}></i>}
+          <div className="w-full h-[230px] md:h-[475px] overflow-hidden">
+            <img
+              src="https://i.ibb.co/604qygNq/image.png"
+              alt="Banner 028 Import"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          {logosBarPosition === 'banner' && <LogosBar />}
+          {vape3dPosition === 'banner' && <VapeSpecs3D />}
+          <main className="flex-grow px-4 md:px-10 lg:px-20 xl:px-32 pt-10 w-full min-h-[50vh] pb-8 md:pb-16 animate-view-enter">
+            <div className="mb-16 hidden">
+              <h3 className="font-bebas text-2xl text-[#111111] mb-4 pl-2 reveal-title reveal-on-scroll hidden"></h3>
+              <HorizontalScroll className="flex overflow-x-auto gap-2 md:gap-3 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">
+                {virtualDepts.map((vd, i) => (
+                  <div key={`vd-${vd.name}`} onClick={() => { setActiveFilter({dept: 'all', cat: 'all'}); setFilterDepts([]); navigateTo('catalog'); }} className={`animate-bounce-in stagger-${Math.min(i, 9)} snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-gray-50 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-200 flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.1)] hover:border-[#fcdb00]/60 transition-all duration-500 group`}>
+                    <div className="w-14 h-14 md:w-16 md:h-16 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden group-hover:bg-[#fcdb00] transition-colors">
+                      {vd.icon?.startsWith('http') ? <img src={vd.icon} alt={vd.name} className="w-9 h-9 md:w-10 md:h-10 object-contain icon-bounce" /> : <i className={`fas ${vd.icon || 'fa-store'} text-2xl md:text-3xl text-[#111111] group-hover:text-[#111111] icon-bounce`}></i>}
                     </div>
-                    <span className="font-bold text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-[#111111] group-hover:text-black transition-colors font-poppins">{vd.name}</span>
+                    <span className="font-bold text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-[#111111]/70 group-hover:text-[#111111] transition-colors font-poppins">{vd.name}</span>
                   </div>
                 ))}
-                {departments.map(dept => {
+                {departments.map((dept, i) => {
                   const iconId = deptIcons[dept] || 'fa-box';
-                  const iconObj = DEPT_ICONS.find(i => i.id === iconId) || { id: 'fa-box', prefix: 'fas' };
+                  const iconObj = DEPT_ICONS.find(ic => ic.id === iconId) || { id: 'fa-box', prefix: 'fas' };
+                  const staggerIdx = Math.min(virtualDepts.length + i, 9);
                   return (
-                  <div key={dept} onClick={() => navigateTo('catalog', dept)} className="snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-white/70 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-[#fcdb00] transition-all duration-500 group">
-                    <div className="w-14 h-14 md:w-16 md:h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center text-[#111111] text-2xl md:text-3xl group-hover:bg-[#fcdb00] transition-colors"><i className={`${iconObj.prefix} ${iconObj.id}`}></i></div>
-                    <span className="font-bold text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-[#111111] group-hover:text-black transition-colors font-poppins">{dept}</span>
+                  <div key={dept} onClick={() => navigateTo('catalog', dept)} className={`animate-bounce-in stagger-${staggerIdx} snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-gray-50 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-200 flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.1)] hover:border-[#fcdb00]/60 transition-all duration-500 group`}>
+                    <div className="w-14 h-14 md:w-16 md:h-16 bg-gray-100 rounded-full flex items-center justify-center text-[#111111] text-2xl md:text-3xl group-hover:bg-[#fcdb00] group-hover:text-[#111111] transition-colors"><i className={`${iconObj.prefix} ${iconObj.id} icon-bounce`}></i></div>
+                    <span className="font-bold text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-[#111111]/70 group-hover:text-[#111111] transition-colors font-poppins">{dept}</span>
                   </div>
                 )})}
-              </div>
+              </HorizontalScroll>
             </div>
             {renderOrderedHomeBlocks()}
           </main>
@@ -1937,31 +2518,31 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
       ) : currentView === 'catalog' ? (
         <>
           {/* Barra de filtros */}
-          <div className="bg-white/80 backdrop-blur-2xl sticky top-[72px] z-40 border-b border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <div className="max-w-7xl mx-auto px-4 md:px-8">
+          <div className="bg-white/90 backdrop-blur-2xl z-40 border-b border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.08)] sticky top-[72px]">
+            <div className="px-4 md:px-10 lg:px-20 xl:px-32">
               <div className="flex items-center gap-3 pt-3 pb-1">
-                <button onClick={() => navigateTo('home')} className="text-gray-400 hover:text-[#111111] text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5"><i className="fas fa-home"></i> Inicio</button>
-                <span className="text-gray-300 text-[10px]"><i className="fas fa-chevron-right"></i></span>
+                <button onClick={() => navigateTo('home')} className="text-gray-500 hover:text-[#111111] text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5"><i className="fas fa-home"></i> Inicio</button>
+                <span className="text-gray-400 text-[10px]"><i className="fas fa-chevron-right"></i></span>
                 <span className="text-[#111111] font-bold uppercase tracking-widest text-[10px]">CATÁLOGO COMPLETO</span>
               </div>
               <div className="flex items-center justify-between py-3 gap-3">
-                <span className="text-[11px] text-gray-400 font-poppins font-medium flex-shrink-0">{catalogProducts.length} producto{catalogProducts.length !== 1 ? 's' : ''}</span>
+                <span className="text-[11px] text-gray-500 font-poppins font-medium flex-shrink-0">{catalogProducts.length} producto{catalogProducts.length !== 1 ? 's' : ''}</span>
                 <div className="flex items-center gap-2">
                   <div className="relative" ref={sortDropdownRef}>
-                    <button onClick={() => setShowSortDropdown(v => !v)} className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-xl text-[11px] font-bold text-[#111111] hover:border-gray-300 transition-all font-poppins">
+                    <button onClick={() => setShowSortDropdown(v => !v)} className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 border border-gray-200 rounded-xl text-[11px] font-bold text-[#111111] hover:border-gray-300 transition-all font-poppins">
                       Ordenar <i className={`fas fa-chevron-${showSortDropdown ? 'up' : 'down'} text-[8px]`}></i>
                     </button>
                     {showSortDropdown && (
-                      <div className="absolute top-full mt-2 right-0 w-52 bg-white rounded-2xl shadow-xl border border-[#f2f2f2] z-50 overflow-hidden">
+                      <div className="absolute top-full mt-2 right-0 w-52 bg-white rounded-2xl shadow-xl border border-gray-200 z-50 overflow-hidden">
                         {[{id:'relevante',label:'Más relevante'},{id:'reciente',label:'Más reciente'},{id:'mayor_precio',label:'Mayor precio'},{id:'menor_precio',label:'Menor precio'}].map(opt => (
-                          <button key={opt.id} onClick={() => { setSortBy(opt.id); setShowSortDropdown(false); }} className={`w-full text-left px-5 py-3.5 text-[11px] font-bold font-poppins transition-colors flex items-center justify-between ${sortBy === opt.id ? 'bg-[#111111] text-white' : 'hover:bg-gray-50 text-[#111111]'}`}>
-                            {opt.label}{sortBy === opt.id && <i className="fas fa-check text-[#fcdb00]"></i>}
+                          <button key={opt.id} onClick={() => { setSortBy(opt.id); setShowSortDropdown(false); }} className={`w-full text-left px-5 py-3.5 text-[11px] font-bold font-poppins transition-colors flex items-center justify-between ${sortBy === opt.id ? 'bg-[#fcdb00] text-[#111111]' : 'hover:bg-gray-50 text-[#111111]/70'}`}>
+                            {opt.label}{sortBy === opt.id && <i className="fas fa-check text-[#111111]"></i>}
                           </button>
                         ))}
                       </div>
                     )}
                   </div>
-                  <button onClick={openFilterDrawer} className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold transition-all font-poppins border ${activeFilterCount > 0 ? 'bg-[#111111] text-white border-[#111111]' : 'bg-white border-gray-200 text-[#111111] hover:border-gray-300'}`}>
+                  <button onClick={openFilterDrawer} className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold transition-all font-poppins border ${activeFilterCount > 0 ? 'bg-[#fcdb00] text-[#111111] border-[#fcdb00]' : 'bg-gray-100 border-gray-200 text-[#111111] hover:border-gray-300'}`}>
                     <i className="fas fa-sliders-h text-[10px]"></i> Filtrar{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
                   </button>
                 </div>
@@ -1970,15 +2551,15 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           </div>
 
           {/* Productos */}
-          <main className="flex-grow px-4 md:px-8 py-10 max-w-7xl mx-auto min-h-[50vh] pb-8 md:pb-16 w-full">
+          <main className="flex-grow px-4 md:px-10 lg:px-20 xl:px-32 py-10 w-full min-h-[50vh] pb-8 md:pb-16 animate-view-enter">
             {catalogProducts.length === 0 && (
-              <div className="text-center py-24 bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white shadow-sm">
-                <div className="w-20 h-20 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-6"><i className="fas fa-ghost text-3xl text-gray-400"></i></div>
+              <div className="text-center py-24 bg-gray-50 backdrop-blur-xl rounded-[2rem] border border-gray-200">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"><i className="fas fa-ghost text-3xl text-gray-500"></i></div>
                 <h3 className="text-3xl font-bebas uppercase tracking-wide text-[#111111] mb-2">No encontramos nada</h3>
                 <p className="text-xs uppercase tracking-widest text-gray-500 font-poppins">Intentá con otros filtros o buscá otra cosa.</p>
               </div>
             )}
-            <div className="flex flex-wrap gap-3 md:gap-5">
+            <div className="flex flex-wrap gap-1.5 md:gap-2">
               {catalogProducts.map((p, index) => renderProductCard(p, index, false, 'vertical'))}
             </div>
           </main>
@@ -1989,24 +2570,24 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           {showFilterDrawer && (
             <>
               <div className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm" onClick={() => setShowFilterDrawer(false)} />
-              <div className="fixed right-0 top-0 bottom-0 z-[100] w-full max-w-sm bg-white flex flex-col shadow-2xl">
-                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 flex-shrink-0">
-                  <h2 className="text-2xl font-bebas uppercase tracking-wide text-[#111111]">Filtros</h2>
-                  <button onClick={() => setShowFilterDrawer(false)} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-[#111111]"><i className="fas fa-times"></i></button>
+              <div className="fixed right-0 top-0 bottom-0 z-[100] w-full max-w-sm bg-[#111111] flex flex-col shadow-2xl border-l border-white/10">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-white/10 flex-shrink-0">
+                  <h2 className="text-2xl font-bebas uppercase tracking-wide text-white">Filtros</h2>
+                  <button onClick={() => setShowFilterDrawer(false)} className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"><i className="fas fa-times"></i></button>
                 </div>
                 <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
 
                   {/* Gustos */}
                   <div>
                     <button onClick={() => setExpandedFilterSection(expandedFilterSection === 'gustos' ? null : 'gustos')} className="w-full flex items-center justify-between px-6 py-4">
-                      <span className="text-[12px] font-bold uppercase tracking-widest text-[#111111] font-poppins flex items-center gap-2">Gustos{pendingFlavors.length > 0 && <span className="text-[9px] bg-[#111111] text-white rounded-full w-4 h-4 flex items-center justify-center">{pendingFlavors.length}</span>}</span>
-                      <i className={`fas fa-chevron-${expandedFilterSection === 'gustos' ? 'up' : 'down'} text-[10px] text-gray-400`}></i>
+                      <span className="text-[12px] font-bold uppercase tracking-widest text-white font-poppins flex items-center gap-2">Gustos{pendingFlavors.length > 0 && <span className="text-[9px] bg-[#fcdb00] text-[#111111] rounded-full w-4 h-4 flex items-center justify-center">{pendingFlavors.length}</span>}</span>
+                      <i className={`fas fa-chevron-${expandedFilterSection === 'gustos' ? 'up' : 'down'} text-[10px] text-gray-500`}></i>
                     </button>
                     {expandedFilterSection === 'gustos' && (
                       <div className="px-6 pb-5 grid grid-cols-2 gap-2">
                         {FLAVOR_OPTIONS.map(flavor => { const sel = pendingFlavors.includes(flavor); return (
-                          <button key={flavor} onClick={() => setPendingFlavors(prev => sel ? prev.filter(f => f !== flavor) : [...prev, flavor])} className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all text-left ${sel ? 'bg-[#111111] border-[#111111] text-white' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
-                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${sel ? 'bg-white' : 'border border-gray-300'}`}>{sel && <i className="fas fa-check text-[#111111] text-[8px]"></i>}</div>
+                          <button key={flavor} onClick={() => setPendingFlavors(prev => sel ? prev.filter(f => f !== flavor) : [...prev, flavor])} className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all text-left ${sel ? 'bg-[#fcdb00] border-[#fcdb00] text-[#111111]' : 'border-white/10 text-gray-400 hover:border-white/20'}`}>
+                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${sel ? 'bg-[#111111]' : 'border border-white/20'}`}>{sel && <i className="fas fa-check text-[#fcdb00] text-[8px]"></i>}</div>
                             <span className="text-[10px] font-bold uppercase tracking-widest font-poppins">{flavor}</span>
                           </button>
                         );})}
@@ -2017,14 +2598,14 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   {/* Marcas */}
                   <div>
                     <button onClick={() => setExpandedFilterSection(expandedFilterSection === 'marcas' ? null : 'marcas')} className="w-full flex items-center justify-between px-6 py-4">
-                      <span className="text-[12px] font-bold uppercase tracking-widest text-[#111111] font-poppins flex items-center gap-2">Marcas{pendingBrands.length > 0 && <span className="text-[9px] bg-[#111111] text-white rounded-full w-4 h-4 flex items-center justify-center">{pendingBrands.length}</span>}</span>
-                      <i className={`fas fa-chevron-${expandedFilterSection === 'marcas' ? 'up' : 'down'} text-[10px] text-gray-400`}></i>
+                      <span className="text-[12px] font-bold uppercase tracking-widest text-white font-poppins flex items-center gap-2">Marcas{pendingBrands.length > 0 && <span className="text-[9px] bg-[#fcdb00] text-[#111111] rounded-full w-4 h-4 flex items-center justify-center">{pendingBrands.length}</span>}</span>
+                      <i className={`fas fa-chevron-${expandedFilterSection === 'marcas' ? 'up' : 'down'} text-[10px] text-gray-500`}></i>
                     </button>
                     {expandedFilterSection === 'marcas' && (
                       <div className="px-6 pb-5 flex flex-col gap-0.5">
                         {allUniqueCategories.map(cat => { const sel = pendingBrands.includes(cat); return (
-                          <button key={cat} onClick={() => setPendingBrands(prev => sel ? prev.filter(c => c !== cat) : [...prev, cat])} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${sel ? 'bg-[#111111] border-[#111111] text-white' : 'border-transparent text-gray-600 hover:bg-gray-50'}`}>
-                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${sel ? 'bg-white' : 'border border-gray-300'}`}>{sel && <i className="fas fa-check text-[#111111] text-[8px]"></i>}</div>
+                          <button key={cat} onClick={() => setPendingBrands(prev => sel ? prev.filter(c => c !== cat) : [...prev, cat])} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${sel ? 'bg-[#fcdb00] border-[#fcdb00] text-[#111111]' : 'border-transparent text-gray-400 hover:bg-white/5'}`}>
+                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${sel ? 'bg-[#111111]' : 'border border-white/20'}`}>{sel && <i className="fas fa-check text-[#fcdb00] text-[8px]"></i>}</div>
                             <span className="text-[11px] font-bold uppercase tracking-widest font-poppins">{cat}</span>
                           </button>
                         );})}
@@ -2035,14 +2616,14 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   {/* Tipo de producto */}
                   <div>
                     <button onClick={() => setExpandedFilterSection(expandedFilterSection === 'tipo' ? null : 'tipo')} className="w-full flex items-center justify-between px-6 py-4">
-                      <span className="text-[12px] font-bold uppercase tracking-widest text-[#111111] font-poppins flex items-center gap-2">Tipo de producto{pendingDepts.length > 0 && <span className="text-[9px] bg-[#111111] text-white rounded-full w-4 h-4 flex items-center justify-center">{pendingDepts.length}</span>}</span>
-                      <i className={`fas fa-chevron-${expandedFilterSection === 'tipo' ? 'up' : 'down'} text-[10px] text-gray-400`}></i>
+                      <span className="text-[12px] font-bold uppercase tracking-widest text-white font-poppins flex items-center gap-2">Tipo de producto{pendingDepts.length > 0 && <span className="text-[9px] bg-[#fcdb00] text-[#111111] rounded-full w-4 h-4 flex items-center justify-center">{pendingDepts.length}</span>}</span>
+                      <i className={`fas fa-chevron-${expandedFilterSection === 'tipo' ? 'up' : 'down'} text-[10px] text-gray-500`}></i>
                     </button>
                     {expandedFilterSection === 'tipo' && (
                       <div className="px-6 pb-5 flex flex-col gap-0.5">
                         {allDepartments.map(dept => { const sel = pendingDepts.includes(dept); return (
-                          <button key={dept} onClick={() => setPendingDepts(prev => sel ? prev.filter(d => d !== dept) : [...prev, dept])} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${sel ? 'bg-[#111111] border-[#111111] text-white' : 'border-transparent text-gray-600 hover:bg-gray-50'}`}>
-                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${sel ? 'bg-white' : 'border border-gray-300'}`}>{sel && <i className="fas fa-check text-[#111111] text-[8px]"></i>}</div>
+                          <button key={dept} onClick={() => setPendingDepts(prev => sel ? prev.filter(d => d !== dept) : [...prev, dept])} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${sel ? 'bg-[#fcdb00] border-[#fcdb00] text-[#111111]' : 'border-transparent text-gray-400 hover:bg-white/5'}`}>
+                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${sel ? 'bg-[#111111]' : 'border border-white/20'}`}>{sel && <i className="fas fa-check text-[#fcdb00] text-[8px]"></i>}</div>
                             <span className="text-[11px] font-bold uppercase tracking-widest font-poppins">{dept}</span>
                           </button>
                         );})}
@@ -2054,14 +2635,14 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   {uniquePuffs.length > 0 && (
                     <div>
                       <button onClick={() => setExpandedFilterSection(expandedFilterSection === 'puff' ? null : 'puff')} className="w-full flex items-center justify-between px-6 py-4">
-                        <span className="text-[12px] font-bold uppercase tracking-widest text-[#111111] font-poppins flex items-center gap-2">Puff{pendingPuffs.length > 0 && <span className="text-[9px] bg-[#111111] text-white rounded-full w-4 h-4 flex items-center justify-center">{pendingPuffs.length}</span>}</span>
-                        <i className={`fas fa-chevron-${expandedFilterSection === 'puff' ? 'up' : 'down'} text-[10px] text-gray-400`}></i>
+                        <span className="text-[12px] font-bold uppercase tracking-widest text-white font-poppins flex items-center gap-2">Puff{pendingPuffs.length > 0 && <span className="text-[9px] bg-[#fcdb00] text-[#111111] rounded-full w-4 h-4 flex items-center justify-center">{pendingPuffs.length}</span>}</span>
+                        <i className={`fas fa-chevron-${expandedFilterSection === 'puff' ? 'up' : 'down'} text-[10px] text-gray-500`}></i>
                       </button>
                       {expandedFilterSection === 'puff' && (
                         <div className="px-6 pb-5 flex flex-col gap-0.5">
                           {uniquePuffs.map(puff => { const sel = pendingPuffs.includes(puff); return (
-                            <button key={puff} onClick={() => setPendingPuffs(prev => sel ? prev.filter(p => p !== puff) : [...prev, puff])} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${sel ? 'bg-[#111111] border-[#111111] text-white' : 'border-transparent text-gray-600 hover:bg-gray-50'}`}>
-                              <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${sel ? 'bg-white' : 'border border-gray-300'}`}>{sel && <i className="fas fa-check text-[#111111] text-[8px]"></i>}</div>
+                            <button key={puff} onClick={() => setPendingPuffs(prev => sel ? prev.filter(p => p !== puff) : [...prev, puff])} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${sel ? 'bg-[#fcdb00] border-[#fcdb00] text-[#111111]' : 'border-transparent text-gray-400 hover:bg-white/5'}`}>
+                              <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${sel ? 'bg-[#111111]' : 'border border-white/20'}`}>{sel && <i className="fas fa-check text-[#fcdb00] text-[8px]"></i>}</div>
                               <span className="text-[11px] font-bold uppercase tracking-widest font-poppins">{Number(puff).toLocaleString('es-AR')} puffs</span>
                             </button>
                           );})}
@@ -2073,38 +2654,38 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   {/* Precio */}
                   <div>
                     <button onClick={() => setExpandedFilterSection(expandedFilterSection === 'precio' ? null : 'precio')} className="w-full flex items-center justify-between px-6 py-4">
-                      <span className="text-[12px] font-bold uppercase tracking-widest text-[#111111] font-poppins">Precio</span>
-                      <i className={`fas fa-chevron-${expandedFilterSection === 'precio' ? 'up' : 'down'} text-[10px] text-gray-400`}></i>
+                      <span className="text-[12px] font-bold uppercase tracking-widest text-white font-poppins">Precio</span>
+                      <i className={`fas fa-chevron-${expandedFilterSection === 'precio' ? 'up' : 'down'} text-[10px] text-gray-500`}></i>
                     </button>
                     {expandedFilterSection === 'precio' && (
                       <div className="px-6 pb-6">
                         <div className="flex justify-between mb-4">
-                          <span className="text-[13px] font-bold font-poppins text-[#111111]">${formatPrice(pendingPriceRange[0])}</span>
-                          <span className="text-[13px] font-bold font-poppins text-[#111111]">${formatPrice(pendingPriceRange[1])}</span>
+                          <span className="text-[13px] font-bold font-poppins text-white">${formatPrice(pendingPriceRange[0])}</span>
+                          <span className="text-[13px] font-bold font-poppins text-white">${formatPrice(pendingPriceRange[1])}</span>
                         </div>
                         <div className="relative flex items-center h-6">
-                          <div className="absolute left-0 right-0 h-1 bg-gray-200 rounded-full pointer-events-none">
-                            <div className="absolute h-full bg-[#111111] rounded-full" style={{left:`${((pendingPriceRange[0]-minPrice)/((maxPrice-minPrice)||1))*100}%`,right:`${100-((pendingPriceRange[1]-minPrice)/((maxPrice-minPrice)||1))*100}%`}} />
+                          <div className="absolute left-0 right-0 h-1 bg-white/20 rounded-full pointer-events-none">
+                            <div className="absolute h-full bg-[#fcdb00] rounded-full" style={{left:`${((pendingPriceRange[0]-minPrice)/((maxPrice-minPrice)||1))*100}%`,right:`${100-((pendingPriceRange[1]-minPrice)/((maxPrice-minPrice)||1))*100}%`}} />
                           </div>
-                          <input type="range" min={minPrice} max={maxPrice} step={Math.max(500,Math.floor((maxPrice-minPrice)/100))} value={pendingPriceRange[0]} onChange={(e) => { const v=Number(e.target.value); if(v<pendingPriceRange[1]) setPendingPriceRange([v,pendingPriceRange[1]]); }} className="absolute w-full appearance-none bg-transparent outline-none cursor-pointer [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#111111] [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-runnable-track]:bg-transparent [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#111111] [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-track]:bg-transparent" />
-                          <input type="range" min={minPrice} max={maxPrice} step={Math.max(500,Math.floor((maxPrice-minPrice)/100))} value={pendingPriceRange[1]} onChange={(e) => { const v=Number(e.target.value); if(v>pendingPriceRange[0]) setPendingPriceRange([pendingPriceRange[0],v]); }} className="absolute w-full appearance-none bg-transparent outline-none cursor-pointer [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#111111] [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-runnable-track]:bg-transparent [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#111111] [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-track]:bg-transparent" />
+                          <input type="range" min={minPrice} max={maxPrice} step={Math.max(500,Math.floor((maxPrice-minPrice)/100))} value={pendingPriceRange[0]} onChange={(e) => { const v=Number(e.target.value); if(v<pendingPriceRange[1]) setPendingPriceRange([v,pendingPriceRange[1]]); }} className="absolute w-full appearance-none bg-transparent outline-none cursor-pointer [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#fcdb00] [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#111111] [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-runnable-track]:bg-transparent [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#fcdb00] [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#111111] [&::-moz-range-track]:bg-transparent" />
+                          <input type="range" min={minPrice} max={maxPrice} step={Math.max(500,Math.floor((maxPrice-minPrice)/100))} value={pendingPriceRange[1]} onChange={(e) => { const v=Number(e.target.value); if(v>pendingPriceRange[0]) setPendingPriceRange([pendingPriceRange[0],v]); }} className="absolute w-full appearance-none bg-transparent outline-none cursor-pointer [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#fcdb00] [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#111111] [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-runnable-track]:bg-transparent [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#fcdb00] [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#111111] [&::-moz-range-track]:bg-transparent" />
                         </div>
                       </div>
                     )}
                   </div>
                 </div>
-                <div className="px-6 py-4 border-t border-gray-100 flex gap-3 bg-white flex-shrink-0">
-                  <button onClick={clearPendingFilters} className="flex-1 py-3.5 rounded-xl bg-gray-100 text-[#111111] text-[11px] font-black uppercase tracking-widest font-poppins hover:bg-gray-200 transition-colors">Limpiar</button>
+                <div className="px-6 py-4 border-t border-white/10 flex gap-3 bg-[#111111] flex-shrink-0">
+                  <button onClick={clearPendingFilters} className="flex-1 py-3.5 rounded-xl bg-white/10 text-white text-[11px] font-black uppercase tracking-widest font-poppins hover:bg-white/20 transition-colors">Limpiar</button>
                   <button onClick={applyFilters} className="flex-1 py-3.5 rounded-xl bg-[#111111] text-white text-[11px] font-black uppercase tracking-widest font-poppins hover:bg-[#333] transition-colors">Aplicar</button>
                 </div>
               </div>
             </>
           )}
         </>
-      ) : ( 
-          <main className="flex-grow">
+      ) : (
+          <main className="flex-grow animate-view-enter">
               {renderLegalPage()}
-          </main> 
+          </main>
       )}
 
       <footer className="block bg-[#111111] text-white pt-8 md:pt-12 pb-6 md:pb-8 mt-auto relative z-30 rounded-t-[2rem] overflow-hidden">
@@ -2142,266 +2723,462 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
       {selectedProduct && (
           <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6">
               <div className="absolute inset-0 bg-black/75 backdrop-blur-xl transition-opacity" onClick={() => setSelectedProduct(null)}></div>
-              <div className="relative bg-[#111111]/90 backdrop-blur-2xl border border-white/10 w-full max-w-lg rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.7)] max-h-[92dvh] overflow-y-auto animate-in zoom-in-95 duration-500 md:max-w-4xl md:flex md:flex-row md:overflow-hidden md:max-h-[90vh]">
-                  <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-lg">
+              <div className="relative bg-[#111111] backdrop-blur-2xl border border-[#2a2a2a] w-full max-w-lg rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.5)] max-h-[92dvh] overflow-y-auto animate-in zoom-in-95 duration-500 md:max-w-4xl md:flex md:flex-row md:overflow-hidden md:max-h-[90vh]">
+                  <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 backdrop-blur-md border border-white/10 text-white rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-lg">
                       <i className="fas fa-times text-lg"></i>
                   </button>
-                  <div className="bg-white/5 mx-3 mt-3 rounded-[1.5rem] overflow-hidden aspect-square w-full md:mx-0 md:mt-0 md:rounded-none md:rounded-l-[2rem] md:w-1/2 md:aspect-auto md:flex-shrink-0">
+                  <div className="bg-[#1a1a1a] mx-3 mt-3 rounded-[1.5rem] overflow-hidden aspect-square w-full md:mx-0 md:mt-0 md:rounded-none md:rounded-l-[2rem] md:w-1/2 md:aspect-auto md:flex-shrink-0">
                       <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="px-6 pb-8 pt-4 md:w-1/2 md:p-12 md:flex md:flex-col md:justify-center md:overflow-y-auto">
-                      <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-2">{selectedProduct.category}</p>
+                      <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-2">{selectedProduct.category}</p>
                       <h2 className="font-bebas text-5xl text-white uppercase leading-none mb-3">{selectedProduct.name}</h2>
                       {selectedProduct.tag && (
-                          <span className="inline-block bg-white/10 text-white border border-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-4 w-fit">{selectedProduct.tag}</span>
+                          <span className="inline-block bg-white/10 text-white border border-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-4 w-fit">{selectedProduct.tag}</span>
                       )}
                       <div className="border-t border-white/10 my-4"></div>
-                      <p className="text-white/60 text-sm font-poppins leading-relaxed whitespace-pre-line">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p>
+                      <p className="text-white/50 text-sm font-poppins leading-relaxed whitespace-pre-line">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p>
                       <div className="border-t border-white/10 my-4"></div>
-                      <p className="font-bebas text-5xl text-[#fcdb00] mb-6">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}{selectedProduct.isUSD && <span className="text-white/50 text-base font-poppins font-bold ml-2">USD</span>}</p>
+                      <p className="font-bebas text-5xl text-[#fcdb00] mb-6">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}{selectedProduct.isUSD && <span className="text-white/40 text-base font-poppins font-bold ml-2">USD</span>}</p>
                       {selectedProduct.inStock === false ? (
-                          <button disabled className="w-full bg-gray-700 text-gray-500 py-4 text-xl font-bebas uppercase tracking-wider rounded-xl cursor-not-allowed border border-gray-600">Producto Agotado</button>
+                          <button disabled className="w-full bg-white/10 text-white/30 py-4 text-xl font-bebas uppercase tracking-wider rounded-xl cursor-not-allowed border border-white/10">Producto Agotado</button>
                       ) : (
-                          <button onClick={(e) => addToCart(selectedProduct, e)} className="w-full bg-white text-[#111111] hover:bg-[#fcdb00] py-4 text-xl font-bebas uppercase tracking-wider rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_10px_30px_rgba(252,219,0,0.4)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95"><i className="fas fa-shopping-cart text-lg mb-0.5"></i> Agregar a la bolsa</button>
+                          <button onClick={(e) => addToCart(selectedProduct, e)} className="w-full bg-[#fcdb00] text-[#111111] hover:bg-white hover:text-[#111111] py-4 text-xl font-bebas uppercase tracking-wider rounded-xl shadow-[0_10px_30px_rgba(252,219,0,0.2)] hover:shadow-[0_10px_30px_rgba(255,255,255,0.2)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95"><i className="fas fa-shopping-cart text-lg mb-0.5"></i> Agregar a la bolsa</button>
                       )}
                   </div>
               </div>
           </div>
       )}
 
-      {/* --- DRAWER DEL CARRITO (BLINDADO ANTI-INSTAGRAM Y ANTI-TECLADO iOS) --- */}
+      {/* ===== DRAWER DEL CARRITO ===== */}
       {isCartOpen && (
-          <div className="fixed inset-0 z-[120] flex flex-col justify-end items-center sm:justify-center p-0 md:p-4">
-              {/* Fondo oscuro para cerrar */}
-              <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)} />
-              
-              {/* CAJA PRINCIPAL RÍGIDA: Exactamente 85% de alto (dinámico), flex column estricto */}
-              <div className="relative bg-[#f2f2f2] w-full max-w-lg md:mx-auto rounded-t-[2rem] md:rounded-[2rem] max-h-[85dvh] h-full flex flex-col overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/20 animate-in slide-in-from-bottom duration-300">
-                  
-                  {/* HEADER (Fijo arriba, no se achica) */}
-                  <div className="p-5 md:p-6 border-b border-gray-300 flex justify-between items-center bg-white flex-shrink-0 z-10 shadow-sm">
-                      <div>
-                          <h2 className="text-3xl md:text-4xl font-bebas uppercase tracking-wide text-[#111111] leading-none mb-1">Tu Bolsa</h2>
-                          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest font-poppins">{getTotalItems()} artículos seleccionados</p>
-                      </div>
-                      <button onClick={() => setIsCartOpen(false)} className="w-10 h-10 bg-[#f2f2f2] rounded-full text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex items-center justify-center shadow-sm border border-gray-200"><i className="fas fa-times text-lg"></i></button>
+        <div className="fixed inset-0 z-[120]">
+          {/* Backdrop — cubre toda la pantalla, aparece instantáneo */}
+          <div
+            className="hidden md:block absolute inset-0 bg-black/50"
+            onClick={() => closeCart()}
+          />
+
+          {/* Panel lateral */}
+          <div
+            className="absolute top-0 right-0 h-full w-full md:w-[460px] bg-white flex flex-col shadow-2xl z-10"
+            style={{ transform: isCartVisible ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.18s ease-out' }}
+          >
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
+              <button onClick={() => closeCart()} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-[#111111]">
+                <i className="fas fa-arrow-left text-xs"></i>
+              </button>
+              <div className="flex items-center gap-2">
+                <span className="font-bebas text-xl uppercase tracking-wide text-[#111111]">Tu Bolsa</span>
+                <span className="bg-[#111111] text-[#fcdb00] font-bebas text-xs px-2 py-0.5 rounded-full">{getTotalItems()}</span>
+              </div>
+              <div className="w-8" />
+            </div>
+
+            {/* Productos — scroll */}
+            <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-2 cart-scroll">
+
+              {cart.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-20">
+                  <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center">
+                    <i className="fas fa-shopping-bag text-xl text-gray-400"></i>
                   </div>
-                  
-                  {/* CUERPO (Acá es donde el usuario hace scroll, se estira para llenar el espacio medio) */}
-                  <div className="flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar relative">
-                      <div className="space-y-3 mb-4">
-                          {cart.length === 0 && (
-                              <div className="text-center py-20 bg-white/50 rounded-2xl border border-dashed border-gray-300">
-                                  <div className="w-16 h-16 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><i className="fas fa-shopping-bag text-2xl text-gray-400"></i></div>
-                                  <p className="text-gray-400 font-bold text-xs uppercase tracking-widest font-poppins">Tu bolsa está vacía</p>
-                              </div>
-                          )}
-                          
-                          {/* PRODUCTOS */}
-                          {cart.map(item => (
-                              <div key={item.id} className="flex justify-between items-center bg-[#f9f9f9] p-3 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-gray-200">
-                                  <div className="flex items-center gap-4">
-                                      <div className="w-16 h-16 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center p-1">
-                                          <img src={item.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/>
-                                      </div>
-                                      <div className="flex flex-col">
-                                          <p className="font-bebas text-lg uppercase tracking-wide max-w-[130px] md:max-w-[180px] line-clamp-1 text-[#111111]">{item.name}</p>
-                                          <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1 bg-white border border-gray-100 w-fit px-2 py-0.5 rounded-md font-poppins">{item.qty} un.</p>
-                                      </div>
-                                  </div>
-                                  <div className="flex items-center gap-4 pr-2">
-                                      <p className="font-bebas text-[#fcdb00] text-2xl tracking-wide drop-shadow-sm">
-                                          ${formatPrice(item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item)))}
-                                      </p>
-                                      <div className="flex flex-col items-center gap-1.5 bg-white rounded-md p-1.5 border border-gray-200 shadow-sm">
-                                          <button onClick={() => changeQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-gray-50 rounded-md hover:bg-[#fcdb00] transition-colors"><i className="fas fa-plus text-[10px]"></i></button>
-                                          <button onClick={() => changeQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-[#111111] bg-gray-50 rounded-md hover:bg-[#fcdb00] transition-colors"><i className="fas fa-minus text-[10px]"></i></button>
-                                      </div>
-                                  </div>
-                              </div>
-                          ))}
-        
-                          {/* UPSELLS */}
-                          {upsellsList.length > 0 && upsellsList.some(u => u.active && !cart.find(c => c.id == u.productId)) && (
-                              <div className="mt-8 mb-2 animate-in slide-in-from-bottom duration-500">
-                                  <p className="font-bebas text-xl mb-3 uppercase tracking-wider text-[#111111] flex items-center gap-2">
-                                      <i className="fas fa-fire text-[#fcdb00]"></i> Agregá a tu pedido
-                                  </p>
-                                  <div className="flex overflow-x-auto gap-3 pb-2 no-scrollbar snap-x mask-image-gradient pr-4">
-                                      {upsellsList.filter(u => u.active && !cart.find(c => c.id == u.productId)).map(upsell => {
-                                          const prod = products.find(p => p.id == upsell.productId);
-                                          if (!prod || prod.inStock === false || prod.isDeleted) return null;
-                                          return (
-                                              <div key={upsell.id} className="snap-start flex-shrink-0 w-[260px] bg-[#f9f9f9] p-3 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 relative transition-all hover:border-[#fcdb00]">
-                                                  <div className="relative w-16 h-16 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center p-1 flex-shrink-0">
-                                                      <span className="absolute top-0 left-0 bg-[#111111] text-[#fcdb00] text-[8px] font-black uppercase px-1.5 py-0.5 rounded-br-lg shadow-sm z-10 font-poppins">Oferta</span>
-                                                      <img src={prod.image} className="w-full h-full object-contain mix-blend-multiply" alt=""/>
-                                                  </div>
-                                                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                      <p className="font-bebas text-sm uppercase truncate text-[#111111] leading-tight">{prod.name}</p>
-                                                      <p className="text-[#111111] font-bebas text-xl leading-none mt-1.5 drop-shadow-sm">${formatPrice(upsell.price)} <span className="line-through text-gray-400 text-[10px] font-poppins ml-1">${formatPrice(prod.price)}</span></p>
-                                                  </div>
-                                                  <button onClick={() => handleAddUpsellToCart(upsell)} className="w-10 h-10 flex-shrink-0 bg-[#111111] text-[#fcdb00] rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-md active:scale-90">
-                                                      <i className="fas fa-plus text-sm"></i>
-                                                  </button>
-                                              </div>
-                                          );
-                                      })}
-                                  </div>
-                              </div>
-                          )}
+                  <p className="text-gray-400 font-bold text-xs uppercase tracking-widest font-poppins">Tu bolsa está vacía</p>
+                  <button onClick={() => closeCart()} className="bg-[#111111] text-[#fcdb00] font-bebas text-base uppercase px-6 py-2.5 rounded-xl hover:brightness-110 transition-all">Ver productos</button>
+                </div>
+              )}
+
+              {cart.map(item => {
+                const unitPrice = item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item);
+                return (
+                  <div key={item.id} className="flex gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                    {/* Imagen */}
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden flex items-center justify-center p-1 flex-shrink-0" style={{width:'62px',height:'62px'}}>
+                      <img src={item.image} className="w-full h-full object-contain" alt=""/>
+                    </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                      <p className="font-bebas text-lg uppercase tracking-wide text-[#111111] leading-tight break-words max-w-[140px]" style={{display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{item.name}</p>
+                      {/* Controles qty */}
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => changeQty(item.id, 1)} className="w-7 h-7 flex items-center justify-center bg-white border border-gray-200 rounded-md hover:border-[#fcdb00] hover:bg-[#fcdb00] transition-colors text-[#111111]">
+                          <i className="fas fa-plus text-[10px]"></i>
+                        </button>
+                        <span className="font-bebas text-lg w-5 text-center">{item.qty}</span>
+                        <button onClick={() => changeQty(item.id, -1)} className="w-7 h-7 flex items-center justify-center bg-white border border-gray-200 rounded-md hover:bg-gray-100 transition-colors text-[#111111]">
+                          <i className="fas fa-minus text-[10px]"></i>
+                        </button>
                       </div>
-                      
-                      {/* FORMULARIOS */}
-                      {cart.length > 0 && (
-                          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-                              {localRoulettePrize && localRoulettePrize.type !== 'none' && (
-                                <div className="bg-[#111111] text-[#fcdb00] p-4 rounded-xl flex items-center justify-between border border-[#fcdb00]/30 shadow-md">
-                                  <div className="flex items-center gap-4">
-                                      <i className="fas fa-gift text-2xl"></i>
-                                      <div className="flex flex-col">
-                                          <span className="font-bold text-[10px] uppercase text-white">Premio Hot Sale</span>
-                                          <span className="font-bebas text-xl block leading-none mt-1">{localRoulettePrize.text}</span>
-                                      </div>
-                                  </div>
-                                  <i className="fas fa-check-circle text-2xl text-[#25D366]"></i>
+                    </div>
+                    {/* Columna derecha: eliminar + precio */}
+                    <div className="flex flex-col items-end justify-between flex-shrink-0 ml-auto">
+                      <button onClick={() => changeQty(item.id, -item.qty)} className="w-7 h-7 flex items-center justify-center hover:text-red-400 text-gray-500 transition-colors">
+                        <i className="far fa-trash-alt text-[14px]"></i>
+                      </button>
+                      <p className="font-bebas text-lg text-[#111111] leading-none">${formatPrice(item.qty * unitPrice)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+
+
+            </div>
+
+            {/* Footer fijo: ofertas + calcular envío + subtotal + botón */}
+            {cart.length > 0 && (
+              <div className="flex-shrink-0 border-t border-gray-100 bg-white">
+
+                {/* Upsells — muestra uno a la vez, rota cada 1.5s */}
+                {(() => {
+                  const upsellItems = upsellsList.filter(u => u.active && !cart.find(c => c.id == u.productId));
+                  const carritoItems = carritoDestacados.filter(u => u.active && !cart.find(c => c.id == u.productId));
+                  const activeUpsells = [...upsellItems, ...carritoItems];
+                  const upsell = activeUpsells[upsellIndex % (activeUpsells.length || 1)];
+                  if (!upsell) return null;
+                  const prod = products.find(p => p.id == upsell.productId);
+                  if (!prod || prod.inStock === false || prod.isDeleted) return null;
+                  const prevUpsell = prevUpsellIndex !== null ? activeUpsells[prevUpsellIndex % activeUpsells.length] : null;
+                  const prevProd = prevUpsell ? products.find(p => p.id == prevUpsell.productId) : null;
+                  return (
+                    <div className="px-4 pt-3 pb-2 border-b border-gray-100 overflow-hidden relative" style={{minHeight: '60px'}}>
+                      {/* Saliente */}
+                      {prevUpsell && prevProd && (
+                        <div className="upsell-exit flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-2">
+                          <div className="relative w-12 h-12 flex-shrink-0">
+                            {prevUpsell.price && <span className="absolute top-0 left-0 bg-[#fcdb00] text-[#111111] text-[6px] font-black uppercase px-0.5 py-px rounded-md z-10 font-poppins leading-none">Oferta</span>}
+                            <img src={prevProd.image} className="w-full h-full object-contain drop-shadow-md" alt=""/>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bebas text-sm uppercase text-[#111111] leading-tight truncate">{prevProd.name}</p>
+                            {prevUpsell.price
+                              ? <p className="font-bebas text-base text-[#111111] leading-none">${formatPrice(prevUpsell.price)} <span className="line-through text-gray-400 text-[9px] font-poppins">${formatPrice(prevProd.price)}</span></p>
+                              : <p className="font-bebas text-base text-[#111111] leading-none">${formatPrice(prevProd.price)}</p>
+                            }
+                          </div>
+                          <div className="flex-shrink-0 px-3 py-1.5 bg-[#111111] text-[#fcdb00] rounded-lg font-bebas text-sm uppercase opacity-50">+ Agregar</div>
+                        </div>
+                      )}
+                      {/* Entrante */}
+                      <div key={upsellIndex} className="upsell-enter flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-2">
+                        <div className="relative w-12 h-12 flex-shrink-0">
+                          {upsell.price && <span className="absolute top-0 left-0 bg-[#fcdb00] text-[#111111] text-[6px] font-black uppercase px-0.5 py-px rounded-md z-10 font-poppins leading-none">Oferta</span>}
+                          <img src={prod.image} className="w-full h-full object-contain drop-shadow-md" alt=""/>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bebas text-sm uppercase text-[#111111] leading-tight truncate">{prod.name}</p>
+                          {upsell.price
+                            ? <p className="font-bebas text-base text-[#111111] leading-none">${formatPrice(upsell.price)} <span className="line-through text-gray-400 text-[9px] font-poppins">${formatPrice(prod.price)}</span></p>
+                            : <p className="font-bebas text-base text-[#111111] leading-none">${formatPrice(prod.price)}</p>
+                          }
+                        </div>
+                        <button onClick={() => handleAddUpsellToCart(upsell)} className="flex-shrink-0 px-3 py-1.5 bg-[#111111] text-white rounded-lg font-bebas text-sm uppercase hover:bg-[#fcdb00] hover:text-[#111111] transition-colors active:scale-95">
+                          + Agregar
+                        </button>
+                      </div>
+                      {/* Dots */}
+                      {activeUpsells.length > 1 && (
+                        <div className="flex justify-center gap-1.5 mt-2">
+                          {activeUpsells.map((_, i) => (
+                            <div
+                              key={i}
+                              className="rounded-full transition-all duration-300"
+                              style={{
+                                width:  i === upsellIndex % activeUpsells.length ? '16px' : '6px',
+                                height: '6px',
+                                background: i === upsellIndex % activeUpsells.length ? '#111111' : '#d1d5db',
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Calcular envío */}
+                <div className="px-4 pt-4 pb-4 border-b border-gray-100">
+                  <CalculadorEnvioSimple
+                    address={address} setAddress={setAddress}
+                    setZone={setZone}
+                    setShippingCost={setShippingCost}
+                  />
+                </div>
+                {/* Subtotal + botón */}
+                <div className="px-4 py-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 font-poppins">Subtotal</span>
+                    <span className="font-bebas text-3xl text-[#111111] tracking-wide">{CONFIG.currencySymbol}{formatPrice(cart.reduce((a, i) => a + i.qty * (i.isUpsell ? i.upsellPrice : getUnitPromoPrice(i)), 0))}</span>
+                  </div>
+                  <button
+                    onClick={() => closeCart(() => setIsCheckoutOpen(true))}
+                    className="w-full bg-[#111111] text-[#fcdb00] font-bebas py-4 rounded-xl uppercase tracking-wider text-xl flex justify-center items-center gap-3 hover:brightness-110 active:scale-95 transition-all"
+                  >
+                    Finalizar Compra <i className="fas fa-arrow-right text-lg"></i>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===== PANTALLA DE CHECKOUT ===== */}
+      {isCheckoutOpen && (() => {
+        const isFormValid = clientName.trim() && clientPhone.trim() && (
+          deliveryMethod === 'retiro' ||
+          (deliveryMethod === 'envio' && shippingType === 'flash' && address.trim()) ||
+          (deliveryMethod === 'envio' && shippingType === 'moto' && address.trim() && shippingCost > 0)
+        );
+        return (
+        <div className="fixed inset-0 z-[125] bg-[#f5f5f5] flex flex-col overflow-hidden">
+
+          {/* Header */}
+          <div className="bg-white border-b border-gray-200 px-5 py-4 flex items-center gap-4 flex-shrink-0 shadow-sm">
+            <button onClick={() => { setIsCheckoutOpen(false); openCart(); }} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-[#111111]">
+              <i className="fas fa-arrow-left text-sm"></i>
+            </button>
+            <div>
+              <h2 className="font-bebas text-2xl uppercase tracking-wide text-[#111111] leading-none">Finalizar Compra</h2>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest font-poppins">{getTotalItems()} producto{getTotalItems() !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
+
+          {/* Contenido — dos columnas en desktop, una en mobile */}
+          <div className="flex-1 overflow-y-auto md:overflow-hidden no-scrollbar">
+            <div className="checkout-grid max-w-full gap-0 px-0 md:pl-4">
+
+              {/* ── COLUMNA IZQUIERDA: formularios ── */}
+              <div className="checkout-left flex flex-col gap-3 md:gap-4 px-4 md:px-0 md:pr-6 py-4 md:py-6 no-scrollbar">
+
+                {/* Premio ruleta */}
+                {localRoulettePrize && localRoulettePrize.type !== 'none' && (
+                  <div className="bg-[#111111] text-[#fcdb00] p-4 rounded-2xl flex items-center gap-4 border border-[#fcdb00]/30">
+                    <i className="fas fa-gift text-2xl"></i>
+                    <div><span className="font-bold text-[10px] uppercase text-white block font-poppins">Premio Hot Sale</span><span className="font-bebas text-xl leading-none">{localRoulettePrize.text}</span></div>
+                    <i className="fas fa-check-circle text-xl text-[#25D366] ml-auto"></i>
+                  </div>
+                )}
+
+                {/* Datos personales */}
+                <div className="bg-white rounded-none border border-gray-200 p-5">
+                  <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2">
+                    <i className="fas fa-user text-[#fcdb00]"></i> Tus Datos
+                  </p>
+                  <div className="flex flex-col gap-3 font-poppins">
+                    <input type="text" placeholder="Nombre completo *" value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-300 rounded-none text-xs font-bold text-[#111111] outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
+                    <input type="tel" placeholder="Número de WhatsApp *" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-300 rounded-none text-xs font-bold text-[#111111] outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
+                    {/* Cupón */}
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <i className="fas fa-ticket-alt absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                        <input
+                          type="text"
+                          placeholder="Código de cupón"
+                          value={couponCode}
+                          onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(''); if (appliedCoupon) setAppliedCoupon(null); }}
+                          disabled={!!appliedCoupon}
+                          className="w-full pl-8 pr-3 py-4 bg-gray-50 border border-gray-300 rounded-none text-xs font-bold text-[#111111] outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400 uppercase disabled:opacity-60"
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (appliedCoupon) { setAppliedCoupon(null); setCouponCode(''); setCouponError(''); return; }
+                          const found = coupons.find(c => c.code === couponCode.trim().toUpperCase() && c.active);
+                          if (found) { setAppliedCoupon(found); setCouponError(''); }
+                          else setCouponError('Cupón inválido o expirado');
+                        }}
+                        className={`px-4 py-2 rounded-none text-xs font-bold uppercase tracking-widest transition-all flex-shrink-0 ${appliedCoupon ? 'bg-red-100 text-red-500 hover:bg-red-200' : 'bg-[#111111] text-[#fcdb00] hover:bg-[#222]'}`}
+                      >
+                        {appliedCoupon ? 'Quitar' : 'Aplicar'}
+                      </button>
+                    </div>
+                    {couponError && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest">{couponError}</p>}
+                    {appliedCoupon && <p className="text-emerald-600 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5"><i className="fas fa-check-circle"></i> Cupón aplicado: {appliedCoupon.discount}% off</p>}
+                  </div>
+                </div>
+
+                {/* Entrega */}
+                <div className="bg-white rounded-none border border-gray-200 p-5">
+                  <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2">
+                    <i className="fas fa-map-marked-alt text-[#fcdb00]"></i> Entrega
+                  </p>
+                  <div className="flex gap-2 mb-4 bg-gray-100 p-1.5 rounded-none border border-gray-300 font-poppins">
+                    <button onClick={() => setDeliveryMethod('retiro')} className={`flex-1 py-3 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryMethod === 'retiro' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Retiro Local</button>
+                    <button onClick={() => setDeliveryMethod('envio')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryMethod === 'envio' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Envío Domicilio</button>
+                  </div>
+
+                  {deliveryMethod === 'retiro' && (
+                    <div className="bg-[#fcdb00]/10 border border-[#fcdb00] p-4 rounded-none flex items-center gap-3">
+                      <div className="w-10 h-10 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] flex-shrink-0"><i className="fas fa-store text-lg"></i></div>
+                      <div>
+                        <span className="font-bebas text-lg tracking-wide leading-none block text-[#111111]">Miñones & Juramento</span>
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-relaxed font-poppins">Belgrano, CABA</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {deliveryMethod === 'envio' && (
+                    <div className="flex flex-col gap-3 font-poppins">
+                      <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Elegí tu opción:</label>
+                      <div onClick={() => { setShippingType('flash'); if (firebaseRefs.db) setDoc(doc(firebaseRefs.db, 'stats', 'shipping'), { flash: increment(1) }, { merge: true }).catch(console.error); }} className={`p-4 rounded-none border-2 cursor-pointer transition-all flex gap-3 items-center ${shippingType === 'flash' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-300 bg-gray-50 hover:border-[#fcdb00]/40 rounded-none'}`}>
+                        <div className="w-9 h-9 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] flex-shrink-0"><i className="fas fa-bolt"></i></div>
+                        <div className="flex-1"><span className={`font-bebas text-lg leading-none block mb-1 ${shippingType === 'flash' ? 'text-[#fcdb00]' : 'text-[#111111]/70'}`}>Envío Flash</span><span className="text-[9px] font-bold text-gray-500">⏱️ Menos de 30 min · Solo transferencia</span></div>
+                        {shippingType === 'flash' && <i className="fas fa-check-circle text-[#fcdb00] text-lg"></i>}
+                      </div>
+                      <div onClick={() => { setShippingType('moto'); if (firebaseRefs.db) setDoc(doc(firebaseRefs.db, 'stats', 'shipping'), { moto: increment(1) }, { merge: true }).catch(console.error); }} className={`p-4 rounded-none border-2 cursor-pointer transition-all flex gap-3 items-center ${shippingType === 'moto' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-300 bg-gray-50 hover:border-[#fcdb00]/40 rounded-none'}`}>
+                        <div className="w-9 h-9 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] flex-shrink-0"><i className="fas fa-motorcycle"></i></div>
+                        <div className="flex-1"><span className={`font-bebas text-lg leading-none block mb-1 ${shippingType === 'moto' ? 'text-[#fcdb00]' : 'text-[#111111]/70'}`}>Motomensajería</span><span className="text-[9px] font-bold text-gray-500">⏲️ Horarios: 13:00 · 16:00 · 20:00hs</span></div>
+                        {shippingType === 'moto' && <i className="fas fa-check-circle text-[#fcdb00] text-lg"></i>}
+                      </div>
+
+                      {shippingType === 'flash' && (
+                        <div className="flex flex-col gap-3 mt-1">
+                          <div className="relative"><i className="fas fa-map-marker-alt absolute left-4 top-1/2 -translate-y-1/2 text-[#fcdb00]"></i><input type="text" placeholder="Dirección completa *" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-300 rounded-none text-xs font-bold text-[#111111] outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" /></div>
+                          <div className="relative"><i className="fas fa-city absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" placeholder="Barrio / CP" value={zone} onChange={(e) => setZone(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-300 rounded-none text-xs font-bold text-[#111111] outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" /></div>
+                          <div className="relative"><i className="fas fa-building absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" placeholder="Piso / Depto (Opcional)" value={aptDetails} onChange={(e) => setAptDetails(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-300 rounded-none text-xs font-bold text-[#111111] outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" /></div>
+                        </div>
+                      )}
+
+                      {shippingType === 'moto' && (
+                        <div className="flex flex-col gap-3 mt-1">
+                          <CalculadorEnvio address={address} setAddress={setAddress} zone={zone} setZone={setZone} shippingType={shippingType} setShippingCost={setShippingCost} aptDetails={aptDetails} setAptDetails={setAptDetails} />
+                          <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest mt-1">¿Cuándo querés recibirlo?</label>
+                          <div className="relative"><i className="fas fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i><select value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-none text-[11px] font-bold uppercase tracking-wider outline-none focus:border-[#fcdb00] transition-all appearance-none cursor-pointer text-[#111111]">{next7Days.map(d => (<option key={d.value} value={d.value}>{d.label}</option>))}</select><i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[10px]"></i></div>
+                          <div className="flex gap-2 bg-gray-100 p-1.5 rounded-none border border-gray-300">
+                            <button onClick={() => setDeliveryTime('13:00')} className={`flex-1 py-2.5 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryTime === '13:00' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}>13:00</button>
+                            <button onClick={() => setDeliveryTime('16:00')} className={`flex-1 py-2.5 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryTime === '16:00' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}>16:00</button>
+                            <button onClick={() => setDeliveryTime('20:00')} className={`flex-1 py-2.5 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryTime === '20:00' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}>20:00</button>
+                          </div>
+                          <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">¿Cómo querés abonar?</label>
+                          <div className="flex gap-2 bg-gray-100 p-1.5 rounded-none border border-gray-300">
+                            <button onClick={() => setPaymentMethod('transferencia')} className={`flex-1 py-3 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 ${paymentMethod === 'transferencia' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}><i className="fas fa-university"></i> Transferencia</button>
+                            <button onClick={() => setPaymentMethod('efectivo')} className={`flex-1 py-3 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 ${paymentMethod === 'efectivo' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}><i className="fas fa-money-bill-wave"></i> Efectivo</button>
+                          </div>
+                          {paymentMethod !== 'efectivo' && <p className="text-[10px] text-emerald-600 font-bold text-center font-poppins flex items-center justify-center gap-1.5"><i className="fas fa-tag text-[11px]"></i> Pagando en efectivo tenés descuento</p>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ── COLUMNA DERECHA: resumen + total + botón ── */}
+              <div className="checkout-right flex flex-col">
+
+                {/* Resumen + total juntos */}
+                <div className="flex flex-col md:flex-1 md:overflow-hidden md:rounded-b-2xl md:border md:border-gray-200">
+                  {/* Productos */}
+                  <div className="bg-white p-5 md:flex-1 md:overflow-y-auto no-scrollbar">
+                    <p className="font-bebas text-xl uppercase tracking-wider text-[#111111] mb-4 flex items-center gap-2">
+                      <i className="fas fa-shopping-bag text-[#fcdb00]"></i> Resumen de Compra
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      {cart.map(item => (
+                        <div key={item.id} className="flex items-center gap-4">
+                          <div className="w-16 h-16 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 p-1">
+                            <img src={item.image} alt="" className="w-full h-full object-contain" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bebas text-xl uppercase tracking-wide text-[#111111] leading-tight truncate">{item.name}</p>
+                            <p className="text-xs font-bold text-gray-400 font-poppins">x{item.qty}</p>
+                          </div>
+                          <span className="font-bebas text-2xl text-[#111111] flex-shrink-0">${formatPrice(item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item)))}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {shippingCost > 0 && (
+                      <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
+                        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest font-poppins">Envío</span>
+                        <span className="font-bebas text-lg text-[#111111]">${formatPrice(shippingCost)}</span>
+                      </div>
+                    )}
+                  </div>
+                  {/* Total + botón */}
+                  <div className="checkout-total bg-[#111111] p-5 flex flex-col gap-4">
+                    {(() => {
+                      const precioOriginal = cart.reduce((acc, item) => acc + item.qty * item.price, 0) + shippingCost;
+                      const totalFinal = calculateTotal();
+                      const ahorro = precioOriginal - totalFinal;
+                      const promoSavings = cart.reduce((acc, item) => {
+                        if (item.isUpsell) return acc;
+                        const promo = getUnitPromoPrice(item);
+                        return acc + (item.price - promo) * item.qty;
+                      }, 0);
+                      const upsellSavings = cart.reduce((acc, item) => {
+                        if (!item.isUpsell) return acc;
+                        return acc + (item.price - item.upsellPrice) * item.qty;
+                      }, 0);
+                      const subtotalParaCalc = cart.reduce((acc, item) => acc + item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item)), 0);
+                      const cashDisc = deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'efectivo'
+                        ? (subtotalParaCalc >= 50000 ? 2500 : 1500) : 0;
+                      const couponDisc = appliedCoupon ? Math.round(subtotalParaCalc * appliedCoupon.discount / 100) : 0;
+                      return (
+                        <div className="flex flex-col gap-3">
+                          <div className="flex justify-between items-end">
+                            <div className="flex flex-col gap-0.5">
+                              <span className="font-bold text-gray-300 text-[10px] uppercase tracking-widest font-poppins">Total a Pagar</span>
+                              {ahorro > 0 && (
+                                <button onClick={() => setShowDiscountBreakdown(v => !v)} className="flex items-center gap-1 text-left">
+                                  <span className="font-bebas text-gray-300 text-sm tracking-wide">Descuento Total {CONFIG.currencySymbol}{formatPrice(ahorro)}</span>
+                                  <i className={`fas fa-chevron-down text-gray-400 text-[10px] transition-transform duration-300 ${showDiscountBreakdown ? 'rotate-180' : ''}`}></i>
+                                </button>
+                              )}
+                            </div>
+                            <div className="flex flex-col items-end">
+                              {ahorro > 0 && <span className="font-bebas text-lg text-gray-500 line-through leading-none">{CONFIG.currencySymbol}{formatPrice(precioOriginal)}</span>}
+                              <span className="font-bebas text-5xl text-white tracking-wide leading-none"><span className="text-[#fcdb00] text-3xl mr-1">{CONFIG.currencySymbol}</span>{formatPrice(totalFinal)}</span>
+                            </div>
+                          </div>
+                          {/* Desglose deslizable */}
+                          <div style={{maxHeight: showDiscountBreakdown && ahorro > 0 ? '200px' : '0px', overflow:'hidden', transition:'max-height 0.3s ease'}}>
+                            <div className="flex flex-col gap-2 pt-1 border-t border-white/10">
+                              {promoSavings > 0 && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-poppins flex items-center gap-1.5"><i className="fas fa-layer-group text-[9px] text-[#fcdb00]"></i> Promo cantidad</span>
+                                  <span className="font-bebas text-base text-emerald-400">-{CONFIG.currencySymbol}{formatPrice(promoSavings)}</span>
                                 </div>
                               )}
-                              
-                              <div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
-                                  <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-user-circle text-[#fcdb00] text-xl"></i> Tus Datos</p>
-                                  <div className="flex flex-col gap-3 font-poppins">
-                                      <input type="text" placeholder="Nombre completo" value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
-                                      <input type="tel" placeholder="Número de WhatsApp" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className="w-full p-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
-                                  </div>
-                              </div>
-                              
-                              <div className="bg-white p-6 rounded-[1.5rem] border border-[#f2f2f2] shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
-                                  <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2"><i className="fas fa-map-marked-alt text-[#fcdb00] text-xl"></i> Entrega</p>
-                                  <div className="flex gap-2 mb-5 bg-[#f2f2f2] p-1.5 rounded-xl border border-gray-200 font-poppins">
-                                      <button onClick={() => setDeliveryMethod('retiro')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryMethod === 'retiro' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Retiro Local</button>
-                                      <button onClick={() => setDeliveryMethod('envio')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryMethod === 'envio' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Envío Domicilio</button>
-                                  </div>
-                                  
-                                  {deliveryMethod === 'retiro' && (
-                                    <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-300 mt-4">
-                                      <div className="bg-[#fcdb00]/10 border border-[#fcdb00] p-4 rounded-xl flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] flex-shrink-0"><i className="fas fa-store text-lg"></i></div>
-                                        <div className="flex flex-col">
-                                          <span className="font-bebas text-lg tracking-wide leading-none mb-1 text-[#111111]">Miñones & Juramento</span>
-                                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-relaxed">Belgrano, CABA.<br/>Te enviaremos el depto exacto al confirmar.</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {deliveryMethod === 'envio' && (
-                                    <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-300 font-poppins">
-                                      <div className="flex flex-col gap-3 mb-2">
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Elegí tu opción de envío:</label>
-                                        <div onClick={() => { setShippingType('flash'); if (firebaseRefs.db) setDoc(doc(firebaseRefs.db, 'stats', 'shipping'), { flash: increment(1) }, { merge: true }).catch(console.error); }} className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex gap-4 items-center ${shippingType === 'flash' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-200 bg-white hover:border-[#fcdb00]/50'}`}>
-                                          <div className="w-10 h-10 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] shadow-md flex-shrink-0"><i className="fas fa-bolt text-lg"></i></div>
-                                          <div className="flex flex-col"><span className={`font-bebas text-xl tracking-wide leading-none mb-1.5 ${shippingType === 'flash' ? 'text-[#111111]' : 'text-gray-700'}`}>Envío Flash</span><span className="text-[10px] font-bold text-gray-500 leading-relaxed">⏱️ Te llega en menos de 30 minutos.<br/>💳 Abonando solo por transferencia.</span></div>
-                                          {shippingType === 'flash' && <div className="ml-auto text-[#fcdb00]"><i className="fas fa-check-circle text-xl"></i></div>}
-                                        </div>
-                                        <div onClick={() => { setShippingType('moto'); if (firebaseRefs.db) setDoc(doc(firebaseRefs.db, 'stats', 'shipping'), { moto: increment(1) }, { merge: true }).catch(console.error); }} className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex gap-4 items-center ${shippingType === 'moto' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-200 bg-white hover:border-[#fcdb00]/50'}`}>
-                                          <div className="w-10 h-10 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] shadow-md flex-shrink-0"><i className="fas fa-motorcycle text-lg"></i></div>
-                                          <div className="flex flex-col"><span className={`font-bebas text-xl tracking-wide leading-none mb-1.5 ${shippingType === 'moto' ? 'text-[#111111]' : 'text-gray-700'}`}>Vía Motomensajería</span><span className="text-[10px] font-bold text-gray-500 leading-relaxed">⏲️ Horarios fijos: 13:00hs - 16:00hs - 20:00hs.</span></div>
-                                          {shippingType === 'moto' && <div className="ml-auto text-[#fcdb00]"><i className="fas fa-check-circle text-xl"></i></div>}
-                                        </div>
-                                      </div>
-                                      
-                                      {shippingType === 'flash' && (
-                                        <div className="flex flex-col gap-4 animate-in fade-in duration-300">
-                                          <div className="relative">
-                                            <i className="fas fa-map-marker-alt absolute left-4 top-1/2 -translate-y-1/2 text-[#fcdb00]"></i>
-                                            <input type="text" placeholder="Dirección completa" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
-                                          </div>
-                                          <div className="relative">
-                                            <i className="fas fa-city absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                                            <input type="text" placeholder="Barrio / CP" value={zone} onChange={(e) => setZone(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
-                                          </div>
-                                          <div className="relative mt-1">
-                                            <i className="fas fa-building absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                                            <input type="text" placeholder="Piso / Depto (Opcional)" value={aptDetails} onChange={(e) => setAptDetails(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400" />
-                                          </div>
-                                        </div>
-                                      )}
-
-                                      {shippingType === 'moto' && (
-                                        <div className="flex flex-col gap-4 animate-in fade-in duration-300">
-                                          <CalculadorEnvio 
-                                            address={address} setAddress={setAddress}
-                                            zone={zone} setZone={setZone}
-                                            shippingType={shippingType}
-                                            setShippingCost={setShippingCost}
-                                            aptDetails={aptDetails}
-                                            setAptDetails={setAptDetails}
-                                          />
-                                          <div className="flex flex-col gap-3 mt-2">
-                                            <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">¿Cuándo querés recibirlo?</label>
-                                            <div className="relative">
-                                              <i className="fas fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                                              <select value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-[11px] font-bold uppercase tracking-wider outline-none focus:border-[#fcdb00] transition-all appearance-none cursor-pointer text-[#111111]">
-                                                {next7Days.map(d => ( <option key={d.value} value={d.value}>{d.label}</option> ))}
-                                              </select>
-                                              <i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[10px]"></i>
-                                            </div>
-                                            <div className="flex gap-2 bg-[#f2f2f2] p-1.5 rounded-xl border border-gray-200">
-                                              <button onClick={() => setDeliveryTime('13:00')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${deliveryTime === '13:00' ? 'bg-white text-[#111111] shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-sun"></i> Turno 13:00</button>
-                                              <button onClick={() => setDeliveryTime('16:00')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${deliveryTime === '16:00' ? 'bg-white text-[#111111] shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-moon"></i> Turno 16:00</button>
-                                              <button onClick={() => setDeliveryTime('20:00')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${deliveryTime === '20:00' ? 'bg-white text-[#111111] shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}>🌙 Turno 20:00</button>
-                                            </div>
-                                          </div>
-
-                                          <div className="flex flex-col gap-2 mt-2">
-                                            <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">¿Cómo querés abonar?</label>
-                                            <div className="flex gap-2 bg-[#f2f2f2] p-1.5 rounded-xl border border-gray-200">
-                                              <button onClick={() => setPaymentMethod('transferencia')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${paymentMethod === 'transferencia' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-university"></i> Transferencia</button>
-                                              <button onClick={() => setPaymentMethod('efectivo')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${paymentMethod === 'efectivo' ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><i className="fas fa-money-bill-wave"></i> Efectivo</button>
-                                            </div>
-                                            {paymentMethod !== 'efectivo' && (
-                                              <p className="text-[10px] text-emerald-600 font-bold text-center font-poppins mt-0.5 flex items-center justify-center gap-1.5">
-                                                <i className="fas fa-tag text-[11px]"></i> Pagando en efectivo tenés descuento en el total
-                                              </p>
-                                            )}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-                              </div>
+                              {upsellSavings > 0 && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-poppins flex items-center gap-1.5"><i className="fas fa-tag text-[9px] text-[#fcdb00]"></i> Precio oferta</span>
+                                  <span className="font-bebas text-base text-emerald-400">-{CONFIG.currencySymbol}{formatPrice(upsellSavings)}</span>
+                                </div>
+                              )}
+                              {cashDisc > 0 && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-poppins flex items-center gap-1.5"><i className="fas fa-money-bill-wave text-[9px] text-[#fcdb00]"></i> Pago en efectivo</span>
+                                  <span className="font-bebas text-base text-emerald-400">-{CONFIG.currencySymbol}{formatPrice(cashDisc)}</span>
+                                </div>
+                              )}
+                              {couponDisc > 0 && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-poppins flex items-center gap-1.5"><i className="fas fa-ticket-alt text-[9px] text-[#fcdb00]"></i> Cupón {appliedCoupon.code} ({appliedCoupon.discount}%)</span>
+                                  <span className="font-bebas text-base text-emerald-400">-{CONFIG.currencySymbol}{formatPrice(couponDisc)}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                      )}
+                        </div>
+                      );
+                    })()}
+                    <button
+                      onClick={handleCheckout}
+                      disabled={!isFormValid}
+                      className={`w-full font-bebas py-4 rounded-xl uppercase tracking-wider text-xl flex justify-center items-center gap-3 transition-all ${isFormValid ? 'bg-[#fcdb00] text-[#111111] active:scale-95 hover:brightness-95' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}`}
+                    >
+                      <i className="fas fa-check-circle text-2xl"></i> Confirmar Pedido
+                    </button>
                   </div>
-
-                  {/* FOOTER (Fijo abajo, NO se empuja por el scroll ni desaparece por la barra) */}
-                  {cart.length > 0 && (
-                      <div className="bg-white border-t border-gray-200 flex-shrink-0 z-20 pb-8 md:pb-6 pt-5 px-5 md:px-6 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
-                          {(() => {
-                            const s = cart.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
-                            const disc = deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'efectivo' ? (s >= 50000 ? 2500 : 1500) : 0;
-                            if (!disc) return null;
-                            return (
-                              <div className="flex justify-end mb-2">
-                                <span className="bg-emerald-500 text-white font-bold text-[11px] px-3 py-1 rounded-full font-poppins uppercase tracking-wider flex items-center gap-1.5">
-                                  <i className="fas fa-tag text-[10px]"></i> -{CONFIG.currencySymbol}{formatPrice(disc)} descuento efectivo
-                                </span>
-                              </div>
-                            );
-                          })()}
-                          <div className="flex justify-between items-end mb-4">
-                              <span className="font-bold text-gray-500 text-[10px] uppercase tracking-widest font-poppins">Total a Pagar</span>
-                              <span className="font-bebas text-5xl text-[#111111] tracking-wide leading-none drop-shadow-sm"><span className="text-[#fcdb00] text-3xl mr-1.5">{CONFIG.currencySymbol}</span>{formatPrice(calculateTotal())}</span>
-                          </div>
-                          <button onClick={handleCheckout} className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] shadow-[0_10px_30px_rgba(0,0,0,0.2)] active:scale-95 font-bebas py-4 rounded-xl uppercase tracking-wider text-xl flex justify-center items-center gap-3 transition-all duration-300">
-                              <i className="fas fa-check-circle text-2xl mb-0.5"></i> Confirmar Pedido
-                          </button>
-                      </div>
-                  )}
+                </div>
               </div>
+
+            </div>
           </div>
-      )}
+        </div>
+        );
+      })()}
 
       {/* --- BOTONES FLOTANTES INDEPENDIENTES (Se esconden si el carrito se abre) --- */}
 
@@ -2409,13 +3186,13 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
       {showPaymentModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setShowPaymentModal(false)}></div>
-          <div className="relative bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="bg-[#111111] p-6 text-center relative border-b border-white/10">
-              <button onClick={() => setShowPaymentModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times"></i></button>
+          <div className="relative bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 border border-gray-200">
+            <div className="bg-gray-50 p-6 text-center relative border-b border-gray-200">
+              <button onClick={() => setShowPaymentModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times"></i></button>
               <div className="w-16 h-16 bg-[#fcdb00] rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
                   <i className="fas fa-university text-3xl text-[#111111]"></i>
               </div>
-              <h2 className="text-3xl font-bebas text-white uppercase tracking-wide">¡Pedido Reservado!</h2>
+              <h2 className="text-3xl font-bebas text-[#111111] uppercase tracking-wide">¡Pedido Reservado!</h2>
               <p className="text-[#fcdb00] text-[11px] font-bold uppercase tracking-widest font-poppins">Falta 1 paso para despacharlo</p>
             </div>
             <div className="p-6 md:p-8 flex flex-col gap-6">
@@ -2423,19 +3200,19 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-1 font-poppins">Total a transferir</p>
                   <p className="text-5xl font-bebas text-[#111111] leading-none tracking-wide"><span className="text-[#fcdb00] text-3xl mr-1">$</span>{formatPrice(calculateTotal())}</p>
               </div>
-              
-              <div className="bg-[#f2f2f2] p-5 rounded-2xl border border-gray-200 relative overflow-hidden">
+
+              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-1 h-full bg-[#fcdb00]"></div>
                   <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 font-poppins"><i className="fas fa-university text-[#fcdb00] mr-1"></i> Transferir a:</p>
                   <div className="flex flex-col gap-2">
-                      <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+                      <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-200">
                           <span className="font-bebas text-2xl text-[#111111] tracking-wider truncate">{CONFIG.paymentAlias}</span>
-                          <button onClick={copyAliasToClipboard} className="w-10 h-10 bg-[#f2f2f2] rounded-lg flex items-center justify-center text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex-shrink-0">
+                          <button onClick={copyAliasToClipboard} className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex-shrink-0">
                               <i className="fas fa-copy"></i>
                           </button>
                       </div>
-                      <div className="bg-gray-200/50 p-2.5 rounded-lg border border-gray-200 text-center">
-                          <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest font-poppins">TITULAR: {CONFIG.paymentName}</p>
+                      <div className="bg-gray-100 p-2.5 rounded-lg border border-gray-200 text-center">
+                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest font-poppins">TITULAR: {CONFIG.paymentName}</p>
                       </div>
                   </div>
               </div>
@@ -2457,13 +3234,13 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
       {showShippingCalculatorModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setShowShippingCalculatorModal(false)}></div>
-          <div className="relative bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="bg-[#111111] p-6 text-center relative border-b border-white/10">
-                <button onClick={() => setShowShippingCalculatorModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times"></i></button>
+          <div className="relative bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 border border-gray-200">
+            <div className="bg-gray-50 p-6 text-center relative border-b border-gray-200">
+                <button onClick={() => setShowShippingCalculatorModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors"><i className="fas fa-times"></i></button>
                 <div className="w-16 h-16 bg-[#fcdb00] rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
                     <i className="fas fa-motorcycle text-3xl text-[#111111]"></i>
                 </div>
-                <h2 className="text-3xl font-bebas text-white uppercase tracking-wide">Cotizar Envío</h2>
+                <h2 className="text-3xl font-bebas text-[#111111] uppercase tracking-wide">Cotizar Envío</h2>
                 <p className="text-[#fcdb00] text-[11px] font-bold uppercase tracking-widest font-poppins">Solo válido para Motomensajería</p>
             </div>
             <div className="p-6 md:p-8 flex flex-col gap-6">
@@ -2488,23 +3265,136 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         </div>
       )}
 
+      {/* === MODAL DE AUTENTICACIÓN === */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[120] overflow-y-auto">
+          <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm" onClick={() => setShowAuthModal(false)}></div>
+          <div className="flex min-h-full items-end sm:items-center justify-center sm:p-4">
+          <div className="relative bg-[#111111] w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-300">
+
+            {/* Pill handle */}
+            <div className="flex justify-center pt-3 pb-0 sm:hidden">
+              <div className="w-10 h-1 bg-white/20 rounded-full"></div>
+            </div>
+
+            {/* Header negro */}
+            <div className="p-5 text-center relative">
+              <button onClick={() => setShowAuthModal(false)} className="absolute top-3 right-3 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-[#fcdb00] hover:text-[#111111] transition-colors">
+                <i className="fas fa-times text-sm"></i>
+              </button>
+              <div className="w-12 h-12 bg-[#fcdb00] rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg">
+                <i className="fas fa-user text-xl text-[#111111]"></i>
+              </div>
+              <h2 className="font-bebas text-2xl text-white uppercase tracking-wide leading-tight">
+                {authMode === 'login' ? 'Iniciá Sesión' : 'Crear Cuenta'}
+              </h2>
+              <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest font-poppins">
+                {authMode === 'login' ? 'Accedé a tu cuenta 028' : 'Unite a la comunidad 028'}
+              </p>
+            </div>
+
+            {/* Formulario blanco */}
+            <div className="bg-white rounded-t-3xl p-5 space-y-3 pb-10 sm:pb-6 sm:rounded-b-3xl">
+              {/* Google */}
+              <button
+                onClick={() => { setShowAuthModal(false); handleGoogleLogin(); }}
+                className="w-full border-2 border-gray-200 text-[#111111] py-3 rounded-2xl font-bold text-sm uppercase tracking-widest hover:border-[#fcdb00] hover:bg-[#fcdb00]/5 transition-all flex items-center justify-center gap-3 active:scale-95"
+              >
+                <i className="fab fa-google text-lg text-[#EA4335]"></i> Continuar con Google
+              </button>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-gray-200"></div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 font-poppins">o con email</span>
+                <div className="flex-1 h-px bg-gray-200"></div>
+              </div>
+
+              <form onSubmit={handleEmailAuth} className="space-y-2.5">
+                {authMode === 'register' && (
+                  <input
+                    type="text"
+                    placeholder="Tu nombre"
+                    value={authName}
+                    onChange={e => setAuthName(e.target.value)}
+                    className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-base font-semibold text-[#111111] placeholder-gray-400 focus:outline-none focus:border-[#fcdb00] transition-colors"
+                  />
+                )}
+                <input
+                  type="email"
+                  placeholder="Correo electrónico"
+                  value={authEmail}
+                  onChange={e => setAuthEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-base font-semibold text-[#111111] placeholder-gray-400 focus:outline-none focus:border-[#fcdb00] transition-colors"
+                />
+                <input
+                  type="password"
+                  placeholder="Contraseña"
+                  value={authPassword}
+                  onChange={e => setAuthPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-base font-semibold text-[#111111] placeholder-gray-400 focus:outline-none focus:border-[#fcdb00] transition-colors"
+                />
+                {authMode === 'register' && (
+                  <input
+                    type="password"
+                    placeholder="Repetí tu contraseña"
+                    value={authConfirmPassword}
+                    onChange={e => setAuthConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                    className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-base font-semibold text-[#111111] placeholder-gray-400 focus:outline-none focus:border-[#fcdb00] transition-colors"
+                  />
+                )}
+                {authError && (
+                  <p className="text-red-500 text-[11px] font-bold text-center font-poppins">{authError}</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full bg-[#111111] text-white py-3.5 rounded-2xl font-bebas text-xl uppercase tracking-wider hover:bg-[#fcdb00] hover:text-[#111111] transition-all shadow-lg active:scale-95 disabled:opacity-60"
+                >
+                  {authLoading ? <><i className="fas fa-circle-notch fa-spin mr-2"></i>Procesando...</> : authMode === 'login' ? 'Ingresar' : 'Crear Cuenta'}
+                </button>
+              </form>
+
+              <button
+                onClick={() => { setAuthMode(authMode === 'login' ? 'register' : 'login'); setAuthError(''); setAuthConfirmPassword(''); }}
+                className="w-full text-center text-[11px] font-bold uppercase tracking-widest text-gray-500 hover:text-[#111111] transition-colors font-poppins py-1"
+              >
+                {authMode === 'login' ? '¿No tenés cuenta? Registrate' : '¿Ya tenés cuenta? Iniciá sesión'}
+              </button>
+            </div>
+          </div>
+          </div>
+        </div>
+      )}
+
       {/* === BOTÓN FLOTANTE WHATSAPP === */}
       <div className="fixed bottom-6 right-5 z-[200] flex flex-col items-end gap-3">
         {showTooltip && (
-          <div className="bg-white text-[#111111] text-xs font-semibold font-poppins px-4 py-2.5 rounded-2xl shadow-xl border border-gray-100 max-w-[200px] text-center leading-snug animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="bg-white text-[#111111] text-xs font-semibold font-poppins px-4 py-2.5 rounded-2xl shadow-xl border border-gray-200 max-w-[200px] text-center leading-snug animate-in fade-in slide-in-from-bottom-2 duration-300">
             ¿Tenés dudas? <span className="text-[#25D366]">¡Escribinos por WhatsApp!</span> 💬
-            <div className="absolute bottom-[-6px] right-5 w-3 h-3 bg-white border-r border-b border-gray-100 rotate-45"></div>
+            <div className="absolute bottom-[-6px] right-5 w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45"></div>
           </div>
         )}
-        <a
-          href={`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent('Hola! Tengo una consulta sobre 028 Import 👋')}`}
-          target="_blank"
-          rel="noreferrer"
-          className="w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg shadow-[#25D366]/40 hover:scale-110 hover:shadow-[#25D366]/60 active:scale-95 transition-all duration-200"
-          aria-label="Contactar por WhatsApp"
-        >
-          <i className="fab fa-whatsapp text-3xl text-white"></i>
-        </a>
+        <div className="relative">
+          <span className="wa-ring-1 absolute inset-0 rounded-full bg-[#25D366] pointer-events-none"></span>
+          <span className="wa-ring-2 absolute inset-0 rounded-full bg-[#25D366] pointer-events-none"></span>
+          <a
+            href={`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent('Hola! Tengo una consulta sobre 028 Import 👋')}`}
+            target="_blank"
+            rel="noreferrer"
+            className="relative w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg shadow-[#25D366]/40 hover:scale-110 hover:shadow-[#25D366]/60 active:scale-95 transition-all duration-200"
+            aria-label="Contactar por WhatsApp"
+          >
+            <i className="fab fa-whatsapp text-3xl text-white"></i>
+          </a>
+        </div>
       </div>
 
       <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
