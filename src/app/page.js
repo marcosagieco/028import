@@ -1019,6 +1019,13 @@ export default function Home() {
     videoEl.muted = true;
 
     if (videoEl.paused) {
+      // Pausar todos los otros videos antes de reproducir
+      Object.entries(communityVideoRefs.current).forEach(([id, el]) => {
+        if (id !== cardId && el && !el.paused) {
+          el.pause();
+          el.currentTime = 0;
+        }
+      });
       const playPromise = videoEl.play();
       if (playPromise && typeof playPromise.then === 'function') {
         playPromise.then(() => {
@@ -1070,6 +1077,9 @@ export default function Home() {
     const videoEl = communityVideoRefs.current[cardId];
     if (!videoEl) return;
     videoEl.muted = true;
+    Object.entries(communityVideoRefs.current).forEach(([id, el]) => {
+      if (id !== cardId && el && !el.paused) { el.pause(); el.currentTime = 0; }
+    });
     const playPromise = videoEl.play();
     if (playPromise && typeof playPromise.then === 'function') {
       playPromise.then(() => trackCommunityView(videoData)).catch(() => {});
@@ -1567,7 +1577,7 @@ export default function Home() {
                   className={`absolute inset-0 z-[1] w-full h-full object-cover bg-black transition-opacity duration-300 pointer-events-none ${communityVideoLoaded[cardId] ? 'opacity-100' : 'opacity-0'}`}
                   playsInline
                   muted
-                  preload="metadata"
+                  preload="none"
                   x-webkit-airplay="deny"
                   onLoadedData={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
                   onCanPlay={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
