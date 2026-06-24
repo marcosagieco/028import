@@ -1011,11 +1011,11 @@ export default function Home() {
 
   const handleCommunityVideoTap = (cardId, videoData, e) => {
     if (e) {
-      e.preventDefault();
       e.stopPropagation();
     }
     const videoEl = communityVideoRefs.current[cardId];
     if (!videoEl) return;
+    videoEl.muted = true;
 
     if (videoEl.paused) {
       const playPromise = videoEl.play();
@@ -1560,13 +1560,13 @@ export default function Home() {
                 />
 
                 <video
-                  ref={(el) => { if (el) communityVideoRefs.current[cardId] = el; }}
+                  ref={(el) => { if (el) { communityVideoRefs.current[cardId] = el; el.muted = true; } }}
                   src={video.videoUrl}
                   poster={video.poster || getCommunityVideoPoster(video.videoUrl)}
                   className={`relative z-[1] w-full h-full object-cover cursor-pointer bg-black transition-opacity duration-300 ${communityVideoLoaded[cardId] ? 'opacity-100' : 'opacity-0'}`}
                   playsInline
                   muted
-                  preload="auto"
+                  preload="metadata"
                   onLoadedData={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
                   onCanPlay={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
                   onLoadedMetadata={(e) => { try { e.currentTarget.currentTime = 0.05; } catch (_) {} }}
@@ -2178,7 +2178,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
 
       {/* --- HEADER PRINCIPAL --- */}
       {/* BARRA SUPERIOR */}
-      <div className="hidden md:block w-full bg-[#050505] border-b border-white/[0.06]">
+      <div className="hidden md:block w-full bg-[#050505] border-b border-white/[0.06] relative z-[60]">
         <div className="w-full px-4 md:px-8 h-8 flex items-center justify-between">
 
           {/* Izquierda: Login */}
@@ -2399,7 +2399,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                         <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'}`}>
                           <div className="pb-3 flex flex-col gap-0.5">
                             <button
-                              onClick={() => { setActiveFilter({dept, cat: 'all'}); navigateTo('catalog'); setIsMenuOpen(false); }}
+                              onClick={() => { setFilterDepts([dept]); setFilterBrands([]); setActiveFilter({dept, cat: 'all'}); setCurrentView('catalog'); setIsMenuOpen(false); window.scrollTo({top:0,behavior:'smooth'}); }}
                               className="text-left py-2 pl-4 text-sm font-medium text-[#111111] active:opacity-60 transition-opacity"
                             >
                               Ver todo en {dept}
@@ -2407,7 +2407,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                             {deptCats.map(cat => (
                               <button
                                 key={cat}
-                                onClick={() => { setActiveFilter({dept, cat}); navigateTo('catalog'); setIsMenuOpen(false); setTimeout(() => { const target = document.getElementById(slugify(cat)); if(target) target.scrollIntoView({behavior:'smooth'}); }, 300); }}
+                                onClick={() => { setFilterDepts([dept]); setFilterBrands([]); setActiveFilter({dept, cat}); setCurrentView('catalog'); setIsMenuOpen(false); window.scrollTo({top:0,behavior:'smooth'}); }}
                                 className="text-left py-2 pl-4 text-sm font-medium text-[#111111] active:opacity-60 transition-opacity"
                               >
                                 {cat}
