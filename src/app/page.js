@@ -1562,18 +1562,22 @@ export default function Home() {
                 className="absolute inset-0 rounded-[2rem] overflow-hidden bg-black border border-black/8 shadow-[0_12px_28px_rgba(0,0,0,0.10)] group transition-all duration-500 ease-out md:group-hover/community:shadow-[0_26px_58px_rgba(0,0,0,0.22)]"
                 style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
               >
-                <img
-                  src={video.poster || getCommunityVideoPoster(video.videoUrl)}
-                  alt={video.title || '028 Community'}
-                  className="absolute inset-0 w-full h-full object-cover bg-black"
-                  loading="eager"
-                  draggable="false"
-                />
+                {(video.poster || getCommunityVideoPoster(video.videoUrl)) ? (
+                  <img
+                    src={video.poster || getCommunityVideoPoster(video.videoUrl)}
+                    alt={video.title || '028 Community'}
+                    className="absolute inset-0 w-full h-full object-cover bg-black"
+                    loading="eager"
+                    draggable="false"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-[#111111]" />
+                )}
 
                 <video
                   ref={(el) => { if (el) { communityVideoRefs.current[cardId] = el; el.muted = true; } }}
                   src={video.videoUrl}
-                  poster={video.poster || getCommunityVideoPoster(video.videoUrl)}
+                  poster={video.poster || getCommunityVideoPoster(video.videoUrl) || undefined}
                   className={`absolute inset-0 z-[1] w-full h-full object-cover bg-black transition-opacity duration-300 pointer-events-none ${communityVideoLoaded[cardId] ? 'opacity-100' : 'opacity-0'}`}
                   playsInline
                   muted
@@ -1639,17 +1643,18 @@ export default function Home() {
                 className="absolute inset-0 rounded-[2rem] overflow-hidden text-white border border-white/12 shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
                 style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
               >
-                <video
-                  src={video.videoUrl}
-                  poster={video.poster || getCommunityVideoPoster(video.videoUrl)}
-                  className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-35 bg-black"
-                  muted
-                  loop
-                  autoPlay
-                  playsInline
-                  preload="auto"
-                  aria-hidden="true"
-                />
+                {isFlipped && (
+                  <video
+                    src={video.videoUrl}
+                    className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-35 bg-black"
+                    muted
+                    loop
+                    autoPlay
+                    playsInline
+                    preload="none"
+                    aria-hidden="true"
+                  />
+                )}
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(252,219,0,0.10),transparent_28%)]"></div>
                 <div className="absolute inset-0 bg-black/42"></div>
                 <div className="absolute inset-0 backdrop-blur-[18px] bg-white/[0.07]"></div>
