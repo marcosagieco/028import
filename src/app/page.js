@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import CalculadorEnvio from '@/components/CalculadorEnvio';
-import CalculadorEnvioSimple from '@/components/CalculadorEnvioSimple';
+import dynamic from 'next/dynamic';
+const CalculadorEnvio = dynamic(() => import('@/components/CalculadorEnvio'), { ssr: false });
+const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvioSimple'), { ssr: false });
 import VapeSpecs3D from '@/components/VapeSpecs3D';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, setDoc, getDoc, increment, query, orderBy, limit } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, setDoc, getDoc, getDocs, increment, query, orderBy, limit } from "firebase/firestore";
 
 const CONFIG = {
   brandName: "028", 
@@ -718,34 +719,34 @@ export default function Home() {
         setProducts(sortedAll.filter(p => !p.isHidden));
       });
       const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
-      const unsubscribeHomeSections = onSnapshot(collection(firebaseRefs.db, 'home_sections'), (s) => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : []));
-      const unsubscribeCommunityVideos = onSnapshot(doc(firebaseRefs.db, 'settings', 'community_videos'), (snap) => {
+      getDocs(collection(firebaseRefs.db, 'home_sections')).then(s => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : [])).catch(() => {});
+      getDoc(doc(firebaseRefs.db, 'settings', 'community_videos')).then(snap => {
         const videosFromSettings = snap.exists() && Array.isArray(snap.data()?.videos)
           ? snap.data().videos
               .filter(video => !video.isHidden && !video.isDeleted && video.videoUrl)
               .sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99))
           : [];
         setCommunityVideos(videosFromSettings.length ? videosFromSettings : INITIAL_COMMUNITY_VIDEOS);
-      });
-      const unsubscribeHomeLayout = onSnapshot(doc(firebaseRefs.db, 'settings', 'home_layout'), (snap) => {
+      }).catch(() => setCommunityVideos(INITIAL_COMMUNITY_VIDEOS));
+      getDoc(doc(firebaseRefs.db, 'settings', 'home_layout')).then(snap => {
         const sections = snap.exists() ? snap.data()?.sections : null;
         setHomeLayout(Array.isArray(sections) ? sections : []);
-      });
-      const unsubscribeDeptIcons = onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
+      }).catch(() => {});
+      getDoc(doc(firebaseRefs.db, 'settings', 'departments')).then(snap => {
         if (snap.exists()) { setDeptIcons(snap.data().icons || {}); setVirtualDepts(snap.data().virtualDepts || []); }
-      });
-      const unsubscribeCategoryPuffs = onSnapshot(doc(firebaseRefs.db, 'settings', 'category_puffs'), (snap) => {
+      }).catch(() => {});
+      getDoc(doc(firebaseRefs.db, 'settings', 'category_puffs')).then(snap => {
         if (snap.exists()) setCategoryPuffs(snap.data() || {});
-      });
-      const unsubscribeVidreiraStyle = onSnapshot(doc(firebaseRefs.db, 'settings', 'vidriera_style'), (snap) => {
+      }).catch(() => {});
+      getDoc(doc(firebaseRefs.db, 'settings', 'vidriera_style')).then(snap => {
         if (snap.exists()) { setVidreiraCardRadius(snap.data().cardRadius || 'rounded'); setVidreiraShowIcons(snap.data().showIcons !== false); }
-      });
-      onSnapshot(doc(firebaseRefs.db, 'settings', 'vape3d_position'), (snap) => {
+      }).catch(() => {});
+      getDoc(doc(firebaseRefs.db, 'settings', 'vape3d_position')).then(snap => {
         if (snap.exists()) setVape3dPosition(snap.data().afterSectionId || 'banner');
-      });
-      onSnapshot(doc(firebaseRefs.db, 'settings', 'logos_bar_position'), (snap) => {
+      }).catch(() => {});
+      getDoc(doc(firebaseRefs.db, 'settings', 'logos_bar_position')).then(snap => {
         if (snap.exists()) setLogosBarPosition(snap.data().afterSectionId || 'banner');
-      });
+      }).catch(() => {});
       const unsubscribeUpsells = onSnapshot(collection(firebaseRefs.db, 'upsells'), (snap) => {
         setUpsellsList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
       });
@@ -756,7 +757,7 @@ export default function Home() {
         setCoupons(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
       });
 
-      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeHomeSections(); unsubscribeCommunityVideos(); unsubscribeHomeLayout(); unsubscribeDeptIcons(); unsubscribeCategoryPuffs(); unsubscribeUpsells(); unsubscribeCarritoDestacados(); unsubscribeCoupons(); unsubscribeVidreiraStyle(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
+      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeUpsells(); unsubscribeCarritoDestacados(); unsubscribeCoupons(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
     }
   }, [firebaseRefs]);
 
@@ -1581,7 +1582,7 @@ export default function Home() {
                   className={`absolute inset-0 z-[1] w-full h-full object-cover bg-black transition-opacity duration-300 pointer-events-none ${communityVideoLoaded[cardId] ? 'opacity-100' : 'opacity-0'}`}
                   playsInline
                   muted
-                  preload="none"
+                  preload="metadata"
                   x-webkit-airplay="deny"
                   onLoadedData={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
                   onCanPlay={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
