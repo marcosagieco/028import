@@ -1283,6 +1283,8 @@ export default function Home() {
     
     if (costoEnvioAgregado > 0) {
         msg += `\n*Costo de Envío (Moto):* ${CONFIG.currencySymbol}${formatPrice(costoEnvioAgregado)}`;
+    } else if (deliveryMethod === 'envio' && shippingType === 'moto') {
+        msg += `\n*Costo de Envío (Moto):* A confirmar`;
     }
     
     msg += `\n*TOTAL A PAGAR: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
@@ -2960,7 +2962,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         const isFormValid = clientName.trim() && clientPhone.trim() && (
           deliveryMethod === 'retiro' ||
           (deliveryMethod === 'envio' && shippingType === 'flash' && address.trim()) ||
-          (deliveryMethod === 'envio' && shippingType === 'moto' && address.trim() && shippingCost > 0)
+          (deliveryMethod === 'envio' && shippingType === 'moto' && address.trim() && zone.trim())
         );
         return (
         <div className="fixed inset-0 z-[125] bg-[#f5f5f5] flex flex-col overflow-hidden">
