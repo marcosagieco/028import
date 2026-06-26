@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, onSnapshot } from 'firebase/firestore';
 
-const MODEL_URL = '/models/pink vape device 3d model.glb';
+const MODEL_URL = '/models/pinkvapedevice3dmodel-v1.glb';
 
 const SPECS = [
   { icon: 'fa-candy-cane', label: 'Sabor',            value: 'Cherry Straz', desc: null },
