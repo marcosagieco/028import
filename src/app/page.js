@@ -428,6 +428,22 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    const container = communityScrollRef.current;
+    if (!container) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        const firstEl = Object.values(communityVideoRefs.current)[0];
+        if (firstEl) firstEl.load();
+        observer.disconnect();
+      },
+      { rootMargin: '0px 0px -5% 0px' }
+    );
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [communityVideos]);
+
   const [paymentMethod, setPaymentMethod] = useState('transferencia'); 
   const [shippingCost, setShippingCost] = useState(0); 
   const [clientName, setClientName] = useState('');
@@ -1413,6 +1429,7 @@ export default function Home() {
           <img
             src={p.image}
             alt={p.name}
+            loading="lazy"
             className={`w-full h-full object-cover mix-blend-normal group-hover:scale-105 transition-transform duration-700 ease-out ${isVidriera && vidreiraCardRadius === 'squared' ? '' : 'rounded-t-[1.4rem]'}`}
           />
           {isOutOfStock ? ( 
@@ -1588,11 +1605,10 @@ export default function Home() {
                   className={`absolute inset-0 z-[1] w-full h-full object-cover bg-black transition-opacity duration-300 pointer-events-none ${communityVideoLoaded[cardId] ? 'opacity-100' : 'opacity-0'}`}
                   playsInline
                   muted
-                  preload="metadata"
+                  preload="none"
                   x-webkit-airplay="deny"
                   onLoadedData={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
                   onCanPlay={() => { setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true })); setCommunityVideoBuffering(prev => ({ ...prev, [cardId]: false })); }}
-                  onLoadedMetadata={(e) => { try { e.currentTarget.currentTime = 0.05; } catch (_) {} }}
                   onPlay={() => {
                     setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }));
                     setCommunityVideoBuffering(prev => ({ ...prev, [cardId]: false }));
@@ -1701,7 +1717,7 @@ export default function Home() {
                     {productsInVideo.length ? productsInVideo.map(product => (
                       <div key={`flip-${cardId}-${product.id}`} className="bg-white/[0.11] backdrop-blur-2xl rounded-[1.05rem] p-2 grid grid-cols-[44px_minmax(0,1fr)_40px] items-center gap-2.5 border border-white/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_8px_22px_rgba(0,0,0,0.14)] min-w-0">
                         <div className="w-11 h-11 bg-white/16 rounded-xl p-1.5 flex-shrink-0 backdrop-blur-xl border border-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
-                          <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
+                          <img src={product.image} alt={product.name} loading="lazy" className="w-full h-full object-contain" />
                         </div>
                         <div className="min-w-0 overflow-hidden">
                           <p className="font-bebas text-[17px] uppercase leading-[0.95] text-white break-words" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.name}</p>
@@ -1826,7 +1842,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         "https://i.ibb.co/rKkcpVqz/5.png",
         "https://i.ibb.co/20nZ2zVW/6.png",
       ].map((src, i) => (
-        <img key={i} src={src} alt={`brand-${i+1}`} className="logo-float h-28 md:h-40 w-auto object-contain" style={{ animationDelay: `${i * 0.4}s` }} />
+        <img key={i} src={src} alt={`brand-${i+1}`} loading="lazy" className="logo-float h-28 md:h-40 w-auto object-contain" style={{ animationDelay: `${i * 0.4}s` }} />
       ))}
     </div>
   );
@@ -2761,7 +2777,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       <i className="fas fa-times text-lg"></i>
                   </button>
                   <div className="bg-[#1a1a1a] mx-3 mt-3 rounded-[1.5rem] overflow-hidden aspect-square w-full md:mx-0 md:mt-0 md:rounded-none md:rounded-l-[2rem] md:w-1/2 md:aspect-auto md:flex-shrink-0">
-                      <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover" />
+                      <img src={selectedProduct.image} alt={selectedProduct.name} loading="lazy" className="w-full h-full object-cover" />
                   </div>
                   <div className="px-6 pb-8 pt-4 md:w-1/2 md:p-12 md:flex md:flex-col md:justify-center md:overflow-y-auto">
                       <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-2">{selectedProduct.category}</p>
@@ -2829,7 +2845,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   <div key={item.id} className="flex gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
                     {/* Imagen */}
                     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden flex items-center justify-center p-1 flex-shrink-0" style={{width:'62px',height:'62px'}}>
-                      <img src={item.image} className="w-full h-full object-contain" alt=""/>
+                      <img src={item.image} loading="lazy" className="w-full h-full object-contain" alt=""/>
                     </div>
                     {/* Info */}
                     <div className="flex-1 min-w-0 flex flex-col gap-1.5">
@@ -2881,7 +2897,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                         <div className="upsell-exit flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-2">
                           <div className="relative w-12 h-12 flex-shrink-0">
                             {prevUpsell.price && <span className="absolute top-0 left-0 bg-[#fcdb00] text-[#111111] text-[6px] font-black uppercase px-0.5 py-px rounded-md z-10 font-poppins leading-none">Oferta</span>}
-                            <img src={prevProd.image} className="w-full h-full object-contain drop-shadow-md" alt=""/>
+                            <img src={prevProd.image} loading="lazy" className="w-full h-full object-contain drop-shadow-md" alt=""/>
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-bebas text-sm uppercase text-[#111111] leading-tight truncate">{prevProd.name}</p>
@@ -2897,7 +2913,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       <div key={upsellIndex} className="upsell-enter flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-2">
                         <div className="relative w-12 h-12 flex-shrink-0">
                           {upsell.price && <span className="absolute top-0 left-0 bg-[#fcdb00] text-[#111111] text-[6px] font-black uppercase px-0.5 py-px rounded-md z-10 font-poppins leading-none">Oferta</span>}
-                          <img src={prod.image} className="w-full h-full object-contain drop-shadow-md" alt=""/>
+                          <img src={prod.image} loading="lazy" className="w-full h-full object-contain drop-shadow-md" alt=""/>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-bebas text-sm uppercase text-[#111111] leading-tight truncate">{prod.name}</p>
@@ -3111,7 +3127,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       {cart.map(item => (
                         <div key={item.id} className="flex items-center gap-4">
                           <div className="w-16 h-16 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 p-1">
-                            <img src={item.image} alt="" className="w-full h-full object-contain" />
+                            <img src={item.image} alt="" loading="lazy" className="w-full h-full object-contain" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-bebas text-xl uppercase tracking-wide text-[#111111] leading-tight truncate">{item.name}</p>
