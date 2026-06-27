@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 const CalculadorEnvio = dynamic(() => import('@/components/CalculadorEnvio'), { ssr: false });
 const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvioSimple'), { ssr: false });
-import VapeSpecs3D from '@/components/VapeSpecs3D';
+const VapeSpecs3D = dynamic(() => import('@/components/VapeSpecs3D'), { ssr: false });
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, setDoc, getDoc, getDocs, increment, query, orderBy, limit } from "firebase/firestore";
@@ -350,6 +350,26 @@ function HorizontalScroll({ children, className }) {
         onClick={() => scroll(1)}
         className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10 items-center justify-center rounded-full bg-gray-100 border border-gray-200 text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] hover:border-[#fcdb00] transition-all opacity-0 group-hover/hscroll:opacity-100 backdrop-blur-xl shadow-lg"
       ><i className="fas fa-chevron-right text-xs" /></button>
+    </div>
+  );
+}
+
+function LazyVapeSpecs3D() {
+  const ref = useRef(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); obs.disconnect(); } },
+      { rootMargin: '300px' }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <div ref={ref}>
+      {inView && <VapeSpecs3D />}
     </div>
   );
 }
@@ -1859,7 +1879,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           if (sec) result.push(<React.Fragment key={`home-block-${block.id}`}>{renderSingleHomeSection(sec)}</React.Fragment>);
         }
         if (vape3dPosition === block.id) {
-          result.push(<React.Fragment key="vape3d-showcase"><VapeSpecs3D /></React.Fragment>);
+          result.push(<React.Fragment key="vape3d-showcase"><LazyVapeSpecs3D /></React.Fragment>);
         }
         if (logosBarPosition === block.id) {
           result.push(<React.Fragment key="logos-bar"><LogosBar /></React.Fragment>);
@@ -2536,7 +2556,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
             />
           </div>
           {logosBarPosition === 'banner' && <LogosBar />}
-          {vape3dPosition === 'banner' && <VapeSpecs3D />}
+          {vape3dPosition === 'banner' && <LazyVapeSpecs3D />}
           <main className="flex-grow px-4 md:px-10 lg:px-20 xl:px-32 pt-10 w-full min-h-[50vh] pb-8 md:pb-16 animate-view-enter">
             <div className="mb-16 hidden">
               <h3 className="font-bebas text-2xl text-[#111111] mb-4 pl-2 reveal-title reveal-on-scroll hidden"></h3>
