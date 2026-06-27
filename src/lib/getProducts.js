@@ -67,6 +67,30 @@ function serializeProduct(data) {
   return out;
 }
 
+export async function getSSRHomeSections() {
+  try {
+    const snapshot = await adminDb.collection('home_sections').get();
+    if (snapshot.empty) return [];
+    return snapshot.docs
+      .map(d => ({ dbId: d.id, ...serializeProduct(d.data()) }))
+      .sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+  } catch (err) {
+    console.error('[SSR] getSSRHomeSections falló:', err.message);
+    return [];
+  }
+}
+
+export async function getSSRHomeLayout() {
+  try {
+    const docSnap = await adminDb.collection('settings').doc('home_layout').get();
+    const sections = docSnap.exists ? docSnap.data()?.sections : null;
+    return Array.isArray(sections) ? sections : [];
+  } catch (err) {
+    console.error('[SSR] getSSRHomeLayout falló:', err.message);
+    return [];
+  }
+}
+
 export async function getSSRProducts() {
   try {
     const snapshot = await adminDb.collection('products').get();

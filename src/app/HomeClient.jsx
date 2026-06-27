@@ -374,13 +374,13 @@ function LazyVapeSpecs3D() {
   );
 }
 
-export default function HomeClient({ ssrProducts = [] }) {
+export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssrHomeLayout = [] }) {
   const [cart, setCart] = useState([]);
   const [products, setProducts] = useState(ssrProducts.filter(p => !p.isHidden));
   const [allProducts, setAllProducts] = useState(ssrProducts);
   const [promos, setPromos] = useState([]);
-  const [homeSections, setHomeSections] = useState([]); 
-  const [homeLayout, setHomeLayout] = useState([]);
+  const [homeSections, setHomeSections] = useState(ssrHomeSections);
+  const [homeLayout, setHomeLayout] = useState(ssrHomeLayout);
   const [communityVideos, setCommunityVideos] = useState(INITIAL_COMMUNITY_VIDEOS);
   const [activeCommunityVideoId, setActiveCommunityVideoId] = useState(null);
   const [flippedCommunityCards, setFlippedCommunityCards] = useState({});
