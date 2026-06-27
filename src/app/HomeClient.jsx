@@ -406,7 +406,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const [vidreiraCardRadius, setVidreiraCardRadius] = useState('rounded');
   const [vidreiraShowIcons, setVidreiraShowIcons] = useState(true);
   const [vape3dPosition, setVape3dPosition] = useState('banner');
-  const [logosBarPosition, setLogosBarPosition] = useState('banner');
+  const [logosBarPosition, setLogosBarPosition] = useState(null);
   const [showAyudaMenu, setShowAyudaMenu] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCartVisible, setIsCartVisible] = useState(false);
@@ -1910,10 +1910,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         if (vape3dPosition === block.id) {
           result.push(<React.Fragment key="vape3d-showcase"><LazyVapeSpecs3D /></React.Fragment>);
         }
-        if (logosBarPosition === block.id) {
-          result.push(<React.Fragment key="logos-bar"><LogosBar /></React.Fragment>);
-        }
       });
+    result.push(<React.Fragment key="logos-bar"><LogosBar /></React.Fragment>);
     return result;
   };
 
@@ -2584,7 +2582,6 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
               className="w-full h-full object-cover"
             />
           </div>
-          {logosBarPosition === 'banner' && <LogosBar />}
           {vape3dPosition === 'banner' && <LazyVapeSpecs3D />}
           <main className="flex-grow px-4 md:px-10 lg:px-20 xl:px-32 pt-10 w-full min-h-[50vh] pb-8 md:pb-16 animate-view-enter">
             <div className="mb-16 hidden">
