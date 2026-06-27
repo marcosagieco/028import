@@ -1,11 +1,13 @@
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+
 let _adminDb = null;
+let _initAttempted = false;
 
 export function getAdminDb() {
-  if (_adminDb) return _adminDb;
+  if (_initAttempted) return _adminDb;
+  _initAttempted = true;
   try {
-    const { initializeApp, getApps, cert } = require('firebase-admin/app');
-    const { getFirestore } = require('firebase-admin/firestore');
-
     const app = getApps().length > 0
       ? getApps()[0]
       : initializeApp({
@@ -15,11 +17,9 @@ export function getAdminDb() {
             privateKey:  (process.env.FIREBASE_ADMIN_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
           }),
         });
-
     _adminDb = getFirestore(app);
-    return _adminDb;
   } catch (err) {
     console.error('[Firebase Admin] init falló:', err.message);
-    return null;
   }
+  return _adminDb;
 }

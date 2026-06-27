@@ -709,13 +709,32 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
 
   useEffect(() => {
     const handleFocus = () => setIsSending(false);
-    window.addEventListener('focus', handleFocus); window.addEventListener('pageshow', handleFocus);
-    if (firebaseRefs.auth && firebaseRefs.db) {
-      const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (u) => {
-        setUser(u);
-        if (!u && !googleSigningIn.current) { signInAnonymously(firebaseRefs.auth).catch(console.error); }
-      });
-      const unsubscribeStock = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('pageshow', handleFocus);
+
+    if (!firebaseRefs.auth || !firebaseRefs.db) {
+      return () => {
+        window.removeEventListener('focus', handleFocus);
+        window.removeEventListener('pageshow', handleFocus);
+      };
+    }
+
+    let stockUnsub = null, promosUnsub = null;
+    let upsellsUnsub = null, carritoUnsub = null, couponsUnsub = null;
+    let dataSubscribed = false;
+
+    const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (u) => {
+      setUser(u);
+      if (!u) {
+        // Sin usuario todavía: iniciar auth anónima y esperar
+        if (!googleSigningIn.current) signInAnonymously(firebaseRefs.auth).catch(console.error);
+        return;
+      }
+      // Usuario autenticado: abrir listeners solo una vez
+      if (dataSubscribed) return;
+      dataSubscribed = true;
+
+      stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         const normalizeProductId = (docId, data = {}) => {
           const rawId = data.id ?? String(docId).replace(/^prod_/, '');
           const numericId = Number(rawId);
@@ -755,7 +774,8 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
         setAllProducts(sortedAll);
         setProducts(sortedAll.filter(p => !p.isHidden));
       });
-      const unsubscribePromos = onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
+
+      promosUnsub = onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
       getDocs(collection(firebaseRefs.db, 'home_sections')).then(s => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : [])).catch(() => {});
       getDoc(doc(firebaseRefs.db, 'settings', 'community_videos')).then(snap => {
         const videosFromSettings = snap.exists() && Array.isArray(snap.data()?.videos)
@@ -784,18 +804,27 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
       getDoc(doc(firebaseRefs.db, 'settings', 'logos_bar_position')).then(snap => {
         if (snap.exists()) setLogosBarPosition(snap.data().afterSectionId || 'banner');
       }).catch(() => {});
-      const unsubscribeUpsells = onSnapshot(collection(firebaseRefs.db, 'upsells'), (snap) => {
+      upsellsUnsub = onSnapshot(collection(firebaseRefs.db, 'upsells'), (snap) => {
         setUpsellsList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
       });
-      const unsubscribeCarritoDestacados = onSnapshot(collection(firebaseRefs.db, 'carritoDestacados'), (snap) => {
+      carritoUnsub = onSnapshot(collection(firebaseRefs.db, 'carritoDestacados'), (snap) => {
         setCarritoDestacados(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
       });
-      const unsubscribeCoupons = onSnapshot(collection(firebaseRefs.db, 'coupons'), (snap) => {
+      couponsUnsub = onSnapshot(collection(firebaseRefs.db, 'coupons'), (snap) => {
         setCoupons(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
       });
+    });
 
-      return () => { unsubscribeAuth(); unsubscribeStock(); unsubscribePromos(); unsubscribeUpsells(); unsubscribeCarritoDestacados(); unsubscribeCoupons(); window.removeEventListener('focus', handleFocus); window.removeEventListener('pageshow', handleFocus); };
-    }
+    return () => {
+      unsubscribeAuth();
+      stockUnsub?.();
+      promosUnsub?.();
+      upsellsUnsub?.();
+      carritoUnsub?.();
+      couponsUnsub?.();
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('pageshow', handleFocus);
+    };
   }, [firebaseRefs]);
 
   useEffect(() => {
