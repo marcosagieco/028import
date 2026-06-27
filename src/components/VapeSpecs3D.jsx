@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useRef, useMemo, useState, useEffect, useCallback } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -17,9 +17,14 @@ const SPECS = [
   { icon: 'fa-tv',         label: 'Pantalla Digital', value: 'Sí',           desc: 'Sí — indicador visual de batería y líquido restante.' },
 ];
 
-function StaticVape({ rotation, isMobile }) {
+function StaticVape({ rotation, isMobile, onReady }) {
   const { scene } = useGLTF(MODEL_URL);
   const rotRef = useRef();
+  const { invalidate } = useThree();
+
+  useEffect(() => {
+    if (onReady) onReady(invalidate);
+  }, [invalidate, onReady]);
 
   const center = useMemo(() => {
     const box = new THREE.Box3().setFromObject(scene);
@@ -28,8 +33,11 @@ function StaticVape({ rotation, isMobile }) {
 
   useFrame(() => {
     if (!rotRef.current) return;
-    rotRef.current.rotation.x += (rotation.current.x - rotRef.current.rotation.x) * 0.04;
-    rotRef.current.rotation.y += (rotation.current.y - rotRef.current.rotation.y) * 0.04;
+    const dx = rotation.current.x - rotRef.current.rotation.x;
+    const dy = rotation.current.y - rotRef.current.rotation.y;
+    rotRef.current.rotation.x += dx * 0.04;
+    rotRef.current.rotation.y += dy * 0.04;
+    if (Math.abs(dx) > 0.0002 || Math.abs(dy) > 0.0002) invalidate();
   });
 
   const posX  = isMobile ? 0 : -1;
@@ -51,10 +59,11 @@ function StaticVape({ rotation, isMobile }) {
 useGLTF.preload(MODEL_URL);
 
 export default function VapeSpecs3D() {
-  const rotation     = useRef({ x: 0, y: -1.4 });
-  const isDragging   = useRef(false);
-  const lastMouse    = useRef({ x: 0, y: 0 });
+  const rotation      = useRef({ x: 0, y: -1.4 });
+  const isDragging    = useRef(false);
+  const lastMouse     = useRef({ x: 0, y: 0 });
   const canvasWrapRef = useRef(null);
+  const invalidateRef = useRef(null);
   const [cursor, setCursor] = useState('grab');
   const [openSpec, setOpenSpec] = useState(null);
   const [flavors, setFlavors] = useState([]);
@@ -90,6 +99,7 @@ export default function VapeSpecs3D() {
     const baseX = 0;
     rotation.current.y = Math.max(baseY - limitYL, Math.min(baseY + limitYR, rotation.current.y + dx * 0.004));
     rotation.current.x = Math.max(baseX - limitX,  Math.min(baseX + limitX,  rotation.current.x + dy * 0.004));
+    invalidateRef.current?.();
   }, []);
 
   const handleMouseDown = (e) => {
@@ -234,6 +244,7 @@ export default function VapeSpecs3D() {
           <Canvas
             camera={{ position: [0, 0, 5], fov: 45 }}
             gl={{ antialias: true, alpha: true }}
+            frameloop="demand"
             style={{ background: 'transparent', width: '100%', height: '100%' }}
           >
             <ambientLight intensity={0.35} />
@@ -243,7 +254,7 @@ export default function VapeSpecs3D() {
             <pointLight position={[8, 0, 2]}   intensity={16} color="#ffffff" />
             <pointLight position={[-8, 0, 2]}  intensity={16} color="#ffffff" />
             <Suspense fallback={null}>
-              <StaticVape rotation={rotation} isMobile={isMobile} />
+              <StaticVape rotation={rotation} isMobile={isMobile} onReady={fn => { invalidateRef.current = fn; }} />
               <Environment preset="city" />
             </Suspense>
           </Canvas>
