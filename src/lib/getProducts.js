@@ -1,4 +1,4 @@
-import { adminDb } from './firebaseAdmin';
+import { getAdminDb } from './firebaseAdmin';
 
 // Espejo exacto del array hardcodeado en page.js — es la base de fallback
 const initialProducts = [
@@ -69,7 +69,9 @@ function serializeProduct(data) {
 
 export async function getSSRHomeSections() {
   try {
-    const snapshot = await adminDb.collection('home_sections').get();
+    const db = getAdminDb();
+    if (!db) return [];
+    const snapshot = await db.collection('home_sections').get();
     if (snapshot.empty) return [];
     return snapshot.docs
       .map(d => ({ dbId: d.id, ...serializeProduct(d.data()) }))
@@ -82,7 +84,9 @@ export async function getSSRHomeSections() {
 
 export async function getSSRHomeLayout() {
   try {
-    const docSnap = await adminDb.collection('settings').doc('home_layout').get();
+    const db = getAdminDb();
+    if (!db) return [];
+    const docSnap = await db.collection('settings').doc('home_layout').get();
     const sections = docSnap.exists ? docSnap.data()?.sections : null;
     return Array.isArray(sections) ? sections : [];
   } catch (err) {
@@ -93,7 +97,9 @@ export async function getSSRHomeLayout() {
 
 export async function getSSRProducts() {
   try {
-    const snapshot = await adminDb.collection('products').get();
+    const db = getAdminDb();
+    if (!db) return initialProducts;
+    const snapshot = await db.collection('products').get();
 
     const normalizeId = (docId, data) => {
       const rawId = data.id ?? String(docId).replace(/^prod_/, '');
