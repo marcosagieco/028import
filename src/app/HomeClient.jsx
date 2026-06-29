@@ -355,6 +355,7 @@ function HorizontalScroll({ children, className }) {
 }
 
 function LazyVapeSpecs3D() {
+  return null; // DIAGNÓSTICO TEMPORAL — revertir después de confirmar que este componente causa el crash de Safari
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
   useEffect(() => {
