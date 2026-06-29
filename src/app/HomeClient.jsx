@@ -2504,7 +2504,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                             {deptCats.map(cat => (
                               <button
                                 key={cat}
-                                onClick={() => { setFilterDepts([dept]); setFilterBrands([]); setActiveFilter({dept, cat}); setCurrentView('catalog'); setIsMenuOpen(false); window.scrollTo({top:0,behavior:'smooth'}); }}
+                                onClick={() => { setFilterDepts([]); setFilterBrands([cat]); setActiveFilter({dept, cat}); setCurrentView('catalog'); setIsMenuOpen(false); window.scrollTo({top:0,behavior:'smooth'}); }}
                                 className="text-left py-2 pl-4 text-sm font-medium text-[#111111] active:opacity-60 transition-opacity"
                               >
                                 {cat}
