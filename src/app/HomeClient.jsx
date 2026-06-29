@@ -355,7 +355,6 @@ function HorizontalScroll({ children, className }) {
 }
 
 function LazyVapeSpecs3D() {
-  return null; // DIAGNÓSTICO TEMPORAL — revertir después de confirmar que este componente causa el crash de Safari
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
   useEffect(() => {
@@ -2562,8 +2561,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
       )}
 
       {/* --- INICIO CONTENIDO --- */}
-      {currentView === 'home' ? (
-        <>
+      <div style={{ display: currentView === 'home' ? '' : 'none' }}>
           <div className="w-full bg-[#111111] h-8 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex items-center">
             <div className="animate-marquee whitespace-nowrap flex items-center">
               {[...Array(6)].map((_, i) => (
@@ -2610,8 +2608,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
             </div>
             {renderOrderedHomeBlocks()}
           </main>
-        </>
-      ) : currentView === 'catalog' ? (
+      </div>
+      {currentView === 'catalog' && (
         <>
           {/* Barra de filtros */}
           <div className="bg-white/90 backdrop-blur-2xl z-40 border-b border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.08)] sticky top-[72px]">
@@ -2778,7 +2776,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
             </>
           )}
         </>
-      ) : (
+      )}
+      {currentView !== 'home' && currentView !== 'catalog' && (
           <main className="flex-grow animate-view-enter">
               {renderLegalPage()}
           </main>

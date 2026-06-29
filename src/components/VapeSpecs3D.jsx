@@ -5,7 +5,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, collection, onSnapshot } from 'firebase/firestore';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
 
 const MODEL_URL = '/models/pinkvapedevice3dmodel-v1.glb';
 
@@ -81,14 +81,13 @@ export default function VapeSpecs3D() {
     const firebaseConfig = { apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY, authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID, storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET, messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID, appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID };
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
-    const unsub = onSnapshot(collection(db, 'products'), (snap) => {
+    getDocs(collection(db, 'products')).then((snap) => {
       const elfbarFlavors = snap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .filter(p => p.category === 'Elfbar Ice King' && p.inStock !== false)
         .map(p => p.name);
       setFlavors(elfbarFlavors);
     });
-    return () => unsub();
   }, []);
 
   const applyDelta = useCallback((dx, dy) => {
@@ -247,12 +246,8 @@ export default function VapeSpecs3D() {
             frameloop="demand"
             style={{ background: 'transparent', width: '100%', height: '100%' }}
           >
-            <ambientLight intensity={0.35} />
-            <pointLight position={[5, 5, 5]}   intensity={38} color="#ffffff" />
-            <pointLight position={[-5, 3, 3]}  intensity={28} color="#ffffff" />
-            <pointLight position={[0, -5, 5]}  intensity={14} color="#ffffff" />
-            <pointLight position={[8, 0, 2]}   intensity={16} color="#ffffff" />
-            <pointLight position={[-8, 0, 2]}  intensity={16} color="#ffffff" />
+            <ambientLight intensity={1.0} />
+            <pointLight position={[5, 5, 5]} intensity={38} color="#ffffff" />
             <Suspense fallback={null}>
               <StaticVape rotation={rotation} isMobile={isMobile} onReady={fn => { invalidateRef.current = fn; }} />
               <Environment preset="city" />
