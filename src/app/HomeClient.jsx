@@ -355,6 +355,7 @@ function HorizontalScroll({ children, className }) {
 }
 
 function LazyVapeSpecs3D() {
+  return null;
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
   useEffect(() => {
