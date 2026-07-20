@@ -17,7 +17,7 @@ export default function WinterOfferModal({ onClose }) {
         </button>
 
         <img
-          src="https://i.ibb.co/vvCbcNQ6/image.png"
+          src="/winter-offer.webp"
           alt="028 Import — Temporada de invierno"
           className="w-full h-auto block"
         />
