@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
 const CalculadorEnvio = dynamic(() => import('@/components/CalculadorEnvio'), { ssr: false });
 const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvioSimple'), { ssr: false });
@@ -1479,11 +1480,12 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
             className={`relative ${aspectClass} bg-gray-50 cursor-pointer`}
             onClick={() => setSelectedProduct(p)}
         >
-          <img
+          <Image
             src={p.image}
             alt={p.name}
-            loading="lazy"
-            className={`w-full h-full object-cover mix-blend-normal group-hover:scale-105 transition-transform duration-700 ease-out ${isVidriera && vidreiraCardRadius === 'squared' ? '' : 'rounded-t-[1.4rem]'}`}
+            fill
+            sizes="(max-width: 768px) 45vw, 300px"
+            className={`object-cover mix-blend-normal group-hover:scale-105 transition-transform duration-700 ease-out ${isVidriera && vidreiraCardRadius === 'squared' ? '' : 'rounded-t-[1.4rem]'}`}
           />
           {isOutOfStock ? ( 
               <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm flex items-center justify-center">
@@ -1660,7 +1662,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
                     src={video.poster || getCommunityVideoPoster(video.videoUrl)}
                     alt={video.title || '028 Community'}
                     className="absolute inset-0 w-full h-full object-cover bg-black"
-                    loading="eager"
+                    loading={index < 2 ? "eager" : "lazy"}
                     draggable="false"
                   />
                 ) : (
@@ -2594,11 +2596,14 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
               ))}
             </div>
           </div>
-          <div className="w-full h-[230px] md:h-[475px] overflow-hidden">
-            <img
+          <div className="relative w-full h-[230px] md:h-[475px] overflow-hidden">
+            <Image
               src="https://i.ibb.co/604qygNq/image.png"
               alt="Banner 028 Import"
-              className="w-full h-full object-cover"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
             />
           </div>
           {vape3dPosition === 'banner' && <LazyVapeSpecs3D />}
