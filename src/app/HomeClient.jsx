@@ -112,7 +112,8 @@ const AVAILABLE_ICONS = [
   { id: 'fa-gift', prefix: 'fas', color: 'text-blue-500' },      
   { id: 'fa-rocket', prefix: 'fas', color: 'text-orange-500' },  
   { id: 'fa-award', prefix: 'fas', color: 'text-indigo-500' },
-  { id: 'fa-apple', prefix: 'fab', color: 'text-gray-800' } 
+  { id: 'fa-apple', prefix: 'fab', color: 'text-gray-800' },
+  { id: 'fa-snowflake', prefix: 'fas', color: 'text-[#8fd3ff]' }
 ];
 
 const FLAVOR_OPTIONS = ['FRUTAL', 'MENTA', 'FRESCO', 'DULCE', 'ÁCIDO', 'TROPICAL', 'CÍTRICO', 'CAFÉ'];
@@ -1227,15 +1228,17 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
       return subtotal + envio - cashDiscount - couponDiscount;
   };
 
-  const addToCart = async (product, e) => { 
-    if(e) e.stopPropagation(); 
-    if (product.inStock === false) return; 
+  const addToCart = async (product, e) => {
+    if(e) e.stopPropagation();
+    if (product.inStock === false) return;
+    const hasOffer = product.offerPrice > 0 && product.offerPrice < product.price;
+    const effectivePrice = hasOffer ? product.offerPrice : product.price;
 
-    setCart(prev => { 
-        const existing = prev.find(item => item.id === product.id); 
-        if (existing) return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item); 
-        return [...prev, { ...product, qty: 1 }]; 
-    }); 
+    setCart(prev => {
+        const existing = prev.find(item => item.id === product.id);
+        if (existing) return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
+        return [...prev, { ...product, price: effectivePrice, listPrice: product.price, qty: 1 }];
+    });
     showToast(`✅ Añadido: ${product.name}`); 
     if(selectedProduct) setSelectedProduct(null); 
 
@@ -1486,10 +1489,15 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
               <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm flex items-center justify-center">
                   <span className="bg-red-600 text-white font-bebas text-sm px-4 py-1.5 rounded-sm uppercase tracking-wider shadow-lg">SIN STOCK</span>
               </div> 
-          ) : p.tag && ( 
+          ) : p.tag && (
               <span className="absolute top-3 left-3 bg-[#111111] text-[#fcdb00] font-bebas text-[11px] px-3 py-1 uppercase rounded-sm shadow-md tracking-wider">
                   {p.tag}
-              </span> 
+              </span>
+          )}
+          {!isOutOfStock && p.winterBadge && (
+              <span className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[#0c1a2e]/85 backdrop-blur-sm border border-[#8fd3ff]/50 flex items-center justify-center text-base shadow-md" title="Oferta de invierno">
+                  ❄️
+              </span>
           )}
         </div>
         
@@ -1502,9 +1510,20 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
             </h3>
 
             <div className="mt-auto pt-3">
-                <p className={`text-[#111111] font-bebas ${priceClass} mb-4 tracking-wide`}>
-                    {CONFIG.currencySymbol}{formatPrice(p.price)}{p.isUSD && <span className="text-gray-500 text-[11px] font-poppins font-bold ml-1">USD</span>}
-                </p>
+                {p.offerPrice > 0 && p.offerPrice < p.price ? (
+                    <div className="mb-4">
+                        <p className="text-gray-400 font-bebas text-sm line-through leading-none">
+                            {CONFIG.currencySymbol}{formatPrice(p.price)}
+                        </p>
+                        <p className={`text-[#111111] font-bebas ${priceClass} tracking-wide leading-tight`}>
+                            {CONFIG.currencySymbol}{formatPrice(p.offerPrice)}{p.isUSD && <span className="text-gray-500 text-[11px] font-poppins font-bold ml-1">USD</span>}
+                        </p>
+                    </div>
+                ) : (
+                    <p className={`text-[#111111] font-bebas ${priceClass} mb-4 tracking-wide`}>
+                        {CONFIG.currencySymbol}{formatPrice(p.price)}{p.isUSD && <span className="text-gray-500 text-[11px] font-poppins font-bold ml-1">USD</span>}
+                    </p>
+                )}
                 
                 {isOutOfStock ? (
                     <button disabled className="w-full bg-gray-100 text-gray-500 py-3 font-bebas text-[14px] uppercase tracking-wider rounded-xl cursor-not-allowed">
@@ -1852,8 +1871,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
     return (
       <div key={sec.id} className="mb-20 reveal-on-scroll">
         <div className="flex justify-between items-end mb-6 pl-2 border-b border-gray-200 pb-3">
-          <h2 className="text-4xl md:text-6xl font-bebas text-[#111111] tracking-wide uppercase">
-            {vidreiraShowIcons && <i className={`${AVAILABLE_ICONS.find(i => i.id === sec.icon)?.prefix || 'fas'} ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'} mr-3 drop-shadow-sm`}></i>}{sec.title}
+          <h2 className={`text-4xl md:text-6xl font-bebas tracking-wide uppercase ${sec.winterEffect ? 'text-[#4fa4dd]' : 'text-[#111111]'}`}>
+            {vidreiraShowIcons && <i className={`${AVAILABLE_ICONS.find(i => i.id === sec.icon)?.prefix || 'fas'} ${sec.icon || 'fa-star'} ${sec.winterEffect ? 'text-[#4fa4dd]' : (sec.iconColor || 'text-[#fcdb00]')} mr-3 drop-shadow-sm`}></i>}{sec.title}
           </h2>
           <button onClick={() => navigateTo('catalog')} className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#111111]/60 hover:text-[#fcdb00] transition-colors bg-gray-100 px-5 py-2.5 rounded-full border border-gray-200 hover:border-[#fcdb00]/30">Ver Catálogo <i className="fas fa-arrow-right"></i></button>
         </div>
@@ -2835,7 +2854,14 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       <div className="border-t border-white/10 my-4"></div>
                       <p className="text-white/50 text-sm font-poppins leading-relaxed whitespace-pre-line">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p>
                       <div className="border-t border-white/10 my-4"></div>
-                      <p className="font-bebas text-5xl text-[#fcdb00] mb-6">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}{selectedProduct.isUSD && <span className="text-white/40 text-base font-poppins font-bold ml-2">USD</span>}</p>
+                      {selectedProduct.offerPrice > 0 && selectedProduct.offerPrice < selectedProduct.price ? (
+                          <div className="mb-6">
+                              <p className="text-white/40 font-bebas text-xl line-through leading-none mb-1">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}</p>
+                              <p className="font-bebas text-5xl text-[#fcdb00]">{CONFIG.currencySymbol}{formatPrice(selectedProduct.offerPrice)}{selectedProduct.isUSD && <span className="text-white/40 text-base font-poppins font-bold ml-2">USD</span>}</p>
+                          </div>
+                      ) : (
+                          <p className="font-bebas text-5xl text-[#fcdb00] mb-6">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}{selectedProduct.isUSD && <span className="text-white/40 text-base font-poppins font-bold ml-2">USD</span>}</p>
+                      )}
                       {selectedProduct.inStock === false ? (
                           <button disabled className="w-full bg-white/10 text-white/30 py-4 text-xl font-bebas uppercase tracking-wider rounded-xl cursor-not-allowed border border-white/10">Producto Agotado</button>
                       ) : (

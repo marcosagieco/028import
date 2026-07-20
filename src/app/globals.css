@@ -39,3 +39,39 @@ body {
   background-repeat: repeat;
   background-size: 250px 250px;
 }
+
+.snowfall-container {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.snowflake {
+  position: absolute;
+  top: -10%;
+  color: #ffffff;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+  animation-name: snow-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes snow-fall {
+  0% {
+    transform: translate(0, -10vh) rotate(0deg);
+  }
+  100% {
+    transform: translate(var(--drift), 110vh) rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .snowflake {
+    animation: none;
+    display: none;
+  }
+}
+

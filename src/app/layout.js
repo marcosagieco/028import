@@ -1,5 +1,6 @@
-import './globals.css'; 
+import './globals.css';
 import Script from 'next/script';
+import WinterPromo from '../components/WinterPromo';
 
 const CONFIG = {
   brandName: "028", 
@@ -21,6 +22,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="bg-[#fafafa] text-[#1a1a1a] font-sans flex flex-col relative min-h-screen">
         <div className="noise-overlay" aria-hidden="true" />
+        <WinterPromo />
 
         {/* === GOOGLE ANALYTICS === */}
         <Script 
