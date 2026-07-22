@@ -2585,19 +2585,32 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
               ))}
             </div>
           </div>
+          {/* Banner original, volver a este cuando termine la temporada de invierno:
           <div className="relative w-full h-[230px] md:h-[475px] overflow-hidden">
-            {/* Banner original, volver a este cuando termine la temporada de invierno:
             <Image
-              src="https://i.ibb.co/604qygNq/image.png"
+              src="/banner-original.png"
               alt="Banner 028 Import"
               fill
               priority
               sizes="100vw"
               className="object-cover"
             />
-            */}
+          </div>
+          */}
+          <div className="relative w-full overflow-hidden block md:hidden" style={{ aspectRatio: '1600 / 1000' }}>
             <Image
-              src="https://i.ibb.co/4Z2zmFPr/image.png"
+              src="/banner-invierno.png"
+              alt="Banner 028 Import"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+              style={{ objectPosition: 'left center' }}
+            />
+          </div>
+          <div className="relative w-full overflow-hidden hidden md:block" style={{ aspectRatio: '1767 / 667' }}>
+            <Image
+              src="/banner-invierno.png"
               alt="Banner 028 Import"
               fill
               priority
