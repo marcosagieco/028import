@@ -2586,8 +2586,18 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
             </div>
           </div>
           <div className="relative w-full h-[230px] md:h-[475px] overflow-hidden">
+            {/* Banner original, volver a este cuando termine la temporada de invierno:
             <Image
               src="https://i.ibb.co/604qygNq/image.png"
+              alt="Banner 028 Import"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+            />
+            */}
+            <Image
+              src="https://i.ibb.co/4Z2zmFPr/image.png"
               alt="Banner 028 Import"
               fill
               priority
