@@ -266,11 +266,6 @@ const PAGE_CONTENT = {
           <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mb-3 flex items-center gap-2"><i className="fas fa-motorcycle"></i> Motomensajería Programada</h3>
           <p className="text-sm">Contamos con un servicio propio de motomensajería con salidas organizadas en tres turnos fijos (13:00hs - 16:00hs - 20:00hs). Esto nos permite garantizar un tiempo de entrega predecible y seguro. Aboná con efectivo o transferencia.</p>
         </div>
-
-        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 my-6">
-          <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mb-3 flex items-center gap-2"><i className="fas fa-store"></i> Retiro Local</h3>
-          <p className="text-sm">Si prefiere gestionar el retiro de manera personal, lo esperamos en nuestro punto de entrega en Miñones & Juramento (Belgrano, CABA). Le informaremos por WhatsApp las instrucciones exactas al confirmar el pedido.</p>
-        </div>
       </div>
     )
   },
@@ -295,7 +290,7 @@ const PAGE_CONTENT = {
             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-[#111111]"><i className="fas fa-money-bill-wave text-[#fcdb00]"></i></div>
             <div>
               <p className="font-bold text-[#111111]">Efectivo</p>
-              <p className="text-sm mt-1">Disponible para la modalidad de Retiro Local o envío mediante nuestra Motomensajería (Pago contra entrega).</p>
+              <p className="text-sm mt-1">Disponible para envíos mediante nuestra Motomensajería (Pago contra entrega).</p>
             </div>
           </li>
         </ul>
@@ -315,7 +310,7 @@ const PAGE_CONTENT = {
         <p>En cumplimiento con las disposiciones de la Dirección Nacional de Defensa del Consumidor, 028 IMPORT pone a su disposición las directrices para la revocación de compra.</p>
         
         <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mt-8 mb-2">Plazo Legal</h3>
-        <p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de <strong>10 (diez) días corridos</strong> contados desde la fecha de recepción del producto en su domicilio o desde el retiro en sucursal.</p>
+        <p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de <strong>10 (diez) días corridos</strong> contados desde la fecha de recepción del producto en su domicilio.</p>
 
         <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mt-8 mb-2">Condiciones Innegociables para Aceptación</h3>
         <p>Dada la naturaleza de los productos comercializados en nuestro catálogo (artículos de consumo personal e higiene), la devolución será aceptada pura y exclusivamente si se cumplen los siguientes requisitos de manera estricta:</p>
@@ -430,7 +425,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   };
   const [upsellIndex, setUpsellIndex] = useState(0);
   const [prevUpsellIndex, setPrevUpsellIndex] = useState(null);
-  const [deliveryMethod, setDeliveryMethod] = useState('retiro');
+  const deliveryMethod = 'envio';
   const [shippingType, setShippingType] = useState('flash'); 
   useEffect(() => {
     const hideInlineVideoControls = () => {
@@ -1291,10 +1286,8 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     const finalTotal = calculateTotal(currentCart);
 
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n\n`;
-    
-    if (deliveryMethod === 'retiro') {
-        msg = `Hola *${CONFIG.brandName}*, quiero hacer un pedido para *RETIRAR LOCAL*:\n\n`;
-    } else if (deliveryMethod === 'envio' && shippingType === 'flash') {
+
+    if (deliveryMethod === 'envio' && shippingType === 'flash') {
         msg = `Hola *${CONFIG.brandName}*, quiero hacer un pedido con *ENVÍO FLASH*. ¿Me pasás los datos para transferir?\n\n`;
     } else if (deliveryMethod === 'envio' && shippingType === 'moto') {
         if (paymentMethod === 'transferencia') {
@@ -1359,29 +1352,25 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     
     msg += `\n*TOTAL A PAGAR: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
     
-    if (deliveryMethod === 'retiro') {
-        msg += `\n*LOGÍSTICA:* 🏪 Retiro por deposito\n`;
-    } else {
-        msg += `\n*ENTREGA:* ${address}, ${zone}\n`;
-        if (aptDetails.trim()) msg += `*DEPTO/PISO:* ${aptDetails.trim()}\n`; 
-        
-        if (shippingType === 'flash') {
-            msg += `*LOGÍSTICA:* 🚀 Flash (30 mins)\n`;
-        } else {
-            msg += `*LOGÍSTICA:* 🛵 Motomensajería\n`;
-            
-            const selectedLabel = next7Days.find(d => d.value === deliveryDate)?.label || deliveryDate;
-            msg += `📅 *Día:* ${selectedLabel}\n`;
-            msg += `⏰ *Turno:* ${deliveryTime} hs\n`;
+    msg += `\n*ENTREGA:* ${address}, ${zone}\n`;
+    if (aptDetails.trim()) msg += `*DEPTO/PISO:* ${aptDetails.trim()}\n`;
 
-            if (paymentMethod === 'transferencia') {
-                msg += `🏦 *Transferido al Alias:* ${CONFIG.paymentAlias}\n`;
-                msg += `\nAdjunto mi comprobante de pago a continuación 👇`;
-            } else {
-                const cashDiscMsg = subtotalCalc >= 50000 ? 2500 : 1500;
-                msg += `💵 *Método de pago:* Efectivo contra entrega\n`;
-                msg += `💸 *Descuento efectivo aplicado:* -${CONFIG.currencySymbol}${formatPrice(cashDiscMsg)}\n`;
-            }
+    if (shippingType === 'flash') {
+        msg += `*LOGÍSTICA:* 🚀 Flash (30 mins)\n`;
+    } else {
+        msg += `*LOGÍSTICA:* 🛵 Motomensajería\n`;
+
+        const selectedLabel = next7Days.find(d => d.value === deliveryDate)?.label || deliveryDate;
+        msg += `📅 *Día:* ${selectedLabel}\n`;
+        msg += `⏰ *Turno:* ${deliveryTime} hs\n`;
+
+        if (paymentMethod === 'transferencia') {
+            msg += `🏦 *Transferido al Alias:* ${CONFIG.paymentAlias}\n`;
+            msg += `\nAdjunto mi comprobante de pago a continuación 👇`;
+        } else {
+            const cashDiscMsg = subtotalCalc >= 50000 ? 2500 : 1500;
+            msg += `💵 *Método de pago:* Efectivo contra entrega\n`;
+            msg += `💸 *Descuento efectivo aplicado:* -${CONFIG.currencySymbol}${formatPrice(cashDiscMsg)}\n`;
         }
     }
     
@@ -3054,9 +3043,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
       {/* ===== PANTALLA DE CHECKOUT ===== */}
       {isCheckoutOpen && (() => {
         const isFormValid = clientName.trim() && clientPhone.trim() && (
-          deliveryMethod === 'retiro' ||
-          (deliveryMethod === 'envio' && shippingType === 'flash' && address.trim()) ||
-          (deliveryMethod === 'envio' && shippingType === 'moto' && address.trim() && zone.trim())
+          (shippingType === 'flash' && address.trim()) ||
+          (shippingType === 'moto' && address.trim() && zone.trim())
         );
         return (
         <div className="fixed inset-0 z-[125] bg-[#f5f5f5] flex flex-col overflow-hidden">
@@ -3131,21 +3119,6 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2">
                     <i className="fas fa-map-marked-alt text-[#fcdb00]"></i> Entrega
                   </p>
-                  <div className="flex gap-2 mb-4 bg-gray-100 p-1.5 rounded-none border border-gray-300 font-poppins">
-                    <button onClick={() => setDeliveryMethod('retiro')} className={`flex-1 py-3 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryMethod === 'retiro' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Retiro Local</button>
-                    <button onClick={() => setDeliveryMethod('envio')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryMethod === 'envio' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Envío Domicilio</button>
-                  </div>
-
-                  {deliveryMethod === 'retiro' && (
-                    <div className="bg-[#fcdb00]/10 border border-[#fcdb00] p-4 rounded-none flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] flex-shrink-0"><i className="fas fa-store text-lg"></i></div>
-                      <div>
-                        <span className="font-bebas text-lg tracking-wide leading-none block text-[#111111]">Miñones & Juramento</span>
-                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-relaxed font-poppins">Belgrano, CABA</span>
-                      </div>
-                    </div>
-                  )}
-
                   {deliveryMethod === 'envio' && (
                     <div className="flex flex-col gap-3 font-poppins">
                       <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Elegí tu opción:</label>

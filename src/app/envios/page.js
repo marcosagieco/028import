@@ -33,11 +33,6 @@ export default function EnviosPage() {
               <h3 className="text-black font-black uppercase tracking-widest text-sm mb-3 flex items-center gap-2 mt-0"><i className="fas fa-plane"></i> Envíos a Toda Argentina</h3>
               <p className="text-sm m-0">Llegamos a cada rincón del país. Todos nuestros despachos nacionales se realizan a través de empresas de correo de primera línea. Su paquete será embalado con estrictas medidas de protección y contará con un número de seguimiento (Tracking) en tiempo real.</p>
             </div>
-
-            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 my-6">
-              <h3 className="text-black font-black uppercase tracking-widest text-sm mb-3 flex items-center gap-2 mt-0"><i className="fas fa-store"></i> Retiro Pick-Up</h3>
-              <p className="text-sm m-0">Si prefiere gestionar el retiro de manera personal o enviar a su propia mensajería de confianza, puede seleccionar esta opción. Una vez preparado el pedido, le informaremos por WhatsApp la dirección exacta (Zona Belgrano) y la franja horaria habilitada.</p>
-            </div>
           </div>
         </div>
 
