@@ -1213,7 +1213,19 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   
   const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
-  const getUnitPromoPrice = (item) => { const promo = promos.find(p => p.category === item.category); if (promo) { const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0); if (catCount >= promo.minQty) return promo.totalPrice / promo.minQty; } return item.price; };
+  const getUnitPromoPrice = (item) => {
+    const productPromo = promos.find(p => p.type === 'product' && p.productId === item.id);
+    if (productPromo) {
+      const prodCount = cart.filter(i => i.id === item.id).reduce((acc, curr) => acc + curr.qty, 0);
+      if (prodCount >= productPromo.minQty) return productPromo.totalPrice / productPromo.minQty;
+    }
+    const promo = promos.find(p => (p.type || 'category') === 'category' && p.category === item.category);
+    if (promo) {
+      const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0);
+      if (catCount >= promo.minQty) return promo.totalPrice / promo.minQty;
+    }
+    return item.price;
+  };
   
   const calculateTotal = (cartData = cart) => {
       const subtotal = cartData.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
@@ -1499,6 +1511,15 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
             <h3 className={`font-bebas ${titleClass} uppercase mb-1 text-[#111111] line-clamp-2 tracking-wide`}>
                 {p.name}
             </h3>
+            {(() => {
+                const productPromo = promos.find(pr => pr.type === 'product' && pr.productId === p.id);
+                if (!productPromo) return null;
+                return (
+                    <p className="inline-flex items-center gap-1 w-fit bg-[#fcdb00]/20 text-[#8a6d00] text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full mb-2">
+                        <i className="fas fa-tag text-[8px]"></i> {productPromo.minQty}+ un: {CONFIG.currencySymbol}{formatPrice(productPromo.totalPrice / productPromo.minQty)} c/u
+                    </p>
+                );
+            })()}
 
             <div className="mt-auto pt-3">
                 {p.offerPrice > 0 && p.offerPrice < p.price ? (
@@ -1561,7 +1582,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     
     if (sectionProducts.length === 0) return null;
     
-    const promo = promos.find(p => p.category === category); 
+    const promo = promos.find(p => (p.type || 'category') === 'category' && p.category === category);
     let promoText = null;
     
     if (promo) {
