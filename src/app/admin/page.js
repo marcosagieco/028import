@@ -209,7 +209,6 @@ export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
-  const [spins, setSpins] = useState([]); // --- NUEVO ESTADO PARA LA RULETA ---
   const [communityVideos, setCommunityVideos] = useState([]);
   const [newCommunityVideo, setNewCommunityVideo] = useState({
     title: '',
@@ -437,11 +436,6 @@ export default function AdminPage() {
       // LECTURA DE PRODUCTOS DESTACADOS DEL CARRITO
       onSnapshot(collection(firebaseRefs.db, 'carritoDestacados'), (snap) => {
         setCarritoList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
-      });
-
-      // --- LECTURA DE TIROS DE LA RULETA ---
-      onSnapshot(query(collection(firebaseRefs.db, 'spins'), orderBy('createdAt', 'desc')), (snap) => {
-        setSpins(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
       });
 
       // --- LECTURA DE VIDEOS 028 COMMUNITY ---

@@ -123,14 +123,6 @@ const DEPT_ICONS = [
   { id: 'fa-box', prefix: 'fas' }, { id: 'fa-wind', prefix: 'fas' }, { id: 'fa-leaf', prefix: 'fas' }, { id: 'fa-microchip', prefix: 'fas' }, { id: 'fa-star', prefix: 'fas' }, { id: 'fa-fire', prefix: 'fas' }, { id: 'fa-apple', prefix: 'fab' }, { id: 'fa-mobile-alt', prefix: 'fas' }, { id: 'fa-laptop', prefix: 'fas' }, { id: 'fa-gamepad', prefix: 'fas' }, { id: 'fa-headphones', prefix: 'fas' }, { id: 'fa-gem', prefix: 'fas' }, { id: 'fa-tag', prefix: 'fas' }, { id: 'fa-cannabis', prefix: 'fas' }, { id: 'fa-smoking', prefix: 'fas' }
 ];
 
-const ROULETTE_PRIZES = [
-  { id: 'off5', text: '5% OFF x MES', prob: 0.28, type: 'percent', value: 5, textC: '#fcdb00', description: '¡Activado! Tenés un 5% OFF extra y automático en CADA compra.' }, 
-  { id: 'off10', text: '10% OFF', prob: 0.26, type: 'percent', value: 10, textC: '#fcdb00', description: '¡Felicidades! Ganaste un 10% de descuento DIRECTO en tu carrito para usar YA.' }, 
-  { id: 'off15', text: ' 15% +30K COMPRA', prob: 0.20, type: 'percent', value: 15, textC: '#fcdb00', description: '¡Activado! Llená tu carrito hasta $30.000 o más y te regalamos un 15% OFF en el TOTAL.' }, 
-  { id: 'labubu', text: 'LABUBU GRATIS', prob: 0.14, type: 'none', value: 0, textC: '#fcdb00', description: '¡Increíble! Te enviamos un muñeco/llavero Labubu de regalo totalmente gratis.' }, 
-  { id: 'off20', text: '2DO VAPE -20%', prob: 0.09, type: 'percent', value: 20, textC: '#fcdb00', description: '¡Oferta activada! Llevate 2 Vapes y el segundo tiene un 20% OFF automático.' }, 
-  { id: 'sorpresa', text: '🎁 SORPRESA', prob: 0.03, type: 'sorpresa', value: 0, textC: '#fcdb00', description: '¡NO LO PUEDO CREER! Te ganaste EL PREMIO GORDO: Un Vaso Stanley 100% GRATIS superando los $60.000.' }, 
-];
 
 const initialProducts = [
   { id: 1, name: "BAJA SPLASH", price: 26000, department: "VAPES", category: "Elfbar Ice King", tag: "", image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png", description: "Vapeador desechable premium con una mezcla tropical y refrescante.", cardSize: "normal" },
@@ -330,9 +322,6 @@ const PAGE_CONTENT = {
   }
 };
 
-// Banner Hot Sale removido
-const CountdownBanner = () => null;
-
 function HorizontalScroll({ children, className }) {
   const ref = React.useRef(null);
   const scroll = (dir) => ref.current?.scrollBy({ left: dir * 320, behavior: 'smooth' });
@@ -385,6 +374,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const [communityVideoFeedback, setCommunityVideoFeedback] = useState({});
   const [communityVideoLoaded, setCommunityVideoLoaded] = useState({});
   const [communityVideoBuffering, setCommunityVideoBuffering] = useState({});
+  const [communityVideoPlaying, setCommunityVideoPlaying] = useState({});
   const communityVideoRefs = useRef({});
   const communityScrollRef = useRef(null);
   const [hoveredCommunityCard, setHoveredCommunityCard] = useState(null);
@@ -498,14 +488,6 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const [upsellsList, setUpsellsList] = useState([]);
   const [carritoDestacados, setCarritoDestacados] = useState([]);
 
-  const [showRouletteModal, setShowRouletteModal] = useState(false);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [rouletteRotation, setRouletteRotation] = useState(-30);
-  const [showResultModal, setShowResultModal] = useState(false);
-  const [wonPrizeData, setWonPrizeData] = useState(null);
-  
-  const [localRoulettePrize, setLocalRoulettePrize] = useState(null);
-  const [hasSpunLocal, setHasSpunLocal] = useState(false);
   const communityViewedRef = useRef(new Set());
 
   const [sortBy, setSortBy] = useState('relevante');
@@ -634,13 +616,6 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
       const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
       return { auth: getAuth(app), db: getFirestore(app) };
     } catch (error) { return { auth: null, db: null }; }
-  }, []);
-
-  useEffect(() => {
-    setLocalRoulettePrize(null);
-    setWonPrizeData(null);
-    setHasSpunLocal(false);
-    setShowRouletteModal(false);
   }, []);
 
   useEffect(() => {
@@ -853,15 +828,6 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
       return () => unsubscribe();
   }, [user, firebaseRefs.db]);
 
-  const claimPrize = (prize) => {
-    localStorage.removeItem('pendingPrize'); 
-    localStorage.setItem('hotSalePrize', JSON.stringify(prize));
-    setLocalRoulettePrize(prize);
-    setShowResultModal(false);
-    showToast(`¡PREMIO RECLAMADO! 🎉 ${prize.text}`);
-    fireConfetti();
-  };
-
   const handleGoogleLogin = async () => {
       if (!firebaseRefs.auth || !firebaseRefs.db) return;
       googleSigningIn.current = true;
@@ -875,13 +841,6 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
               await setDoc(userRef, { name: u.displayName, email: u.email, photoURL: u.photoURL, createdAt: serverTimestamp() });
           }
           showToast("¡Sesión iniciada con éxito! 🎉");
-
-          const pending = localStorage.getItem('pendingPrize');
-          if (pending) {
-              claimPrize(JSON.parse(pending));
-          } else if (wonPrizeData && !localRoulettePrize) {
-              claimPrize(wonPrizeData);
-          }
       } catch (error) {
           if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
               console.error(error);
@@ -930,82 +889,6 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     } finally {
       setAuthLoading(false);
     }
-  };
-
-  const fireConfetti = () => {
-    if (typeof window !== 'undefined' && window.confetti) {
-      const defaults = { origin: { y: 0.7 }, colors: ['#fcdb00', '#ffffff', '#111111', '#eab308'], zIndex: 9999, gravity: 0.5, scalar: 1.1, ticks: 200 };
-      window.confetti({ ...defaults, particleCount: 120, spread: 100, startVelocity: 35 });
-      setTimeout(() => { window.confetti({ ...defaults, particleCount: 60, spread: 120, startVelocity: 25 }); }, 150);
-    }
-  };
-
-  const handleSpinRoulette = async () => {
-      if (!user || user.isAnonymous) {
-          showToast("⚠️ Iniciá sesión para poder girar");
-          setAuthMode('login');
-          setAuthError('');
-          setShowAuthModal(true);
-          return;
-      }
-
-      if (isSpinning) return;
-      
-      if (hasSpunLocal) {
-        showToast("¡Ya utilizaste tu tiro de Hot Sale!");
-        return;
-      }
-      
-      setIsSpinning(true);
-      const rand = Math.random();
-      let sum = 0;
-      let wonPrize = ROULETTE_PRIZES[0];
-      
-      for (let p of ROULETTE_PRIZES) {
-          sum += p.prob;
-          if (rand <= sum) { wonPrize = p; break; }
-      }
-
-      const extraSpins = 5 * 360; 
-      const prizeIndex = ROULETTE_PRIZES.findIndex(p => p.id === wonPrize.id);
-      const sliceAngle = 360 / ROULETTE_PRIZES.length; 
-      const targetRotation = extraSpins + (360 - (prizeIndex * sliceAngle)) - (sliceAngle / 2);
-      
-      setRouletteRotation(-30 + targetRotation);
-
-      setTimeout(async () => { // Agregamos el 'async' acá
-          setIsSpinning(false);
-          setWonPrizeData(wonPrize);
-          setShowRouletteModal(false); 
-          setShowResultModal(true);    
-          
-          localStorage.setItem('hotSaleSpun', 'true');
-          localStorage.setItem('pendingPrize', JSON.stringify(wonPrize));
-          setHasSpunLocal(true);
-
-          // --- LOGICA PARA REGISTRAR EN EL ADMIN ---
-          if (firebaseRefs.db && user) {
-            try {
-              await addDoc(collection(firebaseRefs.db, 'spins'), {
-                userId: user.uid,
-                userName: dbUser?.name || user.displayName || 'Anónimo',
-                userEmail: user.email || '',
-                prizeId: wonPrize.id,
-                prizeText: wonPrize.text,
-                createdAt: serverTimestamp()
-              });
-              
-              // Opcional: También lo marcamos en su perfil de usuario
-              await setDoc(doc(firebaseRefs.db, 'users', user.uid), {
-                hasSpun: true,
-                wonPrize: wonPrize.text
-              }, { merge: true });
-
-            } catch (error) {
-              console.error("Error al guardar el tiro:", error);
-            }
-          }
-      }, 4000);
   };
 
   const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
@@ -1324,38 +1207,10 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     
     let subtotalFinal = subtotalCalc;
 
-    if (localRoulettePrize) {
-        const totalItems = currentCart.reduce((acc, item) => acc + item.qty, 0);
-        
-        if (localRoulettePrize.id === 'off20') {
-            if (totalItems >= 2) {
-                msg += `\n🎁 *HOT SALE:* 20% OFF en 2do Vape aplicado.\n`;
-            }
-        } else if (localRoulettePrize.id === 'off15') {
-            if (subtotalCalc >= 30000) {
-                msg += `\n🎁 *HOT SALE:* 15% OFF (Superó $30.000) aplicado.\n`;
-            }
-        } else if (localRoulettePrize.type === 'percent') {
-            msg += `\n🎰 *HOT SALE:* ${localRoulettePrize.text} aplicado al total.\n`;
-        } else if (localRoulettePrize.type === 'shipping') {
-            msg += `\n🔥 *HOT SALE:* ¡ENVÍO GRATIS GANADO! 🔥\n`;
-        } else if (localRoulettePrize.id === 'sorpresa') {
-            if (subtotalCalc >= 60000) {
-                msg += `\n🎁 *HOT SALE:* ¡PREMIO SORPRESA! (Vaso Stanley ganado por compra +$60k)\n`;
-            }
-        } else if (localRoulettePrize.id === 'labubu') {
-            msg += `\n🎁 *HOT SALE:* ¡LABUBU GRATIS EN TU COMPRA!\n`;
-        }
-    }
-
     msg += `\n*Subtotal:* ${CONFIG.currencySymbol}${formatPrice(subtotalFinal)}`;
-    
+
     let costoEnvioAgregado = (deliveryMethod === 'envio' && shippingType === 'moto') ? shippingCost : 0;
-    
-    if (localRoulettePrize && localRoulettePrize.type === 'shipping' && deliveryMethod === 'envio' && shippingType === 'moto') {
-        costoEnvioAgregado = 0;
-    }
-    
+
     if (costoEnvioAgregado > 0) {
         msg += `\n*Costo de Envío (Moto):* ${CONFIG.currencySymbol}${formatPrice(costoEnvioAgregado)}`;
     } else if (deliveryMethod === 'envio' && shippingType === 'moto') {
@@ -1409,7 +1264,6 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
                 deliveryDate: deliveryMethod === 'envio' && shippingType === 'moto' ? deliveryDate : null,
                 deliveryTime: deliveryMethod === 'envio' && shippingType === 'moto' ? deliveryTime : null,
                 shippingCost: costoEnvioAgregado,
-                couponUsed: localRoulettePrize ? localRoulettePrize.text : null,
                 status: (deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'transferencia') ? 'pending_verification' : 'pending', 
                 createdAt: serverTimestamp() 
             }).catch(e => console.error(e));
@@ -1686,18 +1540,28 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
                   className={`absolute inset-0 z-[1] w-full h-full object-cover bg-black transition-opacity duration-300 pointer-events-none ${communityVideoLoaded[cardId] ? 'opacity-100' : 'opacity-0'}`}
                   playsInline
                   muted
-                  preload="none"
+                  preload="metadata"
                   x-webkit-airplay="deny"
                   onLoadedData={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
                   onCanPlay={() => { setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true })); setCommunityVideoBuffering(prev => ({ ...prev, [cardId]: false })); }}
                   onPlay={() => {
                     setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }));
                     setCommunityVideoBuffering(prev => ({ ...prev, [cardId]: false }));
+                    setCommunityVideoPlaying(prev => ({ ...prev, [cardId]: true }));
                     trackCommunityView(video);
                   }}
+                  onPause={() => setCommunityVideoPlaying(prev => ({ ...prev, [cardId]: false }))}
                   onWaiting={() => setCommunityVideoBuffering(prev => ({ ...prev, [cardId]: true }))}
                   onPlaying={() => setCommunityVideoBuffering(prev => ({ ...prev, [cardId]: false }))}
                 />
+
+                {!communityVideoPlaying[cardId] && (
+                  <div className="pointer-events-none absolute inset-0 z-[4] flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-black/45 backdrop-blur-md border border-white/25 flex items-center justify-center text-white shadow-lg">
+                      <i className="fas fa-play text-2xl ml-1"></i>
+                    </div>
+                  </div>
+                )}
 
                 <button
                   type="button"
@@ -2435,9 +2299,6 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         </div>
       </header>
 
-      {/* --- BARRA CONTADOR OPTIMIZADA --- */}
-      <CountdownBanner />
-
       {toastMessage && (
           <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[300] bg-[#111111]/90 backdrop-blur-xl text-white px-6 py-4 rounded-full shadow-[0_20px_40px_rgba(252,219,0,0.2)] border border-[#fcdb00]/30 font-bold text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 fade-in duration-300">
               {toastMessage}
@@ -3111,15 +2972,6 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
               {/* ── COLUMNA IZQUIERDA: formularios ── */}
               <div className="checkout-left flex flex-col gap-3 md:gap-4 px-4 md:px-0 md:pr-6 py-4 md:py-6 no-scrollbar">
 
-                {/* Premio ruleta */}
-                {localRoulettePrize && localRoulettePrize.type !== 'none' && (
-                  <div className="bg-[#111111] text-[#fcdb00] p-4 rounded-2xl flex items-center gap-4 border border-[#fcdb00]/30">
-                    <i className="fas fa-gift text-2xl"></i>
-                    <div><span className="font-bold text-[10px] uppercase text-white block font-poppins">Premio Hot Sale</span><span className="font-bebas text-xl leading-none">{localRoulettePrize.text}</span></div>
-                    <i className="fas fa-check-circle text-xl text-[#25D366] ml-auto"></i>
-                  </div>
-                )}
-
                 {/* Datos personales */}
                 <div className="bg-white rounded-none border border-gray-200 p-5">
                   <p className="font-bebas text-xl mb-4 uppercase tracking-wider text-[#111111] flex items-center gap-2">
@@ -3166,7 +3018,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   {deliveryMethod === 'envio' && (
                     <div className="flex flex-col gap-3 font-poppins">
                       <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Elegí tu opción:</label>
-                      <div onClick={() => { setShippingType('flash'); if (firebaseRefs.db) setDoc(doc(firebaseRefs.db, 'stats', 'shipping'), { flash: increment(1) }, { merge: true }).catch(console.error); }} className={`p-4 rounded-none border-2 cursor-pointer transition-all flex gap-3 items-center ${shippingType === 'flash' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-300 bg-gray-50 hover:border-[#fcdb00]/40 rounded-none'}`}>
+                      <div onClick={() => { setShippingType('flash'); setShippingCost(0); if (firebaseRefs.db) setDoc(doc(firebaseRefs.db, 'stats', 'shipping'), { flash: increment(1) }, { merge: true }).catch(console.error); }} className={`p-4 rounded-none border-2 cursor-pointer transition-all flex gap-3 items-center ${shippingType === 'flash' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-300 bg-gray-50 hover:border-[#fcdb00]/40 rounded-none'}`}>
                         <div className="w-9 h-9 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] flex-shrink-0"><i className="fas fa-bolt"></i></div>
                         <div className="flex-1"><span className={`font-bebas text-lg leading-none block mb-1 ${shippingType === 'flash' ? 'text-[#fcdb00]' : 'text-[#111111]/70'}`}>Envío Flash</span><span className="text-[9px] font-bold text-gray-500">⏱️ Menos de 30 min · Solo transferencia</span></div>
                         {shippingType === 'flash' && <i className="fas fa-check-circle text-[#fcdb00] text-lg"></i>}
