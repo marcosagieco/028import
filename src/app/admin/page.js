@@ -204,8 +204,14 @@ const buildDefaultHomeLayout = (sections = []) => {
   ];
 };
 
+const ADMIN_PASSWORD = '171728';
+
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState('historial'); 
+  const [isAdminAuthed, setIsAdminAuthed] = useState(false);
+  const [adminAuthChecked, setAdminAuthChecked] = useState(false);
+  const [adminPasswordInput, setAdminPasswordInput] = useState('');
+  const [adminAuthError, setAdminAuthError] = useState('');
+  const [activeTab, setActiveTab] = useState('historial');
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
@@ -369,6 +375,30 @@ export default function AdminPage() {
     if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.getElementsByTagName('head')[0].appendChild(link); }
     link.href = CONFIG.logoImage;
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('admin_auth') === 'true') {
+      setIsAdminAuthed(true);
+    }
+    setAdminAuthChecked(true);
+  }, []);
+
+  const handleAdminLogin = (e) => {
+    e.preventDefault();
+    if (adminPasswordInput === ADMIN_PASSWORD) {
+      localStorage.setItem('admin_auth', 'true');
+      setIsAdminAuthed(true);
+      setAdminAuthError('');
+    } else {
+      setAdminAuthError('Contraseña incorrecta');
+      setAdminPasswordInput('');
+    }
+  };
+
+  const handleAdminLogout = () => {
+    localStorage.removeItem('admin_auth');
+    setIsAdminAuthed(false);
+  };
 
   const firebaseRefs = useMemo(() => {
     if (typeof window === "undefined") return { auth: null, db: null };
@@ -1195,6 +1225,31 @@ export default function AdminPage() {
     );
   };
 
+  if (!adminAuthChecked) return (
+    <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${darkMode ? 'bg-[#111111]' : 'bg-[#f2f2f2]'}`}>
+      <div className="w-12 h-12 border-4 border-[#f2f2f2] border-t-[#fcdb00] rounded-full animate-spin mb-6"></div>
+    </div>
+  );
+
+  if (!isAdminAuthed) return (
+    <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${darkMode ? 'bg-[#111111]' : 'bg-[#f2f2f2]'}`}>
+      <form onSubmit={handleAdminLogin} className={`${theme.card} w-full max-w-xs p-8 rounded-[2rem] shadow-lg border flex flex-col gap-5 items-center`}>
+        <img src={CONFIG.logoImage} alt="Logo" className="h-12 w-auto object-contain mb-1" />
+        <h1 className={`font-bebas text-2xl uppercase tracking-wide ${theme.text}`}>Acceso Privado</h1>
+        <input
+          type="password"
+          autoFocus
+          value={adminPasswordInput}
+          onChange={(e) => { setAdminPasswordInput(e.target.value); setAdminAuthError(''); }}
+          placeholder="Contraseña"
+          className={`w-full p-4 rounded-xl outline-none font-bold text-center tracking-[0.3em] ${theme.input}`}
+        />
+        {adminAuthError && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest">{adminAuthError}</p>}
+        <button type="submit" className="w-full bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-3.5 rounded-xl hover:bg-[#111111] hover:text-[#fcdb00] transition-all">Entrar</button>
+      </form>
+    </div>
+  );
+
   if (loading) return (
     <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${darkMode ? 'bg-[#111111]' : 'bg-[#f2f2f2]'}`}>
       <div className="w-12 h-12 border-4 border-[#f2f2f2] border-t-[#fcdb00] rounded-full animate-spin mb-6"></div>
@@ -1205,7 +1260,7 @@ export default function AdminPage() {
   return (
     <div className={`min-h-screen font-poppins pb-10 transition-colors duration-300 ${theme.bg} ${theme.text}`}>
       <style dangerouslySetInnerHTML={{__html: `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;700;900&display=swap'); .font-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; } .font-poppins { font-family: 'Poppins', sans-serif; }`}} />
-      <nav className={`${theme.nav} py-4 px-6 text-white flex justify-between items-center shadow-lg border-b border-white/10 sticky top-0 z-50`}><div className="flex items-center gap-4"><img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain" /><h1 className="text-2xl font-bebas tracking-wide uppercase pt-1">028<span className="text-[#fcdb00]">Control</span></h1></div><div className="flex items-center gap-4"><button onClick={() => setDarkMode(!darkMode)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-[#fcdb00] hover:text-[#111111] transition-all text-xs">{darkMode ? '☀️' : '🌙'}</button><a href="/?admin=true" target="_blank" className="text-[11px] text-[#fcdb00] font-bold uppercase hover:text-white transition-all tracking-widest bg-white/10 px-3 py-1.5 rounded-lg border border-white/20">Ver Web</a></div></nav>
+      <nav className={`${theme.nav} py-4 px-6 text-white flex justify-between items-center shadow-lg border-b border-white/10 sticky top-0 z-50`}><div className="flex items-center gap-4"><img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain" /><h1 className="text-2xl font-bebas tracking-wide uppercase pt-1">028<span className="text-[#fcdb00]">Control</span></h1></div><div className="flex items-center gap-4"><button onClick={() => setDarkMode(!darkMode)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-[#fcdb00] hover:text-[#111111] transition-all text-xs">{darkMode ? '☀️' : '🌙'}</button><a href="/?admin=true" target="_blank" className="text-[11px] text-[#fcdb00] font-bold uppercase hover:text-white transition-all tracking-widest bg-white/10 px-3 py-1.5 rounded-lg border border-white/20">Ver Web</a><button onClick={handleAdminLogout} title="Cerrar sesión" className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-red-500 hover:text-white transition-all text-xs"><i className="fas fa-lock"></i></button></div></nav>
       <div className={`${theme.stickyHeader} border-b sticky top-[72px] z-40 transition-colors duration-300`}>
         <div className="max-w-4xl mx-auto flex overflow-x-auto no-scrollbar">
           <button onClick={() => setActiveTab('historial')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'historial' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Historial</button>
