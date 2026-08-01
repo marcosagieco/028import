@@ -1,6 +1,5 @@
 import './globals.css';
 import Script from 'next/script';
-import WinterPromo from '../components/WinterPromo';
 
 const CONFIG = {
   brandName: "028", 
@@ -19,11 +18,9 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="icon" href={CONFIG.logoImage} />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-        <link rel="preload" as="image" href="/winter-offer.webp" fetchPriority="high" />
       </head>
       <body className="bg-[#fafafa] text-[#1a1a1a] font-sans flex flex-col relative min-h-screen">
         <div className="noise-overlay" aria-hidden="true" />
-        <WinterPromo />
 
         {/* === GOOGLE ANALYTICS === */}
         <Script 

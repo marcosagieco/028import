@@ -1351,11 +1351,6 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
                   {p.tag}
               </span>
           )}
-          {!isOutOfStock && p.winterBadge && (
-              <span className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[#0c1a2e]/85 backdrop-blur-sm border border-[#8fd3ff]/50 flex items-center justify-center text-base shadow-md" title="Oferta de invierno">
-                  ❄️
-              </span>
-          )}
         </div>
         
         <div className="p-4 flex-grow flex flex-col">
@@ -1747,8 +1742,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
     return (
       <div key={sec.id} className="mb-20 reveal-on-scroll">
         <div className="flex justify-between items-end mb-6 pl-2 border-b border-gray-200 pb-3">
-          <h2 className={`text-4xl md:text-6xl font-bebas tracking-wide uppercase ${sec.winterEffect ? 'text-[#4fa4dd]' : 'text-[#111111]'}`}>
-            {vidreiraShowIcons && <i className={`${AVAILABLE_ICONS.find(i => i.id === sec.icon)?.prefix || 'fas'} ${sec.icon || 'fa-star'} ${sec.winterEffect ? 'text-[#4fa4dd]' : (sec.iconColor || 'text-[#fcdb00]')} mr-3 drop-shadow-sm`}></i>}{sec.title}
+          <h2 className="text-4xl md:text-6xl font-bebas tracking-wide uppercase text-[#111111]">
+            {vidreiraShowIcons && <i className={`${AVAILABLE_ICONS.find(i => i.id === sec.icon)?.prefix || 'fas'} ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'} mr-3 drop-shadow-sm`}></i>}{sec.title}
           </h2>
           <button onClick={() => navigateTo('catalog')} className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#111111]/60 hover:text-[#fcdb00] transition-colors bg-gray-100 px-5 py-2.5 rounded-full border border-gray-200 hover:border-[#fcdb00]/30">Ver Catálogo <i className="fas fa-arrow-right"></i></button>
         </div>
@@ -2467,32 +2462,9 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
               ))}
             </div>
           </div>
-          {/* Banner original, volver a este cuando termine la temporada de invierno:
           <div className="relative w-full h-[230px] md:h-[475px] overflow-hidden">
             <Image
               src="/banner-original.png"
-              alt="Banner 028 Import"
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
-            />
-          </div>
-          */}
-          <div className="relative w-full overflow-hidden block md:hidden" style={{ aspectRatio: '1600 / 1000' }}>
-            <Image
-              src="/banner-invierno.png"
-              alt="Banner 028 Import"
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
-              style={{ objectPosition: 'left center' }}
-            />
-          </div>
-          <div className="relative w-full overflow-hidden hidden md:block" style={{ aspectRatio: '1767 / 667' }}>
-            <Image
-              src="/banner-invierno.png"
               alt="Banner 028 Import"
               fill
               priority
