@@ -1180,67 +1180,83 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     let currentCart = [...cart];
     const finalTotal = calculateTotal(currentCart);
 
-    let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n\n`;
+    const DIVIDER = `➖➖➖➖➖➖➖➖➖➖`;
+    let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
 
     if (deliveryMethod === 'envio' && shippingType === 'flash') {
-        msg = `Hola *${CONFIG.brandName}*, quiero hacer un pedido con *ENVÍO FLASH*. ¿Me pasás los datos para transferir?\n\n`;
+        msg = `¡Hola *${CONFIG.brandName}*! 👋\nQuiero hacer un pedido con *ENVÍO FLASH* 🚀\n¿Me pasás los datos para transferir?\n`;
     } else if (deliveryMethod === 'envio' && shippingType === 'moto') {
         if (paymentMethod === 'transferencia') {
-            msg = `Hola *${CONFIG.brandName}*, acabo de transferir por mi pedido:\n\n`;
+            msg = `¡Hola *${CONFIG.brandName}*! 👋\nAcabo de transferir por mi pedido:\n`;
         } else {
-            msg = `Hola *${CONFIG.brandName}*, quiero hacer un pedido y *pago en efectivo* al recibir:\n\n`;
+            msg = `¡Hola *${CONFIG.brandName}*! 👋\nQuiero hacer un pedido, pago en *efectivo* al recibir:\n`;
         }
     }
-    
-    msg += `*Resumen de Productos:*\n`;
+
+    // --- PRODUCTOS ---
+    msg += `\n${DIVIDER}\n🛒 *PRODUCTOS*\n`;
     let subtotalCalc = 0;
-    
-    currentCart.forEach(i => { 
+
+    currentCart.forEach(i => {
         const price = i.isUpsell ? i.upsellPrice : getUnitPromoPrice(i);
         subtotalCalc += (i.qty * price);
         if (i.isUpsell) {
-            msg += `- ${i.qty}x ${i.category} - ${i.name} (OFERTA: $${formatPrice(price)})\n`;
+            msg += `• ${i.qty}x ${i.category} - ${i.name} (OFERTA $${formatPrice(price)})\n`;
         } else {
-            msg += `- ${i.qty}x ${i.category} - ${i.name} ($${formatPrice(price)} c/u)\n`;
+            msg += `• ${i.qty}x ${i.category} - ${i.name} ($${formatPrice(price)} c/u)\n`;
         }
     });
-    
+
     let subtotalFinal = subtotalCalc;
-
-    msg += `\n*Subtotal:* ${CONFIG.currencySymbol}${formatPrice(subtotalFinal)}`;
-
     let costoEnvioAgregado = (deliveryMethod === 'envio' && shippingType === 'moto') ? shippingCost : 0;
+    const cashDiscMsg = (deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'efectivo')
+        ? (subtotalCalc >= 50000 ? 2500 : 1500) : 0;
+    const couponDiscMsg = appliedCoupon ? Math.round(subtotalFinal * appliedCoupon.discount / 100) : 0;
+
+    // --- TOTALES ---
+    msg += `\n${DIVIDER}\n💰 *TOTALES*\n`;
+    msg += `Subtotal: ${CONFIG.currencySymbol}${formatPrice(subtotalFinal)}\n`;
 
     if (costoEnvioAgregado > 0) {
-        msg += `\n*Costo de Envío (Moto):* ${CONFIG.currencySymbol}${formatPrice(costoEnvioAgregado)}`;
+        msg += `Envío (Moto): ${CONFIG.currencySymbol}${formatPrice(costoEnvioAgregado)}\n`;
     } else if (deliveryMethod === 'envio' && shippingType === 'moto') {
-        msg += `\n*Costo de Envío (Moto):* A confirmar`;
+        msg += `Envío (Moto): A confirmar\n`;
     }
-    
-    msg += `\n*TOTAL A PAGAR: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
-    
-    msg += `\n*ENTREGA:* ${address}, ${zone}\n`;
-    if (aptDetails.trim()) msg += `*DEPTO/PISO:* ${aptDetails.trim()}\n`;
+
+    msg += `*TOTAL A PAGAR: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
+    if (cashDiscMsg > 0) msg += `_(incluye -${CONFIG.currencySymbol}${formatPrice(cashDiscMsg)} por pago en efectivo)_\n`;
+    if (couponDiscMsg > 0) msg += `_(incluye -${CONFIG.currencySymbol}${formatPrice(couponDiscMsg)} por cupón ${appliedCoupon.code})_\n`;
+
+    // --- ENTREGA ---
+    msg += `\n${DIVIDER}\n📦 *ENTREGA*\n`;
+    msg += `📍 ${address}, ${zone}\n`;
+    if (aptDetails.trim()) msg += `🏢 Depto/Piso: ${aptDetails.trim()}\n`;
 
     if (shippingType === 'flash') {
-        msg += `*LOGÍSTICA:* 🚀 Flash (30 mins)\n`;
+        msg += `🚀 Flash (30 mins)\n`;
     } else {
-        msg += `*LOGÍSTICA:* 🛵 Motomensajería\n`;
-
+        msg += `🛵 Motomensajería\n`;
         const selectedLabel = next7Days.find(d => d.value === deliveryDate)?.label || deliveryDate;
-        msg += `📅 *Día:* ${selectedLabel}\n`;
-        msg += `⏰ *Turno:* ${deliveryTime} hs\n`;
+        msg += `📅 Día: ${selectedLabel}\n`;
+        msg += `⏰ Turno: ${deliveryTime} hs\n`;
+    }
 
+    // --- PAGO ---
+    if (shippingType === 'moto') {
+        msg += `\n${DIVIDER}\n💳 *PAGO*\n`;
         if (paymentMethod === 'transferencia') {
-            msg += `🏦 *Transferido al Alias:* ${CONFIG.paymentAlias}\n`;
-            msg += `\nAdjunto mi comprobante de pago a continuación 👇`;
+            msg += `Transferencia\n`;
+            msg += `🏦 Alias: ${CONFIG.paymentAlias}\n`;
+            msg += `📎 Adjunto el comprobante a continuación 👇\n`;
         } else {
-            const cashDiscMsg = subtotalCalc >= 50000 ? 2500 : 1500;
-            msg += `💵 *Método de pago:* Efectivo contra entrega\n`;
-            msg += `💸 *Descuento efectivo aplicado:* -${CONFIG.currencySymbol}${formatPrice(cashDiscMsg)}\n`;
+            msg += `Efectivo\n`;
         }
     }
-    
+
+    // --- CLIENTE ---
+    msg += `\n${DIVIDER}\n👤 *CLIENTE*\n`;
+    msg += `${clientName}${clientPhone ? ' — ' + clientPhone : ''}\n`;
+
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
     
     try { 
