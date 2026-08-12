@@ -1180,21 +1180,26 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     let currentCart = [...cart];
     const finalTotal = calculateTotal(currentCart);
 
-    const DIVIDER = `➖➖➖➖➖➖➖➖➖➖`;
+    // En PC, WhatsApp Desktop suele romper los emojis al recibir el link (bug conocido de Windows).
+    // En el celu no pasa, así que ahí se mandan los emojis normalmente.
+    const isMobileClient = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(navigator.userAgent);
+    const emo = (e) => isMobileClient ? e : '';
+    const DIVIDER = isMobileClient ? `➖➖➖➖➖➖➖➖➖➖` : `----------`;
+
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
 
     if (deliveryMethod === 'envio' && shippingType === 'flash') {
-        msg = `¡Hola *${CONFIG.brandName}*! 👋\nQuiero hacer un pedido con *ENVÍO FLASH* 🚀\n¿Me pasás los datos para transferir?\n`;
+        msg = `¡Hola *${CONFIG.brandName}*!${emo(' 👋')}\nQuiero hacer un pedido con *ENVÍO FLASH*${emo(' 🚀')}\n¿Me pasás los datos para transferir?\n`;
     } else if (deliveryMethod === 'envio' && shippingType === 'moto') {
         if (paymentMethod === 'transferencia') {
-            msg = `¡Hola *${CONFIG.brandName}*! 👋\nAcabo de transferir por mi pedido:\n`;
+            msg = `¡Hola *${CONFIG.brandName}*!${emo(' 👋')}\nAcabo de transferir por mi pedido:\n`;
         } else {
-            msg = `¡Hola *${CONFIG.brandName}*! 👋\nQuiero hacer un pedido, pago en *efectivo* al recibir:\n`;
+            msg = `¡Hola *${CONFIG.brandName}*!${emo(' 👋')}\nQuiero hacer un pedido, pago en *efectivo* al recibir:\n`;
         }
     }
 
     // --- PRODUCTOS ---
-    msg += `\n${DIVIDER}\n🛒 *PRODUCTOS*\n`;
+    msg += `\n${DIVIDER}\n${emo('🛒 ')}*PRODUCTOS*\n`;
     let subtotalCalc = 0;
 
     currentCart.forEach(i => {
@@ -1214,7 +1219,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     const couponDiscMsg = appliedCoupon ? Math.round(subtotalFinal * appliedCoupon.discount / 100) : 0;
 
     // --- TOTALES ---
-    msg += `\n${DIVIDER}\n💰 *TOTALES*\n`;
+    msg += `\n${DIVIDER}\n${emo('💰 ')}*TOTALES*\n`;
     msg += `Subtotal: ${CONFIG.currencySymbol}${formatPrice(subtotalFinal)}\n`;
 
     if (costoEnvioAgregado > 0) {
@@ -1228,33 +1233,33 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     if (couponDiscMsg > 0) msg += `_(incluye -${CONFIG.currencySymbol}${formatPrice(couponDiscMsg)} por cupón ${appliedCoupon.code})_\n`;
 
     // --- ENTREGA ---
-    msg += `\n${DIVIDER}\n📦 *ENTREGA*\n`;
-    msg += `📍 ${address}, ${zone}\n`;
-    if (aptDetails.trim()) msg += `🏢 Depto/Piso: ${aptDetails.trim()}\n`;
+    msg += `\n${DIVIDER}\n${emo('📦 ')}*ENTREGA*\n`;
+    msg += `${emo('📍 ')}${address}, ${zone}\n`;
+    if (aptDetails.trim()) msg += `${emo('🏢 ')}Depto/Piso: ${aptDetails.trim()}\n`;
 
     if (shippingType === 'flash') {
-        msg += `🚀 Flash (30 mins)\n`;
+        msg += `${emo('🚀 ')}Flash (30 mins)\n`;
     } else {
-        msg += `🛵 Motomensajería\n`;
+        msg += `${emo('🛵 ')}Motomensajería\n`;
         const selectedLabel = next7Days.find(d => d.value === deliveryDate)?.label || deliveryDate;
-        msg += `📅 Día: ${selectedLabel}\n`;
-        msg += `⏰ Turno: ${deliveryTime} hs\n`;
+        msg += `${emo('📅 ')}Día: ${selectedLabel}\n`;
+        msg += `${emo('⏰ ')}Turno: ${deliveryTime} hs\n`;
     }
 
     // --- PAGO ---
     if (shippingType === 'moto') {
-        msg += `\n${DIVIDER}\n💳 *PAGO*\n`;
+        msg += `\n${DIVIDER}\n${emo('💳 ')}*PAGO*\n`;
         if (paymentMethod === 'transferencia') {
             msg += `Transferencia\n`;
-            msg += `🏦 Alias: ${CONFIG.paymentAlias}\n`;
-            msg += `📎 Adjunto el comprobante a continuación 👇\n`;
+            msg += `${emo('🏦 ')}Alias: ${CONFIG.paymentAlias}\n`;
+            msg += `${emo('📎 ')}Adjunto el comprobante a continuación${emo(' 👇')}\n`;
         } else {
             msg += `Efectivo\n`;
         }
     }
 
     // --- CLIENTE ---
-    msg += `\n${DIVIDER}\n👤 *CLIENTE*\n`;
+    msg += `\n${DIVIDER}\n${emo('👤 ')}*CLIENTE*\n`;
     msg += `${clientName}${clientPhone ? ' — ' + clientPhone : ''}\n`;
 
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
