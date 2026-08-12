@@ -1180,11 +1180,11 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     let currentCart = [...cart];
     const finalTotal = calculateTotal(currentCart);
 
-    // En PC, WhatsApp Desktop suele romper los emojis al recibir el link (bug conocido de Windows).
-    // En el celu no pasa, así que ahí se mandan los emojis normalmente.
-    const isMobileClient = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(navigator.userAgent);
-    const emo = (e) => isMobileClient ? e : '';
-    const DIVIDER = isMobileClient ? `➖➖➖➖➖➖➖➖➖➖` : `----------`;
+    // WhatsApp Desktop (PC) y WhatsApp en Android rompen los emojis al recibir el link
+    // (los muestran como "�"). En iPhone/iPad no pasa, así que ahí se mandan los emojis normalmente.
+    const isIOSClient = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const emo = (e) => isIOSClient ? e : '';
+    const DIVIDER = isIOSClient ? `➖➖➖➖➖➖➖➖➖➖` : `----------`;
 
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
 
