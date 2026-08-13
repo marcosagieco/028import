@@ -1758,7 +1758,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
 
   
 const renderSingleHomeSection = (sec, sectionIndex = 0) => {
-    const secProducts = sec.productIds?.map(pid => products.find(p => p.id === pid)).filter(Boolean) || [];
+    const secProducts = sec.productIds?.map(pid => products.find(p => p.id === pid)).filter(Boolean).filter(p => p.inStock !== false) || [];
     if (secProducts.length === 0) return null;
     return (
       <div key={sec.id} className="mb-20 reveal-on-scroll">
