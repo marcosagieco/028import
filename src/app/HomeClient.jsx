@@ -2006,7 +2006,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           .checkout-right { height: calc(100vh - 73px); }
         }
         @media (max-width: 767px) {
-          .checkout-total { position: sticky; bottom: 0; z-index: 10; }
+          .checkout-total { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; }
         }
 
         /* Upsell carousel slide */
@@ -2959,7 +2959,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           </div>
 
           {/* Contenido — dos columnas en desktop, una en mobile */}
-          <div className="flex-1 overflow-y-auto md:overflow-hidden no-scrollbar">
+          <div className={`flex-1 overflow-y-auto md:overflow-hidden no-scrollbar ${showDiscountBreakdown ? 'pb-[420px]' : 'pb-[220px]'} md:pb-0`}>
             <div className="checkout-grid max-w-full gap-0 px-0 md:pl-4">
 
               {/* ── COLUMNA IZQUIERDA: formularios ── */}
