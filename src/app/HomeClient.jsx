@@ -413,6 +413,30 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     setIsCartVisible(false);
     setTimeout(() => { setIsCartOpen(false); if (cb) cb(); }, 300);
   };
+
+  // Bloquea el scroll de fondo (Inicio) mientras el carrito o el checkout están abiertos,
+  // para que en celu no se sienta que "atrás" se mueve al deslizar dentro de estas pantallas.
+  useEffect(() => {
+    if (!isCartOpen && !isCheckoutOpen) return;
+    const scrollY = window.scrollY;
+    const { body } = document;
+    const prev = { position: body.style.position, top: body.style.top, left: body.style.left, right: body.style.right, width: body.style.width, overflow: body.style.overflow };
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+    return () => {
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.left = prev.left;
+      body.style.right = prev.right;
+      body.style.width = prev.width;
+      body.style.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isCartOpen, isCheckoutOpen]);
   const [upsellIndex, setUpsellIndex] = useState(0);
   const [prevUpsellIndex, setPrevUpsellIndex] = useState(null);
   const deliveryMethod = 'envio';
@@ -1995,6 +2019,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         /* ===== ANIMACIONES PREMIUM ===== */
 
         /* Cart scrollbar */
+        .cart-scroll { overscroll-behavior: contain; }
         .cart-scroll::-webkit-scrollbar { width: 6px; }
         .cart-scroll::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 99px; }
         .cart-scroll::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 99px; }
@@ -2959,7 +2984,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           </div>
 
           {/* Contenido — dos columnas en desktop, una en mobile */}
-          <div className={`flex-1 overflow-y-auto md:overflow-hidden no-scrollbar ${showDiscountBreakdown ? 'pb-[420px]' : 'pb-[220px]'} md:pb-0`}>
+          <div className={`flex-1 overflow-y-auto overscroll-contain md:overflow-hidden no-scrollbar ${showDiscountBreakdown ? 'pb-[420px]' : 'pb-[220px]'} md:pb-0`}>
             <div className="checkout-grid max-w-full gap-0 px-0 md:pl-4">
 
               {/* ── COLUMNA IZQUIERDA: formularios ── */}

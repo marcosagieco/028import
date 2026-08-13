@@ -213,6 +213,7 @@ export default function AdminPage() {
   const [adminAuthError, setAdminAuthError] = useState('');
   const [activeTab, setActiveTab] = useState('historial');
   const [orders, setOrders] = useState([]);
+  const [historialCuentaFilter, setHistorialCuentaFilter] = useState('todos'); // 'todos' | 'efectivo' | 'transferencia'
   const [products, setProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
   const [communityVideos, setCommunityVideos] = useState([]);
@@ -1100,6 +1101,9 @@ export default function AdminPage() {
   };
 
   const deleteOrder = async (id) => { if (confirm("¿Eliminar pedido permanentemente?")) { try { await deleteDoc(doc(firebaseRefs.db, 'orders', id)); } catch (err) { alert("Error: " + err.message); } } };
+
+  // Envío Flash siempre se paga por transferencia; en Motomensajería depende de lo que eligió el cliente.
+  const getOrderCuenta = (order) => order.shippingOption === 'flash' ? 'transferencia' : (order.paymentMethod || 'transferencia');
 
   const saveStockOrder = async (newOrder) => {
     try {
@@ -2160,17 +2164,51 @@ export default function AdminPage() {
         )}
 
         {/* --- PESTAÑA HISTORIAL --- */}
-        {activeTab === 'historial' && (<div className="animate-in fade-in duration-500">
+        {activeTab === 'historial' && (() => {
+          const filteredOrders = orders.filter(o => historialCuentaFilter === 'todos' || getOrderCuenta(o) === historialCuentaFilter);
+          const totalEfectivo = orders.filter(o => getOrderCuenta(o) === 'efectivo').reduce((a, o) => a + (o.total || 0), 0);
+          const totalTransferencia = orders.filter(o => getOrderCuenta(o) === 'transferencia').reduce((a, o) => a + (o.total || 0), 0);
+          const countEfectivo = orders.filter(o => getOrderCuenta(o) === 'efectivo').length;
+          const countTransferencia = orders.filter(o => getOrderCuenta(o) === 'transferencia').length;
+          return (<div className="animate-in fade-in duration-500">
           <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-[#333333] pb-6">
             <div>
               <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Historial</h2>
               <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Todas las ventas registradas</p>
             </div>
-            <span className="bg-[#111111] text-[#fcdb00] text-[11px] font-bold px-4 py-2 rounded-lg shadow-sm tracking-widest">{orders.length} PEDIDOS</span>
+            <span className="bg-[#111111] text-[#fcdb00] text-[11px] font-bold px-4 py-2 rounded-lg shadow-sm tracking-widest">{filteredOrders.length} PEDIDOS</span>
           </div>
-          
-          {orders.length === 0 ? (<div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}><i className="fas fa-receipt text-gray-300 text-5xl mb-6"></i><p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">No hay pedidos en el historial</p></div>) : (<div className="grid gap-6">{orders.map((order) => (<div key={order.id} className={`${theme.card} rounded-[2rem] shadow-sm border p-6 md:p-8 hover:shadow-lg transition-all duration-300 ${theme.cardHover}`}><div className="flex justify-between items-start mb-6"><div className="flex items-center gap-4"><div className="bg-[#fcdb00] text-[#111111] w-14 h-14 rounded-2xl flex items-center justify-center font-bebas text-3xl shadow-sm pt-1">{order.items?.reduce((a, b) => a + b.qty, 0)}</div><div><span className="text-[10px] font-bold text-[#b8952a] uppercase tracking-widest block mb-0.5">ID: {order.id.slice(-6).toUpperCase()}</span><p className="text-gray-500 text-[11px] font-bold">{order.createdAt ? order.createdAt.toDate().toLocaleString('es-AR') : 'Procesando...'}</p></div></div><div className="flex gap-2"><button onClick={() => deleteOrder(order.id)} className={`${darkMode ? 'bg-[#333] text-white hover:bg-red-600' : 'bg-gray-100 text-gray-600 hover:bg-red-500 hover:text-white'} w-12 h-12 rounded-xl transition-all flex items-center justify-center shadow-sm`}><i className="fas fa-trash text-lg"></i></button></div></div>{order.clientName && (<div className={`mb-5 pb-5 border-b ${darkMode ? 'border-[#333333]' : 'border-gray-200'} flex items-center gap-4`}><div className="w-10 h-10 bg-[#f2f2f2] rounded-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-lg"></i></div><div><p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest leading-none mb-1">Cliente</p><p className="font-bebas text-xl tracking-wide uppercase text-[#111111] dark:text-white">{order.clientName} <span className="font-poppins font-normal text-sm text-gray-400 ml-2">({order.clientPhone})</span></p></div></div>)}<div className={`space-y-3 mb-6 p-5 rounded-2xl border ${darkMode ? 'bg-[#222] border-[#333333]' : 'bg-[#f2f2f2] border-transparent'}`}>{order.items?.map((item, idx) => (<div key={idx} className="flex justify-between items-center"><span className={`font-bold text-xs uppercase tracking-wide ${darkMode ? 'text-gray-300' : 'text-[#111111]'}`}><span className={`${darkMode ? 'text-[#fcdb00]' : 'text-[#b8952a]'} font-black mr-2 bg-white dark:bg-[#111] px-2 py-0.5 rounded`}>{item.qty}x</span> {item.name}</span><span className="text-gray-500 font-bold text-sm">${item.price?.toLocaleString('es-AR')}</span></div>))}</div>{order.delivery === 'envio' && order.address && (<div className="mb-6 p-5 bg-[#111111] text-white rounded-2xl border-l-8 border-[#fcdb00] shadow-md"><p className="text-[#fcdb00] text-[9px] font-bold uppercase mb-2 tracking-widest"><i className="fas fa-truck mr-1.5"></i> Envío a Domicilio {order.shippingOption === 'flash' ? '🚀 (FLASH)' : order.shippingOption === 'moto' ? '🛵 (MOTO)' : ''}</p><p className="uppercase font-bold text-sm mb-1">{order.address}</p><p className="text-gray-400 text-[10px] uppercase font-bold tracking-widest">{order.zone}</p></div>)}</div>))}</div>)}
-        </div>)}
+
+          {/* Resumen por cuenta: dónde entró cada ingreso */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className={`${theme.card} border p-5 rounded-2xl`}>
+              <p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest mb-1"><i className="fas fa-money-bill-wave text-emerald-500 mr-1.5"></i>Efectivo</p>
+              <p className="font-bebas text-3xl text-emerald-500 tracking-wide">${totalEfectivo.toLocaleString('es-AR')}</p>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">{countEfectivo} pedido{countEfectivo !== 1 ? 's' : ''}</p>
+            </div>
+            <div className={`${theme.card} border p-5 rounded-2xl`}>
+              <p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest mb-1"><i className="fas fa-university text-blue-500 mr-1.5"></i>Transferencia</p>
+              <p className="font-bebas text-3xl text-blue-500 tracking-wide">${totalTransferencia.toLocaleString('es-AR')}</p>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">{countTransferencia} pedido{countTransferencia !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
+
+          {/* Filtro por cuenta */}
+          <div className="flex gap-2 mb-6">
+            {[
+              { key: 'todos', label: 'Todos', icon: 'fa-list' },
+              { key: 'efectivo', label: 'Efectivo', icon: 'fa-money-bill-wave' },
+              { key: 'transferencia', label: 'Transferencia', icon: 'fa-university' },
+            ].map(f => (
+              <button key={f.key} onClick={() => setHistorialCuentaFilter(f.key)} className={`flex-1 px-4 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${historialCuentaFilter === f.key ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : `${theme.card} border ${theme.text}`}`}>
+                <i className={`fas ${f.icon}`}></i> {f.label}
+              </button>
+            ))}
+          </div>
+
+          {filteredOrders.length === 0 ? (<div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}><i className="fas fa-receipt text-gray-300 text-5xl mb-6"></i><p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">{orders.length === 0 ? 'No hay pedidos en el historial' : 'No hay pedidos con esta cuenta'}</p></div>) : (<div className="grid gap-6">{filteredOrders.map((order) => { const cuenta = getOrderCuenta(order); return (<div key={order.id} className={`${theme.card} rounded-[2rem] shadow-sm border p-6 md:p-8 hover:shadow-lg transition-all duration-300 ${theme.cardHover}`}><div className="flex justify-between items-start mb-6"><div className="flex items-center gap-4"><div className="bg-[#fcdb00] text-[#111111] w-14 h-14 rounded-2xl flex items-center justify-center font-bebas text-3xl shadow-sm pt-1">{order.items?.reduce((a, b) => a + b.qty, 0)}</div><div><span className="text-[10px] font-bold text-[#b8952a] uppercase tracking-widest block mb-0.5">ID: {order.id.slice(-6).toUpperCase()}</span><p className="text-gray-500 text-[11px] font-bold">{order.createdAt ? order.createdAt.toDate().toLocaleString('es-AR') : 'Procesando...'}</p></div></div><div className="flex items-center gap-2"><span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-xl flex items-center gap-1.5 ${cuenta === 'efectivo' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'}`}><i className={`fas ${cuenta === 'efectivo' ? 'fa-money-bill-wave' : 'fa-university'}`}></i> {cuenta === 'efectivo' ? 'Efectivo' : 'Transferencia'}</span><button onClick={() => deleteOrder(order.id)} className={`${darkMode ? 'bg-[#333] text-white hover:bg-red-600' : 'bg-gray-100 text-gray-600 hover:bg-red-500 hover:text-white'} w-12 h-12 rounded-xl transition-all flex items-center justify-center shadow-sm`}><i className="fas fa-trash text-lg"></i></button></div></div>{order.clientName && (<div className={`mb-5 pb-5 border-b ${darkMode ? 'border-[#333333]' : 'border-gray-200'} flex items-center gap-4`}><div className="w-10 h-10 bg-[#f2f2f2] rounded-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-lg"></i></div><div><p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest leading-none mb-1">Cliente</p><p className="font-bebas text-xl tracking-wide uppercase text-[#111111] dark:text-white">{order.clientName} <span className="font-poppins font-normal text-sm text-gray-400 ml-2">({order.clientPhone})</span></p></div></div>)}<div className={`space-y-3 mb-6 p-5 rounded-2xl border ${darkMode ? 'bg-[#222] border-[#333333]' : 'bg-[#f2f2f2] border-transparent'}`}>{order.items?.map((item, idx) => (<div key={idx} className="flex justify-between items-center"><span className={`font-bold text-xs uppercase tracking-wide ${darkMode ? 'text-gray-300' : 'text-[#111111]'}`}><span className={`${darkMode ? 'text-[#fcdb00]' : 'text-[#b8952a]'} font-black mr-2 bg-white dark:bg-[#111] px-2 py-0.5 rounded`}>{item.qty}x</span> {item.name}</span><span className="text-gray-500 font-bold text-sm">${item.price?.toLocaleString('es-AR')}</span></div>))}</div>{order.delivery === 'envio' && order.address && (<div className="mb-6 p-5 bg-[#111111] text-white rounded-2xl border-l-8 border-[#fcdb00] shadow-md"><p className="text-[#fcdb00] text-[9px] font-bold uppercase mb-2 tracking-widest"><i className="fas fa-truck mr-1.5"></i> Envío a Domicilio {order.shippingOption === 'flash' ? '🚀 (FLASH)' : order.shippingOption === 'moto' ? '🛵 (MOTO)' : ''}</p><p className="uppercase font-bold text-sm mb-1">{order.address}</p><p className="text-gray-400 text-[10px] uppercase font-bold tracking-widest">{order.zone}</p></div>)}</div>); })}</div>)}
+        </div>);
+        })()}
       </main>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     </div>
