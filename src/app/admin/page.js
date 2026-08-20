@@ -546,6 +546,23 @@ export default function AdminPage() {
   const saveLogosBarPosition = async (val) => { try { await setDoc(doc(firebaseRefs.db, 'settings', 'logos_bar_position'), { afterSectionId: val }, { merge: true }); } catch(err) { alert('Error al guardar: ' + err.message); } };
   const handleRenameCategory = async (oldName, newName) => { const trimmed = newName.trim(); if (!trimmed || trimmed === oldName) return; if (!confirm(`¿Renombrar la marca "${oldName}" a "${trimmed}"?`)) return; try { const prods = products.filter(p => p.category === oldName); await Promise.all(prods.map(p => setDoc(doc(firebaseRefs.db, 'products', p.dbId || `prod_${p.id}`), { category: trimmed }, { merge: true }))); } catch (err) { alert("Error al renombrar: " + err.message); } };
   const updateProductDepartment = async (product, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept || dept === product.department) return; try { await setDoc(doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`), { id: product.id, department: dept }, { merge: true }); } catch(err) { alert("Error al actualizar departamento: " + err.message); } };
+  const addExtraListing = async (product, newDept, newCat) => {
+    const dept = (newDept || '').trim().toUpperCase();
+    const cat = (newCat || '').trim();
+    if (!dept || !cat) return alert("Elegí un departamento y una marca para el listado extra.");
+    if (dept === (product.department || '').toUpperCase() && cat === product.category) return alert("Ese ya es el departamento/marca principal del producto.");
+    const current = Array.isArray(product.extraListings) ? product.extraListings : [];
+    if (current.some(e => e.department === dept && e.category === cat)) return;
+    const next = [...current, { department: dept, category: cat }];
+    try { await setDoc(doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`), { id: product.id, extraListings: next }, { merge: true }); }
+    catch (err) { alert("Error al agregar listado extra: " + err.message); }
+  };
+  const removeExtraListing = async (product, index) => {
+    const current = Array.isArray(product.extraListings) ? product.extraListings : [];
+    const next = current.filter((_, i) => i !== index);
+    try { await setDoc(doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`), { id: product.id, extraListings: next }, { merge: true }); }
+    catch (err) { alert("Error al quitar listado extra: " + err.message); }
+  };
   const toggleStock = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, inStock: product.inStock === false }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const toggleVisibility = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, isHidden: !product.isHidden }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const toggleUSD = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, isUSD: !product.isUSD }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
@@ -1160,6 +1177,7 @@ export default function AdminPage() {
                        <span className="text-[10px] font-bold uppercase text-[#b8952a] tracking-widest font-poppins">Depto:</span>
                        <input list="dept-suggestions-stock" defaultValue={currentDept} onBlur={(e) => { if(e.target.value.toUpperCase() !== currentDept.toUpperCase()) { updateCategoryDepartment(categoryFilter, e.target.value); } }} onKeyDown={(e) => { if(e.key === 'Enter') e.target.blur(); }} className={`bg-transparent text-[10px] font-bold uppercase outline-none w-28 md:w-32 border-b border-transparent hover:border-[#fcdb00] focus:border-[#fcdb00] transition-colors font-poppins ${darkMode ? 'text-white' : 'text-[#111111]'}`} placeholder="Escribí..." title="Cambiá el departamento de toda esta categoría" />
                        <datalist id="dept-suggestions-stock">{availableDepartments.map(d => <option key={d} value={d} />)}</datalist>
+                       <datalist id="cat-suggestions-stock">{uniqueCategories.map(c => <option key={c} value={c} />)}</datalist>
                    </div>
                </div>
                <button onClick={() => handleDeleteCategory(categoryFilter)} className="w-fit text-red-500 hover:text-red-700 hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 text-[10px] font-bold uppercase font-poppins"><i className="fas fa-trash"></i> Borrar Categoría</button>
@@ -1194,6 +1212,18 @@ export default function AdminPage() {
                                   <span className={`w-fit text-[9px] font-bold uppercase px-2 py-0.5 rounded-sm font-poppins ${p.isHidden ? 'bg-amber-100 text-amber-700' : (p.inStock === false ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700')}`}>{p.isHidden ? 'Oculto' : (p.inStock === false ? 'Agotado' : 'Disponible')}</span>
                                   <input type="text" list="dept-suggestions-stock" defaultValue={p.department || ''} placeholder="SIN DEPTO" onBlur={(e) => updateProductDepartment(p, e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }} className={`w-24 text-[9px] font-bold uppercase px-2 py-0.5 rounded-sm border font-poppins outline-none focus:border-[#fcdb00] transition-colors ${darkMode ? 'bg-transparent border-[#333333] text-gray-400 focus:text-white' : 'bg-transparent border-gray-300 text-gray-500 focus:text-[#111111]'}`} title="Editar departamento de este producto" />
                                   <span className={`w-fit text-[9px] font-bold uppercase px-2 py-0.5 rounded-sm border font-poppins flex items-center gap-1 ${darkMode ? 'bg-[#222] border-[#444] text-[#fcdb00]' : 'bg-gray-100 border-gray-200 text-[#b8952a]'}`} title="Cantidad de veces que intentaron añadirlo al carrito"><i className="fas fa-mouse-pointer"></i> Clicks: {p.clicks || 0}</span>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                    <span className="text-gray-400 text-[10px] font-poppins mr-1" title="El producto sigue perteneciendo a su Depto/Marca principal de arriba, y ADEMÁS aparece listado en estos otros">También en:</span>
+                                    {(Array.isArray(p.extraListings) ? p.extraListings : []).map((ex, idx) => (
+                                        <span key={idx} className={`flex items-center gap-1.5 text-[9px] font-bold uppercase px-2 py-0.5 rounded-sm border font-poppins ${darkMode ? 'bg-[#222] border-[#444] text-gray-300' : 'bg-gray-100 border-gray-200 text-gray-600'}`}>
+                                            {ex.department} · {ex.category}
+                                            <button type="button" onClick={() => removeExtraListing(p, idx)} className="text-red-500 hover:text-red-700" title="Quitar de este listado extra">✕</button>
+                                        </span>
+                                    ))}
+                                    <input type="text" list="dept-suggestions-stock" id={`extra-dept-${p.id}`} placeholder="Depto" className={`w-20 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-sm border outline-none font-poppins ${darkMode ? 'bg-transparent border-[#333333] text-gray-400' : 'bg-transparent border-gray-300 text-gray-500'}`} />
+                                    <input type="text" list="cat-suggestions-stock" id={`extra-cat-${p.id}`} placeholder="Marca" className={`w-24 text-[9px] font-bold px-1.5 py-0.5 rounded-sm border outline-none font-poppins ${darkMode ? 'bg-transparent border-[#333333] text-gray-400' : 'bg-transparent border-gray-300 text-gray-500'}`} />
+                                    <button type="button" onClick={() => { const dInput = document.getElementById(`extra-dept-${p.id}`); const cInput = document.getElementById(`extra-cat-${p.id}`); addExtraListing(p, dInput.value, cInput.value); dInput.value = ''; cInput.value = ''; }} className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-sm bg-[#fcdb00]/20 text-[#b8952a] hover:bg-[#fcdb00] hover:text-[#111111] transition-all font-poppins" title="El producto va a seguir apareciendo donde está, y además va a aparecer acá">+ Agregar</button>
                                 </div>
                                 <textarea defaultValue={p.description || ""} placeholder="Escribe la biografía o descripción del producto aquí..." className={`w-full mt-3 text-[11px] p-3 rounded-xl outline-none transition-colors border focus:border-[#fcdb00] focus:ring-1 focus:ring-[#fcdb00] resize-none font-poppins ${darkMode ? 'bg-[#222222] border-[#333333] text-gray-300 placeholder-gray-500' : 'bg-[#f2f2f2] border-transparent text-gray-600 placeholder-gray-400'}`} rows="2" onBlur={(e) => { if (e.target.value !== (p.description || "")) { updateDescription(p, e.target.value); } }} title="Haz clic para editar la biografía" />
                                 <div className="flex items-center gap-2 mt-2 w-full">

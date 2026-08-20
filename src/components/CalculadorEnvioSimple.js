@@ -47,7 +47,7 @@ export default function CalculadorEnvioSimple({ address, setAddress, setZone, se
         if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
           const km = response.rows[0].elements[0].distance.value / 1000;
           const pxKm = km >= 11 ? 900 : 1000;
-          const precio = Math.ceil((km * pxKm) / 100) * 100;
+          const precio = Math.max(Math.ceil((km * pxKm) / 100) * 100, 3000);
           setResultado({ km: km.toFixed(1), precio });
           if (setShippingCost) setShippingCost(precio);
         }

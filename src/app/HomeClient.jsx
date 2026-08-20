@@ -551,11 +551,24 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     }
   }, [next7Days, deliveryDate]);
 
-  const departments = useMemo(() => [...new Set(products.map(p => p.department).filter(Boolean))], [products]);
-  const brandsByDept = useMemo(() => { const map = {}; departments.forEach(d => { map[d] = [...new Set(products.filter(p => p.department === d && !p.isDeleted && p.inStock !== false).map(p => p.category).filter(Boolean))]; }); return map; }, [products, departments]);
+  // Un producto puede tener, además de su Depto/Marca principal, otros "listados extra"
+  // (product.extraListings = [{ department, category }]) para aparecer también en otros lados
+  // sin dejar de pertenecer a su Depto/Marca de siempre.
+  const getExtraListings = (p) => Array.isArray(p.extraListings) ? p.extraListings.filter(e => e && e.department && e.category) : [];
+  const getProductDeptList = (p) => [...new Set([p.department, ...getExtraListings(p).map(e => e.department)].filter(Boolean))];
+  const getProductCatList = (p) => [...new Set([p.category, ...getExtraListings(p).map(e => e.category)].filter(Boolean))];
+  const getProductPairs = (p) => {
+    const pairs = [];
+    if (p.department && p.category) pairs.push({ department: p.department, category: p.category });
+    getExtraListings(p).forEach(e => pairs.push({ department: e.department, category: e.category }));
+    return pairs;
+  };
+
+  const departments = useMemo(() => [...new Set(products.flatMap(p => getProductDeptList(p)))], [products]);
+  const brandsByDept = useMemo(() => { const map = {}; departments.forEach(d => { map[d] = [...new Set(products.filter(p => !p.isDeleted && p.inStock !== false).flatMap(p => getProductPairs(p)).filter(pair => pair.department === d).map(pair => pair.category))]; }); return map; }, [products, departments]);
   const uniqueCategories = useMemo(() => {
-    if (activeFilter.dept !== 'all') return [...new Set(products.filter(p => p.department === activeFilter.dept).map(p => p.category))];
-    return [...new Set(products.map(p => p.category))];
+    if (activeFilter.dept !== 'all') return [...new Set(products.flatMap(p => getProductPairs(p)).filter(pair => pair.department === activeFilter.dept).map(pair => pair.category))];
+    return [...new Set(products.flatMap(p => getProductCatList(p)))];
   }, [products, activeFilter.dept]);
 
   const normalizedHomeLayout = useMemo(() => {
@@ -576,8 +589,8 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     return Array.from(mergedMap.values()).sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
   }, [homeLayout, homeSections]);
 
-  const allUniqueCategories = useMemo(() => [...new Set(products.map(p => p.category).filter(Boolean))], [products]);
-  const allDepartments = useMemo(() => [...new Set(products.map(p => p.department).filter(Boolean))], [products]);
+  const allUniqueCategories = useMemo(() => [...new Set(products.flatMap(p => getProductCatList(p)))], [products]);
+  const allDepartments = useMemo(() => [...new Set(products.flatMap(p => getProductDeptList(p)))], [products]);
   const getPuffs = (p) => p.puffs ?? categoryPuffs[p.category];
   const uniquePuffs = useMemo(() => [...new Set(products.map(p => p.puffs ?? categoryPuffs[p.category]).filter(v => v !== undefined && v !== null && v !== ''))].map(Number).sort((a, b) => a - b), [products, categoryPuffs]);
   const minPrice = useMemo(() => products.length ? Math.min(...products.map(p => p.price || 0)) : 0, [products]);
@@ -585,8 +598,8 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
 
   const catalogProducts = useMemo(() => {
     let filtered = [...products];
-    if (filterDepts.length > 0) filtered = filtered.filter(p => filterDepts.includes(p.department));
-    if (filterBrands.length > 0) filtered = filtered.filter(p => filterBrands.includes(p.category));
+    if (filterDepts.length > 0) filtered = filtered.filter(p => getProductDeptList(p).some(d => filterDepts.includes(d)));
+    if (filterBrands.length > 0) filtered = filtered.filter(p => getProductCatList(p).some(c => filterBrands.includes(c)));
     if (activeFlavors.length > 0) filtered = filtered.filter(p => Array.isArray(p.flavors) && activeFlavors.every(f => p.flavors.includes(f)));
     if (filterPuffs.length > 0) filtered = filtered.filter(p => filterPuffs.some(pv => String(p.puffs ?? categoryPuffs[p.category]) === String(pv)));
     if (priceRange !== null) filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
@@ -1460,10 +1473,10 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   }
 
   const renderProductSection = (category) => {
-    let sectionProducts = products.filter(p => p.category === category);
-    
+    let sectionProducts = products.filter(p => getProductCatList(p).includes(category));
+
     if (activeFilter.dept !== 'all') {
-        sectionProducts = sectionProducts.filter(p => p.department === activeFilter.dept);
+        sectionProducts = sectionProducts.filter(p => getProductDeptList(p).includes(activeFilter.dept));
     }
 
     if (flavorFilterVisible && activeFlavors.length > 0) {
@@ -2416,7 +2429,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
 
                   {departments.map(dept => {
                     const isExpanded = expandedDept === dept;
-                    const deptCats = Array.from(new Set(products.filter(p => p.department === dept).map(p => p.category)));
+                    const deptCats = brandsByDept[dept] || [];
                     return (
                       <div key={dept} className="border-b border-gray-100">
                         <button

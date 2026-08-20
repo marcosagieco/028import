@@ -61,7 +61,7 @@ export default function CalculadorEnvio({ address, setAddress, zone, setZone, ap
               if (distanciaKm >= 11) precioPorKm = 900;
               
               const costoTotalExacto = distanciaKm * precioPorKm;
-              const costoTotalRedondeado = Math.ceil(costoTotalExacto / 100) * 100;
+              const costoTotalRedondeado = Math.max(Math.ceil(costoTotalExacto / 100) * 100, 3000);
               
               setMarkerPos(destinoCoords);
               setDatosEnvio({ km: distanciaKm.toFixed(1), precio: costoTotalRedondeado });
