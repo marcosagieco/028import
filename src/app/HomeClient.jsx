@@ -1102,7 +1102,11 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     setFlippedCommunityCards(prev => ({ ...prev, featured: false }));
   };
 
-  const navigateTo = (view, dept = null) => { setCurrentView(view); if(dept) { setActiveFilter({dept, cat: 'all'}); setFilterDepts([dept]); } setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  // Al tocar un departamento o una marca se reinician los demás filtros que hubiera puestos
+  // (gustos, puffs, rango de precio, búsqueda) para que no queden filtros "viejos" mezclados.
+  const resetSecondaryFilters = () => { setActiveFlavors([]); setFilterPuffs([]); setPriceRange(null); setSearchTerm(''); };
+
+  const navigateTo = (view, dept = null) => { setCurrentView(view); if(dept) { resetSecondaryFilters(); setActiveFilter({dept, cat: 'all'}); setFilterDepts([dept]); setFilterBrands([]); } setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
   const openFilterDrawer = () => {
     setPendingFlavors([...activeFlavors]);
@@ -2321,7 +2325,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                     <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Marcas en {dept}</span>
                   </div>
                   {brandsByDept[dept].map(brand => (
-                    <button key={brand} onClick={() => { setFilterBrands([brand]); setFilterDepts([]); setCurrentView('catalog'); window.scrollTo({top:0,behavior:'smooth'}); setHoveredNavDept(null); }} className="w-full text-left px-5 py-3.5 text-[12px] text-gray-300 hover:bg-[#fcdb00] hover:text-[#111111] transition-colors tracking-widest normal-case font-bold font-poppins">
+                    <button key={brand} onClick={() => { resetSecondaryFilters(); setFilterBrands([brand]); setFilterDepts([]); setCurrentView('catalog'); window.scrollTo({top:0,behavior:'smooth'}); setHoveredNavDept(null); }} className="w-full text-left px-5 py-3.5 text-[12px] text-gray-300 hover:bg-[#fcdb00] hover:text-[#111111] transition-colors tracking-widest normal-case font-bold font-poppins">
                       {brand}
                     </button>
                   ))}
@@ -2330,7 +2334,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
               )}
             </div>
           ))}
-          <button onClick={() => { setFilterDepts([]); setFilterBrands([]); setActiveFilter({dept:'all',cat:'all'}); setCurrentView('catalog'); window.scrollTo({top:0,behavior:'smooth'}); }} className={`relative pb-1 transition-all duration-200 ${currentView === 'catalog' && filterDepts.length === 0 ? 'text-[#fcdb00]' : 'text-gray-400 hover:text-white'}`}>
+          <button onClick={() => { resetSecondaryFilters(); setFilterDepts([]); setFilterBrands([]); setActiveFilter({dept:'all',cat:'all'}); setCurrentView('catalog'); window.scrollTo({top:0,behavior:'smooth'}); }} className={`relative pb-1 transition-all duration-200 ${currentView === 'catalog' && filterDepts.length === 0 ? 'text-[#fcdb00]' : 'text-gray-400 hover:text-white'}`}>
             CATÁLOGO
             <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-[#fcdb00] transition-all duration-200 ${currentView === 'catalog' && filterDepts.length === 0 ? 'opacity-100' : 'opacity-0'}`} />
           </button>
@@ -2421,7 +2425,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                 {/* Nav principal */}
                 <div className="py-2">
                   <button
-                    onClick={() => { setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); setIsMenuOpen(false); }}
+                    onClick={() => { resetSecondaryFilters(); setFilterDepts([]); setFilterBrands([]); setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); setIsMenuOpen(false); }}
                     className="w-full text-left py-3.5 text-base text-[#111111] flex items-center justify-between active:opacity-60 transition-opacity border-b border-gray-100" style={{fontWeight:510}}
                   >
                     Catálogo Completo <i className="fas fa-arrow-right text-gray-300 text-sm"></i>
@@ -2442,7 +2446,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                         <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'}`}>
                           <div className="pb-3 flex flex-col gap-0.5">
                             <button
-                              onClick={() => { setFilterDepts([dept]); setFilterBrands([]); setActiveFilter({dept, cat: 'all'}); setCurrentView('catalog'); setIsMenuOpen(false); window.scrollTo({top:0,behavior:'smooth'}); }}
+                              onClick={() => { resetSecondaryFilters(); setFilterDepts([dept]); setFilterBrands([]); setActiveFilter({dept, cat: 'all'}); setCurrentView('catalog'); setIsMenuOpen(false); window.scrollTo({top:0,behavior:'smooth'}); }}
                               className="text-left py-2 pl-4 text-sm font-medium text-[#111111] active:opacity-60 transition-opacity"
                             >
                               Ver todo en {dept}
@@ -2450,7 +2454,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                             {deptCats.map(cat => (
                               <button
                                 key={cat}
-                                onClick={() => { setFilterDepts([]); setFilterBrands([cat]); setActiveFilter({dept, cat}); setCurrentView('catalog'); setIsMenuOpen(false); window.scrollTo({top:0,behavior:'smooth'}); }}
+                                onClick={() => { resetSecondaryFilters(); setFilterDepts([]); setFilterBrands([cat]); setActiveFilter({dept, cat}); setCurrentView('catalog'); setIsMenuOpen(false); window.scrollTo({top:0,behavior:'smooth'}); }}
                                 className="text-left py-2 pl-4 text-sm font-medium text-[#111111] active:opacity-60 transition-opacity"
                               >
                                 {cat}
@@ -2737,7 +2741,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           <div className="max-w-7xl mx-auto px-5 md:px-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 lg:gap-6 mb-6 md:mb-10 text-xs md:text-sm">
                   <div className="space-y-6"><div className="flex items-center gap-3"><img src={CONFIG.logoImage} alt="028Import Logo" className="h-12 md:h-14 w-auto object-contain drop-shadow-[0_0_15px_rgba(252,219,0,0.25)]" /></div><p className="text-gray-400 font-medium leading-relaxed md:pr-4 font-poppins max-w-sm">Compra rápida, referencias reales y atención directa por WhatsApp.</p></div>
-                  <div><h4 className="font-bebas text-[#fcdb00] text-xl md:text-2xl uppercase tracking-wider mb-4 md:mb-6">Contacto</h4><ul className="space-y-3 md:space-y-5 text-gray-300 font-poppins"><li className="flex items-center gap-4"><div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-[#fcdb00]"><i className="fab fa-whatsapp text-lg"></i></div><span className="text-base font-bold tracking-wider">11 5341 2358</span></li><li className="flex items-start gap-4 mt-2"><div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-[#fcdb00] flex-shrink-0"><i className="fas fa-location-dot text-lg"></i></div><span className="pt-1">Miñones & Juramento,<br/>Belgrano, CABA.</span></li></ul></div>
+                  <div><h4 className="font-bebas text-[#fcdb00] text-xl md:text-2xl uppercase tracking-wider mb-4 md:mb-6">Contacto</h4><ul className="space-y-3 md:space-y-5 text-gray-300 font-poppins"><li className="flex items-center gap-4"><div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-[#fcdb00]"><i className="fab fa-whatsapp text-lg"></i></div><span className="text-base font-bold tracking-wider">11 5341 2358</span></li></ul></div>
                   <div>
                     <h4 className="font-bebas text-[#fcdb00] text-xl md:text-2xl uppercase tracking-wider mb-4 md:mb-6">Información Legal</h4>
                     <ul className="space-y-3 md:space-y-4 text-gray-400 font-poppins font-medium">

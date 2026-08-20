@@ -10,7 +10,7 @@ const mapContainerStyle = {
   marginTop: '15px'
 };
 
-const centerLocal = { lat: -34.5562, lng: -58.4445 };
+const centerLocal = { lat: -34.5538521, lng: -58.4498973 };
 
 export default function CalculadorEnvio({ address, setAddress, zone, setZone, aptDetails, setAptDetails, shippingType, setShippingCost }) {
   const { isLoaded } = useJsApiLoader({
@@ -50,7 +50,7 @@ export default function CalculadorEnvio({ address, setAddress, zone, setZone, ap
         const service = new window.google.maps.DistanceMatrixService();
         service.getDistanceMatrix(
           {
-            origins: ["Miñones y juramento, Belgrano, CABA"],
+            origins: ["Av Libertador 6299, Belgrano, CABA"],
             destinations: [destinoCoords],
             travelMode: 'DRIVING',
           },
@@ -65,14 +65,12 @@ export default function CalculadorEnvio({ address, setAddress, zone, setZone, ap
               
               setMarkerPos(destinoCoords);
               setDatosEnvio({ km: distanciaKm.toFixed(1), precio: costoTotalRedondeado });
-              
+
               if (setShippingCost) setShippingCost(costoTotalRedondeado);
 
               if (map) {
-                const bounds = new window.google.maps.LatLngBounds();
-                bounds.extend(centerLocal);
-                bounds.extend(destinoCoords);
-                map.fitBounds(bounds);
+                map.panTo(destinoCoords);
+                map.setZoom(15);
               }
             }
           }
@@ -138,8 +136,8 @@ export default function CalculadorEnvio({ address, setAddress, zone, setZone, ap
         <div className="animate-in fade-in zoom-in-95 duration-500">
           <GoogleMap
             mapContainerStyle={mapContainerStyle}
-            center={centerLocal}
-            zoom={13}
+            center={markerPos || centerLocal}
+            zoom={15}
             onLoad={onMapLoad}
             options={{
               disableDefaultUI: true,
@@ -147,7 +145,7 @@ export default function CalculadorEnvio({ address, setAddress, zone, setZone, ap
               styles: [{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }]
             }}
           >
-            <Marker position={centerLocal} />
+            {/* Solo se marca la dirección de destino del cliente; la ubicación propia no se muestra en el mapa */}
             {markerPos && <Marker position={markerPos} />}
           </GoogleMap>
 

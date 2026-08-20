@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 
 const libraries = ['places'];
-const centerLocal = { lat: -34.5562, lng: -58.4445 };
+const centerLocal = { lat: -34.5538521, lng: -58.4498973 };
 
 export default function CalculadorEnvioSimple({ address, setAddress, setZone, setShippingCost }) {
   const { isLoaded } = useJsApiLoader({
@@ -38,7 +38,7 @@ export default function CalculadorEnvioSimple({ address, setAddress, setZone, se
     const service = new window.google.maps.DistanceMatrixService();
     service.getDistanceMatrix(
       {
-        origins: ['Miñones y juramento, Belgrano, CABA'],
+        origins: ['Av Libertador 6299, Belgrano, CABA'],
         destinations: [destCoords],
         travelMode: 'DRIVING',
       },
