@@ -3,10 +3,13 @@ import { NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Nada pesado se importa acá arriba a propósito. Si un import falla al cargarse el
-// módulo, la ruta entera se cae antes de ejecutar nada y Next devuelve una página
-// HTML de error que no explica qué pasó. Cargando todo adentro del handler, un
-// fallo de import se vuelve un error atrapable que sí podemos reportar.
+// Acá NO se usa firebase-admin/auth a propósito. Ese módulo arrastra jwks-rsa, que
+// a su vez hace require() de jose, que es ESM puro: en el Node de Vercel eso revienta
+// con ERR_REQUIRE_ESM. Como un token de Firebase no es más que un JWT firmado con la
+// clave privada de la cuenta de servicio, lo generamos acá con el crypto de Node y
+// nos sacamos la dependencia entera de encima.
+
+const AUDIENCIA = 'https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit';
 
 // Freno contra fuerza bruta: 8 intentos fallidos por IP cada 10 minutos.
 const intentos = new Map();
@@ -28,6 +31,40 @@ function registrarFallo(ip) {
   if (r) r.fallos += 1;
 }
 
+function base64url(dato) {
+  return Buffer.from(dato).toString('base64')
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function credenciales() {
+  const email = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+  const clave = (process.env.FIREBASE_ADMIN_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+  return { email, clave, completas: !!email && clave.includes('PRIVATE KEY') };
+}
+
+// Arma el token de sesión que después valida Firebase. El permiso admin va firmado
+// adentro: las reglas de Firestore lo verifican del lado del servidor de Google.
+async function crearTokenDeSesion(uid, permisos) {
+  const { createSign } = await import('node:crypto');
+  const { email, clave } = credenciales();
+  const ahora = Math.floor(Date.now() / 1000);
+
+  const cabecera = { alg: 'RS256', typ: 'JWT' };
+  const cuerpo = {
+    iss: email,
+    sub: email,
+    aud: AUDIENCIA,
+    iat: ahora,
+    exp: ahora + 3600,          // una hora, que es el máximo que acepta Firebase
+    uid,
+    claims: permisos,
+  };
+
+  const base = base64url(JSON.stringify(cabecera)) + '.' + base64url(JSON.stringify(cuerpo));
+  const firma = createSign('RSA-SHA256').update(base).sign(clave);
+  return base + '.' + base64url(firma);
+}
+
 // Comparación que tarda lo mismo acierte o no, para que no se pueda deducir el
 // código midiendo tiempos de respuesta.
 async function sonIguales(a, b) {
@@ -38,20 +75,14 @@ async function sonIguales(a, b) {
   return timingSafeEqual(ba, bb);
 }
 
-// Diagnóstico: dice si el servidor está en condiciones de validar, sin revelar
-// el código ni ningún dato. Sirve para saber qué falta sin tener que probar a ciegas.
+// Diagnóstico: dice si el servidor está en condiciones de validar. No revela el
+// código ni la clave, solo si están presentes.
 export async function GET() {
-  const estado = {
+  const { completas } = credenciales();
+  return NextResponse.json({
     admin_code_configurado: !!process.env.ADMIN_CODE,
-    firebase_admin: 'sin probar',
-  };
-  try {
-    const { getAdminAuth } = await import('@/lib/firebaseAdmin');
-    estado.firebase_admin = getAdminAuth() ? 'ok' : 'no inicializa (revisar credenciales)';
-  } catch (err) {
-    estado.firebase_admin = 'falla al importar: ' + String(err?.message || err).slice(0, 200);
-  }
-  return NextResponse.json(estado);
+    credenciales_firebase: completas ? 'ok' : 'faltan o están mal formadas',
+  });
 }
 
 export async function POST(request) {
@@ -82,19 +113,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Código incorrecto' }, { status: 401 });
     }
 
-    const { getAdminAuth } = await import('@/lib/firebaseAdmin');
-    const auth = getAdminAuth();
-    if (!auth) {
+    if (!credenciales().completas) {
       return NextResponse.json(
-        { error: 'No se pudo validar contra Firebase.', motivo: 'firebase-admin no inicializó' },
+        { error: 'No se pudo crear la sesión.', motivo: 'faltan las credenciales de Firebase' },
         { status: 500 }
       );
     }
 
-    // Sesión real de Firebase con el permiso de admin adentro. Las reglas de
-    // Firestore validan ese permiso del lado del servidor de Google, así que no
-    // alcanza con trucar nada en el navegador.
-    const token = await auth.createCustomToken('panel_028', { admin: true });
+    const token = await crearTokenDeSesion('panel_028', { admin: true });
     return NextResponse.json({ token });
 
   } catch (err) {

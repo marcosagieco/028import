@@ -1,6 +1,5 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
 
 let _app = null;
 let _adminDb = null;
@@ -33,8 +32,3 @@ export function getAdminDb() {
   return _adminDb;
 }
 
-// Se usa para emitir la sesión del panel cuando el código de acceso es correcto.
-export function getAdminAuth() {
-  const app = getApp();
-  return app ? getAuth(app) : null;
-}
