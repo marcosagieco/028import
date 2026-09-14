@@ -89,6 +89,16 @@ const INITIAL_COMMUNITY_VIDEOS = [
   }
 ];
 
+// Pósters de los videos de Community. Los que están en Firebase Storage no traen
+// thumbnail propio, así que se sirven desde /public/community: así la portada se ve
+// sin tener que descargar el video entero.
+const COMMUNITY_POSTERS = {
+  hanni:     '/community/hanni.webp',
+  martulali: '/community/martulali.webp',
+  alelali:   '/community/alelali.webp',
+  giulianny: '/community/giulianny.webp',
+};
+
 const buildDefaultHomeLayout = (sections = []) => {
   const orderedSections = [...sections].sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
   if (!orderedSections.length) {
@@ -689,19 +699,15 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const isFirstLoad = useRef(true);
   useEffect(() => {
     if (!firebaseRefs.db) return;
-    const qFomo = query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc'), limit(1));
-    const unsubscribeFomo = onSnapshot(qFomo, (snap) => {
+    // Escucha un único documento público que solo tiene nombre de pila y producto.
+    // Los pedidos reales quedan privados: acá no hay teléfono ni dirección.
+    const unsubscribeFomo = onSnapshot(doc(firebaseRefs.db, 'fomo', 'latest'), (snap) => {
         if (isFirstLoad.current) { isFirstLoad.current = false; return; }
-        snap.docChanges().forEach((change) => {
-            if (change.type === "added") {
-                const o = change.doc.data();
-                if (o.clientName && o.items?.length > 0) {
-                    const firstName = o.clientName.split(' ')[0]; 
-                    setFomoData({ name: firstName, product: o.items[0].name });
-                    setTimeout(() => setFomoData(null), 6000);
-                }
-            }
-        });
+        const ultimo = snap.data();
+        if (ultimo?.name && ultimo?.product) {
+            setFomoData({ name: ultimo.name, product: ultimo.product });
+            setTimeout(() => setFomoData(null), 6000);
+        }
     });
     return () => unsubscribeFomo();
   }, [firebaseRefs.db]);
@@ -934,10 +940,16 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const getCommunityVideoPoster = (videoUrl) => {
     const url = String(videoUrl || '').trim();
     if (!url) return '';
-    if (!url.includes('/video/upload/')) return '';
-    return url
-      .replace('/video/upload/', '/video/upload/f_jpg,so_0.6,q_auto/')
-      .replace(/\.(mp4|mov|webm)(\?.*)?$/i, '.jpg');
+    // Cloudinary puede generar el frame al vuelo desde la propia URL
+    if (url.includes('/video/upload/')) {
+      return url
+        .replace('/video/upload/', '/video/upload/f_jpg,so_0.6,q_auto/')
+        .replace(/\.(mp4|mov|webm)(\?.*)?$/i, '.jpg');
+    }
+    // Firebase Storage: póster propio guardado en /public/community
+    const fileName = decodeURIComponent((url.split('/o/')[1] || '').split('?')[0]).toLowerCase();
+    const match = Object.keys(COMMUNITY_POSTERS).find(key => fileName.includes(key));
+    return match ? COMMUNITY_POSTERS[match] : '';
   };
 
   const getCommunityDocId = (video) => video?.dbId || null;
@@ -1329,6 +1341,15 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
                 status: (deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'transferencia') ? 'pending_verification' : 'pending', 
                 createdAt: serverTimestamp() 
             }).catch(e => console.error(e));
+            // Aviso público para el cartelito "fulano compró X": solo nombre de pila
+            // y producto. El pedido completo queda en /orders, que no es público.
+            if (clientName && currentCart.length > 0) {
+              setDoc(doc(firebaseRefs.db, 'fomo', 'latest'), {
+                name: clientName.split(' ')[0],
+                product: currentCart[0].name,
+                at: serverTimestamp()
+              }).catch(console.error);
+            }
             if (deliveryMethod === 'envio' && zone.trim()) {
               setDoc(doc(firebaseRefs.db, 'stats', 'zones'), { [zone.trim()]: increment(1) }, { merge: true }).catch(console.error);
             }
@@ -1597,7 +1618,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
                   className={`absolute inset-0 z-[1] w-full h-full object-cover bg-black transition-opacity duration-300 pointer-events-none ${communityVideoLoaded[cardId] ? 'opacity-100' : 'opacity-0'}`}
                   playsInline
                   muted
-                  preload="metadata"
+                  preload="none"
                   x-webkit-airplay="deny"
                   onLoadedData={() => setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true }))}
                   onCanPlay={() => { setCommunityVideoLoaded(prev => ({ ...prev, [cardId]: true })); setCommunityVideoBuffering(prev => ({ ...prev, [cardId]: false })); }}

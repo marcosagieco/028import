@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged, signInWithCustomToken, signOut } from "firebase/auth";
 import {
   getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, deleteDoc, doc, setDoc, getDoc, serverTimestamp
 } from "firebase/firestore";
@@ -204,7 +204,10 @@ const buildDefaultHomeLayout = (sections = []) => {
   ];
 };
 
-const ADMIN_PASSWORD = '171728';
+// El código de acceso NO vive acá: vive en el servidor, en la variable de entorno
+// ADMIN_CODE, y se valida en /api/admin/login. El navegador nunca lo recibe.
+// Si el código es correcto, el servidor devuelve una sesión de Firebase con el
+// permiso "admin" adentro, que es lo que después validan las reglas de Firestore.
 
 // Exporta un arreglo de objetos a un archivo .csv (se abre directo en Excel)
 const exportToExcel = (rows, columns, filename) => {
@@ -229,7 +232,6 @@ const exportToExcel = (rows, columns, filename) => {
 export default function AdminPage() {
   const [isAdminAuthed, setIsAdminAuthed] = useState(false);
   const [adminAuthChecked, setAdminAuthChecked] = useState(false);
-  const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [adminAuthError, setAdminAuthError] = useState('');
   const [activeTab, setActiveTab] = useState('historial');
   const [orders, setOrders] = useState([]);
@@ -397,27 +399,37 @@ export default function AdminPage() {
     link.href = CONFIG.logoImage;
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem('admin_auth') === 'true') {
-      setIsAdminAuthed(true);
-    }
-    setAdminAuthChecked(true);
-  }, []);
+  const [adminPasswordInput, setAdminPasswordInput] = useState('');
+  const [entrando, setEntrando] = useState(false);
 
-  const handleAdminLogin = (e) => {
-    e.preventDefault();
-    if (adminPasswordInput === ADMIN_PASSWORD) {
-      localStorage.setItem('admin_auth', 'true');
-      setIsAdminAuthed(true);
-      setAdminAuthError('');
-    } else {
-      setAdminAuthError('Contraseña incorrecta');
-      setAdminPasswordInput('');
+  const handleAdminLogin = async (e) => {
+    if (e) e.preventDefault();
+    if (!firebaseRefs.auth) { setAdminAuthError('Firebase no está disponible'); return; }
+    setEntrando(true);
+    setAdminAuthError('');
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigo: adminPasswordInput }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAdminAuthError(data?.error || 'No se pudo entrar');
+        setAdminPasswordInput('');
+        return;
+      }
+      // El servidor aprobó el código: abrimos la sesión con el token que mandó.
+      await signInWithCustomToken(firebaseRefs.auth, data.token);
+    } catch (err) {
+      setAdminAuthError('No se pudo entrar: ' + (err.code || err.message));
+    } finally {
+      setEntrando(false);
     }
   };
 
   const handleAdminLogout = () => {
-    localStorage.removeItem('admin_auth');
+    if (firebaseRefs.auth) signOut(firebaseRefs.auth).catch(console.error);
     setIsAdminAuthed(false);
   };
 
@@ -432,9 +444,16 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!firebaseRefs.auth || !firebaseRefs.db) return;
-    signInAnonymously(firebaseRefs.auth).catch(console.error);
-    onAuthStateChanged(firebaseRefs.auth, (user) => {
-      if (!user) return;
+    onAuthStateChanged(firebaseRefs.auth, async (user) => {
+      let habilitado = false;
+      if (user) {
+        // El permiso viene firmado adentro del token que emitió el servidor.
+        const datos = await user.getIdTokenResult().catch(() => null);
+        habilitado = datos?.claims?.admin === true;
+      }
+      setIsAdminAuthed(habilitado);
+      setAdminAuthChecked(true);
+      if (!habilitado) { setLoading(false); return; }
       onSnapshot(query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc')), (snap) => { setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); });
       
       onSnapshot(collection(firebaseRefs.db, 'products'), (snap) => {
@@ -1292,14 +1311,17 @@ export default function AdminPage() {
         <h1 className={`font-bebas text-2xl uppercase tracking-wide ${theme.text}`}>Acceso Privado</h1>
         <input
           type="password"
+          id="admin-codigo"
           autoFocus
           value={adminPasswordInput}
           onChange={(e) => { setAdminPasswordInput(e.target.value); setAdminAuthError(''); }}
-          placeholder="Contraseña"
+          placeholder="Código"
           className={`w-full p-4 rounded-xl outline-none font-bold text-center tracking-[0.3em] ${theme.input}`}
         />
-        {adminAuthError && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest">{adminAuthError}</p>}
-        <button type="submit" className="w-full bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-3.5 rounded-xl hover:bg-[#111111] hover:text-[#fcdb00] transition-all">Entrar</button>
+        {adminAuthError && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest text-center">{adminAuthError}</p>}
+        <button type="submit" disabled={entrando || !adminPasswordInput} className="w-full bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-3.5 rounded-xl hover:bg-[#111111] hover:text-[#fcdb00] transition-all disabled:opacity-50">
+          {entrando ? 'Entrando...' : 'Entrar'}
+        </button>
       </form>
     </div>
   );

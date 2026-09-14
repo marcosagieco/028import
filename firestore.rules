@@ -1,0 +1,94 @@
+rules_version = '2';
+
+// Reglas de seguridad de 028 Import.
+//
+// Criterio general:
+//   - El catálogo es público de lectura (lo necesita la tienda para mostrarse).
+//   - Los datos de clientes (pedidos y usuarios) NO son públicos.
+//   - Escribir el catálogo es exclusivo del admin.
+//   - Las pocas escrituras que hace un visitante común (crear su pedido, sumar
+//     un contador) están permitidas de forma acotada: solo esos campos y nada más.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Identidad del admin -----------------------------------------------
+    // El permiso viene firmado dentro del token que emite /api/admin/login cuando
+    // alguien acierta el código de acceso. Google valida esa firma acá, del lado
+    // del servidor: no se puede falsificar desde el navegador.
+    function esAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // La escritura solo toca los campos indicados y ninguno más.
+    function soloToca(campos) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(campos);
+    }
+
+    // --- CATÁLOGO -----------------------------------------------------------
+    // Lectura pública: la tienda tiene que poder mostrarlo.
+    // Escritura: solo el admin, salvo el contador de clicks.
+    match /products/{id} {
+      allow read: if true;
+      allow update: if esAdmin() || soloToca(['clicks']);
+      allow create, delete: if esAdmin();
+    }
+
+    match /promos/{id}             { allow read: if true; allow write: if esAdmin(); }
+    match /upsells/{id}            { allow read: if true; allow write: if esAdmin(); }
+    match /carritoDestacados/{id}  { allow read: if true; allow write: if esAdmin(); }
+    match /home_sections/{id}      { allow read: if true; allow write: if esAdmin(); }
+    match /settings/{id}           { allow read: if true; allow write: if esAdmin(); }
+
+    // Códigos de descuento. Hoy la tienda los valida en el navegador, así que
+    // necesita leerlos. Ojo: eso significa que son visibles para cualquiera.
+    // Para que dejen de serlo hay que validarlos del lado del servidor.
+    match /coupons/{id} {
+      allow read: if true;
+      allow write: if esAdmin();
+    }
+
+    // Contadores de vistas y clicks de los videos de Community.
+    match /community_videos/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['views', 'clicks']);
+      allow update: if esAdmin() || soloToca(['views', 'clicks']);
+      allow delete: if esAdmin();
+    }
+
+    // Contadores agregados (zonas de envío, tipo de envío). No tienen datos personales.
+    match /stats/{id} {
+      allow read: if esAdmin();
+      allow create, update: if true;
+      allow delete: if esAdmin();
+    }
+
+    // Cartelito "fulano compró X". Solo nombre de pila y producto: sin teléfono
+    // ni dirección. Es lo que reemplaza la lectura pública de /orders.
+    match /fomo/{id} {
+      allow read: if true;
+      allow create, update: if request.resource.data.keys().hasOnly(['name', 'product', 'at']);
+      allow delete: if esAdmin();
+    }
+
+    // --- DATOS DE CLIENTES --------------------------------------------------
+    // Pedidos: cualquiera puede crear el suyo al comprar, pero NADIE puede
+    // leerlos, modificarlos ni borrarlos salvo el admin.
+    match /orders/{id} {
+      allow create: if true;
+      allow read, update, delete: if esAdmin();
+    }
+
+    // Usuarios: cada uno ve y edita únicamente su propia ficha.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read: if esAdmin();
+      allow update, delete: if esAdmin();
+    }
+
+    // --- Todo lo demás queda cerrado ---------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
