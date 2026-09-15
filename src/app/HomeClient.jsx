@@ -339,11 +339,13 @@ function HorizontalScroll({ children, className }) {
     <div className="relative group/hscroll">
       <button
         onClick={() => scroll(-1)}
+        aria-label="Ver anteriores"
         className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 items-center justify-center rounded-full bg-gray-100 border border-gray-200 text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] hover:border-[#fcdb00] transition-all opacity-0 group-hover/hscroll:opacity-100 backdrop-blur-xl shadow-lg"
       ><i className="fas fa-chevron-left text-xs" /></button>
       <div ref={ref} className={className}>{children}</div>
       <button
         onClick={() => scroll(1)}
+        aria-label="Ver siguientes"
         className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10 items-center justify-center rounded-full bg-gray-100 border border-gray-200 text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] hover:border-[#fcdb00] transition-all opacity-0 group-hover/hscroll:opacity-100 backdrop-blur-xl shadow-lg"
       ><i className="fas fa-chevron-right text-xs" /></button>
     </div>
@@ -503,6 +505,9 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const [deptIcons, setDeptIcons] = useState({});
   const [virtualDepts, setVirtualDepts] = useState([]);
   const [categoryPuffs, setCategoryPuffs] = useState({});
+  // Cotización del dólar para ordenar por precio los productos marcados como USD.
+  // Se edita desde el panel (pestaña Descuentos); el 1450 es solo el valor de arranque.
+  const [usdToArs, setUsdToArs] = useState(1450);
   const [user, setUser] = useState(null);
   const [dbUser, setDbUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -614,15 +619,45 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     if (filterPuffs.length > 0) filtered = filtered.filter(p => filterPuffs.some(pv => String(p.puffs ?? categoryPuffs[p.category]) === String(pv)));
     if (priceRange !== null) filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
     if (searchTerm) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase()));
-    const USD_TO_ARS = 1450;
-    const arsPrice = (p) => p.tag === 'USD' ? p.price * USD_TO_ARS : p.price;
+    const arsPrice = (p) => p.tag === 'USD' ? p.price * usdToArs : p.price;
     const sorted = [...filtered];
     if (sortBy === 'mayor_precio') sorted.sort((a, b) => arsPrice(b) - arsPrice(a));
     else if (sortBy === 'menor_precio') sorted.sort((a, b) => arsPrice(a) - arsPrice(b));
     else if (sortBy === 'reciente') sorted.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     else sorted.sort((a, b) => (b.clicks || 0) - (a.clicks || 0));
     return sorted;
-  }, [products, filterDepts, filterBrands, activeFlavors, filterPuffs, priceRange, searchTerm, sortBy, categoryPuffs]);
+  }, [products, filterDepts, filterBrands, activeFlavors, filterPuffs, priceRange, searchTerm, sortBy, categoryPuffs, usdToArs]);
+
+  // Le describe el catálogo a Google en su formato: cada producto con su marca,
+  // precio y disponibilidad. Es lo que permite que aparezcan con el precio al lado
+  // en los resultados de búsqueda, en vez de un link de texto pelado.
+  const datosDeProductos = useMemo(() => {
+    const visibles = products.filter(p => !p.isDeleted).slice(0, 40);
+    if (!visibles.length) return null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: 'Catálogo 028 Import',
+      numberOfItems: visibles.length,
+      itemListElement: visibles.map((p, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        item: {
+          '@type': 'Product',
+          name: p.name,
+          image: p.image || undefined,
+          description: p.description || undefined,
+          brand: p.category ? { '@type': 'Brand', name: p.category } : undefined,
+          offers: {
+            '@type': 'Offer',
+            price: Number(p.offerPrice > 0 && p.offerPrice < p.price ? p.offerPrice : p.price) || 0,
+            priceCurrency: p.tag === 'USD' ? 'USD' : 'ARS',
+            availability: p.inStock === false ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+          },
+        },
+      })),
+    };
+  }, [products]);
 
   const activeFilterCount = activeFlavors.length + filterBrands.length + filterDepts.length + filterPuffs.length + (priceRange !== null ? 1 : 0);
 
@@ -807,6 +842,10 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
       }).catch(() => {});
       getDoc(doc(firebaseRefs.db, 'settings', 'departments')).then(snap => {
         if (snap.exists()) { setDeptIcons(snap.data().icons || {}); setVirtualDepts(snap.data().virtualDepts || []); }
+      }).catch(() => {});
+      getDoc(doc(firebaseRefs.db, 'settings', 'cotizacion')).then(snap => {
+        const valor = Number(snap.data()?.usdToArs);
+        if (snap.exists() && valor > 0) setUsdToArs(valor);
       }).catch(() => {});
       getDoc(doc(firebaseRefs.db, 'settings', 'category_puffs')).then(snap => {
         if (snap.exists()) setCategoryPuffs(snap.data() || {});
@@ -1920,10 +1959,14 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
   };
   return (
     <div style={{backgroundColor: '#f5f5f5'}} className="text-[#111111] font-poppins flex flex-col relative min-h-screen selection:bg-[#fcdb00] selection:text-[#111111]">
+      {datosDeProductos && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(datosDeProductos) }}
+        />
+      )}
+
       <style dangerouslySetInnerHTML={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;700;900&family=Syncopate:wght@400;700&display=swap');
-        .font-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
-        .font-poppins { font-family: 'Poppins', sans-serif; }
         .reveal-on-scroll {
           opacity: 0;
           transform: translateY(40px);
@@ -2313,7 +2356,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         <div className="flex items-center gap-4">
           {/* carrito — solo móvil, lado izquierdo */}
           <button onClick={() => openCart()} className="relative p-2 hover:text-[#fcdb00] transition-colors md:hidden">
-            <i className="fas fa-shopping-bag text-2xl"></i>
+            <i className="fas fa-shopping-bag text-2xl" aria-hidden="true"></i>
+            <span className="sr-only">Abrir carrito</span>
             {getTotalItems() > 0 && (
               <span key={getTotalItems()} className="absolute top-1.5 -right-1 bg-[#fcdb00] text-[#111111] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-[#111111] animate-badge-pop">
                 {getTotalItems()}
@@ -2364,7 +2408,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         <div className="flex items-center gap-2 md:gap-4">
           {/* carrito — solo desktop, lado derecho */}
           <button onClick={() => openCart()} className="relative p-2 hover:text-[#fcdb00] transition-colors hidden md:flex">
-            <i className="fas fa-shopping-bag text-2xl"></i>
+            <i className="fas fa-shopping-bag text-2xl" aria-hidden="true"></i>
+            <span className="sr-only">Abrir carrito</span>
             {getTotalItems() > 0 && (
               <span key={getTotalItems()} className="absolute top-1.5 -right-1 bg-[#fcdb00] text-[#111111] text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border border-[#111111] animate-badge-pop">
                 {getTotalItems()}
@@ -2373,7 +2418,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           </button>
           {/* hamburguesa — solo móvil, lado derecho */}
           <button onClick={() => setIsMenuOpen(true)} className="text-2xl hover:text-[#fcdb00] transition-colors p-2 md:hidden">
-            <i className="fas fa-bars"></i>
+            <i className="fas fa-bars" aria-hidden="true"></i>
+            <span className="sr-only">Abrir menú</span>
           </button>
         </div>
       </header>
@@ -2515,13 +2561,13 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
 
                 {/* Redes */}
                 <div className="pt-6 flex items-center gap-3">
-                  <a href="https://www.tiktok.com/@028.import" target="_blank" rel="noreferrer" className="flex-1 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-[#111111] active:bg-[#fcdb00] transition-all">
+                  <a href="https://www.tiktok.com/@028.import" target="_blank" rel="noreferrer" aria-label="TikTok" className="flex-1 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-[#111111] active:bg-[#fcdb00] transition-all">
                     <i className="fab fa-tiktok text-lg"></i>
                   </a>
-                  <a href="https://www.instagram.com/028.import" target="_blank" rel="noreferrer" className="flex-1 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-[#111111] active:bg-[#fcdb00] transition-all">
+                  <a href="https://www.instagram.com/028.import" target="_blank" rel="noreferrer" aria-label="Instagram" className="flex-1 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-[#111111] active:bg-[#fcdb00] transition-all">
                     <i className="fab fa-instagram text-lg"></i>
                   </a>
-                  <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="flex-1 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-[#111111] active:bg-[#25D366] active:text-white transition-all">
+                  <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" aria-label="WhatsApp" className="flex-1 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-[#111111] active:bg-[#25D366] active:text-white transition-all">
                     <i className="fab fa-whatsapp text-lg"></i>
                   </a>
                 </div>
@@ -2537,7 +2583,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           <div className="w-full bg-[#111111] h-8 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex items-center">
             <div className="animate-marquee whitespace-nowrap flex items-center">
               {[...Array(6)].map((_, i) => (
-                <div key={i} style={{color: '#f5d000', fontFamily: "'Bebas Neue', sans-serif"}} className="flex items-center gap-8 px-4 font-bold italic text-[13px] md:text-[15px] tracking-widest uppercase">
+                <div key={i} style={{color: '#f5d000'}} className="font-bebas flex items-center gap-8 px-4 font-bold italic text-[13px] md:text-[15px] tracking-widest uppercase">
                   <span> ENVIOS 24HS CABA/AMBA </span><span style={{color: '#787878'}}>•</span>
                   <span> 028 IMPORT </span><span style={{color: '#787878'}}>•</span>
                   <span> DESCUENTOS ABONANDO EN EFECTIVO </span><span style={{color: '#787878'}}>•</span>
@@ -2546,9 +2592,10 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
               ))}
             </div>
           </div>
+          <h1 className="sr-only">028 Import — Vapes y tecnología con envío en 30 minutos por CABA y AMBA</h1>
           <div className="relative w-full h-[230px] md:h-[475px] overflow-hidden">
             <Image
-              src="/banner-original.png"
+              src="/banner-original.webp"
               alt="Banner 028 Import"
               fill
               priority
@@ -2776,9 +2823,9 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   <div>
                     <h4 className="font-bebas text-[#fcdb00] text-xl md:text-2xl uppercase tracking-wider mb-4 md:mb-6">Nuestras Redes</h4>
                     <div className="flex gap-4">
-                      <a href="https://www.tiktok.com/@028.import" target="_blank" rel="noreferrer" className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-[#fcdb00] hover:text-[#111111] transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(252,219,0,0.3)]"><i className="fab fa-tiktok text-2xl"></i></a>
-                      <a href="https://www.instagram.com/028.import" target="_blank" rel="noreferrer" className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-[#fcdb00] hover:text-[#111111] transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(252,219,0,0.3)]"><i className="fab fa-instagram text-2xl"></i></a>
-                      <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-[#25D366] hover:text-white transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(37,211,102,0.3)]"><i className="fab fa-whatsapp text-2xl"></i></a>
+                      <a href="https://www.tiktok.com/@028.import" target="_blank" rel="noreferrer" aria-label="TikTok" className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-[#fcdb00] hover:text-[#111111] transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(252,219,0,0.3)]"><i className="fab fa-tiktok text-2xl"></i></a>
+                      <a href="https://www.instagram.com/028.import" target="_blank" rel="noreferrer" aria-label="Instagram" className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-[#fcdb00] hover:text-[#111111] transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(252,219,0,0.3)]"><i className="fab fa-instagram text-2xl"></i></a>
+                      <a href={`https://wa.me/${CONFIG.whatsappNumber}`} target="_blank" rel="noreferrer" aria-label="WhatsApp" className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-[#25D366] hover:text-white transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(37,211,102,0.3)]"><i className="fab fa-whatsapp text-2xl"></i></a>
                     </div>
                   </div>
               </div>
@@ -3427,9 +3474,9 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
       )}
 
       {/* === BOTÓN FLOTANTE WHATSAPP === */}
-      <div className="fixed bottom-6 right-5 z-[200] flex flex-col items-end gap-3">
+      <div className="fixed bottom-6 right-5 z-[200] flex flex-col items-end">
         {showTooltip && (
-          <div className="bg-white text-[#111111] text-xs font-semibold font-poppins px-4 py-2.5 rounded-2xl shadow-xl border border-gray-200 max-w-[200px] text-center leading-snug animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="absolute bottom-full right-0 mb-3 bg-white text-[#111111] text-xs font-semibold font-poppins px-4 py-2.5 rounded-2xl shadow-xl border border-gray-200 w-[200px] text-center leading-snug animate-in fade-in slide-in-from-bottom-2 duration-300">
             ¿Tenés dudas? <span className="text-[#25D366]">¡Escribinos por WhatsApp!</span> 💬
             <div className="absolute bottom-[-6px] right-5 w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45"></div>
           </div>

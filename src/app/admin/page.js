@@ -261,6 +261,7 @@ export default function AdminPage() {
   const [newUpsell, setNewUpsell] = useState({ productId: '', price: '' });
 
   const [newDiscount, setNewDiscount] = useState({ productId: '', offerPrice: '' });
+  const [usdToArs, setUsdToArs] = useState('');
   const [brandDiscount, setBrandDiscount] = useState({ category: '', offerPrice: '' });
 
   const [carritoList, setCarritoList] = useState([]);
@@ -531,6 +532,10 @@ export default function AdminPage() {
       onSnapshot(doc(firebaseRefs.db, 'settings', 'stock_order'), (snap) => {
         if (snap.exists()) setStockOrder(snap.data() || { depts: [], cats: {} });
       });
+      onSnapshot(doc(firebaseRefs.db, 'settings', 'cotizacion'), (snap) => {
+        const valor = Number(snap.data()?.usdToArs);
+        if (snap.exists() && valor > 0) setUsdToArs(String(valor));
+      });
       onSnapshot(doc(firebaseRefs.db, 'settings', 'vape3d_position'), (snap) => {
         if (snap.exists()) setVape3dPosition(snap.data().afterSectionId || 'banner');
       });
@@ -579,6 +584,15 @@ export default function AdminPage() {
   const toggleProductFlavor = async (product, flavor) => { const current = Array.isArray(product.flavors) ? product.flavors : []; const next = current.includes(flavor) ? current.filter(f => f !== flavor) : [...current, flavor]; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, flavors: next }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const updatePuffs = async (product, val) => { const v = val.trim(); try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, puffs: v === '' ? null : Number(v) }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const updateCategoryDepartment = async (categoryName, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept) return; try { const prods = products.filter(p => p.category === categoryName); await Promise.all(prods.map(p => setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, department: dept }, { merge: true }))); } catch (err) { alert("Error: " + err.message); } }
+  const saveUsdToArs = async (e) => {
+    if (e) e.preventDefault();
+    const valor = Number(usdToArs);
+    if (!(valor > 0)) { alert('Poné un valor mayor a cero'); return; }
+    try {
+      await setDoc(doc(firebaseRefs.db, 'settings', 'cotizacion'), { usdToArs: valor }, { merge: true });
+      alert('Cotización guardada: ' + valor.toLocaleString('es-AR'));
+    } catch (err) { alert('Error al guardar: ' + err.message); }
+  };
   const saveVidreiraCardRadius = async (val) => { try { await setDoc(doc(firebaseRefs.db, 'settings', 'vidriera_style'), { cardRadius: val }, { merge: true }); } catch(err) { alert('Error al guardar: ' + err.message); } };
   const saveVidreiraShowIcons = async (val) => { try { await setDoc(doc(firebaseRefs.db, 'settings', 'vidriera_style'), { showIcons: val }, { merge: true }); } catch(err) { alert('Error al guardar: ' + err.message); } };
   const saveVape3dPosition = async (val) => { try { await setDoc(doc(firebaseRefs.db, 'settings', 'vape3d_position'), { afterSectionId: val }, { merge: true }); } catch(err) { alert('Error al guardar: ' + err.message); } };
@@ -1335,7 +1349,7 @@ export default function AdminPage() {
 
   return (
     <div className={`min-h-screen font-poppins pb-10 transition-colors duration-300 ${theme.bg} ${theme.text}`}>
-      <style dangerouslySetInnerHTML={{__html: `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;700;900&display=swap'); .font-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; } .font-poppins { font-family: 'Poppins', sans-serif; }`}} />
+      <style dangerouslySetInnerHTML={{__html: ``}} />
       <nav className={`${theme.nav} py-4 px-6 text-white flex justify-between items-center shadow-lg border-b border-white/10 sticky top-0 z-50`}><div className="flex items-center gap-4"><img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain" /><h1 className="text-2xl font-bebas tracking-wide uppercase pt-1">028<span className="text-[#fcdb00]">Control</span></h1></div><div className="flex items-center gap-4"><button onClick={() => setDarkMode(!darkMode)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-[#fcdb00] hover:text-[#111111] transition-all text-xs">{darkMode ? '☀️' : '🌙'}</button><a href="/?admin=true" target="_blank" className="text-[11px] text-[#fcdb00] font-bold uppercase hover:text-white transition-all tracking-widest bg-white/10 px-3 py-1.5 rounded-lg border border-white/20">Ver Web</a><button onClick={handleAdminLogout} title="Cerrar sesión" className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-red-500 hover:text-white transition-all text-xs"><i className="fas fa-lock"></i></button></div></nav>
       <div className={`${theme.stickyHeader} border-b sticky top-[72px] z-40 transition-colors duration-300`}>
         <div className="max-w-4xl mx-auto flex overflow-x-auto no-scrollbar">
@@ -1968,6 +1982,20 @@ export default function AdminPage() {
                 <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Precio tachado arriba y precio de oferta abajo en la vidriera</p>
               </div>
             </div>
+
+            <form onSubmit={saveUsdToArs} className={`${theme.card} p-6 rounded-[2rem] shadow-sm border mb-6 flex flex-col gap-4`}>
+              <div>
+                <h3 className={`text-2xl font-bebas uppercase tracking-wide ${theme.text}`}>Cotización del Dólar</h3>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Se usa para ordenar por precio los productos con etiqueta USD</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bebas text-xl text-gray-400">$</span>
+                  <input type="number" step="1" min="1" id="usd-to-ars" value={usdToArs} onChange={e => setUsdToArs(e.target.value)} placeholder="Ej: 1450" className={`w-full p-4 pl-10 rounded-xl font-black text-lg outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />
+                </div>
+                <button type="submit" className="bg-[#fcdb00] text-[#111111] font-bebas text-lg uppercase px-6 py-3.5 rounded-xl hover:bg-[#111111] hover:text-[#fcdb00] transition-all whitespace-nowrap">Guardar</button>
+              </div>
+            </form>
 
             <form onSubmit={handleSetDiscount} className={`${theme.card} p-8 rounded-[2rem] shadow-sm border mb-8 flex flex-col gap-6`}>
               <div>

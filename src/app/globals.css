@@ -40,3 +40,13 @@ body {
   background-size: 250px 250px;
 }
 
+
+/* Las fuentes las carga next/font desde el layout y expone estas variables.
+   Antes estas clases estaban duplicadas en un <style> dentro de cada página. */
+.font-bebas {
+  font-family: var(--fuente-bebas), 'Bebas Neue', Impact, sans-serif;
+  letter-spacing: 1px;
+}
+.font-poppins {
+  font-family: var(--fuente-poppins), 'Poppins', system-ui, sans-serif;
+}
