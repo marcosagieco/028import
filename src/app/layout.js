@@ -91,7 +91,6 @@ export default function RootLayout({ children }) {
     <html lang="es" className={`${bebas.variable} ${poppins.variable}`}>
       <head>
         <link rel="icon" href={CONFIG.logoImage} />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(datosDelNegocio) }}

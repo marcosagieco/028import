@@ -29,7 +29,7 @@ const INITIAL_COMMUNITY_VIDEOS = [
     creator: '@hannimohamed',
     type: 'Review',
     description: 'Contenido real de la comunidad 028 para generar confianza antes de comprar.',
-    videoUrl: 'https://firebasestorage.googleapis.com/v0/b/paginadeventa028.firebasestorage.app/o/Hanni%20028.mp4?alt=media&token=79a46d9e-2a81-4766-b09b-3d0b78100f5a',
+    videoUrl: '/community/hanni.mp4',
     productId: 17,
     productsShown: [17, 26, 33],
     ctaText: 'Ver productos del video',
@@ -45,7 +45,7 @@ const INITIAL_COMMUNITY_VIDEOS = [
     creator: '@martu_lalli',
     type: 'Influencer',
     description: 'Contenido real de nuestra comunidad con productos destacados de la tienda.',
-    videoUrl: 'https://firebasestorage.googleapis.com/v0/b/paginadeventa028.firebasestorage.app/o/Martulali%20028.mp4?alt=media&token=9bc79118-e026-43f8-9da2-2974ad3183f2',
+    videoUrl: '/community/martulali.mp4',
     productId: 17,
     productsShown: [17, 25, 39],
     ctaText: 'Ver productos del video',
@@ -61,7 +61,7 @@ const INITIAL_COMMUNITY_VIDEOS = [
     creator: '@alessitalalli',
     type: 'Referencia',
     description: 'Más referencias reales para mostrar productos vistos en el video y generar confianza.',
-    videoUrl: 'https://firebasestorage.googleapis.com/v0/b/paginadeventa028.firebasestorage.app/o/alelali%20028.mp4?alt=media&token=865148d5-ffad-456e-b7f5-9c268d3f5333',
+    videoUrl: '/community/alelali.mp4',
     productId: 33,
     productsShown: [33, 31, 45],
     ctaText: 'Ver productos del video',
@@ -77,7 +77,7 @@ const INITIAL_COMMUNITY_VIDEOS = [
     creator: '@giuli.bellicoso',
     type: 'Influencer',
     description: 'Nuevo contenido real para sumar prueba social y mostrar productos destacados.',
-    videoUrl: 'https://firebasestorage.googleapis.com/v0/b/paginadeventa028.firebasestorage.app/o/GiuliAnny%20028.mp4?alt=media&token=e50b7494-471b-4734-a257-6aebc8cda155',
+    videoUrl: '/community/giulianny.mp4',
     productId: 17,
     productsShown: [17, 26, 33],
     ctaText: 'Ver productos del video',
@@ -372,6 +372,149 @@ function LazyVapeSpecs3D() {
     </div>
   );
 }
+
+const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
+
+// La tarjeta de producto, aparte y memorizada. Antes era una función suelta dentro
+// de HomeClient, así que cualquiera de los ~90 estados del componente la volvía a
+// dibujar: abrir el carrito redibujaba las 42 tarjetas del catálogo.
+//
+// Para que React.memo sirva de algo, las props tienen que ser estables entre
+// renders. Por eso no recibe ni el carrito ni la lista de promos completos —que se
+// recrean seguido— sino solo lo que le toca a ESTE producto: cuántas unidades hay
+// en el carrito (un número) y su promo (si tiene). Las funciones que recibe están
+// envueltas en useCallback del lado del padre.
+const TarjetaProducto = React.memo(function TarjetaProducto({
+  p, index, isVidriera = false, layout = 'horizontal',
+  radioVidriera, cantidadEnCarrito, promo,
+  onAbrir, onAgregar, onCambiarCantidad,
+}) {
+        const inCart = cantidadEnCarrito > 0;
+    const isOutOfStock = p.inStock === false;
+    const effectiveSize = isVidriera ? (p.cardSize || 'normal') : 'normal';
+
+    let cardStyle = {}; 
+    let sizeClasses = ''; 
+    let aspectClass = 'aspect-square';
+    let titleClass = 'text-[13px] md:text-[16px] leading-tight';
+    let priceClass = 'text-xl md:text-2xl';
+
+    if (layout === 'vertical') {
+        if (effectiveSize === 'normal') {
+            sizeClasses = 'w-[calc(50%-6px)] md:w-[calc(33.333%-14px)] lg:w-[calc(25%-15px)] flex-shrink-0';
+        } else if (effectiveSize === 'medium') {
+            sizeClasses = 'w-full md:w-[calc(66.666%-14px)] lg:w-[calc(50%-10px)] flex-shrink-0';
+            titleClass = 'text-[15px] md:text-lg leading-tight';
+            priceClass = 'text-2xl md:text-3xl';
+        } else if (effectiveSize === 'large') {
+            sizeClasses = 'w-full flex-shrink-0';
+            aspectClass = 'aspect-[16/9] md:aspect-[21/9]';
+            titleClass = 'text-xl md:text-3xl leading-tight';
+            priceClass = 'text-3xl md:text-4xl';
+        }
+    } else {
+        if (effectiveSize === 'normal') {
+            sizeClasses = 'w-[180px] md:w-[225px] lg:w-[290px] flex-shrink-0';
+        } else if (effectiveSize === 'medium') {
+            sizeClasses = 'w-[230px] md:w-[280px] flex-shrink-0';
+            titleClass = 'text-[15px] md:text-lg leading-tight';
+            priceClass = 'text-2xl md:text-3xl';
+        } else if (effectiveSize === 'large') {
+            sizeClasses = 'w-[320px] md:w-[480px] flex-shrink-0';
+            aspectClass = 'aspect-[16/9]';
+            titleClass = 'text-xl md:text-3xl leading-tight';
+            priceClass = 'text-3xl md:text-4xl';
+        }
+    }
+
+    return (
+      <div 
+        key={p.id} 
+        style={{ transitionDelay: `${(index % 4) * 75}ms`, ...cardStyle }} 
+        className={`card-shimmer reveal-on-scroll relative bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col hover:-translate-y-2 hover:shadow-[0_24px_48px_rgb(0,0,0,0.12)] hover:border-gray-300 ${isVidriera && layout !== 'vertical' ? 'snap-center md:snap-start' : 'snap-start'} group transition-all duration-500 ${isVidriera && radioVidriera === 'squared' ? 'rounded-none' : 'rounded-[1.5rem]'} ${isOutOfStock ? 'opacity-50 grayscale' : ''} ${sizeClasses}`}
+      >
+        <div
+            className={`relative ${aspectClass} bg-gray-50 cursor-pointer`}
+            onClick={() => onAbrir(p)}
+        >
+          <Image
+            src={p.image}
+            alt={p.name}
+            fill
+            sizes="(max-width: 768px) 45vw, 300px"
+            className={`object-cover mix-blend-normal group-hover:scale-105 transition-transform duration-700 ease-out ${isVidriera && radioVidriera === 'squared' ? '' : 'rounded-t-[1.4rem]'}`}
+          />
+          {isOutOfStock ? ( 
+              <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm flex items-center justify-center">
+                  <span className="bg-red-600 text-white font-bebas text-sm px-4 py-1.5 rounded-sm uppercase tracking-wider shadow-lg">SIN STOCK</span>
+              </div> 
+          ) : p.tag && (
+              <span className="absolute top-3 left-3 bg-[#111111] text-[#fcdb00] font-bebas text-[11px] px-3 py-1 uppercase rounded-sm shadow-md tracking-wider">
+                  {p.tag}
+              </span>
+          )}
+        </div>
+        
+        <div className="p-4 flex-grow flex flex-col">
+            <p className="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-1.5 font-poppins">
+                {p.category}
+            </p>
+            <h3 className={`font-bebas ${titleClass} uppercase mb-1 text-[#111111] line-clamp-2 tracking-wide`}>
+                {p.name}
+            </h3>
+            {(() => {
+                const productPromo = promo;
+                if (!productPromo) return null;
+                return (
+                    <p className="inline-flex items-center gap-1 w-fit bg-[#fcdb00]/20 text-[#8a6d00] text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full mb-2">
+                        <i className="fas fa-tag text-[8px]"></i> {productPromo.minQty}+ un: {CONFIG.currencySymbol}{formatPrice(productPromo.totalPrice / productPromo.minQty)} c/u
+                    </p>
+                );
+            })()}
+
+            <div className="mt-auto pt-3">
+                {p.offerPrice > 0 && p.offerPrice < p.price ? (
+                    <div className="mb-4">
+                        <p className="text-gray-400 font-bebas text-sm line-through leading-none">
+                            {CONFIG.currencySymbol}{formatPrice(p.price)}
+                        </p>
+                        <p className={`text-[#111111] font-bebas ${priceClass} tracking-wide leading-tight`}>
+                            {CONFIG.currencySymbol}{formatPrice(p.offerPrice)}{p.isUSD && <span className="text-gray-500 text-[11px] font-poppins font-bold ml-1">USD</span>}
+                        </p>
+                    </div>
+                ) : (
+                    <p className={`text-[#111111] font-bebas ${priceClass} mb-4 tracking-wide`}>
+                        {CONFIG.currencySymbol}{formatPrice(p.price)}{p.isUSD && <span className="text-gray-500 text-[11px] font-poppins font-bold ml-1">USD</span>}
+                    </p>
+                )}
+                
+                {isOutOfStock ? (
+                    <button disabled className="w-full bg-gray-100 text-gray-500 py-3 font-bebas text-[14px] uppercase tracking-wider rounded-xl cursor-not-allowed">
+                        Agotado
+                    </button>
+                ) : inCart ? (
+                    <div className="flex items-center justify-between bg-[#fcdb00] text-[#111111] h-11 rounded-xl font-bold px-1.5 shadow-md">
+                        <button className="w-12 h-full flex items-center justify-center hover:text-black transition-colors" onClick={() => onCambiarCantidad(p.id, -1)}>
+                            <i className="fas fa-minus text-xs"></i>
+                        </button>
+                        <span className="font-bebas text-lg pt-1">{cantidadEnCarrito}</span>
+                        <button className="w-12 h-full flex items-center justify-center hover:text-black transition-colors" onClick={() => onAgregar(p)}>
+                            <i className="fas fa-plus text-xs"></i>
+                        </button>
+                    </div>
+                ) : ( 
+                    <button 
+                        onClick={(e) => onAgregar(p, e)} 
+                        className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] py-3 font-bebas text-[16px] uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
+                    >
+                        <i className="fas fa-shopping-bag text-xs mb-0.5"></i> comprar ahora
+                    </button> 
+                )}
+            </div>
+        </div>
+      </div>
+    );
+});
 
 export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssrHomeLayout = [] }) {
   const [cart, setCart] = useState([]);
@@ -772,102 +915,106 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
 
     let stockUnsub = null, promosUnsub = null;
     let upsellsUnsub = null, carritoUnsub = null, couponsUnsub = null;
-    let dataSubscribed = false;
 
+    // Los datos del catálogo son públicos: no hace falta esperar a que termine el
+    // login para pedirlos. Antes todo esto vivía adentro del callback de auth, así
+    // que la descarga arrancaba recién después de crear una sesión anónima y
+    // esperar su respuesta. Ahora las dos cosas salen en paralelo.
+stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
+      const normalizeProductId = (docId, data = {}) => {
+        const rawId = data.id ?? String(docId).replace(/^prod_/, '');
+        const numericId = Number(rawId);
+        return Number.isSafeInteger(numericId) && String(rawId).trim() !== '' ? numericId : rawId;
+      };
+
+      const dbProducts = !snapshot.empty
+        ? snapshot.docs.map(docSnap => {
+            const data = docSnap.data();
+            return {
+              dbId: docSnap.id,
+              ...data,
+              id: normalizeProductId(docSnap.id, data),
+              isHidden: data.isHidden === true,
+              isDeleted: data.isDeleted === true,
+              inStock: data.inStock === false ? false : true,
+              cardSize: data.cardSize || 'normal',
+              clicks: data.clicks || 0,
+              order: Number(data.order) || 99,
+            };
+          })
+        : [];
+
+      const combined = [...initialProducts];
+
+      dbProducts.forEach(dbItem => {
+        const index = combined.findIndex(p => String(p.id) === String(dbItem.id));
+        if (dbItem.isDeleted) {
+          if (index > -1) combined.splice(index, 1);
+          return;
+        }
+        if (index > -1) combined[index] = { ...combined[index], ...dbItem };
+        else combined.push(dbItem);
+      });
+
+      const sortedAll = combined.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+      setAllProducts(sortedAll);
+      setProducts(sortedAll.filter(p => !p.isHidden));
+    });
+
+    promosUnsub = onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
+    getDocs(collection(firebaseRefs.db, 'home_sections')).then(s => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : [])).catch(() => {});
+
+    // Toda la configuración en una sola lectura. Antes eran 8 pedidos sueltos, cada
+    // uno con su viaje de ida y vuelta al servidor.
+    getDocs(collection(firebaseRefs.db, 'settings')).then(snap => {
+      const ajustes = {};
+      snap.forEach(d => { ajustes[d.id] = d.data(); });
+
+      const videos = Array.isArray(ajustes.community_videos?.videos)
+        ? ajustes.community_videos.videos
+            .filter(video => !video.isHidden && !video.isDeleted && video.videoUrl)
+            .sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99))
+        : [];
+      setCommunityVideos(videos.length ? videos : INITIAL_COMMUNITY_VIDEOS);
+
+      setHomeLayout(Array.isArray(ajustes.home_layout?.sections) ? ajustes.home_layout.sections : []);
+
+      if (ajustes.departments) {
+        setDeptIcons(ajustes.departments.icons || {});
+        setVirtualDepts(ajustes.departments.virtualDepts || []);
+      }
+
+      const usd = Number(ajustes.cotizacion?.usdToArs);
+      if (usd > 0) setUsdToArs(usd);
+
+      if (ajustes.category_puffs) setCategoryPuffs(ajustes.category_puffs);
+
+      if (ajustes.vidriera_style) {
+        setVidreiraCardRadius(ajustes.vidriera_style.cardRadius || 'rounded');
+        setVidreiraShowIcons(ajustes.vidriera_style.showIcons !== false);
+      }
+
+      if (ajustes.vape3d_position) setVape3dPosition(ajustes.vape3d_position.afterSectionId || 'banner');
+      if (ajustes.logos_bar_position) setLogosBarPosition(ajustes.logos_bar_position.afterSectionId || 'banner');
+    }).catch(() => setCommunityVideos(INITIAL_COMMUNITY_VIDEOS));
+
+    upsellsUnsub = onSnapshot(collection(firebaseRefs.db, 'upsells'), (snap) => {
+      setUpsellsList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
+    });
+    carritoUnsub = onSnapshot(collection(firebaseRefs.db, 'carritoDestacados'), (snap) => {
+      setCarritoDestacados(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
+    });
+    couponsUnsub = onSnapshot(collection(firebaseRefs.db, 'coupons'), (snap) => {
+      setCoupons(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
+    });
+
+    // La sesión anónima sigue existiendo (la usa el login de clientes), pero ya no
+    // bloquea la carga del catálogo.
     const unsubscribeAuth = onAuthStateChanged(firebaseRefs.auth, (u) => {
       setUser(u);
-      if (!u) {
-        // Sin usuario todavía: iniciar auth anónima y esperar
-        if (!googleSigningIn.current) signInAnonymously(firebaseRefs.auth).catch(console.error);
-        return;
+      if (!u && !googleSigningIn.current) {
+        signInAnonymously(firebaseRefs.auth).catch(console.error);
       }
-      // Usuario autenticado: abrir listeners solo una vez
-      if (dataSubscribed) return;
-      dataSubscribed = true;
-
-      stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
-        const normalizeProductId = (docId, data = {}) => {
-          const rawId = data.id ?? String(docId).replace(/^prod_/, '');
-          const numericId = Number(rawId);
-          return Number.isSafeInteger(numericId) && String(rawId).trim() !== '' ? numericId : rawId;
-        };
-
-        const dbProducts = !snapshot.empty
-          ? snapshot.docs.map(docSnap => {
-              const data = docSnap.data();
-              return {
-                dbId: docSnap.id,
-                ...data,
-                id: normalizeProductId(docSnap.id, data),
-                isHidden: data.isHidden === true,
-                isDeleted: data.isDeleted === true,
-                inStock: data.inStock === false ? false : true,
-                cardSize: data.cardSize || 'normal',
-                clicks: data.clicks || 0,
-                order: Number(data.order) || 99,
-              };
-            })
-          : [];
-
-        const combined = [...initialProducts];
-
-        dbProducts.forEach(dbItem => {
-          const index = combined.findIndex(p => String(p.id) === String(dbItem.id));
-          if (dbItem.isDeleted) {
-            if (index > -1) combined.splice(index, 1);
-            return;
-          }
-          if (index > -1) combined[index] = { ...combined[index], ...dbItem };
-          else combined.push(dbItem);
-        });
-
-        const sortedAll = combined.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
-        setAllProducts(sortedAll);
-        setProducts(sortedAll.filter(p => !p.isHidden));
-      });
-
-      promosUnsub = onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
-      getDocs(collection(firebaseRefs.db, 'home_sections')).then(s => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : [])).catch(() => {});
-      getDoc(doc(firebaseRefs.db, 'settings', 'community_videos')).then(snap => {
-        const videosFromSettings = snap.exists() && Array.isArray(snap.data()?.videos)
-          ? snap.data().videos
-              .filter(video => !video.isHidden && !video.isDeleted && video.videoUrl)
-              .sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99))
-          : [];
-        setCommunityVideos(videosFromSettings.length ? videosFromSettings : INITIAL_COMMUNITY_VIDEOS);
-      }).catch(() => setCommunityVideos(INITIAL_COMMUNITY_VIDEOS));
-      getDoc(doc(firebaseRefs.db, 'settings', 'home_layout')).then(snap => {
-        const sections = snap.exists() ? snap.data()?.sections : null;
-        setHomeLayout(Array.isArray(sections) ? sections : []);
-      }).catch(() => {});
-      getDoc(doc(firebaseRefs.db, 'settings', 'departments')).then(snap => {
-        if (snap.exists()) { setDeptIcons(snap.data().icons || {}); setVirtualDepts(snap.data().virtualDepts || []); }
-      }).catch(() => {});
-      getDoc(doc(firebaseRefs.db, 'settings', 'cotizacion')).then(snap => {
-        const valor = Number(snap.data()?.usdToArs);
-        if (snap.exists() && valor > 0) setUsdToArs(valor);
-      }).catch(() => {});
-      getDoc(doc(firebaseRefs.db, 'settings', 'category_puffs')).then(snap => {
-        if (snap.exists()) setCategoryPuffs(snap.data() || {});
-      }).catch(() => {});
-      getDoc(doc(firebaseRefs.db, 'settings', 'vidriera_style')).then(snap => {
-        if (snap.exists()) { setVidreiraCardRadius(snap.data().cardRadius || 'rounded'); setVidreiraShowIcons(snap.data().showIcons !== false); }
-      }).catch(() => {});
-      getDoc(doc(firebaseRefs.db, 'settings', 'vape3d_position')).then(snap => {
-        if (snap.exists()) setVape3dPosition(snap.data().afterSectionId || 'banner');
-      }).catch(() => {});
-      getDoc(doc(firebaseRefs.db, 'settings', 'logos_bar_position')).then(snap => {
-        if (snap.exists()) setLogosBarPosition(snap.data().afterSectionId || 'banner');
-      }).catch(() => {});
-      upsellsUnsub = onSnapshot(collection(firebaseRefs.db, 'upsells'), (snap) => {
-        setUpsellsList(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
-      });
-      carritoUnsub = onSnapshot(collection(firebaseRefs.db, 'carritoDestacados'), (snap) => {
-        setCarritoDestacados(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
-      });
-      couponsUnsub = onSnapshot(collection(firebaseRefs.db, 'coupons'), (snap) => {
-        setCoupons(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
-      });
     });
 
     return () => {
@@ -973,7 +1120,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     }
   };
 
-  const showToast = (message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); };
+  const showToast = React.useCallback((message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); }, []);
 
 
   const getCommunityVideoPoster = (videoUrl) => {
@@ -985,7 +1132,10 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
         .replace('/video/upload/', '/video/upload/f_jpg,so_0.6,q_auto/')
         .replace(/\.(mp4|mov|webm)(\?.*)?$/i, '.jpg');
     }
-    // Firebase Storage: póster propio guardado en /public/community
+    // Videos propios en /community: el póster es el mismo nombre en .webp,
+    // así no hay que mantener ninguna lista aparte.
+    if (url.startsWith('/community/')) return url.replace(/\.(mp4|mov|webm)$/i, '.webp');
+    // Firebase Storage: se mantiene el mapa por si quedara alguno apuntando ahí.
     const fileName = decodeURIComponent((url.split('/o/')[1] || '').split('?')[0]).toLowerCase();
     const match = Object.keys(COMMUNITY_POSTERS).find(key => fileName.includes(key));
     return match ? COMMUNITY_POSTERS[match] : '';
@@ -1186,7 +1336,6 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     setPendingPriceRange([minPrice, maxPrice]);
   };
   
-  const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
   const getUnitPromoPrice = (item) => {
     const productPromo = promos.find(p => p.type === 'product' && p.productId === item.id);
@@ -1211,7 +1360,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
       return subtotal + envio - cashDiscount - couponDiscount;
   };
 
-  const addToCart = async (product, e) => {
+  const addToCart = React.useCallback(async (product, e) => {
     if(e) e.stopPropagation();
     if (product.inStock === false) return;
     const hasOffer = product.offerPrice > 0 && product.offerPrice < product.price;
@@ -1223,18 +1372,18 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
         return [...prev, { ...product, price: effectivePrice, listPrice: product.price, qty: 1 }];
     });
     showToast(`✅ Añadido: ${product.name}`); 
-    if(selectedProduct) setSelectedProduct(null); 
+    setSelectedProduct(prev => (prev ? null : prev));   // forma funcional: así no depende de selectedProduct
 
     if (firebaseRefs.db) {
       try { 
           setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { clicks: increment(1) }, { merge: true }).catch(e => console.error(e)); 
       } catch (err) { console.error(err); }
     }
-  };
+  }, [showToast, firebaseRefs.db]);
   
-  const changeQty = (id, delta) => { 
-    setCart(prev => prev.map(i => i.id === id ? { ...i, qty: i.qty + delta } : i).filter(i => i.qty > 0)); 
-  };
+  const changeQty = React.useCallback((id, delta) => {
+    setCart(prev => prev.map(i => i.id === id ? { ...i, qty: i.qty + delta } : i).filter(i => i.qty > 0));
+  }, []);
 
   const handleAddUpsellToCart = (upsell) => {
       const prod = products.find(p => String(p.id) === String(upsell.productId));
@@ -1408,133 +1557,21 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     showToast("✅ ALIAS copiado al portapapeles");
   };
 
-  const renderProductCard = (p, index, isVidriera = false, layout = 'horizontal') => {
-    const inCart = cart.find(i => i.id === p.id);
-    const isOutOfStock = p.inStock === false;
-    const effectiveSize = isVidriera ? (p.cardSize || 'normal') : 'normal';
-
-    let cardStyle = {}; 
-    let sizeClasses = ''; 
-    let aspectClass = 'aspect-square';
-    let titleClass = 'text-[13px] md:text-[16px] leading-tight';
-    let priceClass = 'text-xl md:text-2xl';
-
-    if (layout === 'vertical') {
-        if (effectiveSize === 'normal') {
-            sizeClasses = 'w-[calc(50%-6px)] md:w-[calc(33.333%-14px)] lg:w-[calc(25%-15px)] flex-shrink-0';
-        } else if (effectiveSize === 'medium') {
-            sizeClasses = 'w-full md:w-[calc(66.666%-14px)] lg:w-[calc(50%-10px)] flex-shrink-0';
-            titleClass = 'text-[15px] md:text-lg leading-tight';
-            priceClass = 'text-2xl md:text-3xl';
-        } else if (effectiveSize === 'large') {
-            sizeClasses = 'w-full flex-shrink-0';
-            aspectClass = 'aspect-[16/9] md:aspect-[21/9]';
-            titleClass = 'text-xl md:text-3xl leading-tight';
-            priceClass = 'text-3xl md:text-4xl';
-        }
-    } else {
-        if (effectiveSize === 'normal') {
-            sizeClasses = 'w-[180px] md:w-[225px] lg:w-[290px] flex-shrink-0';
-        } else if (effectiveSize === 'medium') {
-            sizeClasses = 'w-[230px] md:w-[280px] flex-shrink-0';
-            titleClass = 'text-[15px] md:text-lg leading-tight';
-            priceClass = 'text-2xl md:text-3xl';
-        } else if (effectiveSize === 'large') {
-            sizeClasses = 'w-[320px] md:w-[480px] flex-shrink-0';
-            aspectClass = 'aspect-[16/9]';
-            titleClass = 'text-xl md:text-3xl leading-tight';
-            priceClass = 'text-3xl md:text-4xl';
-        }
-    }
-
-    return (
-      <div 
-        key={p.id} 
-        style={{ transitionDelay: `${(index % 4) * 75}ms`, ...cardStyle }} 
-        className={`card-shimmer reveal-on-scroll relative bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col hover:-translate-y-2 hover:shadow-[0_24px_48px_rgb(0,0,0,0.12)] hover:border-gray-300 ${isVidriera && layout !== 'vertical' ? 'snap-center md:snap-start' : 'snap-start'} group transition-all duration-500 ${isVidriera && vidreiraCardRadius === 'squared' ? 'rounded-none' : 'rounded-[1.5rem]'} ${isOutOfStock ? 'opacity-50 grayscale' : ''} ${sizeClasses}`}
-      >
-        <div
-            className={`relative ${aspectClass} bg-gray-50 cursor-pointer`}
-            onClick={() => setSelectedProduct(p)}
-        >
-          <Image
-            src={p.image}
-            alt={p.name}
-            fill
-            sizes="(max-width: 768px) 45vw, 300px"
-            className={`object-cover mix-blend-normal group-hover:scale-105 transition-transform duration-700 ease-out ${isVidriera && vidreiraCardRadius === 'squared' ? '' : 'rounded-t-[1.4rem]'}`}
-          />
-          {isOutOfStock ? ( 
-              <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm flex items-center justify-center">
-                  <span className="bg-red-600 text-white font-bebas text-sm px-4 py-1.5 rounded-sm uppercase tracking-wider shadow-lg">SIN STOCK</span>
-              </div> 
-          ) : p.tag && (
-              <span className="absolute top-3 left-3 bg-[#111111] text-[#fcdb00] font-bebas text-[11px] px-3 py-1 uppercase rounded-sm shadow-md tracking-wider">
-                  {p.tag}
-              </span>
-          )}
-        </div>
-        
-        <div className="p-4 flex-grow flex flex-col">
-            <p className="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-1.5 font-poppins">
-                {p.category}
-            </p>
-            <h3 className={`font-bebas ${titleClass} uppercase mb-1 text-[#111111] line-clamp-2 tracking-wide`}>
-                {p.name}
-            </h3>
-            {(() => {
-                const productPromo = promos.find(pr => pr.type === 'product' && pr.productId === p.id);
-                if (!productPromo) return null;
-                return (
-                    <p className="inline-flex items-center gap-1 w-fit bg-[#fcdb00]/20 text-[#8a6d00] text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full mb-2">
-                        <i className="fas fa-tag text-[8px]"></i> {productPromo.minQty}+ un: {CONFIG.currencySymbol}{formatPrice(productPromo.totalPrice / productPromo.minQty)} c/u
-                    </p>
-                );
-            })()}
-
-            <div className="mt-auto pt-3">
-                {p.offerPrice > 0 && p.offerPrice < p.price ? (
-                    <div className="mb-4">
-                        <p className="text-gray-400 font-bebas text-sm line-through leading-none">
-                            {CONFIG.currencySymbol}{formatPrice(p.price)}
-                        </p>
-                        <p className={`text-[#111111] font-bebas ${priceClass} tracking-wide leading-tight`}>
-                            {CONFIG.currencySymbol}{formatPrice(p.offerPrice)}{p.isUSD && <span className="text-gray-500 text-[11px] font-poppins font-bold ml-1">USD</span>}
-                        </p>
-                    </div>
-                ) : (
-                    <p className={`text-[#111111] font-bebas ${priceClass} mb-4 tracking-wide`}>
-                        {CONFIG.currencySymbol}{formatPrice(p.price)}{p.isUSD && <span className="text-gray-500 text-[11px] font-poppins font-bold ml-1">USD</span>}
-                    </p>
-                )}
-                
-                {isOutOfStock ? (
-                    <button disabled className="w-full bg-gray-100 text-gray-500 py-3 font-bebas text-[14px] uppercase tracking-wider rounded-xl cursor-not-allowed">
-                        Agotado
-                    </button>
-                ) : inCart ? (
-                    <div className="flex items-center justify-between bg-[#fcdb00] text-[#111111] h-11 rounded-xl font-bold px-1.5 shadow-md">
-                        <button className="w-12 h-full flex items-center justify-center hover:text-black transition-colors" onClick={() => changeQty(p.id, -1)}>
-                            <i className="fas fa-minus text-xs"></i>
-                        </button>
-                        <span className="font-bebas text-lg pt-1">{inCart.qty}</span>
-                        <button className="w-12 h-full flex items-center justify-center hover:text-black transition-colors" onClick={() => addToCart(p)}>
-                            <i className="fas fa-plus text-xs"></i>
-                        </button>
-                    </div>
-                ) : ( 
-                    <button 
-                        onClick={(e) => addToCart(p, e)} 
-                        className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] py-3 font-bebas text-[16px] uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
-                    >
-                        <i className="fas fa-shopping-bag text-xs mb-0.5"></i> comprar ahora
-                    </button> 
-                )}
-            </div>
-        </div>
-      </div>
-    );
-  }
+  const renderProductCard = (p, index, isVidriera = false, layout = 'horizontal') => (
+    <TarjetaProducto
+      key={p.id}
+      p={p}
+      index={index}
+      isVidriera={isVidriera}
+      layout={layout}
+      radioVidriera={vidreiraCardRadius}
+      cantidadEnCarrito={cart.find(i => i.id === p.id)?.qty || 0}
+      promo={promos.find(pr => pr.type === 'product' && pr.productId === p.id) || null}
+      onAbrir={setSelectedProduct}
+      onAgregar={addToCart}
+      onCambiarCantidad={changeQty}
+    />
+  );
 
   const renderProductSection = (category) => {
     let sectionProducts = products.filter(p => getProductCatList(p).includes(category));
@@ -3497,7 +3534,6 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
       </div>
 
       <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     </div>
   );
 }

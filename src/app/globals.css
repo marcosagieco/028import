@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./iconos.css";
 
 :root {
   --background: #0d0d0d;
