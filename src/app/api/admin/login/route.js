@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { crearPase } from '@/lib/paseAdmin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -121,7 +122,11 @@ export async function POST(request) {
     }
 
     const token = await crearTokenDeSesion('panel_028', { admin: true });
-    return NextResponse.json({ token });
+
+    // El pase es lo que después le permite al panel avisarle al sitio que rehaga
+    // una página cuando guardás un cambio. Va aparte del token de Firebase porque
+    // es nuestro, no de Google.
+    return NextResponse.json({ token, pase: crearPase() });
 
   } catch (err) {
     console.error('[admin/login] error:', err);

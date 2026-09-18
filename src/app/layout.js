@@ -1,6 +1,7 @@
 import './globals.css';
 import Script from 'next/script';
 import { Bebas_Neue, Poppins } from 'next/font/google';
+import { CarritoProvider } from '@/components/CarritoProvider';
 
 // next/font descarga las fuentes en el build y las sirve desde tu propio dominio.
 // Antes se pedían con un @import adentro de una etiqueta <style>, que es la forma
@@ -116,9 +117,11 @@ export default function RootLayout({ children }) {
 
         {/* === CONTENIDO PRINCIPAL === */}
         {/* Al sacar el <nav> de acá, la ÚNICA barra que va a aparecer es la nueva que armamos en tu página principal */}
-        <div className="flex-grow">
-          {children}
-        </div>
+        <CarritoProvider>
+          <div className="flex-grow">
+            {children}
+          </div>
+        </CarritoProvider>
 
       </body>
     </html>

@@ -2,12 +2,31 @@
 
 import { Suspense, useRef, useMemo, useState, useEffect, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF, Environment } from '@react-three/drei';
+import { useGLTF } from '@react-three/drei';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import * as THREE from 'three';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 
-const MODEL_URL = '/models/pinkvapedevice3dmodel-v1.glb';
+// Modelo reducido de 1.972.638 a 19.726 triángulos (10,7 MB -> 0,27 MB). En el
+// zoom no se distingue del original, pero el original ocupaba 36,8 MB de memoria
+// de video: eso era lo que colgaba la página, sobre todo en celulares.
+const MODEL_URL = '/models/vape-optimizado.glb';
+
+// Iluminación generada en el navegador. Antes se usaba <Environment preset="city" />,
+// que descarga un mapa HDR de un servidor externo (uno o dos megas) cada vez que
+// alguien llega a esta sección. Esto se ve igual y no descarga nada.
+function LuzDeAmbiente() {
+  const { scene, gl } = useThree();
+  useEffect(() => {
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const entorno = pmrem.fromScene(new RoomEnvironment(), 0.04);
+    scene.environment = entorno.texture;
+    scene.environmentIntensity = 0.55;   // sin esto el reflejo del entorno lo deja blanco
+    return () => { entorno.texture.dispose(); pmrem.dispose(); scene.environment = null; };
+  }, [scene, gl]);
+  return null;
+}
 
 const SPECS = [
   { icon: 'fa-candy-cane', label: 'Sabor',            value: 'Cherry Straz', desc: null },
@@ -82,12 +101,21 @@ export default function VapeSpecs3D() {
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
     getDocs(collection(db, 'products')).then((snap) => {
-      const elfbarFlavors = snap.docs
+      // Comparación sin distinguir mayúsculas ni espacios: en la base la categoría
+      // figura como "ELFBAR ICE KING" y antes se buscaba "Elfbar Ice King" exacto,
+      // así que la lista salía siempre vacía. Si se renombra desde el panel, sigue andando.
+      const normalizar = (t) => String(t || '').trim().toLowerCase();
+      const elfbarFlavors = [...new Set(snap.docs
         .map(d => ({ id: d.id, ...d.data() }))
-        .filter(p => p.category === 'Elfbar Ice King' && p.inStock !== false)
-        .map(p => p.name);
+        .filter(p =>
+          normalizar(p.category) === 'elfbar ice king' &&
+          p.inStock !== false && p.isDeleted !== true && p.isHidden !== true
+        )
+        .map(p => String(p.name || '').trim())
+        .filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, 'es'));
       setFlavors(elfbarFlavors);
-    });
+    }).catch(() => setFlavors([]));
   }, []);
 
   const applyDelta = useCallback((dx, dy) => {
@@ -242,15 +270,15 @@ export default function VapeSpecs3D() {
         >
           <Canvas
             camera={{ position: [0, 0, 5], fov: 45 }}
-            gl={{ antialias: true, alpha: true }}
+            gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 0.85 }}
             frameloop="demand"
             style={{ background: 'transparent', width: '100%', height: '100%' }}
           >
-            <ambientLight intensity={1.0} />
-            <pointLight position={[5, 5, 5]} intensity={38} color="#ffffff" />
+            <ambientLight intensity={0.35} />
+            <pointLight position={[5, 5, 5]} intensity={10} color="#ffffff" />
             <Suspense fallback={null}>
               <StaticVape rotation={rotation} isMobile={isMobile} onReady={fn => { invalidateRef.current = fn; }} />
-              <Environment preset="city" />
+              <LuzDeAmbiente />
             </Suspense>
           </Canvas>
         </div>

@@ -67,6 +67,21 @@ function serializeProduct(data) {
   return out;
 }
 
+/** Las promociones por cantidad (los "combos"). La ficha de producto las necesita
+ *  para dibujar los escalones, y esa página la arma el servidor. */
+export async function getSSRPromos() {
+  try {
+    const db = getAdminDb();
+    if (!db) return [];
+    const snapshot = await db.collection('promos').get();
+    if (snapshot.empty) return [];
+    return snapshot.docs.map(d => ({ id: d.id, ...serializeProduct(d.data()) }));
+  } catch (err) {
+    console.error('[SSR] getSSRPromos falló:', err.message);
+    return [];
+  }
+}
+
 export async function getSSRHomeSections() {
   try {
     const db = getAdminDb();

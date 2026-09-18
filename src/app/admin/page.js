@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithCustomToken, signOut } from "firebase/auth";
 import {
@@ -421,6 +421,9 @@ export default function AdminPage() {
         return;
       }
       // El servidor aprobó el código: abrimos la sesión con el token que mandó.
+      // El pase va aparte, y es lo que después deja avisarle al sitio que rehaga
+      // una página cuando guardás.
+      paseDelPanel.current = data.pase || null;
       await signInWithCustomToken(firebaseRefs.auth, data.token);
     } catch (err) {
       setAdminAuthError('No se pudo entrar: ' + (err.code || err.message));
@@ -574,16 +577,76 @@ export default function AdminPage() {
     return () => { unsubShipping(); unsubZones(); };
   }, [activeTab, firebaseRefs.db]);
 
-  const updatePrice = async (product, newPrice) => { const price = parseInt(newPrice); if(isNaN(price) || price < 0) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, price: price }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
-  const updateName = async (product, newName) => { const name = newName.trim().toUpperCase(); if(!name) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, name: name }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
-  const updateImage = async (product, newImageUrl) => { const url = newImageUrl.trim(); if(!url) return; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, image: url }, { merge: true }); } catch(err) { alert("Error al actualizar la imagen: " + err.message); } }
-  const updateOrder = async (product, newOrder) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, order: parseInt(newOrder) }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
-  const updateDescription = async (product, newDesc) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, description: newDesc.trim() }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
-  const updateCardSize = async (product, newSize) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, cardSize: newSize }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
-  const updateWinterBadge = async (product, value) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, winterBadge: value }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
-  const toggleProductFlavor = async (product, flavor) => { const current = Array.isArray(product.flavors) ? product.flavors : []; const next = current.includes(flavor) ? current.filter(f => f !== flavor) : [...current, flavor]; try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, flavors: next }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
-  const updatePuffs = async (product, val) => { const v = val.trim(); try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, puffs: v === '' ? null : Number(v) }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
-  const updateCategoryDepartment = async (categoryName, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept) return; try { const prods = products.filter(p => p.category === categoryName); await Promise.all(prods.map(p => setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, department: dept }, { merge: true }))); } catch (err) { alert("Error: " + err.message); } }
+  // ---------------------------------------------------------------------------
+  // Aviso al sitio cuando guardás algo
+  //
+  // Las páginas de producto, departamento y marca son archivos ya armados: son
+  // rápidas porque no se calculan en cada visita. La contra es que un cambio tuyo
+  // no se ve hasta que se rearman. Antes eso pasaba sola cada tanto; ahora el panel
+  // avisa en el momento y se rehacen sólo las páginas que ese cambio toca.
+  //
+  // Los avisos se juntan por un segundo antes de salir: si corregís el precio y
+  // enseguida el nombre, va un solo pedido y no dos.
+  // ---------------------------------------------------------------------------
+  const paseDelPanel = useRef(null);
+  const catalogoActual = useRef([]);
+  catalogoActual.current = products;
+  const cambiosPendientes = useRef(new Map());
+  const relojDelAviso = useRef(null);
+
+  const enviarAviso = useCallback(async () => {
+    const productos = [...cambiosPendientes.current.values()];
+    cambiosPendientes.current.clear();
+    if (!productos.length || !paseDelPanel.current) return;
+    try {
+      const res = await fetch('/api/revalidar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pase: paseDelPanel.current, productos }),
+      });
+      if (!res.ok) console.warn('[panel] el sitio no aceptó el aviso:', res.status);
+    } catch (err) {
+      // Si el aviso no llega, el cambio igual se ve: las páginas se rearman solas
+      // cada tanto. Sólo tarda más.
+      console.warn('[panel] no se pudo avisar al sitio:', err?.message);
+    }
+  }, []);
+
+  /** Marca que un producto cambió. Acepta el producto o el id de su documento. */
+  const avisarCambio = useCallback((productoOId) => {
+    let producto = productoOId;
+    if (typeof productoOId === 'string') {
+      const id = productoOId.replace(/^prod_/, '');
+      producto = catalogoActual.current.find(p => String(p.id) === id || p.dbId === productoOId);
+    }
+    if (!producto) return;
+    cambiosPendientes.current.set(String(producto.id), {
+      id: producto.id,
+      name: producto.name,
+      category: producto.category,
+      department: producto.department,
+      extraListings: producto.extraListings || [],
+    });
+    clearTimeout(relojDelAviso.current);
+    relojDelAviso.current = setTimeout(enviarAviso, 1000);
+  }, [enviarAviso]);
+
+  /** Guarda un producto y avisa. Reemplaza a setDoc en todo lo que sea catálogo. */
+  const guardarProducto = async (referencia, datos, opciones) => {
+    await setDoc(referencia, datos, opciones);
+    avisarCambio(referencia.id);
+  };
+
+  const updatePrice = async (product, newPrice) => { const price = parseInt(newPrice); if(isNaN(price) || price < 0) return; try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, price: price }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
+  const updateName = async (product, newName) => { const name = newName.trim().toUpperCase(); if(!name) return; try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, name: name }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
+  const updateImage = async (product, newImageUrl) => { const url = newImageUrl.trim(); if(!url) return; try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, image: url }, { merge: true }); } catch(err) { alert("Error al actualizar la imagen: " + err.message); } }
+  const updateOrder = async (product, newOrder) => { try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, order: parseInt(newOrder) }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
+  const updateDescription = async (product, newDesc) => { try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, description: newDesc.trim() }, { merge: true }); } catch(err) { alert("Error: " + err.message); } }
+  const updateCardSize = async (product, newSize) => { try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, cardSize: newSize }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
+  const updateWinterBadge = async (product, value) => { try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, winterBadge: value }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
+  const toggleProductFlavor = async (product, flavor) => { const current = Array.isArray(product.flavors) ? product.flavors : []; const next = current.includes(flavor) ? current.filter(f => f !== flavor) : [...current, flavor]; try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, flavors: next }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
+  const updatePuffs = async (product, val) => { const v = val.trim(); try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, puffs: v === '' ? null : Number(v) }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
+  const updateCategoryDepartment = async (categoryName, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept) return; try { const prods = products.filter(p => p.category === categoryName); await Promise.all(prods.map(p => guardarProducto(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, department: dept }, { merge: true }))); } catch (err) { alert("Error: " + err.message); } }
   const saveUsdToArs = async (e) => {
     if (e) e.preventDefault();
     const valor = Number(usdToArs);
@@ -597,8 +660,8 @@ export default function AdminPage() {
   const saveVidreiraShowIcons = async (val) => { try { await setDoc(doc(firebaseRefs.db, 'settings', 'vidriera_style'), { showIcons: val }, { merge: true }); } catch(err) { alert('Error al guardar: ' + err.message); } };
   const saveVape3dPosition = async (val) => { try { await setDoc(doc(firebaseRefs.db, 'settings', 'vape3d_position'), { afterSectionId: val }, { merge: true }); } catch(err) { alert('Error al guardar: ' + err.message); } };
   const saveLogosBarPosition = async (val) => { try { await setDoc(doc(firebaseRefs.db, 'settings', 'logos_bar_position'), { afterSectionId: val }, { merge: true }); } catch(err) { alert('Error al guardar: ' + err.message); } };
-  const handleRenameCategory = async (oldName, newName) => { const trimmed = newName.trim(); if (!trimmed || trimmed === oldName) return; if (!confirm(`¿Renombrar la marca "${oldName}" a "${trimmed}"?`)) return; try { const prods = products.filter(p => p.category === oldName); await Promise.all(prods.map(p => setDoc(doc(firebaseRefs.db, 'products', p.dbId || `prod_${p.id}`), { category: trimmed }, { merge: true }))); } catch (err) { alert("Error al renombrar: " + err.message); } };
-  const updateProductDepartment = async (product, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept || dept === product.department) return; try { await setDoc(doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`), { id: product.id, department: dept }, { merge: true }); } catch(err) { alert("Error al actualizar departamento: " + err.message); } };
+  const handleRenameCategory = async (oldName, newName) => { const trimmed = newName.trim(); if (!trimmed || trimmed === oldName) return; if (!confirm(`¿Renombrar la marca "${oldName}" a "${trimmed}"?`)) return; try { const prods = products.filter(p => p.category === oldName); await Promise.all(prods.map(p => guardarProducto(doc(firebaseRefs.db, 'products', p.dbId || `prod_${p.id}`), { category: trimmed }, { merge: true }))); } catch (err) { alert("Error al renombrar: " + err.message); } };
+  const updateProductDepartment = async (product, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept || dept === product.department) return; try { await guardarProducto(doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`), { id: product.id, department: dept }, { merge: true }); } catch(err) { alert("Error al actualizar departamento: " + err.message); } };
   const addExtraListing = async (product, newDept, newCat) => {
     const dept = (newDept || '').trim().toUpperCase();
     const cat = (newCat || '').trim();
@@ -607,19 +670,19 @@ export default function AdminPage() {
     const current = Array.isArray(product.extraListings) ? product.extraListings : [];
     if (current.some(e => e.department === dept && e.category === cat)) return;
     const next = [...current, { department: dept, category: cat }];
-    try { await setDoc(doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`), { id: product.id, extraListings: next }, { merge: true }); }
+    try { await guardarProducto(doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`), { id: product.id, extraListings: next }, { merge: true }); }
     catch (err) { alert("Error al agregar listado extra: " + err.message); }
   };
   const removeExtraListing = async (product, index) => {
     const current = Array.isArray(product.extraListings) ? product.extraListings : [];
     const next = current.filter((_, i) => i !== index);
-    try { await setDoc(doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`), { id: product.id, extraListings: next }, { merge: true }); }
+    try { await guardarProducto(doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`), { id: product.id, extraListings: next }, { merge: true }); }
     catch (err) { alert("Error al quitar listado extra: " + err.message); }
   };
-  const toggleStock = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, inStock: product.inStock === false }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
-  const toggleVisibility = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, isHidden: !product.isHidden }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
-  const toggleUSD = async (product) => { try { await setDoc(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, isUSD: !product.isUSD }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
-  const handleDeleteProduct = async (product) => { if(!confirm(`Eliminar "${product.name}"?`)) return; try { const isHardcoded = initialProducts.some(p => p.id === product.id); const docRef = doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`); if (isHardcoded) { await setDoc(docRef, { isDeleted: true }, { merge: true }); } else { await deleteDoc(docRef); } } catch (err) { alert("Error: " + err.message); } };
+  const toggleStock = async (product) => { try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, inStock: product.inStock === false }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
+  const toggleVisibility = async (product) => { try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, isHidden: !product.isHidden }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
+  const toggleUSD = async (product) => { try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, isUSD: !product.isUSD }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
+  const handleDeleteProduct = async (product) => { if(!confirm(`Eliminar "${product.name}"?`)) return; try { const isHardcoded = initialProducts.some(p => p.id === product.id); const docRef = doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`); if (isHardcoded) { await setDoc(docRef, { isDeleted: true }, { merge: true }); } else { await deleteDoc(docRef); } avisarCambio(product); } catch (err) { alert("Error: " + err.message); } };
 
   // --- FUNCIONES PARA CREAR Y BORRAR CUPONES ---
   const handleAddCoupon = async (e) => { 
@@ -648,13 +711,13 @@ export default function AdminPage() {
     const offer = Number(newDiscount.offerPrice);
     if (!(offer > 0) || offer >= prod.price) return alert("El precio de oferta debe ser mayor a 0 y menor al precio actual ($" + prod.price + ")");
     try {
-      await setDoc(doc(firebaseRefs.db, 'products', prod.dbId || `prod_${prod.id}`), { id: prod.id, offerPrice: offer }, { merge: true });
+      await guardarProducto(doc(firebaseRefs.db, 'products', prod.dbId || `prod_${prod.id}`), { id: prod.id, offerPrice: offer }, { merge: true });
       setNewDiscount({ productId: '', offerPrice: '' });
       alert("¡Descuento aplicado!");
     } catch (err) { alert("Error al aplicar descuento: " + err.message); }
   };
   const removeDiscount = async (product) => {
-    try { await setDoc(doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`), { offerPrice: null }, { merge: true }); }
+    try { await guardarProducto(doc(firebaseRefs.db, 'products', product.dbId || `prod_${product.id}`), { offerPrice: null }, { merge: true }); }
     catch (err) { alert("Error al quitar descuento: " + err.message); }
   };
   const applyDiscountByCategory = async (category, offerPriceValue) => {
@@ -668,7 +731,7 @@ export default function AdminPage() {
     const skipped = prods.length - applicable.length;
     if (!confirm(`¿Aplicar el precio de oferta $${offer} a ${applicable.length} productos de "${category}"?${skipped > 0 ? ` (${skipped} se van a saltear porque ya cuestan menos o igual)` : ''}`)) return;
     try {
-      await Promise.all(applicable.map(p => setDoc(doc(firebaseRefs.db, 'products', p.dbId || `prod_${p.id}`), { id: p.id, offerPrice: offer }, { merge: true })));
+      await Promise.all(applicable.map(p => guardarProducto(doc(firebaseRefs.db, 'products', p.dbId || `prod_${p.id}`), { id: p.id, offerPrice: offer }, { merge: true })));
       setBrandDiscount({ category: '', offerPrice: '' });
       alert(`¡Precio de oferta aplicado a ${applicable.length} productos de ${category}!`);
     } catch (err) { alert("Error al aplicar precio de oferta por marca: " + err.message); }
@@ -678,7 +741,7 @@ export default function AdminPage() {
     if (prods.length === 0) return alert("Esa marca no tiene descuentos activos");
     if (!confirm(`¿Quitar el descuento de los ${prods.length} productos de "${category}"?`)) return;
     try {
-      await Promise.all(prods.map(p => setDoc(doc(firebaseRefs.db, 'products', p.dbId || `prod_${p.id}`), { offerPrice: null }, { merge: true })));
+      await Promise.all(prods.map(p => guardarProducto(doc(firebaseRefs.db, 'products', p.dbId || `prod_${p.id}`), { offerPrice: null }, { merge: true })));
       setBrandDiscount({ category: '', percent: '' });
     } catch (err) { alert("Error al quitar descuentos por marca: " + err.message); }
   };
@@ -1137,8 +1200,10 @@ export default function AdminPage() {
     } catch(err) { alert("Error al autocompletar: " + err.message); }
   };
 
-  const handleAddProduct = async (e) => { e.preventDefault(); if (!newProduct.category || !newProduct.department) return alert("Faltan datos"); setIsAdding(true); try { const newId = Date.now(); await setDoc(doc(firebaseRefs.db, 'products', `prod_${newId}`), { id: newId, name: newProduct.name.toUpperCase(), price: Number(newProduct.price), department: newProduct.department.toUpperCase(), category: newProduct.category, image: newProduct.image, tag: newProduct.tag, description: newProduct.description, cardSize: newProduct.cardSize, inStock: true, order: 99, clicks: 0, createdAt: serverTimestamp(), isHidden: false, isDeleted: false }); setNewProduct({ name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '', cardSize: 'normal' }); alert("¡Producto agregado!"); } catch (error) { alert("Error al agregar producto: " + error.message); } setIsAdding(false); };
-  const handleAddPromo = async (e) => { e.preventDefault(); try { if (newPromo.type === 'product') { const selected = products.find(p => !p.isDeleted && `${p.name} — ${p.category}` === newPromo.productQuery); if (!selected) return alert("Buscá y seleccioná un producto de la lista de sugerencias"); const promoId = `producto-${selected.id}`; await setDoc(doc(firebaseRefs.db, 'promos', promoId), { type: 'product', productId: selected.id, productName: selected.name, category: selected.category, minQty: Number(newPromo.minQty), totalPrice: Number(newPromo.totalPrice), createdAt: serverTimestamp() }); } else { const promoId = newPromo.category.toLowerCase().replace(/\s+/g, '-'); await setDoc(doc(firebaseRefs.db, 'promos', promoId), { type: 'category', category: newPromo.category, minQty: Number(newPromo.minQty), totalPrice: Number(newPromo.totalPrice), createdAt: serverTimestamp() }); } setNewPromo({ type: newPromo.type, category: '', productQuery: '', minQty: 2, totalPrice: '' }); alert("¡Promo guardada!"); } catch(err) { alert("Error al guardar promo: " + err.message); } };
+  const handleAddProduct = async (e) => { e.preventDefault(); if (!newProduct.category || !newProduct.department) return alert("Faltan datos"); setIsAdding(true); try { const newId = Date.now(); await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${newId}`), { id: newId, name: newProduct.name.toUpperCase(), price: Number(newProduct.price), department: newProduct.department.toUpperCase(), category: newProduct.category, image: newProduct.image, tag: newProduct.tag, description: newProduct.description, cardSize: newProduct.cardSize, inStock: true, order: 99, clicks: 0, createdAt: serverTimestamp(), isHidden: false, isDeleted: false }); setNewProduct({ name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '', cardSize: 'normal' }); alert("¡Producto agregado!"); } catch (error) { alert("Error al agregar producto: " + error.message); } setIsAdding(false); };
+  const handleAddPromo = async (e) => { e.preventDefault(); try { if (newPromo.type === 'product') { const selected = products.find(p => !p.isDeleted && `${p.name} — ${p.category}` === newPromo.productQuery); if (!selected) return alert("Buscá y seleccioná un producto de la lista de sugerencias"); // El identificador incluye la cantidad: así un producto puede tener varios
+        // escalones (2 unidades, 3 unidades...) en vez de que uno pise al otro.
+        const promoId = `producto-${selected.id}-x${Number(newPromo.minQty)}`; await setDoc(doc(firebaseRefs.db, 'promos', promoId), { type: 'product', productId: selected.id, productName: selected.name, category: selected.category, minQty: Number(newPromo.minQty), totalPrice: Number(newPromo.totalPrice), createdAt: serverTimestamp() }); } else { const promoId = newPromo.category.toLowerCase().replace(/\s+/g, '-') + `-x${Number(newPromo.minQty)}`; await setDoc(doc(firebaseRefs.db, 'promos', promoId), { type: 'category', category: newPromo.category, minQty: Number(newPromo.minQty), totalPrice: Number(newPromo.totalPrice), createdAt: serverTimestamp() }); } setNewPromo({ type: newPromo.type, category: '', productQuery: '', minQty: 2, totalPrice: '' }); alert("¡Promo guardada!"); } catch(err) { alert("Error al guardar promo: " + err.message); } };
   const handleDeletePromo = async (id) => { if(confirm("¿Eliminar?")) { try { await deleteDoc(doc(firebaseRefs.db, 'promos', id)); } catch(err) { alert("Error al borrar promo: " + err.message); } } };
   const handleDeleteCategory = async (categoryName) => { 
     if(!confirm(`⚠️ ¿ELIMINAR categoría "${categoryName}" y todos sus productos?`)) return; 
@@ -1148,6 +1213,7 @@ export default function AdminPage() {
         const isHardcoded = initialProducts.some(initP => initP.id === p.id);
         const docRef = doc(firebaseRefs.db, 'products', p.dbId || `prod_${p.id}`);
         if (isHardcoded) { await setDoc(docRef, { isDeleted: true }, { merge: true }); } else { await deleteDoc(docRef); }
+        avisarCambio(p);
       } 
       try { await deleteDoc(doc(firebaseRefs.db, 'promos', categoryName.toLowerCase().replace(/\s+/g, '-'))); } catch (e) {} 
       alert(`Categoría eliminada.`); 
@@ -1159,7 +1225,7 @@ export default function AdminPage() {
           setLoading(true); 
           try { 
               for (const p of initialProducts) { 
-                  await setDoc(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, name: p.name, department: p.department || "OTROS", category: p.category, image: p.image, description: p.description || "", cardSize: p.cardSize || "normal", order: 99, isHidden: false, isDeleted: false, clicks: 0 }, { merge: true }); 
+                  await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, name: p.name, department: p.department || "OTROS", category: p.category, image: p.image, description: p.description || "", cardSize: p.cardSize || "normal", order: 99, isHidden: false, isDeleted: false, clicks: 0 }, { merge: true }); 
               } 
               for (const sec of initialHomeSections) { 
                   await setDoc(doc(firebaseRefs.db, 'home_sections', sec.id), { ...sec, createdAt: serverTimestamp() }, { merge: true }); 

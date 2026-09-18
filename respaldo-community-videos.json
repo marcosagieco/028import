@@ -1,0 +1,93 @@
+{
+  "updatedAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1781641432,
+    "nanoseconds": 510000000
+  },
+  "videos": [
+    {
+      "productsShown": [
+        1777063180978,
+        1776448981888,
+        28,
+        22,
+        1776474995488,
+        26,
+        1775605102812,
+        36,
+        1777031817694
+      ],
+      "videoUrl": "https://firebasestorage.googleapis.com/v0/b/paginadeventa028.firebasestorage.app/o/Hanni%20028.mp4?alt=media&token=79a46d9e-2a81-4766-b09b-3d0b78100f5a",
+      "views": 0,
+      "clicks": 0,
+      "isDeleted": false,
+      "type": "Review",
+      "productId": 1777063180978,
+      "featured": true,
+      "creator": "@hannimohamed",
+      "isHidden": false,
+      "title": "UNBOXING 028",
+      "description": "Video con referencia real y productos comprables.",
+      "ctaText": "Ver productos",
+      "id": "community_video_1",
+      "order": 1
+    },
+    {
+      "clicks": 0,
+      "views": 0,
+      "videoUrl": "https://firebasestorage.googleapis.com/v0/b/paginadeventa028.firebasestorage.app/o/Martulali%20028.mp4?alt=media&token=9bc79118-e026-43f8-9da2-2974ad3183f2",
+      "order": 2,
+      "ctaText": "Ver productos",
+      "description": "Video visual mostrando productos 028.",
+      "type": "Influencer",
+      "productsShown": [
+        4
+      ],
+      "title": "COLABORACIONES",
+      "id": "community_video_2",
+      "isDeleted": false,
+      "creator": "@martu_lalli",
+      "productId": 4,
+      "featured": false,
+      "isHidden": false
+    },
+    {
+      "isHidden": false,
+      "featured": false,
+      "order": 3,
+      "description": "Video visual mostrando productos 028.",
+      "type": "Influencer",
+      "id": "community_video_3",
+      "title": "COLABORACIONES",
+      "clicks": 0,
+      "videoUrl": "https://firebasestorage.googleapis.com/v0/b/paginadeventa028.firebasestorage.app/o/alelali%20028.mp4?alt=media&token=865148d5-ffad-456e-b7f5-9c268d3f5333",
+      "productsShown": [
+        3
+      ],
+      "creator": "@alessitalalli",
+      "views": 0,
+      "ctaText": "Ver productos",
+      "productId": 3,
+      "isDeleted": false
+    },
+    {
+      "videoUrl": "https://firebasestorage.googleapis.com/v0/b/paginadeventa028.firebasestorage.app/o/GiuliAnny%20028.mp4?alt=media&token=e50b7494-471b-4734-a257-6aebc8cda155",
+      "productsShown": [
+        9
+      ],
+      "productId": 9,
+      "id": "community_video_4",
+      "isDeleted": false,
+      "views": 0,
+      "type": "Influencer",
+      "clicks": 0,
+      "ctaText": "Ver productos",
+      "order": 4,
+      "isHidden": false,
+      "featured": false,
+      "description": "Video visual mostrando productos 028.",
+      "title": "COLABORACIONES",
+      "creator": "@giuli.bellicoso"
+    }
+  ]
+}

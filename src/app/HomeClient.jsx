@@ -3,6 +3,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { rutaProducto, aSlug } from '@/lib/slug';
+import { escalonesDeProducto, precioSegunCantidad } from '@/lib/combos';
+import { useCarrito } from '@/components/CarritoProvider';
 const CalculadorEnvio = dynamic(() => import('@/components/CalculadorEnvio'), { ssr: false });
 const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvioSimple'), { ssr: false });
 const VapeSpecs3D = dynamic(() => import('@/components/VapeSpecs3D'), { ssr: false });
@@ -184,153 +189,6 @@ const initialProducts = [
   { id: 24, name: "CABLE USB-C A LIGHTNING 2M", price: 13500, department: "TECNOLOGÍA", category: "PRODUCTOS APPLE", tag: "", image: "https://i.postimg.cc/QCvPcQkg/usb-c-to-lightning-cable.jpg", description: "Cable original Apple USB-C a Lightning de 2 metros.", cardSize: "normal" }
 ];
 
-const PAGE_CONTENT = {
-  nosotros: {
-    title: "Nuestra Esencia",
-    subtitle: "Acerca de 028 IMPORT",
-    body: (
-      <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base font-poppins">
-        <p className="text-xl font-medium text-[#111111] leading-snug">En 028 IMPORT no solo entregamos productos; brindamos una experiencia de exclusividad, confianza y absoluta prioridad al tiempo de nuestros clientes.</p>
-        <p>Nacimos con el firme propósito de establecer un nuevo estándar en la importación y distribución de artículos premium. Entendemos que el lujo moderno no se trata únicamente de lo que adquieres, sino de cómo lo adquieres. Por ello, hemos diseñado un ecosistema de atención al cliente meticuloso, donde la amabilidad, la inmediatez y la transparencia son nuestros pilares innegociables.</p>
-        <p>Nuestro catálogo es el resultado de una curaduría exhaustiva. Cada marca y cada modelo que ofrecemos ha sido seleccionado bajo los más estrictos controles de calidad e idoneidad, garantizando a nuestros usuarios el acceso a lo mejor del mercado global sin intermediarios innecesarios y con la certeza de un origen 100% legítimo.</p>
-        <div className="border-l-4 border-[#fcdb00] pl-6 py-2 my-10 bg-gray-50 rounded-r-2xl">
-          <p className="italic text-gray-800 text-lg font-medium">"Creemos firmemente que el tiempo de nuestro cliente es su activo más valioso. Por eso, nuestro compromiso es la excelencia y la velocidad en cada entrega."</p>
-        </div>
-        <p>Agradecemos tu confianza y te damos la bienvenida a la experiencia 028.</p>
-      </div>
-    )
-  },
-  terminos: {
-    title: "Términos y Condiciones",
-    subtitle: "Legal & Políticas Comerciales",
-    body: (
-      <div className="space-y-8 text-gray-600 leading-relaxed text-sm md:text-base font-poppins">
-        <p>El acceso y uso de la plataforma 028 IMPORT (en adelante, "la Tienda" o "Nosotros") se rige por los presentes Términos y Condiciones. Al utilizar nuestro sitio web, usted acepta íntegramente las políticas aquí detalladas.</p>
-        
-        <div>
-          <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mb-3">1. Naturaleza del Servicio</h3>
-          <p>028 IMPORT opera como un catálogo virtual interactivo. Los productos añadidos a la "Bolsa de Compras" no constituyen una reserva legal de inventario ni una transacción comercial finalizada. La confirmación del pedido, fijación del precio final y reserva de stock se perfecciona de manera exclusiva a través de nuestro canal oficial de WhatsApp, mediado por un asesor de ventas.</p>
-        </div>
-
-        <div>
-          <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mb-3">2. Precios y Disponibilidad</h3>
-          <p>Nos esforzamos por mantener nuestro catálogo actualizado en tiempo real. No obstante, debido a fluctuaciones arancelarias y dinámicas del mercado de importación, los precios publicados tienen carácter referencial. 028 IMPORT se reserva el derecho de modificar los precios sin previo aviso antes de la confirmación formal del pago.</p>
-        </div>
-
-        <div>
-          <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mb-3">3. Garantía de Originalidad</h3>
-          <p>Garantizamos de manera absoluta la autenticidad y el origen legítimo de todos los artículos comercializados. Todo producto es entregado en su embalaje original y con los sellos de seguridad correspondientes emitidos por el fabricante.</p>
-        </div>
-
-        <div>
-          <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mb-3">4. Política de Cambios y Garantías</h3>
-          <p>Dado el carácter personal y consumible de gran parte de nuestro catálogo, no se aceptarán cambios ni devoluciones por motivos de "insatisfacción" o error en la elección del sabor/modelo una vez que el precinto de seguridad haya sido vulnerado. Solo se admitirán reclamos por defectos técnicos de fabricación, los cuales deberán ser notificados dentro de las 48 horas posteriores a la recepción, adjuntando evidencia visual.</p>
-        </div>
-      </div>
-    )
-  },
-  privacidad: {
-    title: "Política de Privacidad",
-    subtitle: "Protección de Datos Personales",
-    body: (
-      <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base font-poppins">
-        <p className="text-lg font-medium text-[#111111]">En 028 IMPORT, la salvaguarda y confidencialidad de su información personal es una absoluta prioridad.</p>
-        <p>La presente Política de Privacidad describe cómo recopilamos, utilizamos y protegemos los datos que usted nos proporciona, en estricto cumplimiento con la Ley de Protección de los Datos Personales (Nº 25.326) de la República Argentina.</p>
-        
-        <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mt-8 mb-2">Recopilación de Información</h3>
-        <p>A través de nuestra plataforma, podemos solicitar datos básicos como su nombre y datos de domicilio/ubicación (para envíos). No procesamos ni almacenamos datos financieros, bancarios ni tarjetas de crédito en nuestros servidores.</p>
-        
-        <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mt-8 mb-2">Uso Exclusivo de los Datos</h3>
-        <p>La información recolectada se utiliza con los siguientes fines exclusivos:</p>
-        <ul className="list-disc pl-5 space-y-2 mt-2">
-          <li>Gestión logística y coordinación efectiva de las entregas.</li>
-          <li>Comunicación directa vía WhatsApp para confirmación de pedidos.</li>
-        </ul>
-
-        <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mt-8 mb-2">No Divulgación a Terceros</h3>
-        <p>028 IMPORT garantiza que bajo ninguna circunstancia comercializará, alquilará ni compartirá su base de datos de clientes con entidades externas, agencias de publicidad o terceros no involucrados en la cadena logística de su pedido.</p>
-      </div>
-    )
-  },
-  envios: {
-    title: "Envíos y Entregas",
-    subtitle: "Logística Premium",
-    body: (
-      <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base font-poppins">
-        <p className="text-lg font-medium text-[#111111]">Sabemos que la inmediatez es fundamental. Por ello, hemos diseñado un esquema logístico ágil, seguro y adaptado a sus necesidades.</p>
-        
-        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 my-6">
-          <h3 className="text-[#fcdb00] font-black uppercase tracking-widest text-sm mb-3 flex items-center gap-2"><i className="fas fa-bolt"></i> Envío Flash</h3>
-          <p className="text-sm">Para zonas seleccionadas, ofrecemos un servicio de entrega en menos de 30 minutos abonando mediante transferencia bancaria. Ideal para quienes necesitan sus productos de forma inmediata.</p>
-        </div>
-
-        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 my-6">
-          <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mb-3 flex items-center gap-2"><i className="fas fa-motorcycle"></i> Motomensajería Programada</h3>
-          <p className="text-sm">Contamos con un servicio propio de motomensajería con salidas organizadas en tres turnos fijos (13:00hs - 16:00hs - 20:00hs). Esto nos permite garantizar un tiempo de entrega predecible y seguro. Aboná con efectivo o transferencia.</p>
-        </div>
-      </div>
-    )
-  },
-  pagos: {
-    title: "Medios de Pago",
-    subtitle: "Transacciones Seguras",
-    body: (
-      <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base font-poppins">
-        <p>Con el objetivo de garantizar su seguridad y ofrecerle flexibilidad, en 028 IMPORT procesamos los pagos por fuera de la plataforma web, evitando que usted deba ingresar datos sensibles en línea.</p>
-        
-        <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mt-8 mb-4">Alternativas Disponibles:</h3>
-        
-        <ul className="space-y-4">
-          <li className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-[#111111]"><i className="fas fa-university text-[#fcdb00]"></i></div>
-            <div>
-              <p className="font-bold text-[#111111]">Transferencia Bancaria (ARS)</p>
-              <p className="text-sm mt-1">Acreditación rápida mediante CBU/CVU o Alias. La app le mostrará nuestro Alias oficial durante el proceso de compra (Titular: Lucio Bunge).</p>
-            </div>
-          </li>
-          <li className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-[#111111]"><i className="fas fa-money-bill-wave text-[#fcdb00]"></i></div>
-            <div>
-              <p className="font-bold text-[#111111]">Efectivo</p>
-              <p className="text-sm mt-1">Disponible para envíos mediante nuestra Motomensajería (Pago contra entrega).</p>
-            </div>
-          </li>
-        </ul>
-
-        <div className="border-t border-gray-200 pt-6 mt-8">
-          <p className="text-xs uppercase tracking-widest font-black text-gray-400 mb-2">Aviso de Seguridad</p>
-          <p className="text-sm">Bajo ninguna circunstancia el personal de 028 IMPORT le solicitará los dígitos de su tarjeta de crédito, claves de seguridad o contraseñas bancarias a través de esta plataforma ni por canales no oficiales.</p>
-        </div>
-      </div>
-    )
-  },
-  arrepentimiento: {
-    title: "Botón de Arrepentimiento",
-    subtitle: "Marco Legal y Devoluciones",
-    body: (
-      <div className="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base font-poppins">
-        <p>En cumplimiento con las disposiciones de la Dirección Nacional de Defensa del Consumidor, 028 IMPORT pone a su disposición las directrices para la revocación de compra.</p>
-        
-        <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mt-8 mb-2">Plazo Legal</h3>
-        <p>Usted tiene el derecho irrevocable de cancelar su compra dentro de un plazo máximo de <strong>10 (diez) días corridos</strong> contados desde la fecha de recepción del producto en su domicilio.</p>
-
-        <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mt-8 mb-2">Condiciones Innegociables para Aceptación</h3>
-        <p>Dada la naturaleza de los productos comercializados en nuestro catálogo (artículos de consumo personal e higiene), la devolución será aceptada pura y exclusivamente si se cumplen los siguientes requisitos de manera estricta:</p>
-        <ul className="list-disc pl-5 space-y-2 mt-2">
-          <li>El producto debe encontrarse en <strong>estado impecable, inmaculado y totalmente sin uso</strong>.</li>
-          <li>Los sellos térmicos, precintos de fábrica y plásticos protectores deben estar <strong>intactos y sin alteraciones</strong>.</li>
-          <li>El packaging o cajas no deben presentar roturas, marcas ni abolladuras.</li>
-        </ul>
-
-        <div className="bg-red-50 text-red-800 p-4 rounded-xl mt-6 border border-red-100 text-sm">
-          <strong>IMPORTANTE:</strong> Por normativas sanitarias, si un dispositivo electrónico de consumo o esencia ha sido abierto, encendido o sus sellos han sido rotos, se perderá automáticamente el derecho a devolución por arrepentimiento.
-        </div>
-
-        <p className="mt-8">Para iniciar el trámite, le solicitamos contactarse inmediatamente a nuestra línea de WhatsApp informando su número de pedido y adjuntando fotografías del estado del producto.</p>
-      </div>
-    )
-  }
-};
 
 function HorizontalScroll({ children, className }) {
   const ref = React.useRef(null);
@@ -352,11 +210,42 @@ function HorizontalScroll({ children, className }) {
   );
 }
 
+// Se monta solo cuando la seccion esta por entrar en pantalla: quien no scrollea
+// hasta aca no descarga ni el modelo ni la libreria 3D (que pesa ~1 MB).
+// Decide si este equipo puede con el 3D. Cargar el modelo y arrancar la librería
+// traba la pantalla unos segundos, y en un equipo flojo esa traba es larga: no vale
+// la pena arriesgar la venta por un adorno. Se pide poca cosa (memoria, núcleos,
+// pantalla táctil chica) y ante la duda NO se carga.
+function equipoAguantaEl3D() {
+  if (typeof window === 'undefined') return false;
+
+  // Quien pidió menos animaciones, no quiere esto.
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+
+  // Pantalla chica o control táctil: casi siempre un celular.
+  const esTactil = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  if (esTactil || window.innerWidth < 1024) return false;
+
+  // Equipos de pocos recursos.
+  const nucleos = navigator.hardwareConcurrency || 0;
+  const memoria = navigator.deviceMemory || 0;
+  if (nucleos && nucleos < 4) return false;
+  if (memoria && memoria < 4) return false;
+
+  // Sin WebGL no hay nada que hacer.
+  try {
+    const c = document.createElement('canvas');
+    if (!(c.getContext('webgl2') || c.getContext('webgl'))) return false;
+  } catch { return false; }
+
+  return true;
+}
+
 function LazyVapeSpecs3D() {
-  return null;
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
   useEffect(() => {
+    if (!equipoAguantaEl3D()) return;
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
@@ -387,7 +276,7 @@ const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
 const TarjetaProducto = React.memo(function TarjetaProducto({
   p, index, isVidriera = false, layout = 'horizontal',
   radioVidriera, cantidadEnCarrito, promo,
-  onAbrir, onAgregar, onCambiarCantidad,
+  onAgregar, onCambiarCantidad,
 }) {
         const inCart = cantidadEnCarrito > 0;
     const isOutOfStock = p.inStock === false;
@@ -433,9 +322,14 @@ const TarjetaProducto = React.memo(function TarjetaProducto({
         style={{ transitionDelay: `${(index % 4) * 75}ms`, ...cardStyle }} 
         className={`card-shimmer reveal-on-scroll relative bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col hover:-translate-y-2 hover:shadow-[0_24px_48px_rgb(0,0,0,0.12)] hover:border-gray-300 ${isVidriera && layout !== 'vertical' ? 'snap-center md:snap-start' : 'snap-start'} group transition-all duration-500 ${isVidriera && radioVidriera === 'squared' ? 'rounded-none' : 'rounded-[1.5rem]'} ${isOutOfStock ? 'opacity-50 grayscale' : ''} ${sizeClasses}`}
       >
-        <div
-            className={`relative ${aspectClass} bg-gray-50 cursor-pointer`}
-            onClick={() => onAbrir(p)}
+        {/* La foto lleva a la pagina del producto. Es un enlace de verdad, asi que
+            se puede abrir en otra pestana y Google lo sigue. No se precarga sola
+            para no descargar 40 paginas al entrar: Next la precarga al pasar el mouse. */}
+        <Link
+            href={rutaProducto(p)}
+            prefetch={false}
+            aria-label={`Ver ${p.name}`}
+            className={`relative block ${aspectClass} bg-gray-50 cursor-pointer`}
         >
           <Image
             src={p.image}
@@ -453,14 +347,16 @@ const TarjetaProducto = React.memo(function TarjetaProducto({
                   {p.tag}
               </span>
           )}
-        </div>
-        
+        </Link>
+
         <div className="p-4 flex-grow flex flex-col">
             <p className="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-1.5 font-poppins">
                 {p.category}
             </p>
             <h3 className={`font-bebas ${titleClass} uppercase mb-1 text-[#111111] line-clamp-2 tracking-wide`}>
-                {p.name}
+                <Link href={rutaProducto(p)} prefetch={false} className="hover:underline decoration-2 underline-offset-2">
+                    {p.name}
+                </Link>
             </h3>
             {(() => {
                 const productPromo = promo;
@@ -516,9 +412,25 @@ const TarjetaProducto = React.memo(function TarjetaProducto({
     );
 });
 
-export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssrHomeLayout = [] }) {
-  const [cart, setCart] = useState([]);
+// La tienda entera —barra de arriba, menú, carrito, login, pie— vive acá. Antes esto
+// era sólo la home; ahora es el armazón que usan todas las páginas, para que la barra
+// sea la misma en todos lados y el carrito se abra donde estés, sin saltar al inicio.
+//
+// "modo" dice qué va debajo de la barra:
+//   'inicio'    -> la portada (con el marquee, que es sólo de acá) y el catálogo
+//   'catalogo'  -> sólo el catálogo completo con sus filtros
+//   'contenido' -> lo que le pasen: una ficha de producto, un departamento, una marca
+//   'checkout'  -> la pantalla de datos para terminar la compra
+export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssrHomeLayout = [], modo = 'inicio', children = null }) {
+  // El carrito ya no vive acá: lo maneja <CarritoProvider> desde el layout, así
+  // sobrevive cuando el visitante pasa a la página de un producto.
+  const { cart, setCart, sincronizarConCatalogo } = useCarrito();
+
   const [products, setProducts] = useState(ssrProducts.filter(p => !p.isHidden));
+
+  // La puesta al día de precios la hace el proveedor; acá sólo se le avisa cuándo
+  // llegó el catálogo.
+  useEffect(() => { sincronizarConCatalogo(products); }, [products, sincronizarConCatalogo]);
   const [allProducts, setAllProducts] = useState(ssrProducts);
   const [promos, setPromos] = useState([]);
   const [homeSections, setHomeSections] = useState(ssrHomeSections);
@@ -539,7 +451,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const googleSigningIn = useRef(false);
   const headerRef = useRef(null);
   const [headerScrolled, setHeaderScrolled] = useState(false);
-  const [currentView, setCurrentView] = useState('home');
+  const [currentView, setCurrentView] = useState(modo === 'catalogo' ? 'catalog' : 'home');
   const [activeFilter, setActiveFilter] = useState({ dept: 'all', cat: 'all' });
   const [activeFlavors, setActiveFlavors] = useState([]);
   const [showFlavorMenu, setShowFlavorMenu] = useState(false);
@@ -553,7 +465,8 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const [showAyudaMenu, setShowAyudaMenu] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCartVisible, setIsCartVisible] = useState(false);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  // En /checkout se entra directo a la pantalla de datos, sin pasar por el cajón.
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(modo === 'checkout');
   const [showDiscountBreakdown, setShowDiscountBreakdown] = useState(false);
   const [coupons, setCoupons] = useState([]);
   const [couponCode, setCouponCode] = useState('');
@@ -615,21 +528,10 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     };
   }, []);
 
-  useEffect(() => {
-    const container = communityScrollRef.current;
-    if (!container) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        const firstEl = Object.values(communityVideoRefs.current)[0];
-        if (firstEl) firstEl.load();
-        observer.disconnect();
-      },
-      { rootMargin: '0px 0px -5% 0px' }
-    );
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, [communityVideos]);
+  // Antes acá había un IntersectionObserver que llamaba a load() sobre el primer
+  // video apenas la sección entraba en pantalla. Eso pasaba por encima del
+  // preload="none" y descargaba el video entero (5,6 MB) sin que nadie lo pidiera,
+  // sólo por scrollear. El video se carga ahora cuando el visitante toca play.
 
   const [paymentMethod, setPaymentMethod] = useState('transferencia'); 
   const [shippingCost, setShippingCost] = useState(0); 
@@ -665,7 +567,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const [isSending, setIsSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const router = useRouter();
 
   const [upsellsList, setUpsellsList] = useState([]);
   const [carritoDestacados, setCarritoDestacados] = useState([]);
@@ -890,16 +792,19 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     return () => unsubscribeFomo();
   }, [firebaseRefs.db]);
 
+  // El panel del vape 3D avisa por aca cuando tocan un sabor. Antes abria la
+  // ventana emergente; ahora lleva a la pagina de ese producto, como cualquier
+  // otro enlace de la tienda.
   useEffect(() => {
     const handleOpenProduct = (e) => {
       const name = e.detail?.name?.toLowerCase();
       if (!name) return;
       const found = products.find(p => p.name?.toLowerCase() === name);
-      if (found) setSelectedProduct(found);
+      if (found) router.push(rutaProducto(found));
     };
     window.addEventListener('openProduct', handleOpenProduct);
     return () => window.removeEventListener('openProduct', handleOpenProduct);
-  }, [products]);
+  }, [products, router]);
 
   useEffect(() => {
     const handleFocus = () => setIsSending(false);
@@ -1159,7 +1064,7 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     if (product) {
       addToCart(product, e);
     } else {
-      navigateTo('catalog');
+      router.push('/catalogo');
     }
   };
 
@@ -1337,18 +1242,20 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
   };
   
   const getTotalItems = () => cart.reduce((acc, item) => acc + item.qty, 0);
+  // El precio por unidad según cuánto se lleve. Si hay varios escalones cargados,
+  // vale el más alto que ya haya alcanzado, no el primero que aparezca.
   const getUnitPromoPrice = (item) => {
-    const productPromo = promos.find(p => p.type === 'product' && p.productId === item.id);
-    if (productPromo) {
-      const prodCount = cart.filter(i => i.id === item.id).reduce((acc, curr) => acc + curr.qty, 0);
-      if (prodCount >= productPromo.minQty) return productPromo.totalPrice / productPromo.minQty;
-    }
-    const promo = promos.find(p => (p.type || 'category') === 'category' && p.category === item.category);
-    if (promo) {
-      const catCount = cart.filter(i => i.category === item.category).reduce((acc, curr) => acc + curr.qty, 0);
-      if (catCount >= promo.minQty) return promo.totalPrice / promo.minQty;
-    }
-    return item.price;
+    const escalones = escalonesDeProducto(promos, item);
+    if (!escalones.length) return item.price;
+
+    // Un combo del producto se cuenta por unidades de ese producto; uno de la marca,
+    // por todo lo que se lleve de esa marca.
+    const esDelProducto = promos.some(p => p.type === 'product' && String(p.productId) === String(item.id));
+    const cantidad = esDelProducto
+      ? cart.filter(i => String(i.id) === String(item.id)).reduce((acc, c) => acc + c.qty, 0)
+      : cart.filter(i => i.category === item.category).reduce((acc, c) => acc + c.qty, 0);
+
+    return precioSegunCantidad(escalones, cantidad, item.price);
   };
   
   const calculateTotal = (cartData = cart) => {
@@ -1372,7 +1279,6 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         return [...prev, { ...product, price: effectivePrice, listPrice: product.price, qty: 1 }];
     });
     showToast(`✅ Añadido: ${product.name}`); 
-    setSelectedProduct(prev => (prev ? null : prev));   // forma funcional: así no depende de selectedProduct
 
     if (firebaseRefs.db) {
       try { 
@@ -1511,8 +1417,13 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
                 userId: user?.uid || "anon", 
                 clientName, 
                 clientPhone, 
+                // Se guarda el id y la marca además del nombre. Antes iba sólo el
+                // nombre, y como hay nombres que se repiten entre marcas (CHERRY
+                // STRAZZ está en dos), no se podía saber con certeza qué se vendió.
                 items: currentCart.map(i => ({ 
+                    productId: i.id,
                     name: i.name, 
+                    category: i.category || '',
                     qty: i.qty, 
                     price: i.isUpsell ? i.upsellPrice : getUnitPromoPrice(i) 
                 })), 
@@ -1567,7 +1478,6 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
       radioVidriera={vidreiraCardRadius}
       cantidadEnCarrito={cart.find(i => i.id === p.id)?.qty || 0}
       promo={promos.find(pr => pr.type === 'product' && pr.productId === p.id) || null}
-      onAbrir={setSelectedProduct}
       onAgregar={addToCart}
       onCambiarCantidad={changeQty}
     />
@@ -1904,13 +1814,13 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           <h2 className="text-4xl md:text-6xl font-bebas tracking-wide uppercase text-[#111111]">
             {vidreiraShowIcons && <i className={`${AVAILABLE_ICONS.find(i => i.id === sec.icon)?.prefix || 'fas'} ${sec.icon || 'fa-star'} ${sec.iconColor || 'text-[#fcdb00]'} mr-3 drop-shadow-sm`}></i>}{sec.title}
           </h2>
-          <button onClick={() => navigateTo('catalog')} className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#111111]/60 hover:text-[#fcdb00] transition-colors bg-gray-100 px-5 py-2.5 rounded-full border border-gray-200 hover:border-[#fcdb00]/30">Ver Catálogo <i className="fas fa-arrow-right"></i></button>
+          <Link href="/catalogo" prefetch={false} className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#111111]/60 hover:text-[#fcdb00] transition-colors bg-gray-100 px-5 py-2.5 rounded-full border border-gray-200 hover:border-[#fcdb00]/30">Ver Catálogo <i className="fas fa-arrow-right"></i></Link>
         </div>
         {sec.layout === 'vertical'
           ? <div className="flex flex-wrap gap-1.5 md:gap-2">{secProducts.map((p, index) => renderProductCard(p, index, true, sec.layout))}</div>
           : <HorizontalScroll className="flex overflow-x-auto gap-3 no-scrollbar pb-8 snap-x snap-mandatory -mx-4 md:mx-0 px-4 md:px-0 pr-4 md:pr-8">{secProducts.map((p, index) => renderProductCard(p, index, true, sec.layout))}</HorizontalScroll>
         }
-        <button onClick={() => navigateTo('catalog')} className="md:hidden w-full mt-2 bg-gray-100 backdrop-blur-xl border border-gray-200 text-[#111111]/80 py-4 rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform font-poppins">ver todos los modelos <i className="fas fa-arrow-right text-[#fcdb00]"></i></button>
+        <Link href="/catalogo" prefetch={false} className="md:hidden w-full mt-2 bg-gray-100 backdrop-blur-xl border border-gray-200 text-[#111111]/80 py-4 rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform font-poppins">ver todos los modelos <i className="fas fa-arrow-right text-[#fcdb00]"></i></Link>
       </div>
     );
   };
@@ -1965,35 +1875,6 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
     return result;
   };
 
-  const renderLegalPage = () => {
-    const pageData = PAGE_CONTENT[currentView]; 
-    if (!pageData) return null;
-    
-    return (
-        <div className="min-h-screen py-16 px-4 md:py-24">
-            <div className="max-w-3xl mx-auto bg-white/90 backdrop-blur-2xl p-8 md:p-16 rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.12)] border border-gray-200 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <button
-                    onClick={() => navigateTo('home')}
-                    className="mb-10 text-[#111111] hover:text-[#fcdb00] transition-colors flex items-center gap-2 font-bold text-xs uppercase tracking-widest font-poppins"
-                >
-                    <i className="fas fa-arrow-left"></i> Volver a la Tienda
-                </button>
-                <div className="text-center mb-16">
-                    <span className="text-[#fcdb00] font-bebas uppercase tracking-widest text-lg mb-2 block drop-shadow-sm">
-                        {pageData.subtitle}
-                    </span>
-                    <h1 className="text-5xl md:text-6xl font-bebas text-[#111111] uppercase tracking-wide">
-                        {pageData.title}
-                    </h1>
-                    <div className="w-24 h-1.5 bg-[#fcdb00] mx-auto mt-6 rounded-full"></div>
-                </div>
-                <div className="prose prose-gray max-w-none font-poppins">
-                    {pageData.body}
-                </div>
-            </div>
-        </div>
-    );
-  };
   return (
     <div style={{backgroundColor: '#f5f5f5'}} className="text-[#111111] font-poppins flex flex-col relative min-h-screen selection:bg-[#fcdb00] selection:text-[#111111]">
       {datosDeProductos && (
@@ -2348,12 +2229,11 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
 
           {/* Derecha: Buscar tienda + Ayuda */}
           <div className="flex items-center gap-6">
-            <button
-              onClick={() => navigateTo('envios')}
-              className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors flex items-center gap-1.5"
+            <Link
+              href="/envios" prefetch={false} className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors flex items-center gap-1.5"
             >
               <i className="fas fa-store text-[9px]"></i> Buscar tienda
-            </button>
+            </Link>
 
             <div className="relative" onMouseEnter={() => setShowAyudaMenu(true)} onMouseLeave={() => setShowAyudaMenu(false)}>
               <button className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors flex items-center gap-1.5">
@@ -2369,18 +2249,16 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   >
                     <i className="fab fa-whatsapp text-[#25D366]"></i> Contactar por WhatsApp
                   </a>
-                  <button
-                    onClick={() => navigateTo('envios')}
-                    className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+                  <Link
+                    href="/envios" prefetch={false} className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
                   >
                     <i className="fas fa-truck text-gray-500"></i> Envíos y entregas
-                  </button>
-                  <button
-                    onClick={() => navigateTo('arrepentimiento')}
-                    className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+                  </Link>
+                  <Link
+                    href="/arrepentimiento" prefetch={false} className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
                   >
                     <i className="fas fa-undo text-gray-500"></i> Arrepentimiento
-                  </button>
+                  </Link>
                 </div>
               )}
             </div>
@@ -2402,12 +2280,14 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
             )}
           </button>
 
-          <div className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 flex items-center gap-3 cursor-pointer group" onClick={() => {setActiveFilter({dept: 'all', cat: 'all'}); setCurrentView('home'); window.scrollTo(0,0);}}>
+          {/* Enlace de verdad: antes sólo cambiaba la vista, y desde una ficha de
+              producto o una marca no hacía nada porque ahí no hay vista que cambiar. */}
+          <Link href="/" aria-label="Ir al inicio" className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 flex items-center gap-3 cursor-pointer group">
             <img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" />
-          </div>
+          </Link>
 
           <div className="hidden md:flex items-center gap-6 ml-8 font-poppins text-xs font-bold uppercase tracking-widest">
-            <button onClick={() => navigateTo('home')} className={`transition-colors ${currentView === 'home' ? 'text-[#fcdb00]' : 'text-gray-300 hover:text-white'}`}>Inicio</button>
+            <Link href="/" className={`transition-colors ${modo === 'inicio' && currentView === 'home' ? 'text-[#fcdb00]' : 'text-gray-300 hover:text-white'}`}>Inicio</Link>
             <button onClick={() => setShowShippingCalculatorModal(true)} className="bg-white/10 text-white px-4 py-2 rounded-full hover:bg-[#fcdb00] hover:text-[#111111] transition-all flex items-center gap-2"><i className="fas fa-motorcycle text-sm"></i> Calcular Envío</button>
           </div>
         </div>
@@ -2416,10 +2296,10 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-6 font-poppins text-xs font-bold uppercase tracking-widest">
           {departments.map(dept => (
             <div key={dept} className="relative" onMouseEnter={() => setHoveredNavDept(dept)} onMouseLeave={() => setHoveredNavDept(null)}>
-              <button onClick={() => navigateTo('catalog', dept)} className={`relative pb-1 transition-all duration-200 ${hoveredNavDept === dept ? 'text-white scale-[1.12]' : currentView === 'catalog' && filterDepts.includes(dept) ? 'text-[#fcdb00]' : 'text-gray-400'}`}>
+              <Link href={`/${aSlug(dept)}`} prefetch={false} className={`relative block pb-1 transition-all duration-200 ${hoveredNavDept === dept ? 'text-white scale-[1.12]' : currentView === 'catalog' && filterDepts.includes(dept) ? 'text-[#fcdb00]' : 'text-gray-400'}`}>
                 {dept}
                 <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-[#fcdb00] transition-all duration-200 ${hoveredNavDept === dept ? 'opacity-100' : 'opacity-0'}`} />
-              </button>
+              </Link>
               {hoveredNavDept === dept && brandsByDept[dept]?.length > 0 && (
                 <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 min-w-[240px] z-50" style={{filter:'none'}}>
                 <div className="bg-[#111111] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden animate-fade-in-down">
@@ -2427,19 +2307,19 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                     <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Marcas en {dept}</span>
                   </div>
                   {brandsByDept[dept].map(brand => (
-                    <button key={brand} onClick={() => { resetSecondaryFilters(); setFilterBrands([brand]); setFilterDepts([]); setCurrentView('catalog'); window.scrollTo({top:0,behavior:'smooth'}); setHoveredNavDept(null); }} className="w-full text-left px-5 py-3.5 text-[12px] text-gray-300 hover:bg-[#fcdb00] hover:text-[#111111] transition-colors tracking-widest normal-case font-bold font-poppins">
+                    <Link key={brand} href={`/${aSlug(dept)}/${aSlug(brand)}`} prefetch={false} onClick={() => setHoveredNavDept(null)} className="block w-full text-left px-5 py-3.5 text-[12px] text-gray-300 hover:bg-[#fcdb00] hover:text-[#111111] transition-colors tracking-widest normal-case font-bold font-poppins">
                       {brand}
-                    </button>
+                    </Link>
                   ))}
                 </div>
                 </div>
               )}
             </div>
           ))}
-          <button onClick={() => { resetSecondaryFilters(); setFilterDepts([]); setFilterBrands([]); setActiveFilter({dept:'all',cat:'all'}); setCurrentView('catalog'); window.scrollTo({top:0,behavior:'smooth'}); }} className={`relative pb-1 transition-all duration-200 ${currentView === 'catalog' && filterDepts.length === 0 ? 'text-[#fcdb00]' : 'text-gray-400 hover:text-white'}`}>
+          <Link href="/catalogo" prefetch={false} className={`relative block pb-1 transition-all duration-200 ${currentView === 'catalog' && filterDepts.length === 0 ? 'text-[#fcdb00]' : 'text-gray-400 hover:text-white'}`}>
             CATÁLOGO
             <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-[#fcdb00] transition-all duration-200 ${currentView === 'catalog' && filterDepts.length === 0 ? 'opacity-100' : 'opacity-0'}`} />
-          </button>
+          </Link>
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
@@ -2528,12 +2408,14 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
 
                 {/* Nav principal */}
                 <div className="py-2">
-                  <button
-                    onClick={() => { resetSecondaryFilters(); setFilterDepts([]); setFilterBrands([]); setActiveFilter({dept:'all', cat:'all'}); navigateTo('catalog'); setIsMenuOpen(false); }}
+                  <Link
+                    href="/catalogo"
+                    prefetch={false}
+                    onClick={() => setIsMenuOpen(false)}
                     className="w-full text-left py-3.5 text-base text-[#111111] flex items-center justify-between active:opacity-60 transition-opacity border-b border-gray-100" style={{fontWeight:510}}
                   >
                     Catálogo Completo <i className="fas fa-arrow-right text-gray-300 text-sm"></i>
-                  </button>
+                  </Link>
 
                   {departments.map(dept => {
                     const isExpanded = expandedDept === dept;
@@ -2549,20 +2431,24 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                         </button>
                         <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'}`}>
                           <div className="pb-3 flex flex-col gap-0.5">
-                            <button
-                              onClick={() => { resetSecondaryFilters(); setFilterDepts([dept]); setFilterBrands([]); setActiveFilter({dept, cat: 'all'}); setCurrentView('catalog'); setIsMenuOpen(false); window.scrollTo({top:0,behavior:'smooth'}); }}
+                            <Link
+                              href={`/${aSlug(dept)}`}
+                              prefetch={false}
+                              onClick={() => setIsMenuOpen(false)}
                               className="text-left py-2 pl-4 text-sm font-medium text-[#111111] active:opacity-60 transition-opacity"
                             >
                               Ver todo en {dept}
-                            </button>
+                            </Link>
                             {deptCats.map(cat => (
-                              <button
+                              <Link
                                 key={cat}
-                                onClick={() => { resetSecondaryFilters(); setFilterDepts([]); setFilterBrands([cat]); setActiveFilter({dept, cat}); setCurrentView('catalog'); setIsMenuOpen(false); window.scrollTo({top:0,behavior:'smooth'}); }}
+                                href={`/${aSlug(dept)}/${aSlug(cat)}`}
+                                prefetch={false}
+                                onClick={() => setIsMenuOpen(false)}
                                 className="text-left py-2 pl-4 text-sm font-medium text-[#111111] active:opacity-60 transition-opacity"
                               >
                                 {cat}
-                              </button>
+                              </Link>
                             ))}
                           </div>
                         </div>
@@ -2583,16 +2469,16 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                 <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 font-poppins mt-20 mb-1">Información</p>
                 <div className="flex flex-col">
                   {[
-                    { label: 'Quiénes Somos',            icon: 'fa-store',           action: () => { navigateTo('nosotros'); setIsMenuOpen(false); } },
-                    { label: 'Envíos y Logística',        icon: 'fa-motorcycle',      action: () => { navigateTo('envios'); setIsMenuOpen(false); } },
-                    { label: 'Medios de Pago',            icon: 'fa-credit-card',     action: () => { navigateTo('pagos'); setIsMenuOpen(false); } },
-                    { label: 'Legales y Términos',        icon: 'fa-file-contract',   action: () => { navigateTo('terminos'); setIsMenuOpen(false); } },
-                    { label: 'Botón de Arrepentimiento',  icon: 'fa-rotate-left',     action: () => { navigateTo('arrepentimiento'); setIsMenuOpen(false); } },
+                    { label: 'Quiénes Somos',            icon: 'fa-store',           destino: '/nosotros' },
+                    { label: 'Envíos y Logística',        icon: 'fa-motorcycle',      destino: '/envios' },
+                    { label: 'Medios de Pago',            icon: 'fa-credit-card',     destino: '/pagos' },
+                    { label: 'Legales y Términos',        icon: 'fa-file-contract',   destino: '/terminos' },
+                    { label: 'Botón de Arrepentimiento',  icon: 'fa-rotate-left',     destino: '/arrepentimiento' },
                   ].map(item => (
-                    <button key={item.label} onClick={item.action} className="text-left py-3 text-sm font-normal text-[#111111] border-b border-gray-100 active:opacity-60 transition-opacity last:border-0 flex items-center gap-3">
+                    <Link key={item.label} href={item.destino} prefetch={false} onClick={() => setIsMenuOpen(false)} className="text-left py-3 text-sm font-normal text-[#111111] border-b border-gray-100 active:opacity-60 transition-opacity last:border-0 flex items-center gap-3">
                       <i className={`fas ${item.icon} text-gray-600 text-sm w-4 text-center`}></i>
                       {item.label}
-                    </button>
+                    </Link>
                   ))}
                 </div>
 
@@ -2616,6 +2502,9 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
       )}
 
       {/* --- INICIO CONTENIDO --- */}
+      {/* Sólo en la portada. En las demás páginas ni se dibuja: así el marquee queda
+          únicamente acá y esas páginas no cargan de más. */}
+      {modo === 'inicio' && (
       <div style={{ display: currentView === 'home' ? '' : 'none' }}>
           <div className="w-full bg-[#111111] h-8 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex items-center">
             <div className="animate-marquee whitespace-nowrap flex items-center">
@@ -2646,35 +2535,37 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
               <h3 className="font-bebas text-2xl text-[#111111] mb-4 pl-2 reveal-title reveal-on-scroll hidden"></h3>
               <HorizontalScroll className="flex overflow-x-auto gap-2 md:gap-3 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">
                 {virtualDepts.map((vd, i) => (
-                  <div key={`vd-${vd.name}`} onClick={() => { setActiveFilter({dept: 'all', cat: 'all'}); setFilterDepts([]); navigateTo('catalog'); }} className={`animate-bounce-in stagger-${Math.min(i, 9)} snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-gray-50 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-200 flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.1)] hover:border-[#fcdb00]/60 transition-all duration-500 group`}>
+                  <Link key={`vd-${vd.name}`} href="/catalogo" prefetch={false} className={`animate-bounce-in stagger-${Math.min(i, 9)} snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-gray-50 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-200 flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.1)] hover:border-[#fcdb00]/60 transition-all duration-500 group`}>
                     <div className="w-14 h-14 md:w-16 md:h-16 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden group-hover:bg-[#fcdb00] transition-colors">
                       {vd.icon?.startsWith('http') ? <img src={vd.icon} alt={vd.name} className="w-9 h-9 md:w-10 md:h-10 object-contain icon-bounce" /> : <i className={`fas ${vd.icon || 'fa-store'} text-2xl md:text-3xl text-[#111111] group-hover:text-[#111111] icon-bounce`}></i>}
                     </div>
                     <span className="font-bold text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-[#111111]/70 group-hover:text-[#111111] transition-colors font-poppins">{vd.name}</span>
-                  </div>
+                  </Link>
                 ))}
                 {departments.map((dept, i) => {
                   const iconId = deptIcons[dept] || 'fa-box';
                   const iconObj = DEPT_ICONS.find(ic => ic.id === iconId) || { id: 'fa-box', prefix: 'fas' };
                   const staggerIdx = Math.min(virtualDepts.length + i, 9);
                   return (
-                  <div key={dept} onClick={() => navigateTo('catalog', dept)} className={`animate-bounce-in stagger-${staggerIdx} snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-gray-50 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-200 flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.1)] hover:border-[#fcdb00]/60 transition-all duration-500 group`}>
+                  <Link key={dept} href={`/${aSlug(dept)}`} prefetch={false} className={`animate-bounce-in stagger-${staggerIdx} snap-start flex-shrink-0 w-32 h-32 md:w-44 md:h-44 bg-gray-50 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-200 flex flex-col items-center justify-center gap-4 cursor-pointer hover:scale-105 hover:shadow-[0_20px_40px_rgb(0,0,0,0.1)] hover:border-[#fcdb00]/60 transition-all duration-500 group`}>
                     <div className="w-14 h-14 md:w-16 md:h-16 bg-gray-100 rounded-full flex items-center justify-center text-[#111111] text-2xl md:text-3xl group-hover:bg-[#fcdb00] group-hover:text-[#111111] transition-colors"><i className={`${iconObj.prefix} ${iconObj.id} icon-bounce`}></i></div>
                     <span className="font-bold text-[10px] md:text-xs uppercase tracking-widest text-center px-2 text-[#111111]/70 group-hover:text-[#111111] transition-colors font-poppins">{dept}</span>
-                  </div>
+                  </Link>
                 )})}
               </HorizontalScroll>
             </div>
             {renderOrderedHomeBlocks()}
           </main>
       </div>
-      {currentView === 'catalog' && (
+      )}
+
+      {modo !== 'contenido' && modo !== 'checkout' && currentView === 'catalog' && (
         <>
           {/* Barra de filtros */}
           <div className="bg-white/90 backdrop-blur-2xl z-40 border-b border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.08)] sticky top-[72px]">
             <div className="px-4 md:px-10 lg:px-20 xl:px-32">
               <div className="flex items-center gap-3 pt-3 pb-1">
-                <button onClick={() => navigateTo('home')} className="text-gray-500 hover:text-[#111111] text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5"><i className="fas fa-home"></i> Inicio</button>
+                <Link href="/" className="text-gray-500 hover:text-[#111111] text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5"><i className="fas fa-home"></i> Inicio</Link>
                 <span className="text-gray-400 text-[10px]"><i className="fas fa-chevron-right"></i></span>
                 <span className="text-[#111111] font-bold uppercase tracking-widest text-[10px]">CATÁLOGO COMPLETO</span>
               </div>
@@ -2836,10 +2727,12 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           )}
         </>
       )}
-      {currentView !== 'home' && currentView !== 'catalog' && (
-          <main className="flex-grow animate-view-enter">
-              {renderLegalPage()}
-          </main>
+      {/* La página de turno: ficha de producto, departamento, marca o institucional.
+          Va acá adentro para que comparta la barra, el carrito y el pie con la home. */}
+      {modo === 'contenido' && (
+        <div className="flex-grow">
+          {children}
+        </div>
       )}
 
       <footer className="block bg-[#111111] text-white pt-8 md:pt-12 pb-6 md:pb-8 mt-auto relative z-30 rounded-t-[2rem] overflow-hidden">
@@ -2850,11 +2743,11 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   <div>
                     <h4 className="font-bebas text-[#fcdb00] text-xl md:text-2xl uppercase tracking-wider mb-4 md:mb-6">Información Legal</h4>
                     <ul className="space-y-3 md:space-y-4 text-gray-400 font-poppins font-medium">
-                      <li><button onClick={() => navigateTo('nosotros')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#fcdb00] text-[10px]"></i> Quiénes Somos</button></li>
-                      <li><button onClick={() => navigateTo('envios')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#fcdb00] text-[10px]"></i> Logística de Envío</button></li>
-                      <li><button onClick={() => navigateTo('pagos')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#fcdb00] text-[10px]"></i> Medios de Pago</button></li>
-                      <li><button onClick={() => navigateTo('terminos')} className="hover:text-white transition-colors flex items-center gap-2 mt-4 pt-4 border-t border-white/10"><i className="fas fa-file-contract text-gray-600 text-[10px]"></i> Términos y Condiciones</button></li>
-                      <li><button onClick={() => navigateTo('privacidad')} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-shield-alt text-gray-600 text-[10px]"></i> Política de Privacidad</button></li>
+                      <li><Link href="/nosotros" prefetch={false} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#fcdb00] text-[10px]"></i> Quiénes Somos</Link></li>
+                      <li><Link href="/envios" prefetch={false} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#fcdb00] text-[10px]"></i> Logística de Envío</Link></li>
+                      <li><Link href="/pagos" prefetch={false} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-angle-right text-[#fcdb00] text-[10px]"></i> Medios de Pago</Link></li>
+                      <li><Link href="/terminos" prefetch={false} className="hover:text-white transition-colors flex items-center gap-2 mt-4 pt-4 border-t border-white/10"><i className="fas fa-file-contract text-gray-600 text-[10px]"></i> Términos y Condiciones</Link></li>
+                      <li><Link href="/privacidad" prefetch={false} className="hover:text-white transition-colors flex items-center gap-2"><i className="fas fa-shield-alt text-gray-600 text-[10px]"></i> Política de Privacidad</Link></li>
                     </ul>
                   </div>
                   <div>
@@ -2868,48 +2761,11 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
               </div>
               <div className="flex flex-col md:flex-row justify-between items-center border-t border-white/10 pt-8 text-[9px] md:text-[10px] text-gray-500 uppercase tracking-widest text-center md:text-left gap-4 font-poppins">
                   <p>© {new Date().getFullYear()} 028IMPORT. Todos los derechos reservados.</p>
-                  <div className="flex gap-4"><button onClick={() => navigateTo('arrepentimiento')} className="hover:text-white transition-colors underline underline-offset-4">Botón de Arrepentimiento</button></div>
+                  <div className="flex gap-4"><Link href="/arrepentimiento" prefetch={false} className="hover:text-white transition-colors underline underline-offset-4">Botón de Arrepentimiento</Link></div>
               </div>
           </div>
       </footer>
 
-      {/* --- MODAL PRODUCTO --- */}
-      {selectedProduct && (
-          <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6">
-              <div className="absolute inset-0 bg-black/75 backdrop-blur-xl transition-opacity" onClick={() => setSelectedProduct(null)}></div>
-              <div className="relative bg-[#111111] backdrop-blur-2xl border border-[#2a2a2a] w-full max-w-lg rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.5)] max-h-[92dvh] overflow-y-auto animate-in zoom-in-95 duration-500 md:max-w-4xl md:flex md:flex-row md:overflow-hidden md:max-h-[90vh]">
-                  <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 backdrop-blur-md border border-white/10 text-white rounded-full flex items-center justify-center hover:bg-[#fcdb00] hover:text-[#111111] transition-colors shadow-lg">
-                      <i className="fas fa-times text-lg"></i>
-                  </button>
-                  <div className="bg-[#1a1a1a] mx-3 mt-3 rounded-[1.5rem] overflow-hidden aspect-square w-full md:mx-0 md:mt-0 md:rounded-none md:rounded-l-[2rem] md:w-1/2 md:aspect-auto md:flex-shrink-0">
-                      <img src={selectedProduct.image} alt={selectedProduct.name} loading="lazy" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="px-6 pb-8 pt-4 md:w-1/2 md:p-12 md:flex md:flex-col md:justify-center md:overflow-y-auto">
-                      <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-2">{selectedProduct.category}</p>
-                      <h2 className="font-bebas text-5xl text-white uppercase leading-none mb-3">{selectedProduct.name}</h2>
-                      {selectedProduct.tag && (
-                          <span className="inline-block bg-white/10 text-white border border-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-4 w-fit">{selectedProduct.tag}</span>
-                      )}
-                      <div className="border-t border-white/10 my-4"></div>
-                      <p className="text-white/50 text-sm font-poppins leading-relaxed whitespace-pre-line">{selectedProduct.description || "Experimenta la mejor calidad con nuestra selección de productos premium."}</p>
-                      <div className="border-t border-white/10 my-4"></div>
-                      {selectedProduct.offerPrice > 0 && selectedProduct.offerPrice < selectedProduct.price ? (
-                          <div className="mb-6">
-                              <p className="text-white/40 font-bebas text-xl line-through leading-none mb-1">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}</p>
-                              <p className="font-bebas text-5xl text-[#fcdb00]">{CONFIG.currencySymbol}{formatPrice(selectedProduct.offerPrice)}{selectedProduct.isUSD && <span className="text-white/40 text-base font-poppins font-bold ml-2">USD</span>}</p>
-                          </div>
-                      ) : (
-                          <p className="font-bebas text-5xl text-[#fcdb00] mb-6">{CONFIG.currencySymbol}{formatPrice(selectedProduct.price)}{selectedProduct.isUSD && <span className="text-white/40 text-base font-poppins font-bold ml-2">USD</span>}</p>
-                      )}
-                      {selectedProduct.inStock === false ? (
-                          <button disabled className="w-full bg-white/10 text-white/30 py-4 text-xl font-bebas uppercase tracking-wider rounded-xl cursor-not-allowed border border-white/10">Producto Agotado</button>
-                      ) : (
-                          <button onClick={(e) => addToCart(selectedProduct, e)} className="w-full bg-[#fcdb00] text-[#111111] hover:bg-white hover:text-[#111111] py-4 text-xl font-bebas uppercase tracking-wider rounded-xl shadow-[0_10px_30px_rgba(252,219,0,0.2)] hover:shadow-[0_10px_30px_rgba(255,255,255,0.2)] transition-all duration-300 flex justify-center items-center gap-3 active:scale-95"><i className="fas fa-shopping-cart text-lg mb-0.5"></i> Agregar a la bolsa</button>
-                      )}
-                  </div>
-              </div>
-          </div>
-      )}
 
       {/* ===== DRAWER DEL CARRITO ===== */}
       {isCartOpen && (
@@ -3096,7 +2952,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
 
           {/* Header */}
           <div className="bg-white border-b border-gray-200 px-5 py-4 flex items-center gap-4 flex-shrink-0 shadow-sm">
-            <button onClick={() => { setIsCheckoutOpen(false); openCart(); }} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-[#111111]">
+            <button onClick={() => { if (modo === 'checkout') { router.back(); return; } setIsCheckoutOpen(false); openCart(); }} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-[#111111]">
               <i className="fas fa-arrow-left text-sm"></i>
             </button>
             <div>
