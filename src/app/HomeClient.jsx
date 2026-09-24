@@ -13,7 +13,12 @@ const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvio
 const VapeSpecs3D = dynamic(() => import('@/components/VapeSpecs3D'), { ssr: false });
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, setDoc, getDoc, getDocs, increment, query, orderBy, limit } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, setDoc, getDoc, getDocs, increment, query, orderBy, limit, where } from "firebase/firestore";
+
+// El Pago Seguro es un servicio aparte, no un producto del catálogo: cubre la
+// pérdida del pedido en el envío. Va como constante acá, no en Firestore, porque
+// no se vende ni se administra como el resto — es una política de la tienda.
+const PRECIO_PAGO_SEGURO = 1900;
 
 const CONFIG = {
   brandName: "028", 
@@ -421,7 +426,13 @@ const TarjetaProducto = React.memo(function TarjetaProducto({
 //   'catalogo'  -> sólo el catálogo completo con sus filtros
 //   'contenido' -> lo que le pasen: una ficha de producto, un departamento, una marca
 //   'checkout'  -> la pantalla de datos para terminar la compra
-export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssrHomeLayout = [], modo = 'inicio', children = null }) {
+// "institucional" es para las seis páginas de puro texto (Nosotros, Envíos, etc).
+// No compran nada ni muestran productos: sólo necesitan la barra de arriba (que ya
+// se arma con lo que llega del servidor) y el carrito (que es local, no depende de
+// esto). Con esto en true, la página no abre una sesión de Firebase ni se conecta
+// en vivo a la base para traer el catálogo completo — algo que antes hacía sin
+// necesitarlo, sólo por compartir el mismo componente que el resto de la tienda.
+export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssrHomeLayout = [], modo = 'inicio', children = null, institucional = false }) {
   // El carrito ya no vive acá: lo maneja <CarritoProvider> desde el layout, así
   // sobrevive cuando el visitante pasa a la página de un producto.
   const { cart, setCart, sincronizarConCatalogo } = useCarrito();
@@ -436,6 +447,16 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const [homeSections, setHomeSections] = useState(ssrHomeSections);
   const [homeLayout, setHomeLayout] = useState(ssrHomeLayout);
   const [communityVideos, setCommunityVideos] = useState(INITIAL_COMMUNITY_VIDEOS);
+  // Opiniones libres del inicio: cualquiera puede dejar la suya, pero no se ven
+  // hasta que el admin las aprueba desde el panel (evita spam y comentarios feos
+  // colgados en la home sin que nadie los revise).
+  const [opinionesHome, setOpinionesHome] = useState([]);
+  const [opinionNombre, setOpinionNombre] = useState('');
+  const [opinionTexto, setOpinionTexto] = useState('');
+  const [opinionRating, setOpinionRating] = useState(0);
+  const [opinionEnviando, setOpinionEnviando] = useState(false);
+  const [opinionEnviada, setOpinionEnviada] = useState(false);
+  const [opinionError, setOpinionError] = useState('');
   const [activeCommunityVideoId, setActiveCommunityVideoId] = useState(null);
   const [flippedCommunityCards, setFlippedCommunityCards] = useState({});
   const [communityVideoFeedback, setCommunityVideoFeedback] = useState({});
@@ -460,7 +481,13 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const [hoveredNavDept, setHoveredNavDept] = useState(null);
   const [vidreiraCardRadius, setVidreiraCardRadius] = useState('rounded');
   const [vidreiraShowIcons, setVidreiraShowIcons] = useState(true);
-  const [vape3dPosition, setVape3dPosition] = useState('banner');
+  // Arranca en null ("todavía no sé"), no en "banner". La posición de verdad se
+  // guarda en Firestore y tarda un instante en llegar; si el valor inicial fuera
+  // "banner" el vape 3D se dibujaba arriba de todo apenas se abría la página y
+  // después saltaba a su lugar real cuando llegaba el dato — el salto que se veía.
+  // Con null no se dibuja en ningún lado hasta saber dónde va: aparece una sola vez,
+  // ya en su posición correcta.
+  const [vape3dPosition, setVape3dPosition] = useState(null);
   const [logosBarPosition, setLogosBarPosition] = useState(null);
   const [showAyudaMenu, setShowAyudaMenu] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -468,7 +495,12 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   // En /checkout se entra directo a la pantalla de datos, sin pasar por el cajón.
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(modo === 'checkout');
   const [showDiscountBreakdown, setShowDiscountBreakdown] = useState(false);
-  const [coupons, setCoupons] = useState([]);
+  // Pago Seguro: cubre el pedido si se pierde en el envío. Es una decisión de cada
+  // compra, así que arranca apagado en cada visita al checkout, igual que el medio
+  // de pago o el tipo de envío.
+  const [pagoSeguroActivo, setPagoSeguroActivo] = useState(false);
+  const [showPagoSeguroInfo, setShowPagoSeguroInfo] = useState(false);
+  const [showConfirmarSinPagoSeguro, setShowConfirmarSinPagoSeguro] = useState(false);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
@@ -778,7 +810,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
 
   const isFirstLoad = useRef(true);
   useEffect(() => {
-    if (!firebaseRefs.db) return;
+    if (institucional || !firebaseRefs.db) return;
     // Escucha un único documento público que solo tiene nombre de pila y producto.
     // Los pedidos reales quedan privados: acá no hay teléfono ni dirección.
     const unsubscribeFomo = onSnapshot(doc(firebaseRefs.db, 'fomo', 'latest'), (snap) => {
@@ -807,6 +839,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   }, [products, router]);
 
   useEffect(() => {
+    if (institucional) return;
     const handleFocus = () => setIsSending(false);
     window.addEventListener('focus', handleFocus);
     window.addEventListener('pageshow', handleFocus);
@@ -819,7 +852,17 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     }
 
     let stockUnsub = null, promosUnsub = null;
-    let upsellsUnsub = null, carritoUnsub = null, couponsUnsub = null;
+    let upsellsUnsub = null, carritoUnsub = null, opinionesUnsub = null;
+
+    // Sólo hace falta escuchar esto en la portada, que es la única página que las
+    // muestra.
+    if (modo === 'inicio') {
+      opinionesUnsub = onSnapshot(
+        query(collection(firebaseRefs.db, 'comentarios_home'), where('aprobado', '==', true), orderBy('createdAt', 'desc'), limit(24)),
+        (snap) => setOpinionesHome(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+        () => {}
+      );
+    }
 
     // Los datos del catálogo son públicos: no hace falta esperar a que termine el
     // login para pedirlos. Antes todo esto vivía adentro del callback de auth, así
@@ -899,7 +942,7 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         setVidreiraShowIcons(ajustes.vidriera_style.showIcons !== false);
       }
 
-      if (ajustes.vape3d_position) setVape3dPosition(ajustes.vape3d_position.afterSectionId || 'banner');
+      if (ajustes.vape3d_position) setVape3dPosition(ajustes.vape3d_position.afterSectionId || null);
       if (ajustes.logos_bar_position) setLogosBarPosition(ajustes.logos_bar_position.afterSectionId || 'banner');
     }).catch(() => setCommunityVideos(INITIAL_COMMUNITY_VIDEOS));
 
@@ -909,9 +952,11 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     carritoUnsub = onSnapshot(collection(firebaseRefs.db, 'carritoDestacados'), (snap) => {
       setCarritoDestacados(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
     });
-    couponsUnsub = onSnapshot(collection(firebaseRefs.db, 'coupons'), (snap) => {
-      setCoupons(!snap.empty ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : []);
-    });
+    // Los cupones NO se suscriben acá. Antes se traía la colección entera —todos
+    // los códigos, activos e inactivos, con su porcentaje— al navegador de cualquier
+    // visitante, sólo para poder validar el que alguien tipeara en el cajón de
+    // "Aplicar cupón". Ahora esa validación se hace de a un código por vez, contra
+    // /api/cupon, que nunca revela el resto.
 
     // La sesión anónima sigue existiendo (la usa el login de clientes), pero ya no
     // bloquea la carga del catálogo.
@@ -928,11 +973,11 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
       promosUnsub?.();
       upsellsUnsub?.();
       carritoUnsub?.();
-      couponsUnsub?.();
+      opinionesUnsub?.();
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('pageshow', handleFocus);
     };
-  }, [firebaseRefs]);
+  }, [firebaseRefs, modo]);
 
   useEffect(() => {
     const upsellItems = upsellsList.filter(u => u.active !== false && !cart.find(c => String(c.id) === String(u.productId)));
@@ -1264,7 +1309,8 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
       const cashDiscount = (deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'efectivo')
         ? (subtotal >= 50000 ? 2500 : 1500) : 0;
       const couponDiscount = appliedCoupon ? Math.round(subtotal * appliedCoupon.discount / 100) : 0;
-      return subtotal + envio - cashDiscount - couponDiscount;
+      const pagoSeguro = pagoSeguroActivo ? PRECIO_PAGO_SEGURO : 0;
+      return subtotal + envio + pagoSeguro - cashDiscount - couponDiscount;
   };
 
   const addToCart = React.useCallback(async (product, e) => {
@@ -1325,13 +1371,67 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     setShowPaymentModal(false);
     setIsSending(true);
     let currentCart = [...cart];
-    const finalTotal = calculateTotal(currentCart);
 
     // WhatsApp Desktop (PC) y WhatsApp en Android rompen los emojis al recibir el link
     // (los muestran como "�"). En iPhone/iPad no pasa, así que ahí se mandan los emojis normalmente.
     const isIOSClient = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
     const emo = (e) => isIOSClient ? e : '';
     const DIVIDER = isIOSClient ? `➖➖➖➖➖➖➖➖➖➖` : `----------`;
+
+    // El pedido se manda al servidor para que vuelva a calcular cada precio con los
+    // datos reales del momento, antes de guardarlo. El navegador no decide el precio
+    // final: solo arma el carrito y el mensaje con lo que el servidor confirma. Así,
+    // si alguna vez el navegador tuviera un precio desactualizado —una conexión que se
+    // cortó, una pestaña abierta hace rato— nunca llega a convertirse en un pedido real
+    // con ese precio incorrecto.
+    let verificado;
+    try {
+      const resp = await fetch('/api/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: currentCart.map(i => ({
+            productId: i.id,
+            name: i.name,
+            qty: i.qty,
+            isUpsell: !!i.isUpsell,
+            upsellPrice: i.isUpsell ? i.upsellPrice : undefined,
+          })),
+          clientName,
+          clientPhone,
+          userId: user?.uid || 'anon',
+          deliveryMethod,
+          address: deliveryMethod === 'envio' ? address : '',
+          zone: deliveryMethod === 'envio' ? zone : '',
+          aptDetails: deliveryMethod === 'envio' ? aptDetails.trim() : '',
+          shippingOption: deliveryMethod === 'envio' ? shippingType : null,
+          paymentMethod: deliveryMethod === 'envio' && shippingType === 'moto' ? paymentMethod : null,
+          deliveryDate: deliveryMethod === 'envio' && shippingType === 'moto' ? deliveryDate : null,
+          deliveryTime: deliveryMethod === 'envio' && shippingType === 'moto' ? deliveryTime : null,
+          shippingCost: (deliveryMethod === 'envio' && shippingType === 'moto') ? shippingCost : 0,
+          couponCode: appliedCoupon ? appliedCoupon.code : null,
+          pagoSeguroActivo,
+          precioPagoSeguro: PRECIO_PAGO_SEGURO,
+        }),
+      });
+      verificado = await resp.json();
+      if (!resp.ok || !verificado.ok) {
+        const faltantes = (verificado?.sinStock || []).join(', ');
+        showToast(faltantes ? `⚠️ Sin stock: ${faltantes}` : '⚠️ No se pudo confirmar el pedido. Probá de nuevo.');
+        setIsSending(false);
+        return;
+      }
+    } catch (e) {
+      showToast('⚠️ No se pudo conectar para confirmar el pedido. Probá de nuevo.');
+      setIsSending(false);
+      return;
+    }
+
+    // De acá en adelante, todo sale de lo que confirmó el servidor: subtotal, envío,
+    // descuentos y el precio de cada producto. No se recalcula nada del lado del
+    // navegador para armar el mensaje.
+    const itemsVerificados = verificado.items;
+    const finalTotal = verificado.total;
 
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
 
@@ -1347,37 +1447,34 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
 
     // --- PRODUCTOS ---
     msg += `\n${DIVIDER}\n${emo('🛒 ')}*PRODUCTOS*\n`;
-    let subtotalCalc = 0;
 
-    currentCart.forEach(i => {
-        const price = i.isUpsell ? i.upsellPrice : getUnitPromoPrice(i);
-        subtotalCalc += (i.qty * price);
+    itemsVerificados.forEach(i => {
         if (i.isUpsell) {
-            msg += `• ${i.qty}x ${i.category} - ${i.name} (OFERTA $${formatPrice(price)})\n`;
+            msg += `• ${i.qty}x ${i.category} - ${i.name} (OFERTA $${formatPrice(i.price)})\n`;
+        } else if (i.price < i.listPrice) {
+            // El precio bajó por una promo de cantidad, no por un cupón. Se avisa acá
+            // mismo: sin esto, el pedido llega con un precio más bajo que el de lista y
+            // no hay forma de saber por qué con solo mirar el mensaje.
+            msg += `• ${i.qty}x ${i.category} - ${i.name} ($${formatPrice(i.price)} c/u — PROMO x${i.qty}, antes $${formatPrice(i.listPrice)})\n`;
         } else {
-            msg += `• ${i.qty}x ${i.category} - ${i.name} ($${formatPrice(price)} c/u)\n`;
+            msg += `• ${i.qty}x ${i.category} - ${i.name} ($${formatPrice(i.price)} c/u)\n`;
         }
     });
 
-    let subtotalFinal = subtotalCalc;
-    let costoEnvioAgregado = (deliveryMethod === 'envio' && shippingType === 'moto') ? shippingCost : 0;
-    const cashDiscMsg = (deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'efectivo')
-        ? (subtotalCalc >= 50000 ? 2500 : 1500) : 0;
-    const couponDiscMsg = appliedCoupon ? Math.round(subtotalFinal * appliedCoupon.discount / 100) : 0;
-
     // --- TOTALES ---
     msg += `\n${DIVIDER}\n${emo('💰 ')}*TOTALES*\n`;
-    msg += `Subtotal: ${CONFIG.currencySymbol}${formatPrice(subtotalFinal)}\n`;
+    msg += `Subtotal: ${CONFIG.currencySymbol}${formatPrice(verificado.subtotal)}\n`;
 
-    if (costoEnvioAgregado > 0) {
-        msg += `Envío (Moto): ${CONFIG.currencySymbol}${formatPrice(costoEnvioAgregado)}\n`;
+    if (verificado.envio > 0) {
+        msg += `Envío (Moto): ${CONFIG.currencySymbol}${formatPrice(verificado.envio)}\n`;
     } else if (deliveryMethod === 'envio' && shippingType === 'moto') {
         msg += `Envío (Moto): A confirmar\n`;
     }
 
+    if (verificado.pagoSeguroMonto > 0) msg += `${emo('🛡️ ')}Pago Seguro: ${CONFIG.currencySymbol}${formatPrice(verificado.pagoSeguroMonto)}\n`;
     msg += `*TOTAL A PAGAR: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
-    if (cashDiscMsg > 0) msg += `_(incluye -${CONFIG.currencySymbol}${formatPrice(cashDiscMsg)} por pago en efectivo)_\n`;
-    if (couponDiscMsg > 0) msg += `_(incluye -${CONFIG.currencySymbol}${formatPrice(couponDiscMsg)} por cupón ${appliedCoupon.code})_\n`;
+    if (verificado.cashDiscount > 0) msg += `_(incluye -${CONFIG.currencySymbol}${formatPrice(verificado.cashDiscount)} por pago en efectivo)_\n`;
+    if (verificado.couponDiscount > 0) msg += `_(incluye -${CONFIG.currencySymbol}${formatPrice(verificado.couponDiscount)} por cupón ${verificado.couponCode})_\n`;
 
     // --- ENTREGA ---
     msg += `\n${DIVIDER}\n${emo('📦 ')}*ENTREGA*\n`;
@@ -1410,42 +1507,16 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     msg += `${clientName}${clientPhone ? ' — ' + clientPhone : ''}\n`;
 
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
-    
-    try { 
-        if (firebaseRefs.db) { 
-            addDoc(collection(firebaseRefs.db, 'orders'), { 
-                userId: user?.uid || "anon", 
-                clientName, 
-                clientPhone, 
-                // Se guarda el id y la marca además del nombre. Antes iba sólo el
-                // nombre, y como hay nombres que se repiten entre marcas (CHERRY
-                // STRAZZ está en dos), no se podía saber con certeza qué se vendió.
-                items: currentCart.map(i => ({ 
-                    productId: i.id,
-                    name: i.name, 
-                    category: i.category || '',
-                    qty: i.qty, 
-                    price: i.isUpsell ? i.upsellPrice : getUnitPromoPrice(i) 
-                })), 
-                total: finalTotal, 
-                delivery: deliveryMethod, 
-                address: deliveryMethod === 'envio' ? address : '', 
-                zone: deliveryMethod === 'envio' ? zone : '', 
-                aptDetails: deliveryMethod === 'envio' ? aptDetails.trim() : '', 
-                shippingOption: deliveryMethod === 'envio' ? shippingType : null,
-                paymentMethod: deliveryMethod === 'envio' && shippingType === 'moto' ? paymentMethod : null,
-                deliveryDate: deliveryMethod === 'envio' && shippingType === 'moto' ? deliveryDate : null,
-                deliveryTime: deliveryMethod === 'envio' && shippingType === 'moto' ? deliveryTime : null,
-                shippingCost: costoEnvioAgregado,
-                status: (deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'transferencia') ? 'pending_verification' : 'pending', 
-                createdAt: serverTimestamp() 
-            }).catch(e => console.error(e));
-            // Aviso público para el cartelito "fulano compró X": solo nombre de pila
-            // y producto. El pedido completo queda en /orders, que no es público.
-            if (clientName && currentCart.length > 0) {
+
+    // El pedido ya quedó guardado por el servidor (con los precios verificados). Acá
+    // sólo quedan los avisos que no tienen que ver con el precio: el cartelito
+    // público de "fulano compró X" y la estadística de zonas.
+    try {
+        if (firebaseRefs.db) {
+            if (clientName && itemsVerificados.length > 0) {
               setDoc(doc(firebaseRefs.db, 'fomo', 'latest'), {
                 name: clientName.split(' ')[0],
-                product: currentCart[0].name,
+                product: itemsVerificados[0].name,
                 at: serverTimestamp()
               }).catch(console.error);
             }
@@ -1454,12 +1525,12 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
             }
         }
         setTimeout(() => {
-            window.location.href = whatsappUrl; 
-            setIsSending(false); 
-        }, 400); 
-    } catch (e) { 
-        window.location.href = whatsappUrl; 
-        setIsSending(false); 
+            window.location.href = whatsappUrl;
+            setIsSending(false);
+        }, 400);
+    } catch (e) {
+        window.location.href = whatsappUrl;
+        setIsSending(false);
     }
   };
 
@@ -1839,7 +1910,16 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
     return sectionsToRender.map((sec, sectionIndex) => renderSingleHomeSection(sec, sectionIndex));
   };
 
-  const LogosBar = () => (
+  // OJO: esto es JSX ya armado, no un componente (no es "const LogosBar = () => ...").
+  // Es a propósito: si fuera un componente invocado como <LogosBar />, React lo trata
+  // como un tipo nuevo en cada render de HomeClient —y acá hay MUCHOS renders, porque
+  // el stock, las promos, las ofertas y demás se escuchan en vivo—. Cada uno de esos
+  // renders remontaba el <img> de cada logo desde cero, así que la animación de
+  // "flotar" nunca llegaba a completar un ciclo: se cortaba a la mitad y arrancaba de
+  // nuevo, por eso se veía el salto de opacidad (más pálido/más fuerte) y el corte al
+  // subir y bajar. Con JSX plano, React actualiza el mismo <img> en vez de recrearlo,
+  // así que la animación corre sin interrupciones.
+  const logosBarNode = (
     <div style={{width:'100vw', marginLeft:'calc(-50vw + 50%)'}} className="relative bg-[#d0d0d0] h-64 flex items-center justify-evenly px-6 mb-10 -mt-6">
       <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-[#f5f5f5] to-transparent pointer-events-none z-10" />
       <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#f5f5f5] to-transparent pointer-events-none z-10" />
@@ -1856,22 +1936,170 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
     </div>
   );
 
+  const enviarOpinionHome = async () => {
+    if (!opinionRating) { setOpinionError('Elegí una calificación.'); return; }
+    if (!opinionTexto.trim()) { setOpinionError('Contanos algo, aunque sea corto.'); return; }
+    setOpinionEnviando(true);
+    setOpinionError('');
+    try {
+      const nombreFinal = (user && !user.isAnonymous) ? (user.displayName || opinionNombre) : opinionNombre;
+      const r = await fetch('/api/opiniones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: nombreFinal, rating: opinionRating, text: opinionTexto }),
+      });
+      const datos = await r.json();
+      if (!r.ok || !datos.ok) { setOpinionError(datos.error || 'No se pudo enviar, probá de nuevo.'); setOpinionEnviando(false); return; }
+      setOpinionEnviada(true);
+      setOpinionNombre(''); setOpinionTexto(''); setOpinionRating(0);
+    } catch {
+      setOpinionError('No se pudo conectar, probá de nuevo.');
+    } finally {
+      setOpinionEnviando(false);
+    }
+  };
+
+  const renderOpinionesSection = () => (
+    <section id="opiniones-section" className="mt-4 mb-16 md:mb-20 reveal-on-scroll">
+      <div className="mb-6 md:mb-8">
+        <span className="inline-flex items-center gap-2 bg-[#111111] text-white px-3.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] font-poppins mb-4">
+          <i className="fas fa-star text-[#fcdb00]"></i> Tu opinión
+        </span>
+        <h2 className="font-bebas text-[40px] md:text-[56px] uppercase tracking-[0.01em] leading-[0.94] text-[#111111]">Lo que dicen de nosotros</h2>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_1.4fr] gap-5 md:gap-8">
+        {/* Formulario */}
+        <div className="bg-white rounded-[1.75rem] border border-gray-100 shadow-[0_0_20px_rgba(0,0,0,0.04)] p-6 md:p-7">
+          {opinionEnviada ? (
+            <div className="text-center py-6">
+              <img src={CONFIG.logoImage} alt="028 Import" className="h-12 w-auto object-contain mx-auto mb-3" />
+              <p className="font-bold text-sm text-[#111111]">¡Gracias por tu opinión!</p>
+              <p className="text-[11px] text-gray-500 mt-1">La vamos a revisar y en breve se va a publicar acá.</p>
+              <button onClick={() => setOpinionEnviada(false)} className="mt-4 text-[11px] font-bold uppercase tracking-widest text-gray-400 hover:text-[#111111] transition-colors">Dejar otra</button>
+            </div>
+          ) : (
+            <>
+              <p className="font-bebas text-2xl uppercase tracking-wide text-[#111111] mb-4">Dejá tu opinión</p>
+              <div className="flex gap-1 mb-4">
+                {[1, 2, 3, 4, 5].map(n => (
+                  <button key={n} type="button" onClick={() => setOpinionRating(n)} className="p-0.5" aria-label="Calificar">
+                    <i className={`${n <= opinionRating ? 'fas' : 'far'} fa-star text-2xl ${n <= opinionRating ? 'text-[#fcdb00]' : 'text-gray-300'} transition-colors`}></i>
+                  </button>
+                ))}
+              </div>
+              {user && !user.isAnonymous ? (
+                <div className="flex items-center gap-2.5 mb-3 bg-[#f2f2f2] rounded-xl px-3.5 py-2.5">
+                  {user.photoURL
+                    ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                    : <span className="w-7 h-7 rounded-full bg-[#111111] text-[#fcdb00] flex items-center justify-center text-[11px] font-bold uppercase flex-shrink-0">{(user.displayName || 'C').charAt(0)}</span>
+                  }
+                  <span className="text-[11px] font-bold text-gray-500 truncate">Publicando como <span className="text-[#111111]">{user.displayName || 'vos'}</span></span>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    placeholder="Tu nombre (opcional)"
+                    value={opinionNombre}
+                    onChange={e => setOpinionNombre(e.target.value)}
+                    maxLength={60}
+                    className="w-full p-3.5 rounded-xl bg-[#f2f2f2] outline-none font-bold text-sm mb-3 focus:ring-2 focus:ring-[#fcdb00] transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-[11px] font-bold text-gray-500 uppercase tracking-widest hover:border-[#fcdb00] hover:bg-[#fcdb00]/5 transition-all mb-3"
+                  >
+                    <i className="fab fa-google text-sm text-[#EA4335]"></i> O continuá con Google
+                  </button>
+                </>
+              )}
+              <textarea
+                rows={3}
+                placeholder="Contanos tu experiencia con la tienda..."
+                value={opinionTexto}
+                onChange={e => setOpinionTexto(e.target.value)}
+                maxLength={500}
+                className="w-full p-3.5 rounded-xl bg-[#f2f2f2] outline-none font-medium text-sm mb-3 resize-none focus:ring-2 focus:ring-[#fcdb00] transition-all"
+              />
+              {opinionError && <p className="text-red-500 text-xs font-bold mb-3">{opinionError}</p>}
+              <button
+                onClick={enviarOpinionHome}
+                disabled={opinionEnviando}
+                className="w-full bg-[#111111] text-[#fcdb00] font-bebas py-3.5 rounded-xl uppercase tracking-wider text-lg hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {opinionEnviando ? 'Enviando...' : 'Publicar opinión'}
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Opiniones aprobadas */}
+        <div className="grid gap-3 sm:grid-cols-2 content-start">
+          {opinionesHome.length === 0 ? (
+            <div className="sm:col-span-2 bg-white rounded-[1.5rem] border border-dashed border-gray-200 p-8 text-center">
+              <p className="text-gray-400 text-[11px] font-bold uppercase tracking-widest">Todavía no hay opiniones publicadas</p>
+            </div>
+          ) : opinionesHome.map(op => (
+            <div key={op.id} className="relative bg-white rounded-[1.5rem] border border-gray-200 shadow-[0_10px_30px_rgba(0,0,0,0.07)] p-6 pt-7">
+              <img src={CONFIG.logoImage} alt="028 Import" className="absolute top-5 right-6 h-6 w-auto object-contain opacity-70" />
+              <span className="flex items-center gap-0.5 mb-3">
+                {[1, 2, 3, 4, 5].map(n => (
+                  <i key={n} className={`fas fa-star text-[13px] ${n <= (op.rating || 0) ? 'text-[#fcdb00]' : 'text-gray-200'}`}></i>
+                ))}
+              </span>
+              {op.text && <p className="text-[14px] text-[#111111] leading-relaxed mb-4">"{op.text}"</p>}
+              <p className="font-bebas text-lg uppercase tracking-wide text-gray-500">— {op.name || 'Cliente'}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+
   const renderOrderedHomeBlocks = () => {
     const result = [];
-    normalizedHomeLayout
-      .filter(block => block.active !== false)
-      .forEach((block) => {
+    let logosInsertada = false;
+    const bloquesActivos = normalizedHomeLayout.filter(block => block.active !== false);
+
+    // "row:2" y "before-last" son posiciones relativas, no atadas al nombre de una
+    // sección puntual. Antes, elegir "Después de Perfumes" literalmente guardaba el
+    // id de esa sección, y si después la reordenabas desde el panel, el 3D o la
+    // barra de marcas se iban con ella a donde sea que Perfumes terminara. Con estas
+    // dos opciones, la posición se recalcula sola contra el orden actual: 028
+    // Community no cuenta como "hilera" acá, porque son reels, no productos.
+    const hilerasDeProductos = bloquesActivos.filter(b => b.id !== 'community');
+    const segundaHilera = hilerasDeProductos[1] || null;
+    const ultimaHilera = hilerasDeProductos[hilerasDeProductos.length - 1] || null;
+
+    bloquesActivos.forEach((block) => {
+        // La barra de marcas "antes de la última hilera" se inserta ANTES de esa
+        // hilera, no después.
+        if (logosBarPosition === 'before-last' && !logosInsertada && ultimaHilera && block.id === ultimaHilera.id) {
+          result.push(<React.Fragment key="logos-bar">{logosBarNode}</React.Fragment>);
+          logosInsertada = true;
+        }
+
         if (block.id === 'community') {
           result.push(<React.Fragment key="home-block-community">{renderCommunitySection()}</React.Fragment>);
         } else {
           const sec = homeSections.find(section => section.id === block.id);
           if (sec) result.push(<React.Fragment key={`home-block-${block.id}`}>{renderSingleHomeSection(sec)}</React.Fragment>);
         }
-        if (vape3dPosition === block.id) {
+
+        if (vape3dPosition === block.id || (vape3dPosition === 'row:2' && segundaHilera && block.id === segundaHilera.id)) {
           result.push(<React.Fragment key="vape3d-showcase"><LazyVapeSpecs3D /></React.Fragment>);
         }
+
+        // La barra de marcas va donde diga el panel (settings/logos_bar_position).
+        if (logosBarPosition === block.id && !logosInsertada) {
+          result.push(<React.Fragment key="logos-bar">{logosBarNode}</React.Fragment>);
+          logosInsertada = true;
+        }
       });
-    result.push(<React.Fragment key="logos-bar"><LogosBar /></React.Fragment>);
+    // Si todavía no se configuró ninguna posición, se muestra al final como antes.
+    if (!logosInsertada) result.push(<React.Fragment key="logos-bar-fallback">{logosBarNode}</React.Fragment>);
     return result;
   };
 
@@ -2051,12 +2279,15 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           top: 0; left: 1rem; right: 1rem;
         }
 
-        /* Logo bar float */
+        /* Logo bar float: sólo se mueve, el color/opacidad queda fijo siempre
+           (antes bajaba a 0.7 de opacidad y volvía a 1, y se notaba como un
+           cambio de color entre gris y color fuerte). */
         @keyframes logoFloat {
-          0%, 100% { transform: translateY(0px); opacity: 0.7; }
-          50%       { transform: translateY(-5px); opacity: 1; }
+          0%, 100% { transform: translateY(0px); }
+          50%       { transform: translateY(-5px); }
         }
         .logo-float {
+          opacity: 1;
           animation: logoFloat 10s ease-in-out infinite;
         }
 
@@ -2555,6 +2786,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
               </HorizontalScroll>
             </div>
             {renderOrderedHomeBlocks()}
+            {renderOpinionesSection()}
           </main>
       </div>
       )}
@@ -2929,7 +3161,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                     <span className="font-bebas text-3xl text-[#111111] tracking-wide">{CONFIG.currencySymbol}{formatPrice(cart.reduce((a, i) => a + i.qty * (i.isUpsell ? i.upsellPrice : getUnitPromoPrice(i)), 0))}</span>
                   </div>
                   <button
-                    onClick={() => closeCart(() => setIsCheckoutOpen(true))}
+                    onClick={() => closeCart(() => router.push('/checkout'))}
                     className="w-full bg-[#111111] text-[#fcdb00] font-bebas py-4 rounded-xl uppercase tracking-wider text-xl flex justify-center items-center gap-3 hover:brightness-110 active:scale-95 transition-all"
                   >
                     Finalizar Compra <i className="fas fa-arrow-right text-lg"></i>
@@ -2990,11 +3222,22 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                         />
                       </div>
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           if (appliedCoupon) { setAppliedCoupon(null); setCouponCode(''); setCouponError(''); return; }
-                          const found = coupons.find(c => c.code === couponCode.trim().toUpperCase() && c.active);
-                          if (found) { setAppliedCoupon(found); setCouponError(''); }
-                          else setCouponError('Cupón inválido o expirado');
+                          const codigo = couponCode.trim().toUpperCase();
+                          if (!codigo) return;
+                          try {
+                            const r = await fetch('/api/cupon', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ code: codigo }),
+                            });
+                            const datos = await r.json();
+                            if (datos.valido) { setAppliedCoupon({ code: datos.code, discount: datos.discount }); setCouponError(''); }
+                            else setCouponError('Cupón inválido o expirado');
+                          } catch {
+                            setCouponError('No se pudo validar el cupón, probá de nuevo');
+                          }
                         }}
                         className={`px-4 py-2 rounded-none text-xs font-bold uppercase tracking-widest transition-all flex-shrink-0 ${appliedCoupon ? 'bg-red-100 text-red-500 hover:bg-red-200' : 'bg-[#111111] text-[#fcdb00] hover:bg-[#222]'}`}
                       >
@@ -3075,6 +3318,11 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                           <div className="flex-1 min-w-0">
                             <p className="font-bebas text-xl uppercase tracking-wide text-[#111111] leading-tight truncate">{item.name}</p>
                             <p className="text-xs font-bold text-gray-400 font-poppins">x{item.qty}</p>
+                            {/* Si el precio bajó por una promo de cantidad (no por un cupón), se
+                                aclara acá mismo: sin esto, el precio parece bajar solo. */}
+                            {!item.isUpsell && getUnitPromoPrice(item) < item.price && (
+                              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Promo x{item.qty}</p>
+                            )}
                           </div>
                           <span className="font-bebas text-2xl text-[#111111] flex-shrink-0">${formatPrice(item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item)))}</span>
                         </div>
@@ -3086,13 +3334,47 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                         <span className="font-bebas text-lg text-[#111111]">${formatPrice(shippingCost)}</span>
                       </div>
                     )}
+
+                    {/* Pago Seguro: cubre el pedido si se pierde en el envío. Un
+                        interruptor grande, no un check chiquito, porque cambia lo que
+                        se va a pagar y la persona tiene que verlo antes de confirmar. */}
+                    <div className="flex items-start gap-3 mt-4 pt-4 border-t border-gray-100">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={pagoSeguroActivo}
+                        onClick={() => { setPagoSeguroActivo(v => !v) }}
+                        className={`relative w-11 h-6 rounded-full flex-shrink-0 mt-0.5 transition-colors ${pagoSeguroActivo ? 'bg-[#fcdb00]' : 'bg-gray-300'}`}
+                      >
+                        <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${pagoSeguroActivo ? 'translate-x-[20px]' : 'translate-x-0'}`} />
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <button type="button" onClick={() => { setPagoSeguroActivo(v => !v) }} className="flex items-center gap-1.5 text-left">
+                          <i className="fas fa-shield-alt text-[#fcdb00] text-sm"></i>
+                          <span className="font-bebas text-lg uppercase tracking-wide text-[#111111]">Pago Seguro</span>
+                        </button>
+                        <p className="text-[11px] text-gray-500 font-poppins leading-snug mt-0.5">
+                          Si tu pedido se pierde en el envío, te lo cubrimos nosotros.
+                          {' '}
+                          <button type="button" onClick={() => setShowPagoSeguroInfo(true)} className="text-[#8a6d00] font-bold underline underline-offset-2">
+                            ¿Cómo funciona?
+                          </button>
+                        </p>
+
+                      </div>
+                      <span className="font-bebas text-lg text-[#111111] flex-shrink-0">+${formatPrice(PRECIO_PAGO_SEGURO)}</span>
+                    </div>
                   </div>
                   {/* Total + botón */}
                   <div className="checkout-total bg-[#111111] p-5 flex flex-col gap-4">
                     {(() => {
                       const precioOriginal = cart.reduce((acc, item) => acc + item.qty * item.price, 0) + shippingCost;
                       const totalFinal = calculateTotal();
-                      const ahorro = precioOriginal - totalFinal;
+                      // El Pago Seguro suma al total, pero no es un descuento negativo:
+                      // se resta acá para que "ahorro" siga reflejando sólo las promos y
+                      // el pago en efectivo, no se vea afectado por un servicio aparte.
+                      const pagoSeguroMonto = pagoSeguroActivo ? PRECIO_PAGO_SEGURO : 0;
+                      const ahorro = precioOriginal - (totalFinal - pagoSeguroMonto);
                       const promoSavings = cart.reduce((acc, item) => {
                         if (item.isUpsell) return acc;
                         const promo = getUnitPromoPrice(item);
@@ -3121,6 +3403,11 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                             <div className="flex flex-col items-end">
                               {ahorro > 0 && <span className="font-bebas text-lg text-gray-500 line-through leading-none">{CONFIG.currencySymbol}{formatPrice(precioOriginal)}</span>}
                               <span className="font-bebas text-5xl text-white tracking-wide leading-none"><span className="text-[#fcdb00] text-3xl mr-1">{CONFIG.currencySymbol}</span>{formatPrice(totalFinal)}</span>
+                              {pagoSeguroActivo && (
+                                <span className="text-[10px] text-gray-400 font-poppins flex items-center gap-1 mt-0.5">
+                                  <i className="fas fa-shield-alt text-[#fcdb00]"></i> Incluye Pago Seguro {CONFIG.currencySymbol}{formatPrice(PRECIO_PAGO_SEGURO)}
+                                </span>
+                              )}
                             </div>
                           </div>
                           {/* Desglose deslizable */}
@@ -3156,12 +3443,13 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       );
                     })()}
                     <button
-                      onClick={handleCheckout}
+                      onClick={() => { if (!pagoSeguroActivo) { setShowConfirmarSinPagoSeguro(true); return; } handleCheckout(); }}
                       disabled={!isFormValid}
                       className={`w-full font-bebas py-4 rounded-xl uppercase tracking-wider text-xl flex justify-center items-center gap-3 transition-all ${isFormValid ? 'bg-[#fcdb00] text-[#111111] active:scale-95 hover:brightness-95' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}`}
                     >
                       <i className="fas fa-check-circle text-2xl"></i> Confirmar Pedido
                     </button>
+
                   </div>
                 </div>
               </div>
@@ -3171,6 +3459,85 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         </div>
         );
       })()}
+
+      {/* --- ÚLTIMO AVISO: CONFIRMAR SIN PAGO SEGURO ---
+          Se muestra sólo cuando la persona va a confirmar sin haber activado el Pago
+          Seguro. Es la última oportunidad de que lo note antes de que el pedido salga:
+          decidir "no" al lado del interruptor es fácil de hacer sin pensarlo. */}
+      {showConfirmarSinPagoSeguro && (
+        <div className="fixed inset-0 z-[131] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setShowConfirmarSinPagoSeguro(false)}></div>
+          <div className="relative bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 border border-gray-200">
+            <div className="bg-gray-50 p-6 text-center relative border-b border-gray-200">
+              <button onClick={() => setShowConfirmarSinPagoSeguro(false)} aria-label="Cerrar" className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-[#111111] hover:bg-[#fcdb00] transition-colors"><i className="fas fa-times"></i></button>
+              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i className="fas fa-shield-alt text-3xl text-gray-400"></i>
+              </div>
+              <h2 className="text-2xl font-bebas text-[#111111] uppercase tracking-wide leading-tight">¿Seguro que no querés<br/>Pago Seguro?</h2>
+            </div>
+            <div className="p-6 flex flex-col gap-4">
+              <p className="text-[13px] text-gray-600 font-poppins leading-snug">
+                Sin Pago Seguro, si tu pedido se pierde en el envío <strong className="text-[#111111]">no podemos hacernos cargo</strong> de esa pérdida.
+              </p>
+              <p className="text-[13px] text-gray-600 font-poppins leading-snug">
+                Por sólo <strong className="text-[#111111]">{CONFIG.currencySymbol}{formatPrice(PRECIO_PAGO_SEGURO)}</strong> más, si se pierde en el camino te lo reenviamos o te devolvemos la plata.
+              </p>
+              <button
+                onClick={() => { setPagoSeguroActivo(true); setShowConfirmarSinPagoSeguro(false); }}
+                className="w-full bg-[#fcdb00] text-[#111111] py-3.5 rounded-xl font-bebas text-lg uppercase tracking-widest hover:brightness-95 transition-all flex items-center justify-center gap-2"
+              >
+                <i className="fas fa-shield-alt"></i> Sí, sumar Pago Seguro
+              </button>
+              <button
+                onClick={() => { setShowConfirmarSinPagoSeguro(false); handleCheckout(); }}
+                className="w-full text-gray-400 py-2 font-poppins text-[12px] font-bold uppercase tracking-widest hover:text-gray-600 transition-colors"
+              >
+                Continuar sin Pago Seguro
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL EXPLICATIVO: PAGO SEGURO ---
+          Se cierra tocando la X o afuera, como cualquier modal de la tienda. Es
+          texto corto a propósito: la idea es que se entienda de un vistazo, no que
+          haga falta leer un reglamento para decidir si conviene. */}
+      {showPagoSeguroInfo && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setShowPagoSeguroInfo(false)}></div>
+          <div className="relative bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 border border-gray-200">
+            <div className="bg-gray-50 p-6 text-center relative border-b border-gray-200">
+              <button onClick={() => setShowPagoSeguroInfo(false)} aria-label="Cerrar" className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-[#111111] hover:bg-[#fcdb00] transition-colors"><i className="fas fa-times"></i></button>
+              <div className="w-16 h-16 bg-[#fcdb00] rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+                <i className="fas fa-shield-alt text-3xl text-[#111111]"></i>
+              </div>
+              <h2 className="text-3xl font-bebas text-[#111111] uppercase tracking-wide">Pago Seguro</h2>
+              <p className="text-[#8a6d00] text-[11px] font-bold uppercase tracking-widest font-poppins">+{CONFIG.currencySymbol}{formatPrice(PRECIO_PAGO_SEGURO)} por pedido</p>
+            </div>
+            <div className="p-6 flex flex-col gap-4">
+              <div className="flex gap-3">
+                <span className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i className="fas fa-check text-xs"></i></span>
+                <p className="text-[13px] text-gray-600 font-poppins leading-snug">
+                  <strong className="text-[#111111]">Si activás Pago Seguro</strong> y tu pedido se pierde en el camino (un problema del cadete, del envío), lo cubrimos nosotros: te lo reenviamos o te devolvemos la plata, como prefieras.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <span className="w-8 h-8 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center flex-shrink-0 mt-0.5"><i className="fas fa-times text-xs"></i></span>
+                <p className="text-[13px] text-gray-600 font-poppins leading-snug">
+                  <strong className="text-[#111111]">Sin Pago Seguro</strong>, si el pedido se pierde en el envío, no podemos hacernos cargo de esa pérdida.
+                </p>
+              </div>
+              <p className="text-[10px] text-gray-400 font-poppins leading-snug pt-2 border-t border-gray-100">
+                No cubre errores de dirección cargados por vos ni el rechazo del pedido al recibirlo.
+              </p>
+              <button onClick={() => setShowPagoSeguroInfo(false)} className="w-full bg-[#111111] text-white py-3.5 rounded-xl font-bebas text-lg uppercase tracking-widest hover:bg-[#fcdb00] hover:text-[#111111] transition-colors">
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- BOTONES FLOTANTES INDEPENDIENTES (Se esconden si el carrito se abre) --- */}
 

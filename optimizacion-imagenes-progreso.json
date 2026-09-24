@@ -1,0 +1,740 @@
+{
+  "hechas": {
+    "productos/e768f41adbc70900.png": {
+      "antesKB": 305.5771484375,
+      "despuesKB": 83.7265625
+    },
+    "productos/51c77444505136cd.png": {
+      "antesKB": 265.41796875,
+      "despuesKB": 71.1904296875
+    },
+    "productos/78ea344feac06ec3.png": {
+      "antesKB": 243.4755859375,
+      "despuesKB": 59.82421875
+    },
+    "productos/076154c02ed45d15.png": {
+      "antesKB": 261.3720703125,
+      "despuesKB": 69.205078125
+    },
+    "productos/4982f7e8acf289d0.png": {
+      "antesKB": 255.5595703125,
+      "despuesKB": 71.1103515625
+    },
+    "productos/1b0c362558009fe1.webp": {
+      "antesKB": 63.841796875,
+      "despuesKB": 63.841796875,
+      "saltada": true
+    },
+    "productos/562c82cb0895455e.png": {
+      "antesKB": 288.296875,
+      "despuesKB": 76.6572265625
+    },
+    "productos/190de34890b3c8ab.jpg": {
+      "antesKB": 94.8125,
+      "despuesKB": 94.8125,
+      "saltada": true
+    },
+    "productos/0b7762734776c353.webp": {
+      "antesKB": 81.25,
+      "despuesKB": 81.25,
+      "saltada": true
+    },
+    "productos/ff8df8b1906835b3.jpg": {
+      "antesKB": 78.2802734375,
+      "despuesKB": 78.2802734375,
+      "saltada": true
+    },
+    "productos/b507cd5f228f7905.jpg": {
+      "antesKB": 104.2666015625,
+      "despuesKB": 104.2666015625,
+      "saltada": true
+    },
+    "productos/4316332b552148ed.jpg": {
+      "antesKB": 93.2041015625,
+      "despuesKB": 93.2041015625,
+      "saltada": true
+    },
+    "productos/204d5cba6f650d0b.png": {
+      "antesKB": 703.4794921875,
+      "despuesKB": 198.9443359375
+    },
+    "productos/06cec6ed85757f1f.png": {
+      "antesKB": 803.240234375,
+      "despuesKB": 180.66796875
+    },
+    "productos/475d7907b0f4d6b8.png": {
+      "antesKB": 882.26171875,
+      "despuesKB": 287.23828125
+    },
+    "productos/2126c63789ad11fc.png": {
+      "antesKB": 1011.9248046875,
+      "despuesKB": 259.255859375
+    },
+    "productos/358e3a15a43419e6.png": {
+      "antesKB": 1116.169921875,
+      "despuesKB": 215.2431640625
+    },
+    "productos/870b17ed08d6e468.png": {
+      "antesKB": 1146.5380859375,
+      "despuesKB": 221.1884765625
+    },
+    "productos/530d594b883da872.png": {
+      "antesKB": 1128.302734375,
+      "despuesKB": 216.806640625
+    },
+    "productos/280c0db50f251a5a.png": {
+      "antesKB": 766.2529296875,
+      "despuesKB": 190.79296875
+    },
+    "productos/092c67e2b945bcba.png": {
+      "antesKB": 856.51171875,
+      "despuesKB": 203.158203125
+    },
+    "productos/8b786e8906a7617e.png": {
+      "antesKB": 716.74609375,
+      "despuesKB": 210.4443359375
+    },
+    "productos/9e138ace3140b629.png": {
+      "antesKB": 588.5693359375,
+      "despuesKB": 151.2265625
+    },
+    "productos/89b0cbf2537be0a6.png": {
+      "antesKB": 663.5439453125,
+      "despuesKB": 213.6416015625
+    },
+    "productos/842d41bd15c69801.png": {
+      "antesKB": 667.9638671875,
+      "despuesKB": 204.732421875
+    },
+    "productos/9f56bdaeb21a6d6f.png": {
+      "antesKB": 726.8603515625,
+      "despuesKB": 227.0380859375
+    },
+    "productos/71fcd333d833dbf9.png": {
+      "antesKB": 650.0390625,
+      "despuesKB": 195.62890625
+    },
+    "productos/80cd7f1278529725.png": {
+      "antesKB": 661.98828125,
+      "despuesKB": 200.9423828125
+    },
+    "productos/91dd94a18aecfcef.png": {
+      "antesKB": 598.6494140625,
+      "despuesKB": 194.0546875
+    },
+    "productos/b4c7d7fc334ee1ff.png": {
+      "antesKB": 490.427734375,
+      "despuesKB": 131.3583984375
+    },
+    "productos/073edcc9ccc9b639.png": {
+      "antesKB": 665.3876953125,
+      "despuesKB": 204.4443359375
+    },
+    "productos/2dc148394ec856c9.png": {
+      "antesKB": 517.841796875,
+      "despuesKB": 165.4912109375
+    },
+    "productos/c860a90c62abc364.png": {
+      "antesKB": 571.2353515625,
+      "despuesKB": 165.875
+    },
+    "productos/14a4b7b24af5926e.png": {
+      "antesKB": 556.2685546875,
+      "despuesKB": 176.6767578125
+    },
+    "productos/2c592118fee62dca.png": {
+      "antesKB": 304.48046875,
+      "despuesKB": 106.7509765625
+    },
+    "productos/1cadb6a454b0bc1a.png": {
+      "antesKB": 784.4892578125,
+      "despuesKB": 280.7529296875
+    },
+    "productos/01a16f0d55b6ee11.png": {
+      "antesKB": 871.8505859375,
+      "despuesKB": 283.1943359375
+    },
+    "productos/fed8cc0135d90852.png": {
+      "antesKB": 795.68359375,
+      "despuesKB": 266.81640625
+    },
+    "productos/f6b9c9b6b768f876.png": {
+      "antesKB": 797.1572265625,
+      "despuesKB": 265.8740234375
+    },
+    "productos/756e9196c21ad5c6.png": {
+      "antesKB": 829.3173828125,
+      "despuesKB": 279.314453125
+    },
+    "productos/341c69d43f8958ba.png": {
+      "antesKB": 356.4384765625,
+      "despuesKB": 160.322265625
+    },
+    "productos/0a817528c7f88183.png": {
+      "antesKB": 106.3701171875,
+      "despuesKB": 106.3701171875,
+      "saltada": true
+    },
+    "productos/ebefa46e41bd07fd.png": {
+      "antesKB": 976.439453125,
+      "despuesKB": 351.4443359375
+    },
+    "productos/b6628ef0f4afdc6c.png": {
+      "antesKB": 1342.703125,
+      "despuesKB": 333.0400390625
+    },
+    "productos/3de4fa310c61bd74.png": {
+      "antesKB": 1360.4501953125,
+      "despuesKB": 331.8037109375
+    },
+    "productos/4cf9c24b8b55d429.png": {
+      "antesKB": 981.591796875,
+      "despuesKB": 355.7666015625
+    },
+    "productos/3b544d8c6acf0f2f.png": {
+      "antesKB": 978.7607421875,
+      "despuesKB": 327.7236328125
+    },
+    "productos/c5bfd66694192c6f.png": {
+      "antesKB": 1005.8828125,
+      "despuesKB": 320.8984375
+    },
+    "productos/66f7f2dd9d8ce41d.png": {
+      "antesKB": 1085.16015625,
+      "despuesKB": 374.517578125
+    },
+    "productos/6d896f210e8ebdf2.png": {
+      "antesKB": 1043.353515625,
+      "despuesKB": 325.4375
+    },
+    "productos/da26661640eaa91d.png": {
+      "antesKB": 1023.1787109375,
+      "despuesKB": 323.732421875
+    },
+    "productos/a3b0a637d56c4fd1.png": {
+      "antesKB": 1080.3212890625,
+      "despuesKB": 336.396484375
+    },
+    "productos/7a76200284a0d08b.png": {
+      "antesKB": 1187.802734375,
+      "despuesKB": 382.1357421875
+    },
+    "productos/39606ac1200d390a.png": {
+      "antesKB": 1043.91015625,
+      "despuesKB": 321.4326171875
+    },
+    "productos/9cd512ca2c982283.png": {
+      "antesKB": 1038.4189453125,
+      "despuesKB": 357.310546875
+    },
+    "productos/ac55a77b0726be1c.png": {
+      "antesKB": 821.6962890625,
+      "despuesKB": 281.3876953125
+    },
+    "productos/3c9d10853548a7ef.png": {
+      "antesKB": 1000.4990234375,
+      "despuesKB": 298.162109375
+    },
+    "productos/992819a0d4a5a542.png": {
+      "antesKB": 1279.7724609375,
+      "despuesKB": 355.3740234375
+    },
+    "productos/84455f5e89bdea68.png": {
+      "antesKB": 1099.5546875,
+      "despuesKB": 352.3740234375
+    },
+    "productos/43ce7e50332353dc.png": {
+      "antesKB": 1081.0283203125,
+      "despuesKB": 355.7431640625
+    },
+    "productos/aa73771716db6340.png": {
+      "antesKB": 1117.45703125,
+      "despuesKB": 351.607421875
+    },
+    "productos/6b4e4c5e52269a9d.png": {
+      "antesKB": 1161.5146484375,
+      "despuesKB": 361.3818359375
+    },
+    "productos/36991e71b8693c06.png": {
+      "antesKB": 1284.2314453125,
+      "despuesKB": 352.486328125
+    },
+    "productos/c4ea086326e742b8.png": {
+      "antesKB": 1205.2255859375,
+      "despuesKB": 390.6455078125
+    },
+    "productos/616680ddb48d0cdd.png": {
+      "antesKB": 1289.4140625,
+      "despuesKB": 377.96484375
+    },
+    "productos/852468614e0ef948.png": {
+      "antesKB": 1364.267578125,
+      "despuesKB": 441.8740234375
+    },
+    "productos/a0ea52db4215cb2d.png": {
+      "antesKB": 1269.4736328125,
+      "despuesKB": 395.3408203125
+    },
+    "productos/36bbb84debe7a562.png": {
+      "antesKB": 1336.9755859375,
+      "despuesKB": 427.7998046875
+    },
+    "productos/c2fced7d8f8f921f.png": {
+      "antesKB": 1329.1435546875,
+      "despuesKB": 411.90234375
+    },
+    "productos/34740286e0709450.png": {
+      "antesKB": 1364.6845703125,
+      "despuesKB": 398.6416015625
+    },
+    "productos/49734aba2e144ef8.png": {
+      "antesKB": 2233.0224609375,
+      "despuesKB": 258.6826171875
+    },
+    "productos/5e1f58482a29cd3c.png": {
+      "antesKB": 2035.0625,
+      "despuesKB": 203.5908203125
+    },
+    "productos/ae2371c8b17a6df6.png": {
+      "antesKB": 1908.86328125,
+      "despuesKB": 195.2197265625
+    },
+    "productos/9dff33f8a12a9f96.png": {
+      "antesKB": 2054.3896484375,
+      "despuesKB": 232.548828125
+    },
+    "productos/4cd0dd3dc019b114.png": {
+      "antesKB": 2729.2861328125,
+      "despuesKB": 473.8408203125
+    },
+    "productos/53596e38553afac0.png": {
+      "antesKB": 2198.92578125,
+      "despuesKB": 279.16015625
+    },
+    "productos/251284206c07a9db.png": {
+      "antesKB": 2091.2060546875,
+      "despuesKB": 327.0400390625
+    },
+    "productos/0099b0992d323c9d.png": {
+      "antesKB": 1042.931640625,
+      "despuesKB": 339.0830078125
+    },
+    "productos/cabe598261c6a0f6.png": {
+      "antesKB": 2089.087890625,
+      "despuesKB": 384.9970703125
+    },
+    "productos/867840755f5b9e22.png": {
+      "antesKB": 2333.98046875,
+      "despuesKB": 348.16796875
+    },
+    "productos/f9816b105221b3fa.png": {
+      "antesKB": 2094.029296875,
+      "despuesKB": 301.2177734375
+    },
+    "productos/c559cd3c8c8aee2d.png": {
+      "antesKB": 2464.5390625,
+      "despuesKB": 313.80078125
+    },
+    "productos/b146c70b855b9622.png": {
+      "antesKB": 2315.474609375,
+      "despuesKB": 446.181640625
+    },
+    "productos/c441111b7fd12c24.png": {
+      "antesKB": 2415.6845703125,
+      "despuesKB": 428.8896484375
+    },
+    "productos/0924b20e4c6c654b.png": {
+      "antesKB": 2416.966796875,
+      "despuesKB": 403.4091796875
+    },
+    "productos/b498870c4e34f7aa.png": {
+      "antesKB": 2173.4072265625,
+      "despuesKB": 395.673828125
+    },
+    "productos/02aca93bf57654dc.png": {
+      "antesKB": 2670.7021484375,
+      "despuesKB": 438.099609375
+    },
+    "productos/0174b4f733d2d952.png": {
+      "antesKB": 2662.8291015625,
+      "despuesKB": 489.11328125
+    },
+    "productos/41cf6c59e68f564a.png": {
+      "antesKB": 2473.431640625,
+      "despuesKB": 413.654296875
+    },
+    "productos/5456d438746b9db5.png": {
+      "antesKB": 2522.8505859375,
+      "despuesKB": 445.8427734375
+    },
+    "productos/9eccfecaaa8e2c83.png": {
+      "antesKB": 2550.357421875,
+      "despuesKB": 432.93359375
+    },
+    "productos/9c102a8dcad27efd.png": {
+      "antesKB": 2341.58984375,
+      "despuesKB": 448.07421875
+    },
+    "productos/58f07330241e8757.png": {
+      "antesKB": 2254.2236328125,
+      "despuesKB": 405.140625
+    },
+    "productos/e6013338c19f7cf3.png": {
+      "antesKB": 2378.724609375,
+      "despuesKB": 419.798828125
+    },
+    "productos/3c843dd72ad2816c.png": {
+      "antesKB": 2474.80859375,
+      "despuesKB": 416.4130859375
+    },
+    "productos/553d02cc26dae609.png": {
+      "antesKB": 2289.9912109375,
+      "despuesKB": 397.6025390625
+    },
+    "productos/e71718bd1901a0b0.png": {
+      "antesKB": 2575.1552734375,
+      "despuesKB": 421.9638671875
+    },
+    "productos/f8bd8a1dd5f6e74b.png": {
+      "antesKB": 2573.8203125,
+      "despuesKB": 433.955078125
+    },
+    "productos/2cc78f48759925dc.png": {
+      "antesKB": 2351.810546875,
+      "despuesKB": 385.4658203125
+    },
+    "productos/27db3c55aa790c92.png": {
+      "antesKB": 2483.5791015625,
+      "despuesKB": 453.3154296875
+    },
+    "productos/8faeab42e087800c.png": {
+      "antesKB": 2273.345703125,
+      "despuesKB": 407.5986328125
+    },
+    "productos/d5e6c8a327e78e62.png": {
+      "antesKB": 2323.41796875,
+      "despuesKB": 436.326171875
+    },
+    "productos/d08b8334c76b2278.png": {
+      "antesKB": 2481.44140625,
+      "despuesKB": 443.6328125
+    },
+    "productos/ee142f7fa13e5910.png": {
+      "antesKB": 2189.3505859375,
+      "despuesKB": 357.6455078125
+    },
+    "productos/3b5c7842be76aff3.png": {
+      "antesKB": 2189.591796875,
+      "despuesKB": 338.458984375
+    },
+    "productos/29b8824b8e1cf65c.png": {
+      "antesKB": 1932.98046875,
+      "despuesKB": 238.6396484375
+    },
+    "productos/83f8d861e9cc8f09.png": {
+      "antesKB": 2242.7734375,
+      "despuesKB": 304.9033203125
+    },
+    "productos/7e19a652150c61ed.png": {
+      "antesKB": 2226.3388671875,
+      "despuesKB": 432.91015625
+    },
+    "productos/cde930dbbb7fb103.png": {
+      "antesKB": 2217.0009765625,
+      "despuesKB": 378.3076171875
+    },
+    "productos/f0295888b9c175e5.png": {
+      "antesKB": 1728.587890625,
+      "despuesKB": 148.267578125
+    },
+    "productos/ddce7f46bed93396.png": {
+      "antesKB": 2202.154296875,
+      "despuesKB": 377.1513671875
+    },
+    "productos/a23a169c92e36d9c.png": {
+      "antesKB": 2278.62109375,
+      "despuesKB": 348.18359375
+    },
+    "productos/f29cb8cca3155e4a.png": {
+      "antesKB": 2197.865234375,
+      "despuesKB": 354.4228515625
+    },
+    "productos/d0ba0e0ebb13bc91.png": {
+      "antesKB": 2292.1474609375,
+      "despuesKB": 473.828125
+    },
+    "productos/0ed022c15ed0a527.png": {
+      "antesKB": 2266.7216796875,
+      "despuesKB": 412.51953125
+    },
+    "productos/7d21d6232ce7a419.png": {
+      "antesKB": 2109.158203125,
+      "despuesKB": 335.8603515625
+    },
+    "productos/ecfbda5cc7d1c9ee.png": {
+      "antesKB": 2287.1474609375,
+      "despuesKB": 421.0498046875
+    },
+    "productos/9f90cdebe85e3fbc.png": {
+      "antesKB": 2151.771484375,
+      "despuesKB": 411.5400390625
+    },
+    "productos/d247510383e3a71c.png": {
+      "antesKB": 1350.9853515625,
+      "despuesKB": 379.576171875
+    },
+    "productos/3da6c5e55dff3872.png": {
+      "antesKB": 1237.9765625,
+      "despuesKB": 393.7900390625
+    },
+    "productos/8d7d714c7504d41c.png": {
+      "antesKB": 1298.826171875,
+      "despuesKB": 360.62109375
+    },
+    "productos/af5d111197467d89.png": {
+      "antesKB": 1457.7724609375,
+      "despuesKB": 402.6005859375
+    },
+    "productos/684505afb5ef2cf8.png": {
+      "antesKB": 1519.455078125,
+      "despuesKB": 409.537109375
+    },
+    "productos/85374611b71ec8ee.png": {
+      "antesKB": 1183.8955078125,
+      "despuesKB": 287.37890625
+    },
+    "productos/b2df2787d5cc10db.png": {
+      "antesKB": 1455.400390625,
+      "despuesKB": 405.2763671875
+    },
+    "productos/c8ff00939efde1b2.png": {
+      "antesKB": 1553.703125,
+      "despuesKB": 433.716796875
+    },
+    "productos/39a048241721e920.png": {
+      "antesKB": 1477.248046875,
+      "despuesKB": 455.6689453125
+    },
+    "productos/63d388dd589b5fb0.png": {
+      "antesKB": 1391.7109375,
+      "despuesKB": 371.7724609375
+    },
+    "productos/0a5006d0dea0a974.png": {
+      "antesKB": 1014.30859375,
+      "despuesKB": 333.1298828125
+    },
+    "productos/6323f496830a6286.png": {
+      "antesKB": 1124.2890625,
+      "despuesKB": 317.671875
+    },
+    "productos/55d1169aff7a0ffe.png": {
+      "antesKB": 2266.8701171875,
+      "despuesKB": 442.240234375
+    },
+    "productos/1b3bb0547027902d.png": {
+      "antesKB": 2374.9853515625,
+      "despuesKB": 423.8564453125
+    },
+    "productos/c012cc09d89fdfb6.png": {
+      "antesKB": 2524.1796875,
+      "despuesKB": 383.5048828125
+    },
+    "productos/a5ba1b939a8d8f3c.png": {
+      "antesKB": 2500.6767578125,
+      "despuesKB": 439.8330078125
+    },
+    "productos/630980ec91012324.png": {
+      "antesKB": 336.3701171875,
+      "despuesKB": 108.384765625
+    },
+    "productos/395717736b8f87d5.png": {
+      "antesKB": 2143.091796875,
+      "despuesKB": 218.5361328125
+    },
+    "productos/e6971d4562655d07.png": {
+      "antesKB": 2140.349609375,
+      "despuesKB": 274.09765625
+    },
+    "productos/2536e305d7660279.png": {
+      "antesKB": 2384.40234375,
+      "despuesKB": 426.3837890625
+    },
+    "productos/915a4c2ce207ef38.png": {
+      "antesKB": 2205.48828125,
+      "despuesKB": 315.80078125
+    },
+    "productos/429002d51176c687.png": {
+      "antesKB": 2167.56640625,
+      "despuesKB": 303.6591796875
+    },
+    "productos/84906c7ed9558f86.png": {
+      "antesKB": 1937.2333984375,
+      "despuesKB": 417.1103515625
+    },
+    "productos/29450c93985345fe.png": {
+      "antesKB": 2540.248046875,
+      "despuesKB": 320.96484375
+    },
+    "productos/7aa370c9d831c434.png": {
+      "antesKB": 2368.658203125,
+      "despuesKB": 261.89453125
+    },
+    "productos/f848ebd39f8be68f.png": {
+      "antesKB": 2932.71484375,
+      "despuesKB": 309.2333984375
+    },
+    "productos/5e9ba81235d41946.png": {
+      "antesKB": 1110.8701171875,
+      "despuesKB": 318.1748046875
+    },
+    "productos/a6255b5839710cf8.png": {
+      "antesKB": 1342.302734375,
+      "despuesKB": 346.5322265625
+    },
+    "productos/3e641f236b515201.png": {
+      "antesKB": 1291.7900390625,
+      "despuesKB": 332.58203125
+    },
+    "productos/9ab3e372fcd01de3.png": {
+      "antesKB": 1002.0107421875,
+      "despuesKB": 316.5146484375
+    },
+    "productos/a8da23f9a396f26f.png": {
+      "antesKB": 1175.255859375,
+      "despuesKB": 364.119140625
+    },
+    "productos/9cab364cf975a10b.png": {
+      "antesKB": 1163.8935546875,
+      "despuesKB": 340.580078125
+    },
+    "productos/4e0d7b6eb60fdf74.png": {
+      "antesKB": 1129.58984375,
+      "despuesKB": 306.1357421875
+    },
+    "productos/7e14d80a8f057ae3.png": {
+      "antesKB": 1309.1279296875,
+      "despuesKB": 342.2216796875
+    },
+    "productos/4e04aa819d3310fc.png": {
+      "antesKB": 2640.21484375,
+      "despuesKB": 444.376953125
+    },
+    "productos/b264132566de66a7.webp": {
+      "antesKB": 74.853515625,
+      "despuesKB": 74.853515625,
+      "saltada": true
+    },
+    "productos/5f12536c5bab8c5e.jpg": {
+      "antesKB": 29.57421875,
+      "despuesKB": 29.57421875,
+      "saltada": true
+    },
+    "productos/efb2c57def136090.jpg": {
+      "antesKB": 26.4267578125,
+      "despuesKB": 26.4267578125,
+      "saltada": true
+    },
+    "productos/eae5acf08d1310f9.jpg": {
+      "antesKB": 39.572265625,
+      "despuesKB": 39.572265625,
+      "saltada": true
+    },
+    "productos/4fbc80fc6df58820.jpg": {
+      "antesKB": 19.5888671875,
+      "despuesKB": 19.5888671875,
+      "saltada": true
+    },
+    "productos/6dbdfbe321f99d01.jpg": {
+      "antesKB": 95.8701171875,
+      "despuesKB": 95.8701171875,
+      "saltada": true
+    },
+    "productos/11f21b0053fcaa01.jpg": {
+      "antesKB": 131.75390625,
+      "despuesKB": 66.390625
+    },
+    "productos/68dc7b4fee931030.jpg": {
+      "antesKB": 64.3916015625,
+      "despuesKB": 64.3916015625,
+      "saltada": true
+    },
+    "productos/7ed38dfe48b80c17.jpg": {
+      "antesKB": 36.91015625,
+      "despuesKB": 36.91015625,
+      "saltada": true
+    },
+    "productos/6aaec324af797bab.jpg": {
+      "antesKB": 78.337890625,
+      "despuesKB": 78.337890625,
+      "saltada": true
+    },
+    "productos/d9242babb9016353.png": {
+      "antesKB": 269.830078125,
+      "despuesKB": 73.724609375
+    },
+    "productos/2fe4d89db4f2802c.jpg": {
+      "antesKB": 148.7451171875,
+      "despuesKB": 71.4111328125
+    },
+    "productos/90a6ce45f08f64df.jpg": {
+      "antesKB": 134.8017578125,
+      "despuesKB": 65.4794921875
+    },
+    "productos/58ab9eb28f2f6561.jpg": {
+      "antesKB": 130.4658203125,
+      "despuesKB": 65.142578125
+    },
+    "productos/d8728c8703c2241c.jpg": {
+      "antesKB": 145.76171875,
+      "despuesKB": 72.9248046875
+    },
+    "productos/d3d71b04bbb2e4a3.jpg": {
+      "antesKB": 157.90234375,
+      "despuesKB": 80.0263671875
+    },
+    "productos/52985aa575119353.jpg": {
+      "antesKB": 140.6796875,
+      "despuesKB": 70.1923828125
+    },
+    "productos/f464baffb593e7f9.jpg": {
+      "antesKB": 150.513671875,
+      "despuesKB": 73.3828125
+    },
+    "productos/2d7b3833aee9f9d8.jpg": {
+      "antesKB": 149.2529296875,
+      "despuesKB": 74.7431640625
+    },
+    "productos/06b73240d4425274.jpg": {
+      "antesKB": 137.63671875,
+      "despuesKB": 67.4453125
+    },
+    "productos/33e61605b785269d.jpg": {
+      "antesKB": 104.1748046875,
+      "despuesKB": 104.1748046875,
+      "saltada": true
+    },
+    "productos/37e199221054e4a3.webp": {
+      "antesKB": 27.8125,
+      "despuesKB": 27.8125,
+      "saltada": true
+    },
+    "productos/4ae6a53b2ec88d1b.png": {
+      "antesKB": 298.673828125,
+      "despuesKB": 72.267578125
+    },
+    "productos/80c0e1764042543b.webp": {
+      "antesKB": 75.03515625,
+      "despuesKB": 75.03515625,
+      "saltada": true
+    },
+    "productos/a1358db9ac574922.png": {
+      "antesKB": 269.65625,
+      "despuesKB": 66.4169921875
+    },
+    "productos/ca9b8b15248867a8.webp": {
+      "antesKB": 63.53125,
+      "despuesKB": 63.53125,
+      "saltada": true
+    }
+  }
+}

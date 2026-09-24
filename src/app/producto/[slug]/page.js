@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getSSRProducts, getSSRPromos } from '@/lib/getProducts';
 import { getVentasPorProducto, puestoEnSuMarca } from '@/lib/ventas';
+import { getResenasDeProducto } from '@/lib/resenas';
 import { escalonesDeProducto } from '@/lib/combos';
 import { slugProducto, buscarPorSlug } from '@/lib/slug';
 import FichaProducto from '@/components/FichaProducto';
@@ -82,7 +83,7 @@ export default async function PaginaProducto({ params }) {
 
   // Los combos por cantidad y las ventas reales. Las dos cosas se leen acá, en el
   // servidor, y viajan ya calculadas: la página no hace consultas desde el navegador.
-  const [promos, ventas] = await Promise.all([getSSRPromos(), getVentasPorProducto()]);
+  const [promos, ventas, resenas] = await Promise.all([getSSRPromos(), getVentasPorProducto(), getResenasDeProducto(producto.id)]);
   const escalones = escalonesDeProducto(promos, producto);
   const puesto = puestoEnSuMarca(ventas, producto, todos);
 
@@ -110,6 +111,11 @@ export default async function PaginaProducto({ params }) {
         : 'https://schema.org/InStock',
       seller: { '@type': 'Organization', name: '028 Import' },
     },
+    aggregateRating: resenas.cantidad > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: resenas.promedio.toFixed(1),
+      reviewCount: resenas.cantidad,
+    } : undefined,
   };
 
   return (
@@ -126,6 +132,7 @@ export default async function PaginaProducto({ params }) {
           relacionados={relacionados}
           escalones={escalones}
           puesto={puesto}
+          resenas={resenas}
         />
       </HomeClient>
     </>

@@ -41,10 +41,12 @@ service cloud.firestore {
     match /settings/{id}           { allow read: if true; allow write: if esAdmin(); }
 
     // Códigos de descuento. Hoy la tienda los valida en el navegador, así que
-    // necesita leerlos. Ojo: eso significa que son visibles para cualquiera.
-    // Para que dejen de serlo hay que validarlos del lado del servidor.
+    // Ya no se leen directo desde el navegador del cliente: /api/cupon valida un
+    // código a la vez con el SDK de administrador, así que la tienda pública no
+    // necesita acceso a la colección. Sólo el panel (ya logueado) la lee para
+    // mostrar la lista en la pestaña CUPONES.
     match /coupons/{id} {
-      allow read: if true;
+      allow read: if esAdmin();
       allow write: if esAdmin();
     }
 
@@ -77,6 +79,25 @@ service cloud.firestore {
     match /orders/{id} {
       allow create: if true;
       allow read, update, delete: if esAdmin();
+    }
+
+    // Reseñas: sólo se crean desde /api/resenas (verifica el enlace único del
+    // pedido con el SDK de administrador), nunca directo desde el navegador. La
+    // lectura es pública porque son opiniones para mostrar en la tienda, no datos
+    // privados de nadie.
+    match /reviews/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Opiniones libres de la portada: las escribe /api/opiniones (con el SDK de
+    // administrador, nunca el navegador), y quedan "aprobado: false" hasta que
+    // alguien del panel las revisa. La lectura pública sólo puede pedir las ya
+    // aprobadas —el panel, además, puede leerlas todas para moderarlas—.
+    match /comentarios_home/{id} {
+      allow read: if resource.data.aprobado == true || esAdmin();
+      allow create: if false;
+      allow update, delete: if esAdmin();
     }
 
     // Usuarios: cada uno ve y edita únicamente su propia ficha.

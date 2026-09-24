@@ -15,15 +15,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCarrito } from '@/components/CarritoProvider';
 import { rutaProducto, aSlug } from '@/lib/slug';
-import { fichasDeCombo } from '@/lib/combos';
-
-const WHATSAPP = '5491153412358';
+import { fichasDeCombo, precioSegunCantidad } from '@/lib/combos';
 
 const precioFormateado = (n) => Number(n || 0).toLocaleString('es-AR');
 
 const POCAS_UNIDADES = 5;   // a partir de acá se avisa que queda poco
 
-export default function FichaProducto({ producto, relacionados = [], escalones = [], puesto = null }) {
+export default function FichaProducto({ producto, relacionados = [], escalones = [], puesto = null, resenas = { promedio: 0, cantidad: 0, lista: [] } }) {
   const { agregarAlCarrito, cambiarCantidad, cart } = useCarrito();
   const router = useRouter();
   const [avisoVisible, setAvisoVisible] = useState(false);
@@ -42,6 +40,12 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
   const simbolo = esUSD ? 'USD ' : '$';
   const descuento = conOferta ? Math.round((1 - producto.offerPrice / producto.price) * 100) : 0;
 
+  // Qué escalón está rigiendo ahora, para marcarlo. Con el carrito vacío rige el
+  // de una unidad, que es lo que pagaría si comprara ahora mismo.
+  // Va acá abajo a propósito: necesita `precio`, declarado unas líneas arriba.
+  const cantidadElegida = Math.max(1, enCarrito?.qty || 0);
+  const precioPorCantidad = precioSegunCantidad(escalones, cantidadElegida, precio);
+
   // Sólo hay galería cuando hay más de una foto cargada.
   const fotos = [producto.image, ...(Array.isArray(producto.images) ? producto.images : [])]
     .filter(Boolean)
@@ -56,6 +60,22 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
     producto.puffs ? ['Puffs', Number(producto.puffs).toLocaleString('es-AR')] : null,
   ].filter(Boolean);
 
+  /**
+   * Deja el carrito con exactamente esa cantidad de este producto.
+   * Es lo que hace falta para elegir un combo: tocar "2+" tiene que poner 2,
+   * no sumar 2 a lo que ya había.
+   */
+  const ponerCantidad = (cuantas) => {
+    const actual = enCarrito?.qty || 0;
+    if (actual === cuantas) return;
+    if (actual === 0) {
+      if (!agregarAlCarrito(producto)) return;   // sin stock
+      if (cuantas > 1) cambiarCantidad(producto.id, cuantas - 1);
+      return;
+    }
+    cambiarCantidad(producto.id, cuantas - actual);
+  };
+
   /** Suma al carrito y lleva a completar los datos, sin pasos intermedios. */
   const comprarAhora = () => {
     if (!enCarrito) agregarAlCarrito(producto);
@@ -68,9 +88,6 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
     setTimeout(() => setAvisoVisible(false), 2600);
   };
 
-  const mensajeWhatsApp = encodeURIComponent(
-    `Hola! Me interesa ${producto.name} (${producto.category}) — ${simbolo}${precioFormateado(precio)}`
-  );
 
   return (
     <div className="bg-[#f2f2f2]">
@@ -172,15 +189,27 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                 </div>
               )}
 
+              {/* Promedio de estrellas, sólo con reseñas de compras verificadas. */}
+              {resenas.cantidad > 0 && (
+                <a href="#resenas" className="flex items-center gap-1.5 mb-3 w-fit">
+                  <span className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map(n => (
+                      <i key={n} className={`fas fa-star text-[13px] ${n <= Math.round(resenas.promedio) ? 'text-[#fcdb00]' : 'text-gray-200'}`}></i>
+                    ))}
+                  </span>
+                  <span className="text-[11px] font-bold text-gray-500 tracking-wide">
+                    {resenas.promedio.toFixed(1)} ({resenas.cantidad} reseña{resenas.cantidad === 1 ? '' : 's'})
+                  </span>
+                </a>
+              )}
+
               {/* El distintivo del podio, calculado con las ventas reales. El número
                   suelto de unidades vendidas se sacó a pedido; el puesto queda. */}
               {puesto && (
-                <div className="mb-4">
-                  <span className="inline-flex items-center gap-1.5 bg-[#fcdb00] text-[#111111] font-bebas text-sm px-2.5 py-1 rounded-md tracking-wide">
-                    <i className="fas fa-trophy text-[10px]" aria-hidden="true"></i>
-                    {puesto === 1 ? 'El más vendido' : `Top ${puesto}`} en {producto.category}
-                  </span>
-                </div>
+                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-[#8a6d00] mb-4">
+                  <i className="fas fa-trophy text-[10px]" aria-hidden="true"></i>
+                  {puesto === 1 ? 'El más vendido' : `Top ${puesto}`} en {producto.category}
+                </p>
               )}
 
               {conOferta && (
@@ -193,8 +222,8 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
               </p>
               {esUSD && <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Precio en dólares</p>}
 
-              <p className={`text-[12px] font-bold uppercase tracking-widest mb-4 ${sinStock ? 'text-red-500' : 'text-green-600'}`}>
-                <i className={`fas ${sinStock ? 'fa-times-circle' : 'fa-check-circle'} mr-1.5`} aria-hidden="true"></i>
+              <p className={`flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest mb-5 ${sinStock ? 'text-red-500' : 'text-gray-500'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${sinStock ? 'bg-red-500' : 'bg-green-500'}`} aria-hidden="true"></span>
                 {sinStock ? 'Sin stock por ahora' : 'Disponible'}
               </p>
 
@@ -216,32 +245,59 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
               {/* Combos por cantidad. Vacío por defecto: aparece sólo si cargaste
                   escalones desde el panel. */}
               {!sinStock && combos.length > 1 && (
-                <div className="mb-5 border-2 border-[#111111] rounded-2xl overflow-hidden">
-                  <p className="bg-[#111111] text-[#fcdb00] font-bebas text-base uppercase tracking-widest px-4 py-2 flex items-center gap-2">
-                    <i className="fas fa-layer-group text-xs" aria-hidden="true"></i>
+                <div className="mb-5 border border-gray-200 rounded-xl overflow-hidden">
+                  <p className="bg-gray-50 text-gray-500 text-[11px] font-bold uppercase tracking-widest px-4 py-2 border-b border-gray-200">
                     Cuantas más llevás, menos pagás
                   </p>
                   <div className="divide-y divide-gray-100">
-                    {combos.map((c) => (
-                      <div key={c.cantidad} className="flex items-center gap-3 px-4 py-3">
-                        <span className="font-bebas text-2xl text-[#111111] w-12 shrink-0 leading-none">
-                          {c.cantidad}{c.abierto ? '+' : ''}
-                        </span>
-                        <span className="flex-1 min-w-0">
-                          {c.esBase ? (
-                            <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Por unidad</span>
-                          ) : (
-                            <span className="text-[11px] font-bold uppercase tracking-widest text-green-600">
-                              Ahorrás {simbolo}{precioFormateado(Math.round(c.ahorro))}
-                            </span>
+                    {combos.map((c, i) => {
+                      // Rige el escalón más alto que la cantidad elegida ya alcanzó.
+                      const siguiente = combos[i + 1];
+                      const activo = cantidadElegida >= c.cantidad && (!siguiente || cantidadElegida < siguiente.cantidad);
+                      return (
+                        <button
+                          key={c.cantidad}
+                          type="button"
+                          onClick={() => ponerCantidad(c.cantidad)}
+                          aria-pressed={activo}
+                          aria-label={`Llevar ${c.cantidad} ${c.cantidad === 1 ? 'unidad' : 'unidades'}`}
+                          className={`w-full text-left flex items-center gap-3 px-4 py-3 border-l-[3px] transition-colors ${activo ? 'bg-[#fcdb00]/15 border-[#fcdb00]' : 'bg-white border-transparent hover:bg-gray-50'}`}
+                        >
+                          <span className={`font-bebas text-2xl w-10 shrink-0 leading-none ${activo ? 'text-[#111111]' : 'text-gray-400'}`}>
+                            {c.cantidad}{c.abierto ? '+' : ''}
+                          </span>
+                          <span className="flex-1 min-w-0">
+                            {c.esBase ? (
+                              <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Por unidad</span>
+                            ) : (
+                              <span className="text-[11px] font-bold uppercase tracking-widest text-gray-500">
+                                Ahorrás {simbolo}{precioFormateado(Math.round(c.ahorro))}
+                              </span>
+                            )}
+                          </span>
+                          <span className={`font-bebas text-xl tracking-wide shrink-0 ${activo ? 'text-[#111111]' : 'text-gray-500'}`}>
+                            {simbolo}{precioFormateado(c.precioUnitario)}<span className={`text-[11px] font-poppins font-bold ml-1 ${activo ? 'text-[#111111]/60' : 'text-gray-400'}`}>c/u</span>
+                          </span>
+                          {activo && (
+                            <i className="fas fa-check text-[#8a6d00] text-xs shrink-0" aria-hidden="true"></i>
                           )}
-                        </span>
-                        <span className={`font-bebas text-xl tracking-wide shrink-0 ${c.esBase ? 'text-gray-400' : 'text-[#111111]'}`}>
-                          {simbolo}{precioFormateado(c.precioUnitario)}<span className="text-[11px] font-poppins font-bold text-gray-400 ml-1">c/u</span>
-                        </span>
-                      </div>
-                    ))}
+                        </button>
+                      );
+                    })}
                   </div>
+
+                  {/* Lo que va a pagar en total con lo que eligió. Sin esto hay que
+                      hacer la cuenta de cabeza para saber si conviene. */}
+                  {enCarrito && (
+                    <p className="bg-gray-50 border-t border-gray-200 px-4 py-2.5 flex items-center justify-between">
+                      <span className="text-[11px] font-bold uppercase tracking-widest text-gray-500">
+                        Llevás {enCarrito.qty} {enCarrito.qty === 1 ? 'unidad' : 'unidades'}
+                      </span>
+                      <span className="font-bebas text-xl text-[#111111] tracking-wide">
+                        {simbolo}{precioFormateado(precioPorCantidad * enCarrito.qty)}
+                      </span>
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -251,69 +307,46 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                       producto y lleva derecho a completar los datos. */}
                   <button
                     onClick={comprarAhora}
-                    className="w-full bg-[#111111] text-white hover:bg-[#fcdb00] hover:text-[#111111] h-12 font-bebas text-xl uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-[0.98] mb-3"
+                    className="w-full bg-[#111111] text-white hover:bg-[#2a2a2a] h-[52px] font-bebas text-xl uppercase tracking-widest rounded-xl transition-colors flex items-center justify-center gap-2 active:scale-[0.99] mb-2.5"
                   >
                     <i className="fas fa-bolt text-sm" aria-hidden="true"></i> Comprar ahora
                   </button>
 
                   {/* Y abajo, para quien quiere seguir mirando. */}
                   {enCarrito ? (
-                    <div className="flex items-center justify-between bg-[#fcdb00] text-[#111111] h-12 rounded-xl font-bold px-2 mb-3 shadow-sm">
-                      <button onClick={() => cambiarCantidad(producto.id, -1)} aria-label="Quitar una unidad" className="w-12 h-full flex items-center justify-center hover:text-black transition-colors">
+                    <div className="flex items-center justify-between border border-gray-300 text-[#111111] h-[52px] rounded-xl px-1 mb-2.5">
+                      <button onClick={() => cambiarCantidad(producto.id, -1)} aria-label="Quitar una unidad" className="w-12 h-full flex items-center justify-center text-gray-500 hover:text-[#111111] transition-colors">
                         <i className="fas fa-minus text-sm" aria-hidden="true"></i>
                       </button>
-                      <span className="font-bebas text-xl pt-1">{enCarrito.qty} en el carrito</span>
-                      <button onClick={agregar} aria-label="Agregar una unidad" className="w-12 h-full flex items-center justify-center hover:text-black transition-colors">
+                      <span className="font-bebas text-lg uppercase tracking-wide pt-0.5">{enCarrito.qty} en el carrito</span>
+                      <button onClick={agregar} aria-label="Agregar una unidad" className="w-12 h-full flex items-center justify-center text-gray-500 hover:text-[#111111] transition-colors">
                         <i className="fas fa-plus text-sm" aria-hidden="true"></i>
                       </button>
                     </div>
                   ) : (
                     <button
                       onClick={agregar}
-                      className="w-full border-2 border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-white h-12 font-bebas text-xl uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center justify-center gap-2 mb-3"
+                      className="w-full border border-gray-300 text-[#111111] hover:border-[#111111] h-[52px] font-bebas text-lg uppercase tracking-widest rounded-xl transition-colors flex items-center justify-center gap-2 mb-2.5"
                     >
-                      <i className="fas fa-shopping-bag text-sm" aria-hidden="true"></i> Agregar al carrito
+                      Agregar al carrito
                     </button>
                   )}
                 </>
               )}
 
-              <a
-                href={`https://wa.me/${WHATSAPP}?text=${mensajeWhatsApp}`}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full bg-[#25D366] text-white h-12 font-bebas text-xl uppercase tracking-widest rounded-xl hover:bg-[#1ebe5d] transition-colors flex items-center justify-center gap-2 shadow-sm"
-              >
-                <i className="fab fa-whatsapp text-lg" aria-hidden="true"></i> Consultar
-              </a>
 
-              {/* La promesa de entrega, destacada: es el argumento más fuerte de la
-                  tienda y antes estaba perdido entre tres renglones grises. */}
-              <div className="mt-6 bg-[#111111] rounded-2xl p-4 flex items-center gap-3">
-                <span className="w-10 h-10 shrink-0 bg-[#fcdb00] rounded-full flex items-center justify-center text-[#111111]">
-                  <i className="fas fa-motorcycle text-lg" aria-hidden="true"></i>
-                </span>
-                <span className="min-w-0">
-                  <span className="block font-bebas text-xl text-[#fcdb00] uppercase tracking-wide leading-none">
-                    Te llega en 30 minutos
-                  </span>
-                  <span className="block text-[12px] text-white/60 mt-1">
-                    Por CABA y AMBA · Al resto del país, envío a domicilio
-                  </span>
-                </span>
-              </div>
-
-              {/* Fila de confianza */}
-              <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-bold uppercase tracking-widest text-gray-500">
-                <span className="flex items-center gap-1.5">
-                  <i className="fas fa-certificate text-[#fcdb00]" aria-hidden="true"></i> 100% original
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <i className="fas fa-box text-[#fcdb00]" aria-hidden="true"></i> Envío discreto
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <i className="fab fa-whatsapp text-[#fcdb00]" aria-hidden="true"></i> Te atendemos siempre
-                </span>
+              {/* Envío y garantías, juntos y en voz baja. Antes eran dos bloques
+                  separados —uno negro con amarillo y otro con íconos amarillos— que
+                  competían con el botón de comprar en vez de acompañarlo. */}
+              <div className="mt-5 pt-5 border-t border-gray-200 space-y-2.5 text-[13px] text-gray-600">
+                <p className="flex items-start gap-2.5">
+                  <i className="fas fa-motorcycle text-gray-400 mt-0.5 w-4 text-center" aria-hidden="true"></i>
+                  <span><strong className="font-semibold text-[#111111]">Te llega en 30 minutos</strong> por CABA y AMBA · Al resto del país, envío a domicilio</span>
+                </p>
+                <p className="flex items-start gap-2.5">
+                  <i className="fas fa-certificate text-gray-400 mt-0.5 w-4 text-center" aria-hidden="true"></i>
+                  <span>Producto 100% original · Envío discreto</span>
+                </p>
               </div>
             </div>
           </div>
@@ -343,6 +376,40 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
             </div>
           )}
         </div>
+
+        {/* ---------- Reseñas ----------
+            Sólo las deja quien compró: llega a esto desde un enlace propio que le
+            manda el vendedor por WhatsApp después del pedido, no hay botón acá para
+            "escribir una reseña" porque no seríamos capaces de saber si compró de
+            verdad. */}
+        {resenas.cantidad > 0 && (
+          <section id="resenas" className="mt-10 scroll-mt-24">
+            <div className="flex items-center gap-3 mb-5">
+              <h2 className="font-bebas text-3xl uppercase tracking-wide text-[#111111]">Reseñas</h2>
+              <span className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map(n => (
+                  <i key={n} className={`fas fa-star text-sm ${n <= Math.round(resenas.promedio) ? 'text-[#fcdb00]' : 'text-gray-200'}`}></i>
+                ))}
+              </span>
+              <span className="text-[12px] font-bold text-gray-500">{resenas.promedio.toFixed(1)} de 5 · {resenas.cantidad} reseña{resenas.cantidad === 1 ? '' : 's'}</span>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {resenas.lista.map(r => (
+                <div key={r.id} className="bg-white rounded-[1.25rem] border border-gray-100 shadow-[0_0_20px_rgba(0,0,0,0.04)] p-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-[13px] text-[#111111]">{r.name}</span>
+                    <span className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map(n => (
+                        <i key={n} className={`fas fa-star text-[11px] ${n <= r.rating ? 'text-[#fcdb00]' : 'text-gray-200'}`}></i>
+                      ))}
+                    </span>
+                  </div>
+                  {r.text && <p className="text-[13px] text-gray-600 leading-relaxed">{r.text}</p>}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ---------- Otros de la misma marca ---------- */}
         {relacionados.length > 0 && (

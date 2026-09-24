@@ -1,5 +1,32 @@
 import { getAdminDb } from './firebaseAdmin';
 
+// ---------------------------------------------------------------------------
+// Memoria corta, por proceso
+//
+// Cada página llama a esto dos veces: una para armar el título y otra para el
+// contenido. Y al compilar se arman 78 fichas. Eso son más de treinta mil lecturas
+// de la base por compilación, leyendo una y otra vez lo mismo.
+//
+// Con unos segundos de memoria alcanza: dentro de un mismo pedido o de una misma
+// tanda de compilación se lee una sola vez, y como dura poco, una actualización del
+// panel se ve igual de rápido que antes.
+// ---------------------------------------------------------------------------
+
+const MEMORIA_MS = 10 * 1000;
+const memoria = new Map();
+
+function conMemoria(clave, traer) {
+  const guardado = memoria.get(clave);
+  if (guardado && Date.now() - guardado.cuando < MEMORIA_MS) return guardado.promesa;
+  const promesa = traer().catch(err => {
+    memoria.delete(clave);   // un error no se guarda: que el próximo reintente
+    throw err;
+  });
+  memoria.set(clave, { cuando: Date.now(), promesa });
+  return promesa;
+}
+
+
 // Espejo exacto del array hardcodeado en page.js — es la base de fallback
 const initialProducts = [
   { id: 1,  name: "BAJA SPLASH",              price: 26000, department: "VAPES",      category: "Elfbar Ice King",    tag: "",          image: "https://i.postimg.cc/76QxH9kQ/BAJA-SPLASH.png",                       description: "Vapeador desechable premium con una mezcla tropical y refrescante.",                             cardSize: "normal" },
@@ -69,7 +96,11 @@ function serializeProduct(data) {
 
 /** Las promociones por cantidad (los "combos"). La ficha de producto las necesita
  *  para dibujar los escalones, y esa página la arma el servidor. */
-export async function getSSRPromos() {
+export function getSSRPromos() {
+  return conMemoria('getSSRPromos', _getSSRPromos);
+}
+
+async function _getSSRPromos() {
   try {
     const db = getAdminDb();
     if (!db) return [];
@@ -82,7 +113,11 @@ export async function getSSRPromos() {
   }
 }
 
-export async function getSSRHomeSections() {
+export function getSSRHomeSections() {
+  return conMemoria('getSSRHomeSections', _getSSRHomeSections);
+}
+
+async function _getSSRHomeSections() {
   try {
     const db = getAdminDb();
     if (!db) return [];
@@ -97,7 +132,11 @@ export async function getSSRHomeSections() {
   }
 }
 
-export async function getSSRHomeLayout() {
+export function getSSRHomeLayout() {
+  return conMemoria('getSSRHomeLayout', _getSSRHomeLayout);
+}
+
+async function _getSSRHomeLayout() {
   try {
     const db = getAdminDb();
     if (!db) return [];
@@ -110,7 +149,11 @@ export async function getSSRHomeLayout() {
   }
 }
 
-export async function getSSRProducts() {
+export function getSSRProducts() {
+  return conMemoria('getSSRProducts', _getSSRProducts);
+}
+
+async function _getSSRProducts() {
   try {
     const db = getAdminDb();
     if (!db) return initialProducts;

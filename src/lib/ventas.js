@@ -64,35 +64,36 @@ async function indiceDeNombres(db) {
   return indice;
 }
 
-/**
- * Devuelve { unidades: { "4": 138, ... }, total } poniendo al día el resumen si hace
- * falta. Nunca lanza: si la base no responde, devuelve el resumen vacío y la página
- * simplemente no muestra los números.
- */
-export async function getVentasPorProducto() {
+// Dos cuidados para no frenar las páginas ni castigar la base:
+//
+// 1) Leer nunca espera a recalcular. Se devuelve el resumen guardado tal como está y,
+//    si quedó viejo, se dispara la puesta al día en segundo plano. La página de al
+//    lado ya la ve fresca. Antes cada página esperaba el recálculo: al compilar, las
+//    78 fichas lo pedían a la vez y el build se colgaba.
+//
+// 2) Dentro de un mismo proceso se reutiliza la lectura por un rato, así compilar 78
+//    fichas no son 78 lecturas del mismo documento.
+
+let enCache = null;
+let leidoEn = 0;
+let recalculando = false;
+const CACHE_PROCESO_MS = 60 * 1000;
+
+/** Pone al día el resumen con los pedidos nuevos. No se espera: corre suelta. */
+async function ponerAlDia(db, actual) {
+  if (recalculando) return;
+  recalculando = true;
   try {
-    const db = getAdminDb();
-    if (!db) return vacio;
-
-    const ref = db.doc(DOC_RESUMEN);
-    const actual = (await ref.get()).data() || vacio;
-
-    const alDia = Date.now() - (actual.actualizado || 0) < FRESCURA_MS;
-    if (alDia) return { unidades: actual.unidades || {}, total: actual.total || 0 };
-
-    // Sólo los pedidos posteriores al último procesado.
     let consulta = db.collection('orders').orderBy('createdAt', 'asc');
-    if (actual.hasta) {
-      consulta = consulta.where('createdAt', '>', new Date(actual.hasta));
-    }
+    if (actual.hasta) consulta = consulta.where('createdAt', '>', new Date(actual.hasta));
     const nuevos = await consulta.get();
 
+    const ref = db.doc(DOC_RESUMEN);
     if (nuevos.empty) {
-      await ref.set({ ...actual, actualizado: Date.now() }, { merge: true });
-      return { unidades: actual.unidades || {}, total: actual.total || 0 };
+      await ref.set({ actualizado: Date.now() }, { merge: true });
+      return;
     }
 
-    // El índice por nombre sólo hace falta si hay pedidos sin id de producto.
     const hacenFaltaNombres = nuevos.docs.some(d => (d.data().items || []).some(i => i.productId == null));
     const indice = hacenFaltaNombres ? await indiceDeNombres(db) : new Map();
 
@@ -100,17 +101,45 @@ export async function getVentasPorProducto() {
     const hasta = acumular(unidades, nuevos.docs, indice);
     const total = Object.values(unidades).reduce((a, b) => a + b, 0);
 
-    await ref.set({
-      unidades,
-      total,
-      hasta: Math.max(hasta, actual.hasta || 0),
-      actualizado: Date.now(),
-    });
+    await ref.set({ unidades, total, hasta: Math.max(hasta, actual.hasta || 0), actualizado: Date.now() });
+    enCache = { unidades, total };
+    leidoEn = Date.now();
+  } catch (err) {
+    console.error('[ventas] no se pudo poner al día:', err.message);
+  } finally {
+    recalculando = false;
+  }
+}
 
-    return { unidades, total };
+/**
+ * Devuelve { unidades: { "4": 138, ... }, total }. Responde siempre rápido: da lo
+ * último que haya y, si está viejo, lo renueva por detrás. Nunca lanza.
+ */
+export async function getVentasPorProducto() {
+  if (enCache && Date.now() - leidoEn < CACHE_PROCESO_MS) return enCache;
+
+  try {
+    const db = getAdminDb();
+    if (!db) return vacio;
+
+    const actual = (await db.doc(DOC_RESUMEN).get()).data() || vacio;
+    enCache = { unidades: actual.unidades || {}, total: actual.total || 0 };
+    leidoEn = Date.now();
+
+    // Si quedó viejo, se renueva sin que nadie espere.
+    //
+    // Menos al compilar: ahí se arman 78 fichas en once procesos a la vez y cada uno
+    // arrancaba su propio recálculo sobre los 2.500 pedidos. La compilación pasaba de
+    // 12 segundos a más de un minuto y medio, y para nada: al compilar alcanza con el
+    // resumen guardado. La puesta al día la hace la primera visita real.
+    const compilando = process.env.NEXT_PHASE === 'phase-production-build';
+    if (!compilando && Date.now() - (actual.actualizado || 0) >= FRESCURA_MS) {
+      ponerAlDia(db, actual);
+    }
+    return enCache;
   } catch (err) {
     console.error('[ventas] no se pudo leer el resumen:', err.message);
-    return vacio;
+    return enCache || vacio;
   }
 }
 

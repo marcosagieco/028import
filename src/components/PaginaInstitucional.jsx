@@ -37,7 +37,7 @@ export default async function PaginaInstitucional({ clave }) {
   try { productos = await getSSRProducts(); } catch {}
 
   return (
-    <HomeClient ssrProducts={productos} modo="contenido">
+    <HomeClient ssrProducts={productos} modo="contenido" institucional>
     <div className="bg-[#f7f7f7]">
 
       <main className="w-full px-4 md:px-10 lg:px-20 xl:px-32 py-10 md:py-16">

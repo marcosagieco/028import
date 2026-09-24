@@ -235,6 +235,7 @@ export default function AdminPage() {
   const [adminAuthError, setAdminAuthError] = useState('');
   const [activeTab, setActiveTab] = useState('historial');
   const [orders, setOrders] = useState([]);
+  const [opiniones, setOpiniones] = useState([]);
   const [historialCuentaFilter, setHistorialCuentaFilter] = useState('todos'); // 'todos' | 'efectivo' | 'transferencia'
   const [products, setProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
@@ -459,7 +460,8 @@ export default function AdminPage() {
       setAdminAuthChecked(true);
       if (!habilitado) { setLoading(false); return; }
       onSnapshot(query(collection(firebaseRefs.db, 'orders'), orderBy('createdAt', 'desc')), (snap) => { setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); });
-      
+      onSnapshot(query(collection(firebaseRefs.db, 'comentarios_home'), orderBy('createdAt', 'desc')), (snap) => { setOpiniones(snap.docs.map(d => ({ id: d.id, ...d.data() }))); });
+
       onSnapshot(collection(firebaseRefs.db, 'products'), (snap) => {
         const normalizeProductId = (docId, data = {}) => {
           const rawId = data.id ?? String(docId).replace(/^prod_/, '');
@@ -1237,6 +1239,17 @@ export default function AdminPage() {
   };
 
   const deleteOrder = async (id) => { if (confirm("¿Eliminar pedido permanentemente?")) { try { await deleteDoc(doc(firebaseRefs.db, 'orders', id)); } catch (err) { alert("Error: " + err.message); } } };
+  // Cada pedido trae su propio link de reseña (ver /api/pedidos). Se copia acá para
+  // pegarlo en el WhatsApp donde ya le confirmás la entrega al cliente — no hay
+  // envío automático, porque no hay forma de avisarle solos sin su número agregado.
+  const aprobarOpinion = async (id) => { try { await updateDoc(doc(firebaseRefs.db, 'comentarios_home', id), { aprobado: true }); } catch (err) { alert("Error: " + err.message); } };
+  const rechazarOpinion = async (id) => { if (confirm("¿Borrar esta opinión?")) { try { await deleteDoc(doc(firebaseRefs.db, 'comentarios_home', id)); } catch (err) { alert("Error: " + err.message); } } };
+  const copiarLinkResena = async (order) => {
+    if (!order.reviewToken) { alert("Este pedido es de antes de la función de reseñas."); return; }
+    const link = `https://028import.com/resena/${order.reviewToken}`;
+    try { await navigator.clipboard.writeText(link); alert("Link copiado: " + link); }
+    catch { prompt("Copiá el link:", link); }
+  };
 
   // Envío Flash siempre se paga por transferencia; en Motomensajería depende de lo que eligió el cliente.
   const getOrderCuenta = (order) => order.shippingOption === 'flash' ? 'transferencia' : (order.paymentMethod || 'transferencia');
@@ -1428,6 +1441,7 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('promos')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'promos' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Promos %</button>
           <button onClick={() => setActiveTab('descuentos')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'descuentos' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Descuentos 🏷️</button>
           <button onClick={() => setActiveTab('cupones')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'cupones' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Cupones</button>
+          <button onClick={() => setActiveTab('opiniones')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'opiniones' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Opiniones{opiniones.filter(o => !o.aprobado).length > 0 ? ` (${opiniones.filter(o => !o.aprobado).length})` : ''}</button>
           <button onClick={() => setActiveTab('usuarios')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'usuarios' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Usuarios</button>
           <button onClick={() => setActiveTab('ofertas')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'ofertas' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Ofertas 🔥</button>
           <button onClick={() => setActiveTab('carrito')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'carrito' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Carrito 🛒</button>
@@ -1532,7 +1546,7 @@ export default function AdminPage() {
             <h3 className={`text-2xl font-bebas uppercase tracking-wide mb-1 ${theme.text}`}>Posición del Showcase 3D</h3>
             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-5">Elegí dónde aparece la sección del Elfbar Ice King</p>
             <div className="flex flex-col gap-2">
-              {[{ id: 'banner', label: 'Después del banner (inicio)' }, ...homeSections.map(s => ({ id: s.id, label: `Después de "${s.title || s.id}"` }))].map(opt => (
+              {[{ id: 'banner', label: 'Después del banner (inicio)' }, { id: 'row:2', label: 'Debajo de las 2 primeras hileras (se ajusta sola si reordenás)' }, ...homeSections.map(s => ({ id: s.id, label: `Después de "${s.title || s.id}"` }))].map(opt => (
                 <button
                   key={opt.id}
                   onClick={() => { setVape3dPosition(opt.id); saveVape3dPosition(opt.id); }}
@@ -1550,7 +1564,7 @@ export default function AdminPage() {
             <h3 className={`text-2xl font-bebas uppercase tracking-wide mb-1 ${theme.text}`}>Posición de la Barra de Marcas</h3>
             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-5">Elegí dónde aparece la barra con los logos de marcas</p>
             <div className="flex flex-col gap-2">
-              {[{ id: 'banner', label: 'Después del banner (inicio)' }, ...homeSections.map(s => ({ id: s.id, label: `Después de "${s.title || s.id}"` }))].map(opt => (
+              {[{ id: 'banner', label: 'Después del banner (inicio)' }, { id: 'before-last', label: 'Arriba de la última hilera de productos (se ajusta sola si reordenás)' }, ...homeSections.map(s => ({ id: s.id, label: `Después de "${s.title || s.id}"` }))].map(opt => (
                 <button
                   key={opt.id}
                   onClick={() => { setLogosBarPosition(opt.id); saveLogosBarPosition(opt.id); }}
@@ -1943,6 +1957,61 @@ export default function AdminPage() {
 
 
         {activeTab === 'promos' && (<div className="animate-in fade-in duration-500 max-w-lg mx-auto"><div className="flex justify-between items-end mb-8"><div><h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Promociones</h2><p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Descuentos automáticos</p></div></div><form onSubmit={handleAddPromo} className={`${theme.card} p-8 rounded-[2rem] shadow-sm border mb-8 flex flex-col gap-5`}><div className="flex gap-2 p-1 rounded-xl bg-gray-100 dark:bg-[#222222]"><button type="button" onClick={() => setNewPromo(v => ({...v, type: 'category'}))} className={`flex-1 py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all ${newPromo.type !== 'product' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}>Por Marca</button><button type="button" onClick={() => setNewPromo(v => ({...v, type: 'product'}))} className={`flex-1 py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all ${newPromo.type === 'product' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}>Por Producto</button></div>{newPromo.type === 'product' ? (<div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Producto a bonificar</label><input list="promo-product-suggestions" placeholder="Buscá por nombre..." value={newPromo.productQuery} onChange={e => setNewPromo({...newPromo, productQuery: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} required/><datalist id="promo-product-suggestions">{products.filter(p => !p.isDeleted).map(p => <option key={p.id} value={`${p.name} — ${p.category}`} />)}</datalist></div>) : (<div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Categoría a bonificar</label><input list="promo-category-suggestions" placeholder="Ej: Ignite v400..." value={newPromo.category} onChange={e => setNewPromo({...newPromo, category: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} required/><datalist id="promo-category-suggestions">{uniqueCategories.map(cat => <option key={cat} value={cat} />)}</datalist></div>)}<div className="flex gap-4"><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Cantidad Mínima</label><input type="number" required min="2" placeholder="Ej: 2" value={newPromo.minQty} onChange={e => setNewPromo({...newPromo, minQty: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Precio Total</label><input type="number" required placeholder="Ej: 49000" value={newPromo.totalPrice} onChange={e => setNewPromo({...newPromo, totalPrice: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div></div><p className="text-[11px] text-gray-500">Ejemplo: Llevando 2 o más, quedan a $24.500 c/u automáticamente.</p><button type="submit" className="bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all">Guardar Promoción</button></form><div className="grid gap-4">{promos.length === 0 ? (<p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest mt-10">No hay promos activas</p>) : (promos.map(promo => (<div key={promo.id} className={`${theme.card} p-6 rounded-[1.5rem] flex justify-between items-center shadow-sm border`}><div><span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">{promo.type === 'product' ? 'Producto' : 'Marca'}</span><h4 className="font-bebas text-2xl uppercase tracking-wide mb-1">{promo.type === 'product' ? promo.productName : promo.category}</h4><p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase">Llevando {promo.minQty}+ : ${(promo.totalPrice / promo.minQty).toLocaleString('es-AR')} c/u</p></div><button onClick={() => handleDeletePromo(promo.id)} className="w-12 h-12 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition-all shadow-sm"><i className="fas fa-trash text-lg"></i></button></div>)))}</div></div>)}
+
+        {/* --- PESTAÑA: OPINIONES --- */}
+        {activeTab === 'opiniones' && (
+          <div className="animate-in fade-in duration-500 max-w-2xl mx-auto">
+            <div className="flex justify-between items-end mb-8">
+              <div>
+                <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Opiniones</h2>
+                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Comentarios libres del inicio</p>
+              </div>
+            </div>
+
+            {opiniones.filter(o => !o.aprobado).length > 0 && (
+              <>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Pendientes de revisar</p>
+                <div className="grid gap-4 mb-10">
+                  {opiniones.filter(o => !o.aprobado).map(op => (
+                    <div key={op.id} className={`${theme.card} p-6 rounded-[1.5rem] shadow-sm border border-[#fcdb00]/40`}>
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <p className="font-bebas text-xl uppercase tracking-wide">{op.name || 'Cliente'}</p>
+                          <span className="flex items-center gap-0.5 mt-1">
+                            {[1,2,3,4,5].map(n => <i key={n} className={`fas fa-star text-xs ${n <= (op.rating||0) ? 'text-[#fcdb00]' : 'text-gray-300'}`}></i>)}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={() => aprobarOpinion(op.id)} className="w-11 h-11 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all"><i className="fas fa-check"></i></button>
+                          <button onClick={() => rechazarOpinion(op.id)} className="w-11 h-11 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all"><i className="fas fa-trash"></i></button>
+                        </div>
+                      </div>
+                      {op.text && <p className="text-sm text-gray-600">{op.text}</p>}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Publicadas en la home</p>
+            <div className="grid gap-4">
+              {opiniones.filter(o => o.aprobado).length === 0 ? (
+                <p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest mt-6">Todavía no hay ninguna publicada</p>
+              ) : opiniones.filter(o => o.aprobado).map(op => (
+                <div key={op.id} className={`${theme.card} p-6 rounded-[1.5rem] shadow-sm border flex justify-between items-start`}>
+                  <div>
+                    <p className="font-bebas text-xl uppercase tracking-wide">{op.name || 'Cliente'}</p>
+                    <span className="flex items-center gap-0.5 mt-1 mb-2">
+                      {[1,2,3,4,5].map(n => <i key={n} className={`fas fa-star text-xs ${n <= (op.rating||0) ? 'text-[#fcdb00]' : 'text-gray-300'}`}></i>)}
+                    </span>
+                    {op.text && <p className="text-sm text-gray-600">{op.text}</p>}
+                  </div>
+                  <button onClick={() => rechazarOpinion(op.id)} className="w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-xl bg-gray-100 text-gray-500 hover:bg-red-500 hover:text-white transition-all"><i className="fas fa-trash"></i></button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* --- PESTAÑA: CUPONES --- */}
         {activeTab === 'cupones' && (
@@ -2388,7 +2457,7 @@ export default function AdminPage() {
             ))}
           </div>
 
-          {filteredOrders.length === 0 ? (<div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}><i className="fas fa-receipt text-gray-300 text-5xl mb-6"></i><p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">{orders.length === 0 ? 'No hay pedidos en el historial' : 'No hay pedidos con esta cuenta'}</p></div>) : (<div className="grid gap-6">{filteredOrders.map((order) => { const cuenta = getOrderCuenta(order); return (<div key={order.id} className={`${theme.card} rounded-[2rem] shadow-sm border p-6 md:p-8 hover:shadow-lg transition-all duration-300 ${theme.cardHover}`}><div className="flex justify-between items-start mb-6"><div className="flex items-center gap-4"><div className="bg-[#fcdb00] text-[#111111] w-14 h-14 rounded-2xl flex items-center justify-center font-bebas text-3xl shadow-sm pt-1">{order.items?.reduce((a, b) => a + b.qty, 0)}</div><div><span className="text-[10px] font-bold text-[#b8952a] uppercase tracking-widest block mb-0.5">ID: {order.id.slice(-6).toUpperCase()}</span><p className="text-gray-500 text-[11px] font-bold">{order.createdAt ? order.createdAt.toDate().toLocaleString('es-AR') : 'Procesando...'}</p></div></div><div className="flex items-center gap-2"><span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-xl flex items-center gap-1.5 ${cuenta === 'efectivo' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'}`}><i className={`fas ${cuenta === 'efectivo' ? 'fa-money-bill-wave' : 'fa-university'}`}></i> {cuenta === 'efectivo' ? 'Efectivo' : 'Transferencia'}</span><button onClick={() => deleteOrder(order.id)} className={`${darkMode ? 'bg-[#333] text-white hover:bg-red-600' : 'bg-gray-100 text-gray-600 hover:bg-red-500 hover:text-white'} w-12 h-12 rounded-xl transition-all flex items-center justify-center shadow-sm`}><i className="fas fa-trash text-lg"></i></button></div></div>{order.clientName && (<div className={`mb-5 pb-5 border-b ${darkMode ? 'border-[#333333]' : 'border-gray-200'} flex items-center gap-4`}><div className="w-10 h-10 bg-[#f2f2f2] rounded-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-lg"></i></div><div><p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest leading-none mb-1">Cliente</p><p className="font-bebas text-xl tracking-wide uppercase text-[#111111] dark:text-white">{order.clientName} <span className="font-poppins font-normal text-sm text-gray-400 ml-2">({order.clientPhone})</span></p></div></div>)}<div className={`space-y-3 mb-6 p-5 rounded-2xl border ${darkMode ? 'bg-[#222] border-[#333333]' : 'bg-[#f2f2f2] border-transparent'}`}>{order.items?.map((item, idx) => (<div key={idx} className="flex justify-between items-center"><span className={`font-bold text-xs uppercase tracking-wide ${darkMode ? 'text-gray-300' : 'text-[#111111]'}`}><span className={`${darkMode ? 'text-[#fcdb00]' : 'text-[#b8952a]'} font-black mr-2 bg-white dark:bg-[#111] px-2 py-0.5 rounded`}>{item.qty}x</span> {item.name}</span><span className="text-gray-500 font-bold text-sm">${item.price?.toLocaleString('es-AR')}</span></div>))}</div>{order.delivery === 'envio' && order.address && (<div className="mb-6 p-5 bg-[#111111] text-white rounded-2xl border-l-8 border-[#fcdb00] shadow-md"><p className="text-[#fcdb00] text-[9px] font-bold uppercase mb-2 tracking-widest"><i className="fas fa-truck mr-1.5"></i> Envío a Domicilio {order.shippingOption === 'flash' ? '🚀 (FLASH)' : order.shippingOption === 'moto' ? '🛵 (MOTO)' : ''}</p><p className="uppercase font-bold text-sm mb-1">{order.address}</p><p className="text-gray-400 text-[10px] uppercase font-bold tracking-widest">{order.zone}</p></div>)}</div>); })}</div>)}
+          {filteredOrders.length === 0 ? (<div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}><i className="fas fa-receipt text-gray-300 text-5xl mb-6"></i><p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">{orders.length === 0 ? 'No hay pedidos en el historial' : 'No hay pedidos con esta cuenta'}</p></div>) : (<div className="grid gap-6">{filteredOrders.map((order) => { const cuenta = getOrderCuenta(order); return (<div key={order.id} className={`${theme.card} rounded-[2rem] shadow-sm border p-6 md:p-8 hover:shadow-lg transition-all duration-300 ${theme.cardHover}`}><div className="flex justify-between items-start mb-6"><div className="flex items-center gap-4"><div className="bg-[#fcdb00] text-[#111111] w-14 h-14 rounded-2xl flex items-center justify-center font-bebas text-3xl shadow-sm pt-1">{order.items?.reduce((a, b) => a + b.qty, 0)}</div><div><span className="text-[10px] font-bold text-[#b8952a] uppercase tracking-widest block mb-0.5">ID: {order.id.slice(-6).toUpperCase()}</span><p className="text-gray-500 text-[11px] font-bold">{order.createdAt ? order.createdAt.toDate().toLocaleString('es-AR') : 'Procesando...'}</p></div></div><div className="flex items-center gap-2"><span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-xl flex items-center gap-1.5 ${cuenta === 'efectivo' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'}`}><i className={`fas ${cuenta === 'efectivo' ? 'fa-money-bill-wave' : 'fa-university'}`}></i> {cuenta === 'efectivo' ? 'Efectivo' : 'Transferencia'}</span><button onClick={() => copiarLinkResena(order)} title="Copiar link de reseña" className={`${darkMode ? 'bg-[#333] text-white hover:bg-[#fcdb00] hover:text-[#111]' : 'bg-gray-100 text-gray-600 hover:bg-[#fcdb00] hover:text-[#111]'} w-12 h-12 rounded-xl transition-all flex items-center justify-center shadow-sm`}><i className="fas fa-star text-lg"></i></button><button onClick={() => deleteOrder(order.id)} className={`${darkMode ? 'bg-[#333] text-white hover:bg-red-600' : 'bg-gray-100 text-gray-600 hover:bg-red-500 hover:text-white'} w-12 h-12 rounded-xl transition-all flex items-center justify-center shadow-sm`}><i className="fas fa-trash text-lg"></i></button></div></div>{order.clientName && (<div className={`mb-5 pb-5 border-b ${darkMode ? 'border-[#333333]' : 'border-gray-200'} flex items-center gap-4`}><div className="w-10 h-10 bg-[#f2f2f2] rounded-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-lg"></i></div><div><p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest leading-none mb-1">Cliente</p><p className="font-bebas text-xl tracking-wide uppercase text-[#111111] dark:text-white">{order.clientName} <span className="font-poppins font-normal text-sm text-gray-400 ml-2">({order.clientPhone})</span></p></div></div>)}<div className={`space-y-3 mb-6 p-5 rounded-2xl border ${darkMode ? 'bg-[#222] border-[#333333]' : 'bg-[#f2f2f2] border-transparent'}`}>{order.items?.map((item, idx) => (<div key={idx} className="flex justify-between items-center"><span className={`font-bold text-xs uppercase tracking-wide ${darkMode ? 'text-gray-300' : 'text-[#111111]'}`}><span className={`${darkMode ? 'text-[#fcdb00]' : 'text-[#b8952a]'} font-black mr-2 bg-white dark:bg-[#111] px-2 py-0.5 rounded`}>{item.qty}x</span> {item.name}</span><span className="text-gray-500 font-bold text-sm">${item.price?.toLocaleString('es-AR')}</span></div>))}</div>{order.delivery === 'envio' && order.address && (<div className="mb-6 p-5 bg-[#111111] text-white rounded-2xl border-l-8 border-[#fcdb00] shadow-md"><p className="text-[#fcdb00] text-[9px] font-bold uppercase mb-2 tracking-widest"><i className="fas fa-truck mr-1.5"></i> Envío a Domicilio {order.shippingOption === 'flash' ? '🚀 (FLASH)' : order.shippingOption === 'moto' ? '🛵 (MOTO)' : ''}</p><p className="uppercase font-bold text-sm mb-1">{order.address}</p><p className="text-gray-400 text-[10px] uppercase font-bold tracking-widest">{order.zone}</p></div>)}</div>); })}</div>)}
         </div>);
         })()}
       </main>
