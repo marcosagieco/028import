@@ -3733,8 +3733,12 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         </div>
       )}
 
-      {/* === BOTÓN FLOTANTE WHATSAPP === */}
-      <div className="fixed bottom-6 right-5 z-[200] flex flex-col items-end">
+      {/* === BOTÓN FLOTANTE WHATSAPP ===
+          En el celular, con el cajón del carrito o el checkout abiertos, esta
+          burbuja quedaba flotando encima de los botones de esas pantallas. En
+          desktop hay lugar de sobra y no molesta, así que ahí se deja como
+          estaba. */}
+      <div className={`fixed bottom-6 right-5 z-[200] flex-col items-end ${(isCartOpen || isCheckoutOpen) ? 'hidden md:flex' : 'flex'}`}>
         {showTooltip && (
           <div className="absolute bottom-full right-0 mb-3 bg-white text-[#111111] text-xs font-semibold font-poppins px-4 py-2.5 rounded-2xl shadow-xl border border-gray-200 w-[200px] text-center leading-snug animate-in fade-in slide-in-from-bottom-2 duration-300">
             ¿Tenés dudas? <span className="text-[#25D366]">¡Escribinos por WhatsApp!</span> 💬
