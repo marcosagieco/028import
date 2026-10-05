@@ -577,7 +577,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const [showShippingCalculatorModal, setShowShippingCalculatorModal] = useState(false);
   
   const [deliveryDate, setDeliveryDate] = useState('');
-  const [deliveryTime, setDeliveryTime] = useState('13:00');
+  const [deliveryTime, setDeliveryTime] = useState('15:30');
 
   const [deptIcons, setDeptIcons] = useState({});
   const [virtualDepts, setVirtualDepts] = useState([]);
@@ -3264,7 +3264,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       </div>
                       <div onClick={() => { setShippingType('moto'); if (firebaseRefs.db) setDoc(doc(firebaseRefs.db, 'stats', 'shipping'), { moto: increment(1) }, { merge: true }).catch(console.error); }} className={`p-4 rounded-none border-2 cursor-pointer transition-all flex gap-3 items-center ${shippingType === 'moto' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-300 bg-gray-50 hover:border-[#fcdb00]/40 rounded-none'}`}>
                         <div className="w-9 h-9 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] flex-shrink-0"><i className="fas fa-motorcycle"></i></div>
-                        <div className="flex-1"><span className={`font-bebas text-lg leading-none block mb-1 ${shippingType === 'moto' ? 'text-[#fcdb00]' : 'text-[#111111]/70'}`}>Motomensajería</span><span className="text-[9px] font-bold text-gray-500">⏲️ Horarios: 13:00 · 16:00 · 20:00hs</span></div>
+                        <div className="flex-1"><span className={`font-bebas text-lg leading-none block mb-1 ${shippingType === 'moto' ? 'text-[#fcdb00]' : 'text-[#111111]/70'}`}>Motomensajería</span><span className="text-[9px] font-bold text-gray-500">⏲️ Horarios: 15:30 · 18:30hs</span></div>
                         {shippingType === 'moto' && <i className="fas fa-check-circle text-[#fcdb00] text-lg"></i>}
                       </div>
 
@@ -3282,9 +3282,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                           <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest mt-1">¿Cuándo querés recibirlo?</label>
                           <div className="relative"><i className="fas fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i><select value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-none text-[11px] font-bold uppercase tracking-wider outline-none focus:border-[#fcdb00] transition-all appearance-none cursor-pointer text-[#111111]">{next7Days.map(d => (<option key={d.value} value={d.value}>{d.label}</option>))}</select><i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[10px]"></i></div>
                           <div className="flex gap-2 bg-gray-100 p-1.5 rounded-none border border-gray-300">
-                            <button onClick={() => setDeliveryTime('13:00')} className={`flex-1 py-2.5 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryTime === '13:00' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}>13:00</button>
-                            <button onClick={() => setDeliveryTime('16:00')} className={`flex-1 py-2.5 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryTime === '16:00' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}>16:00</button>
-                            <button onClick={() => setDeliveryTime('20:00')} className={`flex-1 py-2.5 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryTime === '20:00' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}>20:00</button>
+                            <button onClick={() => setDeliveryTime('15:30')} className={`flex-1 py-2.5 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryTime === '15:30' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}>15:30</button>
+                            <button onClick={() => setDeliveryTime('18:30')} className={`flex-1 py-2.5 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryTime === '18:30' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}>18:30</button>
                           </div>
                           <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">¿Cómo querés abonar?</label>
                           <div className="flex gap-2 bg-gray-100 p-1.5 rounded-none border border-gray-300">

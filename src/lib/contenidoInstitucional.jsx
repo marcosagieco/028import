@@ -88,7 +88,7 @@ export const CONTENIDO_INSTITUCIONAL = {
 
         <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 my-6">
           <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mb-3 flex items-center gap-2"><i className="fas fa-motorcycle"></i> Motomensajería Programada</h3>
-          <p className="text-sm">Contamos con un servicio propio de motomensajería con salidas organizadas en tres turnos fijos (13:00hs - 16:00hs - 20:00hs). Esto nos permite garantizar un tiempo de entrega predecible y seguro. Aboná con efectivo o transferencia.</p>
+          <p className="text-sm">Contamos con un servicio propio de motomensajería con salidas organizadas en dos turnos fijos (15:30hs - 18:30hs). Esto nos permite garantizar un tiempo de entrega predecible y seguro. Aboná con efectivo o transferencia.</p>
         </div>
       </div>
     )
