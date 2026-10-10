@@ -34,6 +34,10 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
     ? Number(producto.stockUnits)
     : null;
   const sinStock = producto.inStock === false;
+  // La línea Eb Create se vende sin garantía: si llega fallada de fábrica, no hay
+  // cambio ni devolución (ver Términos y Condiciones). Se compara por slug, no por
+  // el texto exacto, para que "Elfbar Eb create" y "ELFBAR EB CREATE" matcheen igual.
+  const esEbCreate = aSlug(producto.category) === 'elfbar-eb-create';
   const conOferta = producto.offerPrice > 0 && producto.offerPrice < producto.price;
   const precio = conOferta ? producto.offerPrice : producto.price;
   const esUSD = producto.tag === 'USD';
@@ -226,6 +230,15 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                 <span className={`w-1.5 h-1.5 rounded-full ${sinStock ? 'bg-red-500' : 'bg-green-500'}`} aria-hidden="true"></span>
                 {sinStock ? 'Sin stock por ahora' : 'Disponible'}
               </p>
+
+              {esEbCreate && (
+                <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 mb-5">
+                  <i className="fas fa-info-circle text-amber-500 mt-0.5" aria-hidden="true"></i>
+                  <p className="text-[12px] font-bold leading-snug">
+                    Este modelo se vende sin garantía: si llega con fallas de fábrica, no tiene cambio ni devolución.
+                  </p>
+                </div>
+              )}
 
               {/* Quedan pocas. El número sale del stock cargado en el panel. */}
               {!sinStock && unidadesRestantes != null && unidadesRestantes <= POCAS_UNIDADES && (

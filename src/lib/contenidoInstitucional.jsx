@@ -47,6 +47,7 @@ export const CONTENIDO_INSTITUCIONAL = {
         <div>
           <h3 className="text-[#111111] font-black uppercase tracking-widest text-sm mb-3">4. Política de Cambios y Garantías</h3>
           <p>Dado el carácter personal y consumible de gran parte de nuestro catálogo, no se aceptarán cambios ni devoluciones por motivos de "insatisfacción" o error en la elección del sabor/modelo una vez que el precinto de seguridad haya sido vulnerado. Solo se admitirán reclamos por defectos técnicos de fabricación, los cuales deberán ser notificados dentro de las 48 horas posteriores a la recepción, adjuntando evidencia visual.</p>
+          <p className="mt-4"><span className="font-bold text-[#111111]">Excepción — Línea Elfbar EB Create:</span> los modelos de esta línea se comercializan sin garantía de ningún tipo. Si el producto llega con fallas de fabricación, no se admiten cambios, devoluciones ni reintegros.</p>
         </div>
       </div>
     )
