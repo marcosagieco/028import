@@ -175,6 +175,9 @@ export async function POST(request) {
       // WhatsApp cuando confirma la entrega (ver pestaña Historial del panel).
       reviewToken: crypto.randomBytes(9).toString('base64url'),
       reviewedProductIds: [],
+      // Sólo quien acaba de hacer el pedido recibe esta clave, y es lo que le
+      // permite subirle el comprobante de transferencia (ver /api/comprobante).
+      comprobanteToken: crypto.randomBytes(12).toString('base64url'),
     };
 
     const ref = await db.collection('orders').add(datosPedido);
@@ -182,6 +185,7 @@ export async function POST(request) {
     return NextResponse.json({
       ok: true,
       orderId: ref.id,
+      comprobanteToken: datosPedido.comprobanteToken,
       items: itemsCorregidos,
       subtotal,
       envio,

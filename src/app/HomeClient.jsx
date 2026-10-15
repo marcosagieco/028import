@@ -574,6 +574,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const [aptDetails, setAptDetails] = useState(''); 
   const [showTooltip, setShowTooltip] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [comprobante, setComprobante] = useState(null);
   const [showShippingCalculatorModal, setShowShippingCalculatorModal] = useState(false);
   
   const [deliveryDate, setDeliveryDate] = useState('');
@@ -1367,8 +1368,12 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     executeOrder();
   };
 
-  const executeOrder = async () => {
-    setShowPaymentModal(false);
+  // { conComprobante: true } sólo desde el botón principal de la ventana de
+  // transferencia. Los demás caminos (efectivo, flash, "lo mando por WhatsApp")
+  // llegan sin eso, o con el evento del click, y siguen como siempre.
+  const executeOrder = async (opciones) => {
+    const subirComprobante = opciones?.conComprobante === true && !!comprobante;
+    if (!subirComprobante) setShowPaymentModal(false);
     setIsSending(true);
     let currentCart = [...cart];
 
@@ -1432,6 +1437,25 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     // navegador para armar el mensaje.
     const itemsVerificados = verificado.items;
     const finalTotal = verificado.total;
+    const codigoPedido = String(verificado.orderId || '').slice(-6).toUpperCase();
+
+    // Si falla la subida, el pedido igual sale: el cliente adjunta la captura en el
+    // chat como antes. Perder una venta por un problema de subida sería peor.
+    let linkComprobante = null;
+    if (subirComprobante) {
+      try {
+        const form = new FormData();
+        form.append('orderId', verificado.orderId);
+        form.append('token', verificado.comprobanteToken);
+        form.append('archivo', comprobante);
+        const r = await fetch('/api/comprobante', { method: 'POST', body: form });
+        const datos = await r.json();
+        if (r.ok && datos.ok) linkComprobante = datos.url;
+        else showToast('⚠️ No se pudo subir el comprobante. Adjuntalo en el chat.');
+      } catch {
+        showToast('⚠️ No se pudo subir el comprobante. Adjuntalo en el chat.');
+      }
+    }
 
     let msg = `Hola *${CONFIG.brandName}*, mi pedido:\n`;
 
@@ -1496,7 +1520,11 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (paymentMethod === 'transferencia') {
             msg += `Transferencia\n`;
             msg += `${emo('🏦 ')}Alias: ${CONFIG.paymentAlias}\n`;
-            msg += `${emo('📎 ')}Adjunto el comprobante a continuación${emo(' 👇')}\n`;
+            if (linkComprobante) {
+                msg += `${emo('📎 ')}Comprobante: ${linkComprobante}\n`;
+            } else {
+                msg += `${emo('📎 ')}Adjunto el comprobante a continuación${emo(' 👇')}\n`;
+            }
         } else {
             msg += `Efectivo\n`;
         }
@@ -1505,6 +1533,9 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     // --- CLIENTE ---
     msg += `\n${DIVIDER}\n${emo('👤 ')}*CLIENTE*\n`;
     msg += `${clientName}${clientPhone ? ' — ' + clientPhone : ''}\n`;
+    if (codigoPedido) msg += `Pedido #${codigoPedido}\n`;
+
+    if (subirComprobante) setComprobante(null);
 
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
 
@@ -3541,8 +3572,11 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
       {/* --- BOTONES FLOTANTES INDEPENDIENTES (Se esconden si el carrito se abre) --- */}
 
       {/* --- MODAL DE PAGO OFFLINE --- */}
+      {/* z-[130]: tiene que quedar por encima de la pantalla de checkout (z-[125]),
+          que es desde donde se abre. Con z-[110] quedaba tapada y el cliente no veía
+          nada al confirmar con transferencia. */}
       {showPaymentModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#111111]/80 backdrop-blur-sm transition-opacity" onClick={() => setShowPaymentModal(false)}></div>
           <div className="relative bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 border border-gray-200">
             <div className="bg-gray-50 p-6 text-center relative border-b border-gray-200">
@@ -3576,12 +3610,28 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
               </div>
               
               <div className="space-y-3">
-                  <button onClick={executeOrder} disabled={isSending} className={`w-full ${isSending ? 'bg-gray-300 text-gray-500' : 'bg-[#25D366] text-white hover:scale-[1.02] shadow-lg shadow-[#25D366]/30'} py-4 rounded-xl font-bebas text-xl uppercase tracking-wider transition-all flex items-center justify-center gap-3`}>
-                      {isSending ? <><i className="fas fa-circle-notch fa-spin text-lg"></i> Procesando...</> : <><i className="fab fa-whatsapp text-2xl mb-0.5"></i> Enviar Comprobante</>}
+                  <label className={`flex items-center gap-3 p-4 rounded-xl border-2 border-dashed cursor-pointer transition-all ${comprobante ? 'border-[#25D366] bg-[#25D366]/5' : 'border-gray-300 hover:border-[#fcdb00]'}`}>
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${comprobante ? 'bg-[#25D366] text-white' : 'bg-gray-100 text-[#111111]'}`}>
+                          <i className={`fas ${comprobante ? 'fa-check' : 'fa-receipt'}`}></i>
+                      </div>
+                      <div className="min-w-0">
+                          <p className="text-[11px] font-bold uppercase tracking-widest text-[#111111] font-poppins">{comprobante ? 'Comprobante listo' : 'Subí el comprobante'}</p>
+                          <p className="text-[10px] text-gray-500 font-poppins truncate">{comprobante ? comprobante.name : 'Foto o captura de la transferencia'}</p>
+                      </div>
+                      <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) setComprobante(f); }} />
+                  </label>
+
+                  <button onClick={() => executeOrder({ conComprobante: true })} disabled={isSending || !comprobante} className={`w-full ${isSending || !comprobante ? 'bg-gray-300 text-gray-500' : 'bg-[#25D366] text-white hover:scale-[1.02] shadow-lg shadow-[#25D366]/30'} py-4 rounded-xl font-bebas text-xl uppercase tracking-wider transition-all flex items-center justify-center gap-3`}>
+                      {isSending ? <><i className="fas fa-circle-notch fa-spin text-lg"></i> Enviando pedido...</> : <><i className="fab fa-whatsapp text-2xl mb-0.5"></i> Confirmar pedido</>}
                   </button>
                   <p className="text-[9px] text-gray-400 font-medium text-center font-poppins uppercase tracking-widest leading-relaxed">
-                      Realizá la transferencia y envianos la captura por WhatsApp tocando el botón verde.
+                      Transferí al alias, subí la captura y confirmá. Te llevamos al chat con tu pedido.
                   </p>
+                  {!isSending && (
+                      <button onClick={() => executeOrder()} className="w-full text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-[#111111] transition-colors font-poppins py-1">
+                          Prefiero mandar el comprobante por WhatsApp
+                      </button>
+                  )}
               </div>
             </div>
           </div>

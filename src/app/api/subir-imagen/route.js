@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getApps, initializeApp, cert } from 'firebase-admin/app';
-import { getStorage } from 'firebase-admin/storage';
 import sharp from 'sharp';
 import { createHash } from 'node:crypto';
 import { paseValido } from '@/lib/paseAdmin';
+import { getBucket } from '@/lib/bucket';
 
 // Sube una foto de producto directo desde la compu del admin a Firebase Storage,
 // en vez de depender de pegar un link de un servicio externo (ImgBB, Postimage).
@@ -34,21 +33,6 @@ function demasiados(ip) {
   if (!r || ahora - r.desde > VENTANA_MS) { golpes.set(ip, { desde: ahora, cuantos: 1 }); return false; }
   r.cuantos += 1;
   return r.cuantos > MAX_POR_MINUTO;
-}
-
-let appStorage = null;
-function getBucket() {
-  if (!appStorage) {
-    appStorage = getApps().find(a => a.name === 'subir-imagen') || initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-        privateKey: (process.env.FIREBASE_ADMIN_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
-      }),
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    }, 'subir-imagen');
-  }
-  return getStorage(appStorage).bucket();
 }
 
 /** Recomprime igual que optimizar-imagenes.mjs, para que las fotos nuevas pesen

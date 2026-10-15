@@ -424,7 +424,7 @@ export default function AdminPage() {
       // El servidor aprobó el código: abrimos la sesión con el token que mandó.
       // El pase va aparte, y es lo que después deja avisarle al sitio que rehaga
       // una página cuando guardás.
-      paseDelPanel.current = data.pase || null;
+      guardarPase(data.pase || null);
       await signInWithCustomToken(firebaseRefs.auth, data.token);
     } catch (err) {
       setAdminAuthError('No se pudo entrar: ' + (err.code || err.message));
@@ -434,6 +434,7 @@ export default function AdminPage() {
   };
 
   const handleAdminLogout = () => {
+    guardarPase(null);
     if (firebaseRefs.auth) signOut(firebaseRefs.auth).catch(console.error);
     setIsAdminAuthed(false);
   };
@@ -590,7 +591,39 @@ export default function AdminPage() {
   // Los avisos se juntan por un segundo antes de salir: si corregís el precio y
   // enseguida el nombre, va un solo pedido y no dos.
   // ---------------------------------------------------------------------------
+  // El pase sale sólo al entrar escribiendo el código. Pero Firebase recuerda la
+  // sesión, así que al volver al panel otro día entrás sin escribirlo y el pase no
+  // existía: fallaba subir fotos y los cambios tardaban en verse en la página. Por
+  // eso se guarda en el navegador (dura 12 horas) y, si falta o venció, se vuelve
+  // a pedir el código en el momento (ver obtenerPase).
   const paseDelPanel = useRef(null);
+  const CLAVE_PASE = '028_pase_admin';
+  const guardarPase = (pase) => {
+    paseDelPanel.current = pase;
+    try { pase ? localStorage.setItem(CLAVE_PASE, pase) : localStorage.removeItem(CLAVE_PASE); } catch {}
+  };
+  useEffect(() => {
+    try { const guardado = localStorage.getItem(CLAVE_PASE); if (guardado) paseDelPanel.current = guardado; } catch {}
+  }, []);
+  const obtenerPase = async ({ forzar = false } = {}) => {
+    if (paseDelPanel.current && !forzar) return paseDelPanel.current;
+    const codigo = prompt('Por seguridad, ingresá el código del panel para continuar:');
+    if (!codigo) return null;
+    try {
+      const r = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigo }),
+      });
+      const datos = await r.json();
+      if (!r.ok || !datos.pase) { alert(datos?.error || 'Código incorrecto.'); return null; }
+      guardarPase(datos.pase);
+      return datos.pase;
+    } catch (err) {
+      alert('No se pudo verificar el código: ' + err.message);
+      return null;
+    }
+  };
   const catalogoActual = useRef([]);
   catalogoActual.current = products;
   const cambiosPendientes = useRef(new Map());
@@ -606,6 +639,7 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pase: paseDelPanel.current, productos }),
       });
+      if (res.status === 401) guardarPase(null);
       if (!res.ok) console.warn('[panel] el sitio no aceptó el aviso:', res.status);
     } catch (err) {
       // Si el aviso no llega, el cambio igual se ve: las páginas se rearman solas
@@ -650,13 +684,22 @@ export default function AdminPage() {
   const [subiendoImagenId, setSubiendoImagenId] = useState(null);
   const subirImagenAlServidor = async (archivo, idParaBoton) => {
     if (!archivo) return null;
-    if (!paseDelPanel.current) { alert('Tu sesión de admin venció, volvé a entrar al panel.'); return null; }
+    let pase = await obtenerPase();
+    if (!pase) return null;
     setSubiendoImagenId(idParaBoton);
     try {
-      const formData = new FormData();
-      formData.append('pase', paseDelPanel.current);
-      formData.append('archivo', archivo);
-      const r = await fetch('/api/subir-imagen', { method: 'POST', body: formData });
+      const enviar = (p) => {
+        const formData = new FormData();
+        formData.append('pase', p);
+        formData.append('archivo', archivo);
+        return fetch('/api/subir-imagen', { method: 'POST', body: formData });
+      };
+      let r = await enviar(pase);
+      if (r.status === 401) {
+        pase = await obtenerPase({ forzar: true });
+        if (!pase) return null;
+        r = await enviar(pase);
+      }
       const datos = await r.json();
       if (!r.ok || !datos.ok) { alert(datos.error || 'No se pudo subir la imagen.'); return null; }
       return datos.url;
@@ -673,6 +716,18 @@ export default function AdminPage() {
   const updateWinterBadge = async (product, value) => { try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, winterBadge: value }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const toggleProductFlavor = async (product, flavor) => { const current = Array.isArray(product.flavors) ? product.flavors : []; const next = current.includes(flavor) ? current.filter(f => f !== flavor) : [...current, flavor]; try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, flavors: next }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const updatePuffs = async (product, val) => { const v = val.trim(); try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, puffs: v === '' ? null : Number(v) }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
+  const updateCategoryPrice = async (categoryName, valor) => {
+    const precio = parseInt(String(valor).replace(/\D/g, ''), 10);
+    if (!precio || precio <= 0) { alert('Poné un precio válido.'); return false; }
+    const prods = products.filter(p => p.category === categoryName && !p.isDeleted);
+    if (!prods.length) return false;
+    if (!confirm(`¿Cambiar el precio de los ${prods.length} productos de ${categoryName} a $${precio.toLocaleString('es-AR')}?`)) return false;
+    try {
+      await Promise.all(prods.map(p => guardarProducto(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, price: precio }, { merge: true })));
+      alert(`Listo: ${prods.length} productos de ${categoryName} ahora están a $${precio.toLocaleString('es-AR')}.`);
+      return true;
+    } catch (err) { alert("Error: " + err.message); return false; }
+  };
   const updateCategoryDepartment = async (categoryName, newDept) => { const dept = newDept.trim().toUpperCase(); if (!dept) return; try { const prods = products.filter(p => p.category === categoryName); await Promise.all(prods.map(p => guardarProducto(doc(firebaseRefs.db, 'products', `prod_${p.id}`), { id: p.id, department: dept }, { merge: true }))); } catch (err) { alert("Error: " + err.message); } }
   const saveUsdToArs = async (e) => {
     if (e) e.preventDefault();
@@ -1269,6 +1324,31 @@ export default function AdminPage() {
   // envío automático, porque no hay forma de avisarle solos sin su número agregado.
   const aprobarOpinion = async (id) => { try { await updateDoc(doc(firebaseRefs.db, 'comentarios_home', id), { aprobado: true }); } catch (err) { alert("Error: " + err.message); } };
   const rechazarOpinion = async (id) => { if (confirm("¿Borrar esta opinión?")) { try { await deleteDoc(doc(firebaseRefs.db, 'comentarios_home', id)); } catch (err) { alert("Error: " + err.message); } } };
+  // La pestaña se abre antes de pedir el link: si se abriera después de esperar al
+  // servidor, el navegador la bloquea por considerarla un popup no pedido.
+  const verComprobante = async (order) => {
+    // Sin pase, primero se pide el código; la pestaña no se puede abrir después de
+    // esperar (el navegador la bloquea), así que se pide tocar el botón otra vez.
+    if (!paseDelPanel.current) {
+      if (await obtenerPase()) alert('Listo. Tocá de nuevo el botón para ver el comprobante.');
+      return;
+    }
+    const pestaña = window.open('', '_blank');
+    try {
+      const r = await fetch('/api/comprobante/ver', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pase: paseDelPanel.current, orderId: order.id }),
+      });
+      const datos = await r.json();
+      if (r.status === 401) { pestaña?.close(); guardarPase(null); alert('Tu sesión venció. Tocá de nuevo el botón e ingresá el código del panel.'); return; }
+      if (!r.ok || !datos.ok) { pestaña?.close(); alert(datos.error || 'No se pudo abrir el comprobante.'); return; }
+      if (pestaña) pestaña.location.href = datos.url; else window.location.href = datos.url;
+    } catch (err) {
+      pestaña?.close();
+      alert('No se pudo abrir el comprobante: ' + err.message);
+    }
+  };
   const copiarLinkResena = async (order) => {
     if (!order.reviewToken) { alert("Este pedido es de antes de la función de reseñas."); return; }
     const link = `https://028import.com/resena/${order.reviewToken}`;
@@ -1328,7 +1408,7 @@ export default function AdminPage() {
     return (
         <div id={'cat-' + categoryFilter} className="mb-10" key={categoryFilter}>
             <div className={`flex flex-col md:flex-row md:justify-between md:items-center gap-3 border-b pb-3 mb-4 ${darkMode ? 'border-[#333333]' : 'border-gray-200'}`}>
-               <div className="flex items-center gap-4">
+               <div className="flex flex-wrap items-center gap-3 md:gap-4">
                    <input defaultValue={categoryFilter} key={categoryFilter} className={`text-2xl font-bebas uppercase tracking-wide bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#fcdb00] outline-none transition-colors pb-0.5 ${theme.subText}`} title="Haz clic para renombrar la marca" onKeyDown={(e) => { if(e.key === 'Enter') e.target.blur(); }} onBlur={(e) => handleRenameCategory(categoryFilter, e.target.value)} />
                    <div className="flex items-center gap-2 bg-[#fcdb00]/10 px-3 py-1.5 rounded-lg border border-[#fcdb00]/30">
                        <span className="text-[10px] font-bold uppercase text-[#b8952a] tracking-widest font-poppins">Depto:</span>
@@ -1336,6 +1416,22 @@ export default function AdminPage() {
                        <datalist id="dept-suggestions-stock">{availableDepartments.map(d => <option key={d} value={d} />)}</datalist>
                        <datalist id="cat-suggestions-stock">{uniqueCategories.map(c => <option key={c} value={c} />)}</datalist>
                    </div>
+                   {(() => {
+                     const precios = [...new Set(group.map(p => Number(p.price) || 0))];
+                     const idInput = `precio-marca-${categoryFilter}`;
+                     const aplicar = async () => {
+                       const input = document.getElementById(idInput);
+                       if (!input || !input.value.trim()) return;
+                       if (await updateCategoryPrice(categoryFilter, input.value)) input.value = '';
+                     };
+                     return (
+                       <div className="flex items-center gap-2 bg-[#fcdb00]/10 px-3 py-1.5 rounded-lg border border-[#fcdb00]/30" title="Cambia el precio de todos los productos de esta marca">
+                         <span className="text-[10px] font-bold uppercase text-[#b8952a] tracking-widest font-poppins">Precio a todos:</span>
+                         <input id={idInput} type="text" inputMode="numeric" placeholder={precios.length === 1 ? `$${precios[0].toLocaleString('es-AR')}` : 'Varios'} onKeyDown={(e) => { if (e.key === 'Enter') aplicar(); }} className={`bg-transparent text-[10px] font-bold outline-none w-20 border-b border-transparent hover:border-[#fcdb00] focus:border-[#fcdb00] transition-colors font-poppins ${darkMode ? 'text-white placeholder-gray-500' : 'text-[#111111] placeholder-gray-400'}`} />
+                         <button type="button" onClick={aplicar} className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-sm bg-[#fcdb00] text-[#111111] hover:bg-[#111111] hover:text-[#fcdb00] transition-all font-poppins">Aplicar</button>
+                       </div>
+                     );
+                   })()}
                </div>
                <button onClick={() => handleDeleteCategory(categoryFilter)} className="w-fit text-red-500 hover:text-red-700 hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 text-[10px] font-bold uppercase font-poppins"><i className="fas fa-trash"></i> Borrar Categoría</button>
             </div>
@@ -2486,7 +2582,7 @@ export default function AdminPage() {
             ))}
           </div>
 
-          {filteredOrders.length === 0 ? (<div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}><i className="fas fa-receipt text-gray-300 text-5xl mb-6"></i><p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">{orders.length === 0 ? 'No hay pedidos en el historial' : 'No hay pedidos con esta cuenta'}</p></div>) : (<div className="grid gap-6">{filteredOrders.map((order) => { const cuenta = getOrderCuenta(order); return (<div key={order.id} className={`${theme.card} rounded-[2rem] shadow-sm border p-6 md:p-8 hover:shadow-lg transition-all duration-300 ${theme.cardHover}`}><div className="flex justify-between items-start mb-6"><div className="flex items-center gap-4"><div className="bg-[#fcdb00] text-[#111111] w-14 h-14 rounded-2xl flex items-center justify-center font-bebas text-3xl shadow-sm pt-1">{order.items?.reduce((a, b) => a + b.qty, 0)}</div><div><span className="text-[10px] font-bold text-[#b8952a] uppercase tracking-widest block mb-0.5">ID: {order.id.slice(-6).toUpperCase()}</span><p className="text-gray-500 text-[11px] font-bold">{order.createdAt ? order.createdAt.toDate().toLocaleString('es-AR') : 'Procesando...'}</p></div></div><div className="flex items-center gap-2"><span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-xl flex items-center gap-1.5 ${cuenta === 'efectivo' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'}`}><i className={`fas ${cuenta === 'efectivo' ? 'fa-money-bill-wave' : 'fa-university'}`}></i> {cuenta === 'efectivo' ? 'Efectivo' : 'Transferencia'}</span><button onClick={() => copiarLinkResena(order)} title="Copiar link de reseña" className={`${darkMode ? 'bg-[#333] text-white hover:bg-[#fcdb00] hover:text-[#111]' : 'bg-gray-100 text-gray-600 hover:bg-[#fcdb00] hover:text-[#111]'} w-12 h-12 rounded-xl transition-all flex items-center justify-center shadow-sm`}><i className="fas fa-star text-lg"></i></button><button onClick={() => deleteOrder(order.id)} className={`${darkMode ? 'bg-[#333] text-white hover:bg-red-600' : 'bg-gray-100 text-gray-600 hover:bg-red-500 hover:text-white'} w-12 h-12 rounded-xl transition-all flex items-center justify-center shadow-sm`}><i className="fas fa-trash text-lg"></i></button></div></div>{order.clientName && (<div className={`mb-5 pb-5 border-b ${darkMode ? 'border-[#333333]' : 'border-gray-200'} flex items-center gap-4`}><div className="w-10 h-10 bg-[#f2f2f2] rounded-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-lg"></i></div><div><p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest leading-none mb-1">Cliente</p><p className="font-bebas text-xl tracking-wide uppercase text-[#111111] dark:text-white">{order.clientName} <span className="font-poppins font-normal text-sm text-gray-400 ml-2">({order.clientPhone})</span></p></div></div>)}<div className={`space-y-3 mb-6 p-5 rounded-2xl border ${darkMode ? 'bg-[#222] border-[#333333]' : 'bg-[#f2f2f2] border-transparent'}`}>{order.items?.map((item, idx) => (<div key={idx} className="flex justify-between items-center"><span className={`font-bold text-xs uppercase tracking-wide ${darkMode ? 'text-gray-300' : 'text-[#111111]'}`}><span className={`${darkMode ? 'text-[#fcdb00]' : 'text-[#b8952a]'} font-black mr-2 bg-white dark:bg-[#111] px-2 py-0.5 rounded`}>{item.qty}x</span> {item.name}</span><span className="text-gray-500 font-bold text-sm">${item.price?.toLocaleString('es-AR')}</span></div>))}</div>{order.delivery === 'envio' && order.address && (<div className="mb-6 p-5 bg-[#111111] text-white rounded-2xl border-l-8 border-[#fcdb00] shadow-md"><p className="text-[#fcdb00] text-[9px] font-bold uppercase mb-2 tracking-widest"><i className="fas fa-truck mr-1.5"></i> Envío a Domicilio {order.shippingOption === 'flash' ? '🚀 (FLASH)' : order.shippingOption === 'moto' ? '🛵 (MOTO)' : ''}</p><p className="uppercase font-bold text-sm mb-1">{order.address}</p><p className="text-gray-400 text-[10px] uppercase font-bold tracking-widest">{order.zone}</p></div>)}</div>); })}</div>)}
+          {filteredOrders.length === 0 ? (<div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}><i className="fas fa-receipt text-gray-300 text-5xl mb-6"></i><p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">{orders.length === 0 ? 'No hay pedidos en el historial' : 'No hay pedidos con esta cuenta'}</p></div>) : (<div className="grid gap-6">{filteredOrders.map((order) => { const cuenta = getOrderCuenta(order); return (<div key={order.id} className={`${theme.card} rounded-[2rem] shadow-sm border p-6 md:p-8 hover:shadow-lg transition-all duration-300 ${theme.cardHover}`}><div className="flex justify-between items-start mb-6"><div className="flex items-center gap-4"><div className="bg-[#fcdb00] text-[#111111] w-14 h-14 rounded-2xl flex items-center justify-center font-bebas text-3xl shadow-sm pt-1">{order.items?.reduce((a, b) => a + b.qty, 0)}</div><div><span className="text-[10px] font-bold text-[#b8952a] uppercase tracking-widest block mb-0.5">ID: {order.id.slice(-6).toUpperCase()}</span><p className="text-gray-500 text-[11px] font-bold">{order.createdAt ? order.createdAt.toDate().toLocaleString('es-AR') : 'Procesando...'}</p></div></div><div className="flex items-center gap-2"><span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-xl flex items-center gap-1.5 ${cuenta === 'efectivo' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'}`}><i className={`fas ${cuenta === 'efectivo' ? 'fa-money-bill-wave' : 'fa-university'}`}></i> {cuenta === 'efectivo' ? 'Efectivo' : 'Transferencia'}</span>{order.comprobantePath && (<button onClick={() => verComprobante(order)} title="Ver comprobante de transferencia" className={`${darkMode ? 'bg-[#25D366]/20 text-[#25D366] hover:bg-[#25D366] hover:text-white' : 'bg-[#25D366]/10 text-[#1a9e4b] hover:bg-[#25D366] hover:text-white'} w-12 h-12 rounded-xl transition-all flex items-center justify-center shadow-sm`}><i className="fas fa-receipt text-lg"></i></button>)}<button onClick={() => copiarLinkResena(order)} title="Copiar link de reseña" className={`${darkMode ? 'bg-[#333] text-white hover:bg-[#fcdb00] hover:text-[#111]' : 'bg-gray-100 text-gray-600 hover:bg-[#fcdb00] hover:text-[#111]'} w-12 h-12 rounded-xl transition-all flex items-center justify-center shadow-sm`}><i className="fas fa-star text-lg"></i></button><button onClick={() => deleteOrder(order.id)} className={`${darkMode ? 'bg-[#333] text-white hover:bg-red-600' : 'bg-gray-100 text-gray-600 hover:bg-red-500 hover:text-white'} w-12 h-12 rounded-xl transition-all flex items-center justify-center shadow-sm`}><i className="fas fa-trash text-lg"></i></button></div></div>{order.clientName && (<div className={`mb-5 pb-5 border-b ${darkMode ? 'border-[#333333]' : 'border-gray-200'} flex items-center gap-4`}><div className="w-10 h-10 bg-[#f2f2f2] rounded-full flex items-center justify-center text-gray-400"><i className="fas fa-user text-lg"></i></div><div><p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest leading-none mb-1">Cliente</p><p className="font-bebas text-xl tracking-wide uppercase text-[#111111] dark:text-white">{order.clientName} <span className="font-poppins font-normal text-sm text-gray-400 ml-2">({order.clientPhone})</span></p></div></div>)}<div className={`space-y-3 mb-6 p-5 rounded-2xl border ${darkMode ? 'bg-[#222] border-[#333333]' : 'bg-[#f2f2f2] border-transparent'}`}>{order.items?.map((item, idx) => (<div key={idx} className="flex justify-between items-center"><span className={`font-bold text-xs uppercase tracking-wide ${darkMode ? 'text-gray-300' : 'text-[#111111]'}`}><span className={`${darkMode ? 'text-[#fcdb00]' : 'text-[#b8952a]'} font-black mr-2 bg-white dark:bg-[#111] px-2 py-0.5 rounded`}>{item.qty}x</span> {item.name}</span><span className="text-gray-500 font-bold text-sm">${item.price?.toLocaleString('es-AR')}</span></div>))}</div>{order.delivery === 'envio' && order.address && (<div className="mb-6 p-5 bg-[#111111] text-white rounded-2xl border-l-8 border-[#fcdb00] shadow-md"><p className="text-[#fcdb00] text-[9px] font-bold uppercase mb-2 tracking-widest"><i className="fas fa-truck mr-1.5"></i> Envío a Domicilio {order.shippingOption === 'flash' ? '🚀 (FLASH)' : order.shippingOption === 'moto' ? '🛵 (MOTO)' : ''}</p><p className="uppercase font-bold text-sm mb-1">{order.address}</p><p className="text-gray-400 text-[10px] uppercase font-bold tracking-widest">{order.zone}</p></div>)}</div>); })}</div>)}
         </div>);
         })()}
       </main>
