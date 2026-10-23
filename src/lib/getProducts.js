@@ -149,6 +149,26 @@ async function _getSSRHomeLayout() {
   }
 }
 
+export function getSSRCommunityVideos() {
+  return conMemoria('getSSRCommunityVideos', _getSSRCommunityVideos);
+}
+
+/** Los videos de 028 Community visibles, en el orden del panel. Nunca lanza. */
+async function _getSSRCommunityVideos() {
+  try {
+    const db = getAdminDb();
+    if (!db) return [];
+    const docSnap = await db.collection('settings').doc('community_videos').get();
+    const videos = docSnap.exists ? docSnap.data()?.videos : null;
+    return (Array.isArray(videos) ? videos : [])
+      .filter(v => v && !v.isHidden && !v.isDeleted && v.videoUrl)
+      .sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+  } catch (err) {
+    console.error('[SSR] getSSRCommunityVideos falló:', err.message);
+    return [];
+  }
+}
+
 export function getSSRProducts() {
   return conMemoria('getSSRProducts', _getSSRProducts);
 }

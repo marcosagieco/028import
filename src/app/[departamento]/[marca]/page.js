@@ -9,6 +9,7 @@ import {
   pareceSeccion,
 } from '@/lib/catalogo';
 import ListadoCatalogo from '@/components/ListadoCatalogo';
+import { conExtrasDeTarjeta } from '@/lib/extrasTarjeta';
 import HomeClient from '@/app/HomeClient';
 
 // Cada marca dentro de un departamento: 028import.com/vapes/elfbar-ice-king.
@@ -79,7 +80,7 @@ export default async function PaginaMarca({ params }) {
   if (!laMarca) notFound();
 
   const marcas = marcasDeDepartamento(productos, departamento);
-  const lista = productosDeMarca(productos, departamento, marca);
+  const lista = await conExtrasDeTarjeta(productosDeMarca(productos, departamento, marca));
 
   const camino = {
     '@context': 'https://schema.org',

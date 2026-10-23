@@ -8,6 +8,7 @@ import {
   pareceSeccion,
 } from '@/lib/catalogo';
 import ListadoCatalogo from '@/components/ListadoCatalogo';
+import { conExtrasDeTarjeta } from '@/lib/extrasTarjeta';
 import HomeClient from '@/app/HomeClient';
 
 // Cada departamento es una dirección propia: 028import.com/vapes, /apple, etc.
@@ -73,7 +74,7 @@ export default async function PaginaDepartamento({ params }) {
   if (!depto) notFound();
 
   const marcas = marcasDeDepartamento(productos, departamento);
-  const lista = productosDeDepartamento(productos, departamento);
+  const lista = await conExtrasDeTarjeta(productosDeDepartamento(productos, departamento));
 
   // Le dice a Google dónde está parada esta página dentro de la tienda.
   const camino = {

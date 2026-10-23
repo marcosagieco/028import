@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation';
-import { getSSRProducts, getSSRPromos } from '@/lib/getProducts';
+import { getSSRProducts, getSSRPromos, getSSRCommunityVideos } from '@/lib/getProducts';
+import { posterDeVideo, idsDelVideo } from '@/lib/community';
 import { getVentasPorProducto, puestoEnSuMarca } from '@/lib/ventas';
 import { getResenasDeProducto } from '@/lib/resenas';
+import { getComprasJuntos, tambienLlevaron } from '@/lib/juntos';
 import { escalonesDeProducto } from '@/lib/combos';
-import { slugProducto, buscarPorSlug } from '@/lib/slug';
+import { slugProducto, buscarPorSlug, aSlug } from '@/lib/slug';
 import FichaProducto from '@/components/FichaProducto';
 import HomeClient from '@/app/HomeClient';
 
@@ -83,9 +85,47 @@ export default async function PaginaProducto({ params }) {
 
   // Los combos por cantidad y las ventas reales. Las dos cosas se leen acá, en el
   // servidor, y viajan ya calculadas: la página no hace consultas desde el navegador.
-  const [promos, ventas, resenas] = await Promise.all([getSSRPromos(), getVentasPorProducto(), getResenasDeProducto(producto.id)]);
+  const [promos, ventas, resenas, videos, juntos] = await Promise.all([getSSRPromos(), getVentasPorProducto(), getResenasDeProducto(producto.id), getSSRCommunityVideos(), getComprasJuntos()]);
+
+  // "Los que llevaron este, también llevaron": pares reales de los pedidos, sólo
+  // con productos que hoy se pueden comprar.
+  const porId = new Map(todos.map(p => [String(p.id), p]));
+  const compradosJuntos = tambienLlevaron(juntos, producto.id, 12)
+    .map(({ id }) => porId.get(id))
+    .filter(p => p && p.inStock !== false && String(p.id) !== String(producto.id))
+    .slice(0, 3);
   const escalones = escalonesDeProducto(promos, producto);
   const puesto = puestoEnSuMarca(ventas, producto, todos);
+
+  // Todos los de la misma marca (con o sin stock), para elegir sabor sin salir de la
+  // ficha. Sólo lo que hace falta para dibujar cada opción, no el producto entero.
+  const marcaActual = aSlug(producto.category);
+  const variantes = todos
+    .filter(p => marcaActual && aSlug(p.category) === marcaActual)
+    .map(p => ({ id: p.id, name: p.name, category: p.category, image: p.image || null, inStock: p.inStock !== false }))
+    .sort((a, b) => String(a.name).localeCompare(String(b.name), 'es'));
+
+  // Videos de 028 Community: primero donde aparece este producto, después los de la
+  // misma marca y al final el resto, para que la sección nunca quede vacía.
+  const idsDeLaMarca = new Set(variantes.map(v => String(v.id)));
+  const relevancia = (v) => {
+    const ids = idsDelVideo(v);
+    if (ids.includes(String(producto.id))) return 0;
+    if (ids.some(id => idsDeLaMarca.has(id))) return 1;
+    return 2;
+  };
+  const videosComunidad = videos
+    .map((v, i) => ({ v, i, r: relevancia(v) }))
+    .sort((a, b) => a.r - b.r || a.i - b.i)
+    .slice(0, 8)
+    .map(({ v, r }) => ({
+      id: String(v.dbId || v.id || v.videoUrl),
+      titulo: v.title || '',
+      creador: v.creator || '',
+      videoUrl: v.videoUrl,
+      poster: posterDeVideo(v.videoUrl),
+      conEsteProducto: r === 0,
+    }));
 
   // Productos de la misma marca, para sugerir abajo.
   const relacionados = todos
@@ -133,6 +173,9 @@ export default async function PaginaProducto({ params }) {
           escalones={escalones}
           puesto={puesto}
           resenas={resenas}
+          variantes={variantes}
+          videosComunidad={videosComunidad}
+          compradosJuntos={compradosJuntos}
         />
       </HomeClient>
     </>

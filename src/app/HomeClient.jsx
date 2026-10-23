@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { rutaProducto, aSlug } from '@/lib/slug';
 import { escalonesDeProducto, precioSegunCantidad } from '@/lib/combos';
+import { posterDeVideo, idsDelVideo } from '@/lib/community';
 import { useCarrito } from '@/components/CarritoProvider';
 const CalculadorEnvio = dynamic(() => import('@/components/CalculadorEnvio'), { ssr: false });
 const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvioSimple'), { ssr: false });
@@ -19,6 +20,7 @@ import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, set
 // pérdida del pedido en el envío. Va como constante acá, no en Firestore, porque
 // no se vende ni se administra como el resto — es una política de la tienda.
 const PRECIO_PAGO_SEGURO = 1900;
+const CLAVE_ULTIMO_PEDIDO = '028_ultimo_pedido';
 
 const CONFIG = {
   brandName: "028", 
@@ -98,16 +100,6 @@ const INITIAL_COMMUNITY_VIDEOS = [
     clicks: 0
   }
 ];
-
-// Pósters de los videos de Community. Los que están en Firebase Storage no traen
-// thumbnail propio, así que se sirven desde /public/community: así la portada se ve
-// sin tener que descargar el video entero.
-const COMMUNITY_POSTERS = {
-  hanni:     '/community/hanni.webp',
-  martulali: '/community/martulali.webp',
-  alelali:   '/community/alelali.webp',
-  giulianny: '/community/giulianny.webp',
-};
 
 const buildDefaultHomeLayout = (sections = []) => {
   const orderedSections = [...sections].sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
@@ -280,7 +272,9 @@ const formatPrice = (n) => n ? n.toLocaleString('es-AR') : '0';
 // envueltas en useCallback del lado del padre.
 const TarjetaProducto = React.memo(function TarjetaProducto({
   p, index, isVidriera = false, layout = 'horizontal',
-  radioVidriera, cantidadEnCarrito, promo,
+  radioVidriera, cantidadEnCarrito,
+  promoCantidad = 0, promoPrecio = 0,
+  resenaPromedio = 0, resenaCantidad = 0,
   onAgregar, onCambiarCantidad,
 }) {
         const inCart = cantidadEnCarrito > 0;
@@ -363,15 +357,23 @@ const TarjetaProducto = React.memo(function TarjetaProducto({
                     {p.name}
                 </Link>
             </h3>
-            {(() => {
-                const productPromo = promo;
-                if (!productPromo) return null;
-                return (
-                    <p className="inline-flex items-center gap-1 w-fit bg-[#fcdb00]/20 text-[#8a6d00] text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full mb-2">
-                        <i className="fas fa-tag text-[8px]"></i> {productPromo.minQty}+ un: {CONFIG.currencySymbol}{formatPrice(productPromo.totalPrice / productPromo.minQty)} c/u
-                    </p>
-                );
-            })()}
+            {/* Estrellas sólo con reseñas reales de compras verificadas. */}
+            {resenaCantidad > 0 && (
+                <p className="flex items-center gap-1 mb-1.5" aria-label={`${resenaPromedio.toFixed(1)} de 5, ${resenaCantidad} reseñas`}>
+                    <span className="flex items-center gap-px">
+                        {[1, 2, 3, 4, 5].map(n => (
+                            <i key={n} className={`fas fa-star text-[10px] ${n <= Math.round(resenaPromedio) ? 'text-[#fcdb00]' : 'text-gray-200'}`}></i>
+                        ))}
+                    </span>
+                    <span className="text-[10px] font-bold text-gray-500 font-poppins">({resenaCantidad})</span>
+                </p>
+            )}
+            {/* El mejor precio por cantidad que tiene (del producto o de su marca). */}
+            {promoCantidad > 1 && !isOutOfStock && (
+                <p className="inline-flex items-center gap-1 w-fit bg-[#fcdb00]/20 text-[#8a6d00] text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full mb-2 font-poppins">
+                    <i className="fas fa-tag text-[8px]"></i> Llevando {promoCantidad}+: {CONFIG.currencySymbol}{formatPrice(promoPrecio)} c/u
+                </p>
+            )}
 
             <div className="mt-auto pt-3">
                 {p.offerPrice > 0 && p.offerPrice < p.price ? (
@@ -451,6 +453,8 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   // hasta que el admin las aprueba desde el panel (evita spam y comentarios feos
   // colgados en la home sin que nadie los revise).
   const [opinionesHome, setOpinionesHome] = useState([]);
+  // Promedio y cantidad de reseñas por producto, para las estrellas de las tarjetas.
+  const [resumenResenas, setResumenResenas] = useState({});
   const [opinionNombre, setOpinionNombre] = useState('');
   const [opinionTexto, setOpinionTexto] = useState('');
   const [opinionRating, setOpinionRating] = useState(0);
@@ -508,6 +512,24 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const openCart = () => {
     setIsCartOpen(true);
     requestAnimationFrame(() => requestAnimationFrame(() => setIsCartVisible(true)));
+  };
+
+  // "¿Lo mismo que la última vez?": casi la mitad de los pedidos son de clientes que
+  // vuelven, y con vapes se suele repetir sabor. Se lee lo que guardó executeOrder
+  // en este navegador; "ocultado" recuerda si la persona cerró el aviso de ESE pedido.
+  const [ultimoPedido, setUltimoPedido] = useState(null);
+  useEffect(() => {
+    try {
+      const guardado = JSON.parse(localStorage.getItem(CLAVE_ULTIMO_PEDIDO) || 'null');
+      if (guardado?.items?.length && !guardado.ocultado) setUltimoPedido(guardado);
+    } catch {}
+  }, []);
+  const ocultarUltimoPedido = () => {
+    setUltimoPedido(null);
+    try {
+      const guardado = JSON.parse(localStorage.getItem(CLAVE_ULTIMO_PEDIDO) || 'null');
+      if (guardado) localStorage.setItem(CLAVE_ULTIMO_PEDIDO, JSON.stringify({ ...guardado, ocultado: true }));
+    } catch {}
   };
   const closeCart = (cb) => {
     setIsCartVisible(false);
@@ -911,6 +933,21 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     });
 
     promosUnsub = onSnapshot(collection(firebaseRefs.db, 'promos'), (s) => setPromos(!s.empty ? s.docs.map(d => ({ id: d.id, ...d.data() })) : []));
+
+    // Una sola lectura: las reseñas cambian poco y no hace falta escucharlas en vivo.
+    getDocs(query(collection(firebaseRefs.db, 'reviews'), where('oculta', '==', false))).then(s => {
+      const suma = {};
+      s.forEach(d => {
+        const { productId, rating } = d.data();
+        const clave = String(productId);
+        if (!suma[clave]) suma[clave] = { total: 0, cantidad: 0 };
+        suma[clave].total += Number(rating) || 0;
+        suma[clave].cantidad += 1;
+      });
+      const resumen = {};
+      for (const [clave, { total, cantidad }] of Object.entries(suma)) resumen[clave] = { promedio: total / cantidad, cantidad };
+      setResumenResenas(resumen);
+    }).catch(() => {});
     getDocs(collection(firebaseRefs.db, 'home_sections')).then(s => setHomeSections(!s.empty ? s.docs.map(d => ({ dbId: d.id, ...d.data() })).sort((a, b) => a.order - b.order) : [])).catch(() => {});
 
     // Toda la configuración en una sola lectura. Antes eran 8 pedidos sueltos, cada
@@ -1074,23 +1111,7 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
   const showToast = React.useCallback((message) => { setToastMessage(message); setTimeout(() => { setToastMessage(null); }, 3000); }, []);
 
 
-  const getCommunityVideoPoster = (videoUrl) => {
-    const url = String(videoUrl || '').trim();
-    if (!url) return '';
-    // Cloudinary puede generar el frame al vuelo desde la propia URL
-    if (url.includes('/video/upload/')) {
-      return url
-        .replace('/video/upload/', '/video/upload/f_jpg,so_0.6,q_auto/')
-        .replace(/\.(mp4|mov|webm)(\?.*)?$/i, '.jpg');
-    }
-    // Videos propios en /community: el póster es el mismo nombre en .webp,
-    // así no hay que mantener ninguna lista aparte.
-    if (url.startsWith('/community/')) return url.replace(/\.(mp4|mov|webm)$/i, '.webp');
-    // Firebase Storage: se mantiene el mapa por si quedara alguno apuntando ahí.
-    const fileName = decodeURIComponent((url.split('/o/')[1] || '').split('?')[0]).toLowerCase();
-    const match = Object.keys(COMMUNITY_POSTERS).find(key => fileName.includes(key));
-    return match ? COMMUNITY_POSTERS[match] : '';
-  };
+  const getCommunityVideoPoster = posterDeVideo;
 
   const getCommunityDocId = (video) => video?.dbId || null;
 
@@ -1114,21 +1135,10 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     }
   };
 
-  const getProductsShownForVideo = (video) => {
-    const rawIds = [
-      ...(video?.productId ? [video.productId] : []),
-      ...(Array.isArray(video?.productsShown) ? video.productsShown : [])
-    ];
-
-    const uniqueIds = rawIds
-      .map(id => String(id ?? '').trim())
-      .filter(Boolean)
-      .filter((id, index, arr) => arr.indexOf(id) === index);
-
-    return uniqueIds
+  const getProductsShownForVideo = (video) =>
+    idsDelVideo(video)
       .map(id => allProducts.find(p => String(p.id) === id && !p.isDeleted))
       .filter(Boolean);
-  };
 
   const toggleCommunityCardFlip = (cardId) => {
     setFlippedCommunityCards(prev => ({ ...prev, [cardId]: !prev[cardId] }));
@@ -1303,7 +1313,55 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
 
     return precioSegunCantidad(escalones, cantidad, item.price);
   };
-  
+
+  // Empujón a la segunda unidad: 8 de cada 10 pedidos son de una sola unidad, y casi
+  // todas las marcas tienen precio por cantidad. Si a algo del carrito le faltan 1 o
+  // 2 unidades para el siguiente escalón, el carrito lo dice con el ahorro concreto
+  // y sugiere sabores de esa marca, primero los que más se compran junto con ese
+  // (datos reales, ver /api/tambien-llevaron).
+  const empujonCombo = (() => {
+    for (const item of cart) {
+      if (item.isUpsell) continue;
+      const escalones = escalonesDeProducto(promos, item);
+      if (!escalones.length) continue;
+      const esDelProducto = promos.some(p => p.type === 'product' && String(p.productId) === String(item.id));
+      const cantidad = esDelProducto
+        ? cart.filter(i => String(i.id) === String(item.id)).reduce((a, c) => a + c.qty, 0)
+        : cart.filter(i => i.category === item.category).reduce((a, c) => a + c.qty, 0);
+      const siguiente = escalones.find(e => e.minQty > cantidad);
+      if (!siguiente) continue;
+      const faltan = siguiente.minQty - cantidad;
+      const precioAhora = getUnitPromoPrice(item);
+      if (faltan > 2 || siguiente.precioUnitario >= precioAhora) continue;
+      return {
+        item, faltan, esDelProducto,
+        precio: siguiente.precioUnitario,
+        ahorro: (precioAhora - siguiente.precioUnitario) * siguiente.minQty,
+      };
+    }
+    return null;
+  })();
+
+  const [ordenJuntos, setOrdenJuntos] = useState({});
+  const idEmpujon = empujonCombo && !empujonCombo.esDelProducto ? String(empujonCombo.item.id) : null;
+  useEffect(() => {
+    if (!idEmpujon || ordenJuntos[idEmpujon]) return;
+    fetch(`/api/tambien-llevaron?id=${encodeURIComponent(idEmpujon)}`)
+      .then(r => r.json())
+      .then(d => setOrdenJuntos(prev => ({ ...prev, [idEmpujon]: Array.isArray(d.ids) ? d.ids : [] })))
+      .catch(() => setOrdenJuntos(prev => ({ ...prev, [idEmpujon]: [] })));
+  }, [idEmpujon, ordenJuntos]);
+
+  const sugerenciasEmpujon = (() => {
+    if (!empujonCombo || empujonCombo.esDelProducto) return [];
+    const { item } = empujonCombo;
+    const enCarrito = new Set(cart.map(c => String(c.id)));
+    const candidatos = products.filter(p => p.category === item.category && p.inStock !== false && !p.isHidden && !enCarrito.has(String(p.id)));
+    const orden = ordenJuntos[String(item.id)] || [];
+    const puesto = (p) => { const i = orden.indexOf(String(p.id)); return i === -1 ? 999 : i; };
+    return [...candidatos].sort((a, b) => puesto(a) - puesto(b)).slice(0, 4);
+  })();
+
   const calculateTotal = (cartData = cart) => {
       const subtotal = cartData.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
       const envio = (deliveryMethod === 'envio' && shippingType === 'moto') ? shippingCost : 0;
@@ -1537,6 +1595,16 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
 
     if (subirComprobante) setComprobante(null);
 
+    // Para "¿Lo mismo que la última vez?" en el inicio: sólo ids y cantidades, en
+    // este navegador. Si el almacenamiento no está disponible, simplemente no se
+    // ofrece la próxima vez.
+    try {
+      localStorage.setItem(CLAVE_ULTIMO_PEDIDO, JSON.stringify({
+        fecha: Date.now(),
+        items: itemsVerificados.filter(i => !i.isUpsell).map(i => ({ id: String(i.productId), qty: Number(i.qty) || 1 })),
+      }));
+    } catch {}
+
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
 
     // El pedido ya quedó guardado por el servidor (con los precios verificados). Acá
@@ -1570,20 +1638,29 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     showToast("✅ ALIAS copiado al portapapeles");
   };
 
-  const renderProductCard = (p, index, isVidriera = false, layout = 'horizontal') => (
-    <TarjetaProducto
-      key={p.id}
-      p={p}
-      index={index}
-      isVidriera={isVidriera}
-      layout={layout}
-      radioVidriera={vidreiraCardRadius}
-      cantidadEnCarrito={cart.find(i => i.id === p.id)?.qty || 0}
-      promo={promos.find(pr => pr.type === 'product' && pr.productId === p.id) || null}
-      onAgregar={addToCart}
-      onCambiarCantidad={changeQty}
-    />
-  );
+  const renderProductCard = (p, index, isVidriera = false, layout = 'horizontal') => {
+    // El primer escalón (el más fácil de alcanzar, ej. "llevando 2+"). Se pasan
+    // números sueltos y no el objeto, para que la tarjeta memorizada no se redibuje.
+    const primerEscalon = escalonesDeProducto(promos, p)[0];
+    const resena = resumenResenas[String(p.id)];
+    return (
+      <TarjetaProducto
+        key={p.id}
+        p={p}
+        index={index}
+        isVidriera={isVidriera}
+        layout={layout}
+        radioVidriera={vidreiraCardRadius}
+        cantidadEnCarrito={cart.find(i => i.id === p.id)?.qty || 0}
+        promoCantidad={primerEscalon?.minQty || 0}
+        promoPrecio={primerEscalon?.precioUnitario || 0}
+        resenaPromedio={resena?.promedio || 0}
+        resenaCantidad={resena?.cantidad || 0}
+        onAgregar={addToCart}
+        onCambiarCantidad={changeQty}
+      />
+    );
+  };
 
   const renderProductSection = (category) => {
     let sectionProducts = products.filter(p => getProductCatList(p).includes(category));
@@ -2322,6 +2399,11 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           animation: logoFloat 10s ease-in-out infinite;
         }
 
+        /* La ficha de producto marca <body data-barra-compra> mientras muestra su
+           barra de compra fija abajo: la burbuja de WhatsApp sube para no taparla. */
+        .wa-flotante { transition: bottom 0.3s ease; }
+        body[data-barra-compra] .wa-flotante { bottom: 88px; }
+
         /* Ken Burns: hero image slow zoom-out */
         @keyframes kenBurns {
           from { transform: scale(1.09) translateY(-2%); }
@@ -2781,18 +2863,60 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
             </div>
           </div>
           <h1 className="sr-only">028 Import — Vapes y tecnología con envío en 30 minutos por CABA y AMBA</h1>
-          <div className="relative w-full h-[230px] md:h-[475px] overflow-hidden">
+          {/* Si la pantalla es más ancha que la imagen y hay que recortar, se recorta
+              casi todo de abajo (12% arriba, 88% abajo): se ve la parte de arriba del
+              banner sin que quede pegada al borde. */}
+          <div className="relative w-full h-[230px] md:h-[560px] overflow-hidden">
             <Image
-              src="/banner-original.webp"
+              src="/banner-halloween.webp"
               alt="Banner 028 Import"
               fill
               priority
               sizes="100vw"
-              className="object-cover"
+              className="object-cover object-[center_12%]"
             />
           </div>
           {vape3dPosition === 'banner' && <LazyVapeSpecs3D />}
           <main className="flex-grow px-4 md:px-10 lg:px-20 xl:px-32 pt-10 w-full min-h-[50vh] pb-8 md:pb-16 animate-view-enter">
+            {(() => {
+              if (!ultimoPedido) return null;
+              const items = ultimoPedido.items
+                .map(it => ({ ...it, producto: products.find(p => String(p.id) === String(it.id)) }))
+                .filter(it => it.producto && it.producto.inStock !== false);
+              if (!items.length) return null;
+              const pedirDeNuevo = () => {
+                items.forEach(({ producto, qty }) => {
+                  addToCart(producto);
+                  if (qty > 1) changeQty(producto.id, qty - 1);
+                });
+                openCart();
+              };
+              return (
+                <div className="mb-10 bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] p-4 md:p-5 flex flex-col md:flex-row md:items-center gap-4">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex -space-x-3 shrink-0">
+                      {items.slice(0, 3).map(({ producto }) => (
+                        <img key={producto.id} src={producto.image} alt="" className="w-12 h-12 rounded-xl bg-[#fafafa] border-2 border-white object-contain" />
+                      ))}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bebas text-xl md:text-2xl uppercase tracking-wide text-[#111111] leading-none">¿Lo mismo que la última vez?</p>
+                      <p className="text-[12px] text-gray-500 font-poppins truncate mt-1">
+                        {items.map(({ producto, qty }) => `${producto.name}${qty > 1 ? ` ×${qty}` : ''}`).join(' · ')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={pedirDeNuevo} className="flex-1 md:flex-none bg-[#111111] text-[#fcdb00] font-bebas text-lg uppercase tracking-wider px-6 h-11 rounded-xl hover:brightness-110 active:scale-95 transition-all">
+                      Pedir de nuevo
+                    </button>
+                    <button onClick={ocultarUltimoPedido} aria-label="No mostrar" className="w-11 h-11 rounded-xl bg-gray-100 text-gray-500 hover:text-[#111111] flex items-center justify-center transition-colors">
+                      <i className="fas fa-times text-sm"></i>
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
             <div className="mb-16 hidden">
               <h3 className="font-bebas text-2xl text-[#111111] mb-4 pl-2 reveal-title reveal-on-scroll hidden"></h3>
               <HorizontalScroll className="flex overflow-x-auto gap-2 md:gap-3 no-scrollbar pb-6 snap-x mask-image-gradient pr-8">
@@ -3102,6 +3226,38 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   </div>
                 );
               })}
+
+              {/* Empujón a la siguiente unidad (ver empujonCombo) */}
+              {empujonCombo && (
+                <div className="mt-1 rounded-xl border border-[#fcdb00] bg-[#fcdb00]/10 p-3">
+                  <p className="text-[12px] font-bold text-[#111111] leading-snug font-poppins">
+                    Sumá {empujonCombo.faltan} más {empujonCombo.esDelProducto ? `de ${empujonCombo.item.name}` : `de ${empujonCombo.item.category}`} y te quedan a {CONFIG.currencySymbol}{formatPrice(empujonCombo.precio)} c/u
+                  </p>
+                  <p className="text-[11px] font-bold text-[#8a6d00] font-poppins mb-2.5">Ahorrás {CONFIG.currencySymbol}{formatPrice(empujonCombo.ahorro)}</p>
+                  <div className="flex flex-col gap-1.5">
+                    {/* Siempre: otro igual al que ya eligió */}
+                    <button
+                      onClick={() => changeQty(empujonCombo.item.id, 1)}
+                      className="flex items-center gap-2.5 bg-white border border-gray-200 hover:border-[#111111] rounded-lg p-1.5 pr-3 text-left transition-colors"
+                    >
+                      <img src={empujonCombo.item.image} alt="" loading="lazy" className="w-9 h-9 object-contain shrink-0" />
+                      <span className="flex-1 min-w-0 font-bebas text-sm uppercase tracking-wide text-[#111111] truncate">Otro {empujonCombo.item.name}</span>
+                      <span className="shrink-0 font-bebas text-sm uppercase text-[#111111] flex items-center gap-1"><i className="fas fa-plus text-[9px]"></i> Sumar</span>
+                    </button>
+                    {sugerenciasEmpujon.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => addToCart(p)}
+                        className="flex items-center gap-2.5 bg-white border border-gray-200 hover:border-[#111111] rounded-lg p-1.5 pr-3 text-left transition-colors"
+                      >
+                        <img src={p.image} alt="" loading="lazy" className="w-9 h-9 object-contain shrink-0" />
+                        <span className="flex-1 min-w-0 font-bebas text-sm uppercase tracking-wide text-[#111111] truncate">{p.name}</span>
+                        <span className="shrink-0 font-bebas text-sm uppercase text-[#111111] flex items-center gap-1"><i className="fas fa-plus text-[9px]"></i> Sumar</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
 
             </div>
@@ -3787,7 +3943,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           burbuja quedaba flotando encima de los botones de esas pantallas. En
           desktop hay lugar de sobra y no molesta, así que ahí se deja como
           estaba. */}
-      <div className={`fixed bottom-6 right-5 z-[200] flex-col items-end ${(isCartOpen || isCheckoutOpen) ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`wa-flotante fixed bottom-6 right-5 z-[200] flex-col items-end ${(isCartOpen || isCheckoutOpen) ? 'hidden md:flex' : 'flex'}`}>
         {showTooltip && (
           <div className="absolute bottom-full right-0 mb-3 bg-white text-[#111111] text-xs font-semibold font-poppins px-4 py-2.5 rounded-2xl shadow-xl border border-gray-200 w-[200px] text-center leading-snug animate-in fade-in slide-in-from-bottom-2 duration-300">
             ¿Tenés dudas? <span className="text-[#25D366]">¡Escribinos por WhatsApp!</span> 💬

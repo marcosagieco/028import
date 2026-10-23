@@ -8,6 +8,36 @@ const cache = new Map();
 const TTL_MS = 60 * 1000;
 const VACIO = { promedio: 0, cantidad: 0, lista: [] };
 
+let resumenCache = null;
+let resumenLeidoEn = 0;
+
+/** Promedio y cantidad de reseñas visibles de TODOS los productos, por id. Para las
+ *  estrellas de las tarjetas de los listados. Nunca lanza. */
+export async function getResumenResenas() {
+  if (resumenCache && Date.now() - resumenLeidoEn < TTL_MS) return resumenCache;
+  try {
+    const db = getAdminDb();
+    if (!db) return {};
+    const snap = await db.collection('reviews').where('oculta', '==', false).get();
+    const suma = {};
+    snap.forEach(d => {
+      const { productId, rating } = d.data();
+      const clave = String(productId);
+      if (!suma[clave]) suma[clave] = { total: 0, cantidad: 0 };
+      suma[clave].total += Number(rating) || 0;
+      suma[clave].cantidad += 1;
+    });
+    const resumen = {};
+    for (const [clave, { total, cantidad }] of Object.entries(suma)) resumen[clave] = { promedio: total / cantidad, cantidad };
+    resumenCache = resumen;
+    resumenLeidoEn = Date.now();
+    return resumen;
+  } catch (err) {
+    console.error('[resenas] no se pudo leer el resumen:', err.message);
+    return resumenCache || {};
+  }
+}
+
 /** Reseñas visibles de un producto: promedio, cantidad y la lista para mostrar. */
 export async function getResenasDeProducto(productId) {
   const clave = String(productId);

@@ -67,6 +67,24 @@ export default function TarjetaCatalogo({ producto, onAgregado }) {
           </Link>
         </h3>
 
+        {/* Estrellas y precio por cantidad: vienen calculados del servidor (ver
+            lib/extrasTarjeta.js). Sin reseñas o sin promo, no se muestra nada. */}
+        {producto.resenaCantidad > 0 && (
+          <p className="flex items-center gap-1 mb-1.5" aria-label={`${producto.resenaPromedio.toFixed(1)} de 5, ${producto.resenaCantidad} reseñas`}>
+            <span className="flex items-center gap-px">
+              {[1, 2, 3, 4, 5].map(n => (
+                <i key={n} className={`fas fa-star text-[10px] ${n <= Math.round(producto.resenaPromedio) ? 'text-[#fcdb00]' : 'text-gray-200'}`} aria-hidden="true"></i>
+              ))}
+            </span>
+            <span className="text-[10px] font-bold text-gray-500">({producto.resenaCantidad})</span>
+          </p>
+        )}
+        {producto.promoCantidad > 1 && !sinStock && (
+          <p className="inline-flex items-center gap-1 w-fit bg-[#fcdb00]/20 text-[#8a6d00] text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full mb-2">
+            <i className="fas fa-tag text-[8px]" aria-hidden="true"></i> Llevando {producto.promoCantidad}+: {moneda}{precioFormateado(producto.promoPrecio)} c/u
+          </p>
+        )}
+
         <div className="mt-auto pt-2">
           {conOferta && (
             <p className="text-gray-400 font-bebas text-sm line-through leading-none">
