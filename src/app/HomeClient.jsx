@@ -9,6 +9,7 @@ import { rutaProducto, aSlug } from '@/lib/slug';
 import { escalonesDeProducto, precioSegunCantidad } from '@/lib/combos';
 import { posterDeVideo, idsDelVideo } from '@/lib/community';
 import { useCarrito } from '@/components/CarritoProvider';
+import ReproductorVideo from '@/components/ReproductorVideo';
 const CalculadorEnvio = dynamic(() => import('@/components/CalculadorEnvio'), { ssr: false });
 const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvioSimple'), { ssr: false });
 const VapeSpecs3D = dynamic(() => import('@/components/VapeSpecs3D'), { ssr: false });
@@ -468,6 +469,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const [communityVideoBuffering, setCommunityVideoBuffering] = useState({});
   const [communityVideoPlaying, setCommunityVideoPlaying] = useState({});
   const communityVideoRefs = useRef({});
+  const [videoAmpliado, setVideoAmpliado] = useState(null);
   const communityScrollRef = useRef(null);
   const [hoveredCommunityCard, setHoveredCommunityCard] = useState(null);
   const [communityProductsPanel, setCommunityProductsPanel] = useState(null);
@@ -1192,29 +1194,18 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     }
   };
 
-  const handleCommunityFullscreen = async (cardId, e) => {
+  // Abre el video en el reproductor propio (con sonido), desde donde iba en la tarjeta.
+  const handleCommunityFullscreen = (cardId, videoData, e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
     const videoEl = communityVideoRefs.current[cardId];
-    if (!videoEl) return;
-
-    videoEl.controls = true;
-
-    try {
-      if (videoEl.requestFullscreen) {
-        await videoEl.requestFullscreen();
-      } else if (videoEl.webkitEnterFullscreen) {
-        videoEl.webkitEnterFullscreen();
-      } else if (videoEl.webkitRequestFullscreen) {
-        await videoEl.webkitRequestFullscreen();
-      }
-    } catch (err) {
-      videoEl.controls = true;
-    }
+    const inicio = videoEl ? videoEl.currentTime : 0;
+    if (videoEl) videoEl.pause();
+    trackCommunityView(videoData);
+    setVideoAmpliado({ titulo: videoData.title, videoUrl: videoData.videoUrl, poster: videoData.poster || getCommunityVideoPoster(videoData.videoUrl), inicio });
   };
-
 
   const isFinePointerDevice = () => {
     if (typeof window === 'undefined') return false;
@@ -1837,7 +1828,7 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
                   </div>
                   <button
                     type="button"
-                    onClick={(e) => handleCommunityFullscreen(cardId, e)}
+                    onClick={(e) => handleCommunityFullscreen(cardId, video, e)}
                     className="pointer-events-auto w-9 h-9 rounded-full bg-black/62 hover:bg-black/78 border border-white/15 backdrop-blur-md text-white flex items-center justify-center transition-all"
                     aria-label="Ver video en pantalla completa"
                   >
@@ -2190,7 +2181,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         }
 
         if (block.id === 'community') {
-          result.push(<React.Fragment key="home-block-community">{renderCommunitySection()}</React.Fragment>);
+          result.push(<React.Fragment key="home-block-community">{renderCommunitySection()}{videoAmpliado && <ReproductorVideo key={videoAmpliado.videoUrl} video={videoAmpliado} inicio={videoAmpliado.inicio} onCerrar={() => setVideoAmpliado(null)} />}</React.Fragment>);
         } else {
           const sec = homeSections.find(section => section.id === block.id);
           if (sec) result.push(<React.Fragment key={`home-block-${block.id}`}>{renderSingleHomeSection(sec)}</React.Fragment>);
