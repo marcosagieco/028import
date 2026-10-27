@@ -23,6 +23,7 @@ const precioDe = (p) => (p.offerPrice > 0 && p.offerPrice < p.price ? p.offerPri
 export default function ListadoCatalogo({
   titulo,
   bajada,
+  avisoArriba = null,   // algo a destacar debajo del título (ej.: marca sin garantía)
   migas = [],
   marcas = [],
   slugDepartamento,
@@ -70,6 +71,7 @@ export default function ListadoCatalogo({
             {titulo}
           </h1>
           {bajada && <p className="text-gray-500 text-sm mt-2 max-w-2xl">{bajada}</p>}
+          {avisoArriba && <div className="mt-4 max-w-2xl">{avisoArriba}</div>}
         </header>
 
         {/* Atajos a las marcas del departamento */}

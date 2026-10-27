@@ -15,9 +15,10 @@ import HomeClient from '@/app/HomeClient';
 // vez que alguien entra: no hace falta compilar de nuevo.
 // La red de seguridad, no el mecanismo principal: el panel avisa apenas guardás y
 // la página se rehace en el momento. Esto es por si ese aviso no llega (te quedaste
-// sin señal, se cayó el pedido). Una hora en vez de un minuto ahorra muchísimas
+// sin señal, se cayó el pedido). Una vez por día: cada página rehecha cuenta en el
+// límite de Vercel ("ISR Writes"), y cada hora se pasaba del doble. También ahorra
 // lecturas de la base, que es lo que se paga.
-export const revalidate = 3600;
+export const revalidate = 86400;
 export const dynamicParams = true;   // un producto nuevo funciona sin volver a compilar
 
 const SITIO = 'https://028import.com';

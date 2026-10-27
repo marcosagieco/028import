@@ -648,6 +648,22 @@ export default function AdminPage() {
     }
   }, []);
 
+  /** Para cambios que se ven en muchas páginas a la vez (promos, videos de
+   *  Community): el sitio se rehace entero, cada página en su próxima visita. */
+  const avisarTodo = useCallback(async () => {
+    if (!paseDelPanel.current) return;
+    try {
+      const res = await fetch('/api/revalidar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pase: paseDelPanel.current, todo: true }),
+      });
+      if (res.status === 401) guardarPase(null);
+    } catch (err) {
+      console.warn('[panel] no se pudo avisar al sitio:', err?.message);
+    }
+  }, []);
+
   /** Marca que un producto cambió. Acepta el producto o el id de su documento. */
   const avisarCambio = useCallback((productoOId) => {
     let producto = productoOId;
@@ -928,6 +944,7 @@ export default function AdminPage() {
     }, { merge: true });
 
     setCommunityVideos(mergeCommunityVideosWithDefaults(cleanVideos));
+    avisarTodo();
   };
 
   const buildCommunityVideosWithPatch = (video, patch) => {
@@ -1285,8 +1302,8 @@ export default function AdminPage() {
   const handleAddProduct = async (e) => { e.preventDefault(); if (!newProduct.category || !newProduct.department) return alert("Faltan datos"); setIsAdding(true); try { const newId = Date.now(); await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${newId}`), { id: newId, name: newProduct.name.toUpperCase(), price: Number(newProduct.price), department: newProduct.department.toUpperCase(), category: newProduct.category, image: newProduct.image, tag: newProduct.tag, description: newProduct.description, cardSize: newProduct.cardSize, inStock: true, order: 99, clicks: 0, createdAt: serverTimestamp(), isHidden: false, isDeleted: false }); setNewProduct({ name: '', price: '', department: 'VAPES', category: '', image: '', tag: '', description: '', cardSize: 'normal' }); alert("¡Producto agregado!"); } catch (error) { alert("Error al agregar producto: " + error.message); } setIsAdding(false); };
   const handleAddPromo = async (e) => { e.preventDefault(); try { if (newPromo.type === 'product') { const selected = products.find(p => !p.isDeleted && `${p.name} — ${p.category}` === newPromo.productQuery); if (!selected) return alert("Buscá y seleccioná un producto de la lista de sugerencias"); // El identificador incluye la cantidad: así un producto puede tener varios
         // escalones (2 unidades, 3 unidades...) en vez de que uno pise al otro.
-        const promoId = `producto-${selected.id}-x${Number(newPromo.minQty)}`; await setDoc(doc(firebaseRefs.db, 'promos', promoId), { type: 'product', productId: selected.id, productName: selected.name, category: selected.category, minQty: Number(newPromo.minQty), totalPrice: Number(newPromo.totalPrice), createdAt: serverTimestamp() }); } else { const promoId = newPromo.category.toLowerCase().replace(/\s+/g, '-') + `-x${Number(newPromo.minQty)}`; await setDoc(doc(firebaseRefs.db, 'promos', promoId), { type: 'category', category: newPromo.category, minQty: Number(newPromo.minQty), totalPrice: Number(newPromo.totalPrice), createdAt: serverTimestamp() }); } setNewPromo({ type: newPromo.type, category: '', productQuery: '', minQty: 2, totalPrice: '' }); alert("¡Promo guardada!"); } catch(err) { alert("Error al guardar promo: " + err.message); } };
-  const handleDeletePromo = async (id) => { if(confirm("¿Eliminar?")) { try { await deleteDoc(doc(firebaseRefs.db, 'promos', id)); } catch(err) { alert("Error al borrar promo: " + err.message); } } };
+        const promoId = `producto-${selected.id}-x${Number(newPromo.minQty)}`; await setDoc(doc(firebaseRefs.db, 'promos', promoId), { type: 'product', productId: selected.id, productName: selected.name, category: selected.category, minQty: Number(newPromo.minQty), totalPrice: Number(newPromo.totalPrice), createdAt: serverTimestamp() }); } else { const promoId = newPromo.category.toLowerCase().replace(/\s+/g, '-') + `-x${Number(newPromo.minQty)}`; await setDoc(doc(firebaseRefs.db, 'promos', promoId), { type: 'category', category: newPromo.category, minQty: Number(newPromo.minQty), totalPrice: Number(newPromo.totalPrice), createdAt: serverTimestamp() }); } setNewPromo({ type: newPromo.type, category: '', productQuery: '', minQty: 2, totalPrice: '' }); avisarTodo(); alert("¡Promo guardada!"); } catch(err) { alert("Error al guardar promo: " + err.message); } };
+  const handleDeletePromo = async (id) => { if(confirm("¿Eliminar?")) { try { await deleteDoc(doc(firebaseRefs.db, 'promos', id)); avisarTodo(); } catch(err) { alert("Error al borrar promo: " + err.message); } } };
   const handleDeleteCategory = async (categoryName) => { 
     if(!confirm(`⚠️ ¿ELIMINAR categoría "${categoryName}" y todos sus productos?`)) return; 
     try { 

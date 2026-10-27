@@ -11,13 +11,15 @@ import {
 import ListadoCatalogo from '@/components/ListadoCatalogo';
 import { conExtrasDeTarjeta } from '@/lib/extrasTarjeta';
 import HomeClient from '@/app/HomeClient';
+import { esSinGarantia, AvisoSinGarantia } from '@/components/SinGarantia';
 
 // Cada marca dentro de un departamento: 028import.com/vapes/elfbar-ice-king.
 // La red de seguridad, no el mecanismo principal: el panel avisa apenas guardás y
 // la página se rehace en el momento. Esto es por si ese aviso no llega (te quedaste
-// sin señal, se cayó el pedido). Una hora en vez de un minuto ahorra muchísimas
+// sin señal, se cayó el pedido). Una vez por día: cada página rehecha cuenta en el
+// límite de Vercel ("ISR Writes"), y cada hora se pasaba del doble. También ahorra
 // lecturas de la base, que es lo que se paga.
-export const revalidate = 3600;
+export const revalidate = 86400;
 // Un departamento o una marca que todavía no existía cuando se compiló el sitio
 // —porque la creaste recién desde el panel, o porque sus productos estaban
 // ocultos— igual tiene página: se arma la primera vez que alguien entra. Si el
@@ -103,6 +105,7 @@ export default async function PaginaMarca({ params }) {
           { texto: depto.nombre, href: `/${departamento}` },
           { texto: laMarca.nombre, href: null },
         ]}
+        avisoArriba={esSinGarantia({ category: laMarca.nombre }) ? <AvisoSinGarantia /> : null}
         marcas={marcas}
         slugDepartamento={departamento}
         marcaActiva={marca}

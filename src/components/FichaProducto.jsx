@@ -15,6 +15,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCarrito } from '@/components/CarritoProvider';
 import { rutaProducto, aSlug } from '@/lib/slug';
+import { esSinGarantia, AvisoSinGarantia, IconoAlerta } from '@/components/SinGarantia';
 import { fichasDeCombo, precioSegunCantidad } from '@/lib/combos';
 
 const precioFormateado = (n) => Number(n || 0).toLocaleString('es-AR');
@@ -49,10 +50,9 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
     ? Number(producto.stockUnits)
     : null;
   const sinStock = producto.inStock === false;
-  // La línea Eb Create se vende sin garantía: si llega fallada de fábrica, no hay
-  // cambio ni devolución (ver Términos y Condiciones). Se compara por slug, no por
-  // el texto exacto, para que "Elfbar Eb create" y "ELFBAR EB CREATE" matcheen igual.
-  const esEbCreate = aSlug(producto.category) === 'elfbar-eb-create';
+  // La línea EB Create se vende sin garantía (ver components/SinGarantia.jsx y
+  // Términos y Condiciones).
+  const esEbCreate = esSinGarantia(producto);
   const conOferta = producto.offerPrice > 0 && producto.offerPrice < producto.price;
   const precio = conOferta ? producto.offerPrice : producto.price;
   const esUSD = producto.tag === 'USD';
@@ -352,15 +352,6 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                 </div>
               )}
 
-              {esEbCreate && (
-                <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 mb-5">
-                  <i className="fas fa-info-circle text-amber-500 mt-0.5" aria-hidden="true"></i>
-                  <p className="text-[12px] font-bold leading-snug">
-                    Este modelo se vende sin garantía: si llega con fallas de fábrica, no tiene cambio ni devolución.
-                  </p>
-                </div>
-              )}
-
               {/* Quedan pocas. El número sale del stock cargado en el panel. */}
               {!sinStock && unidadesRestantes != null && unidadesRestantes <= POCAS_UNIDADES && (
                 <div className="mb-5">
@@ -432,6 +423,13 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                       </span>
                     </p>
                   )}
+                </div>
+              )}
+
+              {/* Justo arriba de los botones: es lo último que se lee antes de comprar. */}
+              {esEbCreate && (
+                <div className="mb-3">
+                  <AvisoSinGarantia />
                 </div>
               )}
 
@@ -715,7 +713,14 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
             )}
             <div className="flex-1 min-w-0">
               <p className="font-bebas text-base md:text-lg uppercase tracking-wide leading-none text-[#111111] truncate">{producto.name}</p>
-              <p className="font-bebas text-lg md:text-xl text-[#111111] tracking-wide leading-none mt-0.5">{simbolo}{precioFormateado(precio)}</p>
+              <p className="font-bebas text-lg md:text-xl text-[#111111] tracking-wide leading-none mt-0.5">
+                {simbolo}{precioFormateado(precio)}
+                {esEbCreate && (
+                  <span className="inline-flex items-center gap-1 ml-2 align-middle text-red-600 text-sm tracking-wider">
+                    <IconoAlerta className="w-3 h-3" /> Sin garantía
+                  </span>
+                )}
+              </p>
             </div>
             <button
               onClick={agregar}

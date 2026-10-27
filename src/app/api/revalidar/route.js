@@ -3,6 +3,8 @@ import { revalidatePath } from 'next/cache';
 import { paseValido } from '@/lib/paseAdmin';
 import { slugProducto, aSlug } from '@/lib/slug';
 import { listadosDeProducto } from '@/lib/catalogo';
+import { getAdminDb } from '@/lib/firebaseAdmin';
+import { asegurarVariantes, linksDeFotos } from '@/lib/variantesWeb';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -68,8 +70,28 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Pase inválido o vencido.' }, { status: 401 });
   }
 
+  // Cambios que no son de un producto (promos, videos de Community) se ven en
+  // muchas páginas a la vez: se marca todo el sitio para rehacerse en la próxima
+  // visita de cada página.
+  if (cuerpo?.todo === true) {
+    revalidatePath('/', 'layout');
+    return NextResponse.json({ ok: true, rehechas: ['todo'] });
+  }
+
   // El panel puede mandar varios cambios juntos (si tocaste varias cosas seguidas).
   const productos = Array.isArray(cuerpo?.productos) ? cuerpo.productos.slice(0, 50) : [];
+
+  // Si cambió una foto (o se pegó un link a mano), que tenga sus versiones livianas
+  // antes de rehacer las páginas que la muestran. Se leen de la base y no de lo que
+  // manda el panel, que puede no traer la foto recién cambiada.
+  try {
+    const db = getAdminDb();
+    const ids = productos.map(p => p?.id).filter(id => id !== undefined && id !== null).map(id => `prod_${id}`);
+    const docs = ids.length ? await db.getAll(...ids.map(id => db.collection('products').doc(id))) : [];
+    await asegurarVariantes(docs.flatMap(d => (d.exists ? linksDeFotos(d.data()) : [])));
+  } catch (err) {
+    console.error('[revalidar] no se pudieron preparar las fotos:', err?.message);
+  }
 
   const rutas = new Set();
   for (const p of productos) {

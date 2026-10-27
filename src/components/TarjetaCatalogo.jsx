@@ -11,6 +11,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCarrito } from '@/components/CarritoProvider';
 import { rutaProducto } from '@/lib/slug';
+import { esSinGarantia, BandaSinGarantia } from '@/components/SinGarantia';
 
 const precioFormateado = (n) => Number(n || 0).toLocaleString('es-AR');
 
@@ -57,6 +58,7 @@ export default function TarjetaCatalogo({ producto, onAgregado }) {
             {producto.tag}
           </span>
         ) : null}
+        {!sinStock && esSinGarantia(producto) && <BandaSinGarantia />}
       </Link>
 
       <div className="p-4 flex flex-col flex-grow">

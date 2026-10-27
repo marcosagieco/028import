@@ -21,11 +21,11 @@ const nextConfig = {
     ];
   },
 
+  // Las fotos ya no pasan por el optimizador de Vercel (límite de 5.000 por mes en
+  // el plan gratis): src/lib/cargadorImagen.js las pide directo en su versión WebP.
   images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "**" },
-    ],
-    formats: ["image/avif", "image/webp"],
+    loader: 'custom',
+    loaderFile: './src/lib/cargadorImagen.js',
   },
 };
 

@@ -3,6 +3,7 @@ import sharp from 'sharp';
 import { createHash } from 'node:crypto';
 import { paseValido } from '@/lib/paseAdmin';
 import { getBucket } from '@/lib/bucket';
+import { crearVariantes } from '@/lib/variantesWeb';
 
 // Sube una foto de producto directo desde la compu del admin a Firebase Storage,
 // en vez de depender de pegar un link de un servicio externo (ImgBB, Postimage).
@@ -95,6 +96,8 @@ export async function POST(request) {
       metadata: { contentType, cacheControl: 'public, max-age=31536000, immutable' },
     });
     await archivoDestino.makePublic();
+    // Las versiones livianas que muestra la tienda (ver lib/imagenWeb.js).
+    await crearVariantes(bucket, `${CARPETA_DESTINO}/${hash}`, buffer);
 
     const url = `https://storage.googleapis.com/${bucket.name}/${ruta}`;
     return NextResponse.json({ ok: true, url, pesoKB: Math.round(buffer.length / 1024) });

@@ -10,6 +10,7 @@ import { escalonesDeProducto, precioSegunCantidad } from '@/lib/combos';
 import { posterDeVideo, idsDelVideo } from '@/lib/community';
 import { useCarrito } from '@/components/CarritoProvider';
 import ReproductorVideo from '@/components/ReproductorVideo';
+import { esSinGarantia, BandaSinGarantia, EtiquetaSinGarantia } from '@/components/SinGarantia';
 const CalculadorEnvio = dynamic(() => import('@/components/CalculadorEnvio'), { ssr: false });
 const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvioSimple'), { ssr: false });
 const VapeSpecs3D = dynamic(() => import('@/components/VapeSpecs3D'), { ssr: false });
@@ -347,6 +348,7 @@ const TarjetaProducto = React.memo(function TarjetaProducto({
                   {p.tag}
               </span>
           )}
+          {!isOutOfStock && esSinGarantia(p) && <BandaSinGarantia />}
         </Link>
 
         <div className="p-4 flex-grow flex flex-col">
@@ -470,6 +472,27 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const [communityVideoPlaying, setCommunityVideoPlaying] = useState({});
   const communityVideoRefs = useRef({});
   const [videoAmpliado, setVideoAmpliado] = useState(null);
+
+  // Link directo a las reseñas (028import.com/resenas o /#opiniones) para mandarle al
+  // cliente. La home se termina de armar después de cargar, así que se reubica un par
+  // de veces mientras se acomoda, salvo que la persona ya haya empezado a moverse.
+  useEffect(() => {
+    if (!['#opiniones', '#resenas', '#opiniones-section'].includes(window.location.hash)) return;
+    let movio = false;
+    const marcar = () => { movio = true; };
+    window.addEventListener('wheel', marcar, { passive: true });
+    window.addEventListener('touchstart', marcar, { passive: true });
+    const ir = () => {
+      if (movio) return;
+      document.getElementById('opiniones-section')?.scrollIntoView({ block: 'start' });
+    };
+    const relojes = [300, 1000, 2000, 3500].map(ms => setTimeout(ir, ms));
+    return () => {
+      relojes.forEach(clearTimeout);
+      window.removeEventListener('wheel', marcar);
+      window.removeEventListener('touchstart', marcar);
+    };
+  }, []);
   const communityScrollRef = useRef(null);
   const [hoveredCommunityCard, setHoveredCommunityCard] = useState(null);
   const [communityProductsPanel, setCommunityProductsPanel] = useState(null);
@@ -2059,7 +2082,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
   };
 
   const renderOpinionesSection = () => (
-    <section id="opiniones-section" className="mt-4 mb-16 md:mb-20 reveal-on-scroll">
+    <section id="opiniones-section" className="scroll-mt-24 mt-4 mb-16 md:mb-20 reveal-on-scroll">
       <div className="mb-6 md:mb-8">
         <span className="inline-flex items-center gap-2 bg-[#111111] text-white px-3.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] font-poppins mb-4">
           <i className="fas fa-star text-[#fcdb00]"></i> Tu opinión
@@ -3196,6 +3219,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                     {/* Info */}
                     <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                       <p className="font-bebas text-lg uppercase tracking-wide text-[#111111] leading-tight break-words max-w-[140px]" style={{display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{item.name}</p>
+                      {esSinGarantia(item) && <EtiquetaSinGarantia />}
                       {/* Controles qty */}
                       <div className="flex items-center gap-2">
                         <button onClick={() => changeQty(item.id, 1)} className="w-7 h-7 flex items-center justify-center bg-white border border-gray-200 rounded-md hover:border-[#fcdb00] hover:bg-[#fcdb00] transition-colors text-[#111111]">
@@ -3495,6 +3519,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                           <div className="flex-1 min-w-0">
                             <p className="font-bebas text-xl uppercase tracking-wide text-[#111111] leading-tight truncate">{item.name}</p>
                             <p className="text-xs font-bold text-gray-400 font-poppins">x{item.qty}</p>
+                            {esSinGarantia(item) && <EtiquetaSinGarantia />}
                             {/* Si el precio bajó por una promo de cantidad (no por un cupón), se
                                 aclara acá mismo: sin esto, el precio parece bajar solo. */}
                             {!item.isUpsell && getUnitPromoPrice(item) < item.price && (
