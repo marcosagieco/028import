@@ -15,7 +15,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCarrito } from '@/components/CarritoProvider';
 import { rutaProducto, aSlug } from '@/lib/slug';
-import { esSinGarantia, AvisoSinGarantia, IconoAlerta } from '@/components/SinGarantia';
+import { esSinGarantia, AvisoSinGarantia } from '@/components/SinGarantia';
 import { fichasDeCombo, precioSegunCantidad } from '@/lib/combos';
 
 const precioFormateado = (n) => Number(n || 0).toLocaleString('es-AR');
@@ -198,7 +198,9 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                 En compu queda fija (sticky) mientras la columna de la derecha baja
                 con la compra, la descripción y las preguntas. */}
             <div className="p-5 md:p-8 lg:sticky lg:top-20 lg:self-start">
-              <div className="relative w-full aspect-square max-w-[640px] mx-auto bg-[#fafafa] rounded-2xl overflow-hidden">
+              {/* La foto llena el recuadro de punta a punta, con las esquinas redondeadas:
+                  con margen adentro parecía una imagen pegada encima de la página. */}
+              <div className="relative w-full aspect-square max-w-[640px] mx-auto bg-[#fafafa] rounded-3xl overflow-hidden">
                 {fotos[fotoActiva] ? (
                   <Image
                     src={fotos[fotoActiva]}
@@ -206,7 +208,7 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                     fill
                     sizes="(max-width: 1024px) 92vw, 560px"
                     priority
-                    className="object-contain p-6"
+                    className="object-cover"
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center text-gray-300">
@@ -232,9 +234,9 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                       key={f}
                       onClick={() => setFotoActiva(i)}
                       aria-label={`Ver foto ${i + 1}`}
-                      className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-colors ${i === fotoActiva ? 'border-[#111111]' : 'border-gray-200 hover:border-gray-400'}`}
+                      className={`relative w-16 h-16 rounded-xl overflow-hidden bg-[#fafafa] transition-all ${i === fotoActiva ? 'ring-2 ring-[#111111] ring-offset-2' : 'opacity-70 hover:opacity-100'}`}
                     >
-                      <Image src={f} alt="" fill sizes="56px" className="object-contain p-1" />
+                      <Image src={f} alt="" fill sizes="64px" className="object-cover" />
                     </button>
                   ))}
                 </div>
@@ -713,14 +715,7 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
             )}
             <div className="flex-1 min-w-0">
               <p className="font-bebas text-base md:text-lg uppercase tracking-wide leading-none text-[#111111] truncate">{producto.name}</p>
-              <p className="font-bebas text-lg md:text-xl text-[#111111] tracking-wide leading-none mt-0.5">
-                {simbolo}{precioFormateado(precio)}
-                {esEbCreate && (
-                  <span className="inline-flex items-center gap-1 ml-2 align-middle text-red-600 text-sm tracking-wider">
-                    <IconoAlerta className="w-3 h-3" /> Sin garantía
-                  </span>
-                )}
-              </p>
+              <p className="font-bebas text-lg md:text-xl text-[#111111] tracking-wide leading-none mt-0.5">{simbolo}{precioFormateado(precio)}</p>
             </div>
             <button
               onClick={agregar}

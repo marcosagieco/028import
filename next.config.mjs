@@ -21,6 +21,15 @@ const nextConfig = {
     ];
   },
 
+  // Link para pedir reseñas con ñ. Una carpeta "reseñas" en src/app no la toma
+  // (da 404), así que se redirige acá; /resenas, sin ñ, es una página normal.
+  async redirects() {
+    return [
+      { source: '/rese%C3%B1as', destination: '/#opiniones', permanent: false },
+      { source: '/reseñas', destination: '/#opiniones', permanent: false },
+    ];
+  },
+
   // Las fotos ya no pasan por el optimizador de Vercel (límite de 5.000 por mes en
   // el plan gratis): src/lib/cargadorImagen.js las pide directo en su versión WebP.
   images: {

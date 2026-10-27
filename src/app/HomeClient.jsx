@@ -10,7 +10,7 @@ import { escalonesDeProducto, precioSegunCantidad } from '@/lib/combos';
 import { posterDeVideo, idsDelVideo } from '@/lib/community';
 import { useCarrito } from '@/components/CarritoProvider';
 import ReproductorVideo from '@/components/ReproductorVideo';
-import { esSinGarantia, BandaSinGarantia, EtiquetaSinGarantia } from '@/components/SinGarantia';
+import { esSinGarantia, EtiquetaSinGarantia } from '@/components/SinGarantia';
 const CalculadorEnvio = dynamic(() => import('@/components/CalculadorEnvio'), { ssr: false });
 const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvioSimple'), { ssr: false });
 const VapeSpecs3D = dynamic(() => import('@/components/VapeSpecs3D'), { ssr: false });
@@ -31,8 +31,9 @@ const CONFIG = {
   bannerImage: "https://i.ibb.co/2Yg9wM6x/image.png", 
   currencySymbol: "$",
   shippingText: "Pedime te llega en 30'⏰",
-  paymentAlias: "028import.lm", 
-  paymentName: "Lucio Bunge", 
+  paymentAlias: "tamelake358sa.eluter",
+  paymentCvu: "0000510400000000001348",
+  paymentCuit: "30718603702",
 };
 
 
@@ -348,7 +349,6 @@ const TarjetaProducto = React.memo(function TarjetaProducto({
                   {p.tag}
               </span>
           )}
-          {!isOutOfStock && esSinGarantia(p) && <BandaSinGarantia />}
         </Link>
 
         <div className="p-4 flex-grow flex flex-col">
@@ -1592,6 +1592,7 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         if (paymentMethod === 'transferencia') {
             msg += `Transferencia\n`;
             msg += `${emo('🏦 ')}Alias: ${CONFIG.paymentAlias}\n`;
+            msg += `CVU: ${CONFIG.paymentCvu}\n`;
             if (linkComprobante) {
                 msg += `${emo('📎 ')}Comprobante: ${linkComprobante}\n`;
             } else {
@@ -1647,6 +1648,10 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     }
   };
 
+  const copyCvuToClipboard = () => {
+    navigator.clipboard.writeText(CONFIG.paymentCvu);
+    showToast("✅ CVU copiado al portapapeles");
+  };
   const copyAliasToClipboard = () => {
     navigator.clipboard.writeText(CONFIG.paymentAlias);
     showToast("✅ ALIAS copiado al portapapeles");
@@ -3219,7 +3224,6 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                     {/* Info */}
                     <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                       <p className="font-bebas text-lg uppercase tracking-wide text-[#111111] leading-tight break-words max-w-[140px]" style={{display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{item.name}</p>
-                      {esSinGarantia(item) && <EtiquetaSinGarantia />}
                       {/* Controles qty */}
                       <div className="flex items-center gap-2">
                         <button onClick={() => changeQty(item.id, 1)} className="w-7 h-7 flex items-center justify-center bg-white border border-gray-200 rounded-md hover:border-[#fcdb00] hover:bg-[#fcdb00] transition-colors text-[#111111]">
@@ -3770,13 +3774,25 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 font-poppins"><i className="fas fa-university text-[#fcdb00] mr-1"></i> Transferir a:</p>
                   <div className="flex flex-col gap-2">
                       <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-200">
-                          <span className="font-bebas text-2xl text-[#111111] tracking-wider truncate">{CONFIG.paymentAlias}</span>
+                          <div className="min-w-0">
+                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest font-poppins">Alias</p>
+                              <span className="font-poppins font-bold text-base text-[#111111] break-all">{CONFIG.paymentAlias}</span>
+                          </div>
                           <button onClick={copyAliasToClipboard} className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex-shrink-0">
                               <i className="fas fa-copy"></i>
                           </button>
                       </div>
+                      <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-200">
+                          <div className="min-w-0">
+                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest font-poppins">CVU</p>
+                              <span className="font-poppins font-bold text-sm text-[#111111] break-all">{CONFIG.paymentCvu}</span>
+                          </div>
+                          <button onClick={copyCvuToClipboard} className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-[#111111] hover:bg-[#fcdb00] hover:text-[#111111] transition-colors flex-shrink-0">
+                              <i className="fas fa-copy"></i>
+                          </button>
+                      </div>
                       <div className="bg-gray-100 p-2.5 rounded-lg border border-gray-200 text-center">
-                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest font-poppins">TITULAR: {CONFIG.paymentName}</p>
+                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest font-poppins">CUIT: {CONFIG.paymentCuit}</p>
                       </div>
                   </div>
               </div>

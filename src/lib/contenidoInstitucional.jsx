@@ -108,7 +108,7 @@ export const CONTENIDO_INSTITUCIONAL = {
             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-[#111111]"><i className="fas fa-university text-[#fcdb00]"></i></div>
             <div>
               <p className="font-bold text-[#111111]">Transferencia Bancaria (ARS)</p>
-              <p className="text-sm mt-1">Acreditación rápida mediante CBU/CVU o Alias. La app le mostrará nuestro Alias oficial durante el proceso de compra (Titular: Lucio Bunge).</p>
+              <p className="text-sm mt-1">Acreditación rápida mediante CBU/CVU o Alias. La web le mostrará nuestro Alias y CVU oficiales durante el proceso de compra.</p>
             </div>
           </li>
           <li className="flex items-start gap-4">

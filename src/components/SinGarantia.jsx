@@ -1,8 +1,8 @@
 import { aSlug } from '@/lib/slug';
 
 // La línea Elfbar EB Create se vende sin garantía: si llega fallada de fábrica, no
-// hay cambio ni devolución. Se avisa en rojo en cada lugar donde se decide la compra
-// (tarjeta, ficha, carrito y checkout), para que nadie la compre sin saberlo.
+// hay cambio ni devolución. Se avisa sólo en la ficha del producto (junto a los
+// botones de compra) y en el checkout: en tarjetas y listados quedaba recargado.
 //
 // Se busca "eb-create" dentro del slug de la marca, y no el texto exacto, para que
 // cuenten igual "Elfbar Eb create", "ELFBAR EB CREATE 40K" o cualquier modelo nuevo
@@ -19,13 +19,6 @@ export const IconoAlerta = ({ className = 'w-4 h-4' }) => (
   </svg>
 );
 
-/** Franja roja sobre la parte de abajo de la foto, en las tarjetas. */
-export const BandaSinGarantia = () => (
-  <span className="absolute inset-x-0 bottom-0 z-[2] bg-red-600 text-white flex items-center justify-center gap-1.5 py-1.5 font-bebas text-[13px] md:text-[14px] uppercase tracking-wider">
-    <IconoAlerta className="w-3.5 h-3.5" /> Sin garantía
-  </span>
-);
-
 /** Recuadro para la ficha, junto a los botones de compra. */
 export const AvisoSinGarantia = () => (
   <div role="note" className="flex items-start gap-3 bg-red-50 border-2 border-red-500 rounded-xl px-4 py-3">
@@ -39,7 +32,7 @@ export const AvisoSinGarantia = () => (
   </div>
 );
 
-/** Línea chica debajo del nombre, en el carrito y el checkout. */
+/** Línea chica debajo del nombre, en el resumen del checkout. */
 export const EtiquetaSinGarantia = () => (
   <p className="inline-flex items-center gap-1 w-fit bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">
     <IconoAlerta className="w-3 h-3" /> Sin garantía

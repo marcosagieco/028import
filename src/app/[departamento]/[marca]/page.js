@@ -11,7 +11,6 @@ import {
 import ListadoCatalogo from '@/components/ListadoCatalogo';
 import { conExtrasDeTarjeta } from '@/lib/extrasTarjeta';
 import HomeClient from '@/app/HomeClient';
-import { esSinGarantia, AvisoSinGarantia } from '@/components/SinGarantia';
 
 // Cada marca dentro de un departamento: 028import.com/vapes/elfbar-ice-king.
 // La red de seguridad, no el mecanismo principal: el panel avisa apenas guardás y
@@ -105,7 +104,6 @@ export default async function PaginaMarca({ params }) {
           { texto: depto.nombre, href: `/${departamento}` },
           { texto: laMarca.nombre, href: null },
         ]}
-        avisoArriba={esSinGarantia({ category: laMarca.nombre }) ? <AvisoSinGarantia /> : null}
         marcas={marcas}
         slugDepartamento={departamento}
         marcaActiva={marca}

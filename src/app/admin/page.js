@@ -237,6 +237,9 @@ export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [opiniones, setOpiniones] = useState([]);
   const [historialCuentaFilter, setHistorialCuentaFilter] = useState('todos'); // 'todos' | 'efectivo' | 'transferencia'
+  const [linksComprobantes, setLinksComprobantes] = useState({}); // { orderId: { url, pdf } }
+  const [cargandoComprobantes, setCargandoComprobantes] = useState(false);
+  const [comprobantesVisibles, setComprobantesVisibles] = useState(30);
   const [products, setProducts] = useState(initialProducts);
   const [promos, setPromos] = useState([]);
   const [communityVideos, setCommunityVideos] = useState([]);
@@ -1366,6 +1369,35 @@ export default function AdminPage() {
       alert('No se pudo abrir el comprobante: ' + err.message);
     }
   };
+  // Pestaña "Comprobantes": trae de una vez los links de los que se están mostrando.
+  // Los links duran un día; si la pestaña queda abierta más, se vuelve a cargar.
+  const cargarComprobantes = async ({ pedirCodigo = false } = {}) => {
+    const pase = pedirCodigo ? await obtenerPase() : paseDelPanel.current;
+    if (!pase) return;
+    const ids = orders.filter(o => o.comprobantePath).slice(0, comprobantesVisibles).map(o => o.id)
+      .filter(id => !linksComprobantes[id]);
+    if (!ids.length) return;
+    setCargandoComprobantes(true);
+    try {
+      const r = await fetch('/api/comprobante/lista', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pase, orderIds: ids }),
+      });
+      const datos = await r.json();
+      if (r.status === 401) { guardarPase(null); alert('Tu sesión venció. Tocá "Ver comprobantes" e ingresá el código del panel.'); return; }
+      if (!r.ok || !datos.ok) { alert(datos.error || 'No se pudieron cargar los comprobantes.'); return; }
+      setLinksComprobantes(prev => ({ ...prev, ...datos.links }));
+    } catch (err) {
+      alert('No se pudieron cargar los comprobantes: ' + err.message);
+    } finally {
+      setCargandoComprobantes(false);
+    }
+  };
+  useEffect(() => {
+    if (activeTab === 'comprobantes' && paseDelPanel.current) cargarComprobantes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, comprobantesVisibles, orders.length]);
   const copiarLinkResena = async (order) => {
     if (!order.reviewToken) { alert("Este pedido es de antes de la función de reseñas."); return; }
     const link = `https://028import.com/resena/${order.reviewToken}`;
@@ -1575,6 +1607,7 @@ export default function AdminPage() {
       <div className={`${theme.stickyHeader} border-b sticky top-[72px] z-40 transition-colors duration-300`}>
         <div className="max-w-4xl mx-auto flex overflow-x-auto no-scrollbar">
           <button onClick={() => setActiveTab('historial')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'historial' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Historial</button>
+          <button onClick={() => setActiveTab('comprobantes')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'comprobantes' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Comprobantes 🧾</button>
           <button onClick={() => setActiveTab('stock')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'stock' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Stock</button>
           <button onClick={() => setActiveTab('vidriera')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'vidriera' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Vidriera</button>
           <button onClick={() => setActiveTab('community')} className={`flex-shrink-0 flex-1 px-4 py-4 text-[11px] font-bold uppercase tracking-widest border-b-4 transition-colors ${activeTab === 'community' ? `${theme.tabActive} ${theme.tabActiveText}` : theme.tabInactive}`}>Community 🎥</button>
@@ -2557,6 +2590,82 @@ export default function AdminPage() {
         )}
 
         {/* --- PESTAÑA HISTORIAL --- */}
+        {activeTab === 'comprobantes' && (() => {
+          const conComprobante = orders.filter(o => o.comprobantePath);
+          const mostrados = conComprobante.slice(0, comprobantesVisibles);
+          // Sólo cuentan los pedidos hechos desde que la web pide el comprobante
+          // (los que tienen comprobanteToken); los de antes no tenían dónde subirlo.
+          const sinComprobante = orders.filter(o => o.comprobanteToken && !o.comprobantePath && getOrderCuenta(o) === 'transferencia');
+          const fecha = (o) => o.createdAt ? o.createdAt.toDate().toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+          const hayPase = !!paseDelPanel.current;
+          return (<div className="animate-in fade-in duration-500">
+          <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-[#333333] pb-6">
+            <div>
+              <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Comprobantes</h2>
+              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Las transferencias que suben los clientes al comprar</p>
+            </div>
+            <span className="bg-[#111111] text-[#fcdb00] text-[11px] font-bold px-4 py-2 rounded-lg shadow-sm tracking-widest">{conComprobante.length} SUBIDOS</span>
+          </div>
+
+          {!hayPase && conComprobante.length > 0 && Object.keys(linksComprobantes).length === 0 && (
+            <button onClick={() => cargarComprobantes({ pedirCodigo: true })} className="w-full mb-8 bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-4 rounded-xl hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all"><i className="fas fa-lock mr-2"></i> Ver comprobantes</button>
+          )}
+
+          {conComprobante.length === 0 ? (
+            <div className={`${theme.card} p-16 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center mb-10`}><i className="fas fa-receipt text-gray-300 text-5xl mb-6"></i><p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">Todavía nadie subió un comprobante</p></div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+              {mostrados.map(order => {
+                const link = linksComprobantes[order.id];
+                return (
+                  <div key={order.id} className={`${theme.card} border rounded-2xl overflow-hidden flex flex-col`}>
+                    <button onClick={() => link ? window.open(link.url, '_blank') : verComprobante(order)} className="relative aspect-[3/4] bg-[#f2f2f2] dark:bg-[#222] flex items-center justify-center overflow-hidden" title="Ver en grande">
+                      {link && !link.pdf ? (
+                        <img src={link.url} alt={`Comprobante de ${order.clientName || 'cliente'}`} loading="lazy" className="w-full h-full object-cover object-top" />
+                      ) : (
+                        <span className="flex flex-col items-center gap-2 text-gray-400">
+                          <i className={`fas ${link?.pdf ? 'fa-file-pdf text-red-500' : cargandoComprobantes ? 'fa-circle-notch fa-spin' : 'fa-receipt'} text-4xl`}></i>
+                          <span className="text-[10px] font-bold uppercase tracking-widest">{link?.pdf ? 'PDF' : 'Tocá para ver'}</span>
+                        </span>
+                      )}
+                    </button>
+                    <div className="p-3">
+                      <p className="font-bebas text-lg uppercase tracking-wide leading-none truncate">{order.clientName || 'Sin nombre'}</p>
+                      <p className="text-[10px] text-gray-500 font-bold mt-1">{fecha(order)} · #{order.id.slice(-6).toUpperCase()}</p>
+                      <p className="font-bebas text-xl text-[#b8952a] tracking-wide mt-1">${(order.total || 0).toLocaleString('es-AR')}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {conComprobante.length > mostrados.length && (
+            <button onClick={() => setComprobantesVisibles(v => v + 30)} className={`w-full mb-10 ${theme.card} border py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest ${theme.text}`}>Ver más ({conComprobante.length - mostrados.length})</button>
+          )}
+
+          <div className="mt-6 mb-4">
+            <h3 className={`text-2xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Transferencias sin comprobante <span className="text-red-500">({sinComprobante.length})</span></h3>
+            <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-1">Eligieron transferencia pero no subieron la captura en la web</p>
+          </div>
+          {sinComprobante.length === 0 ? (
+            <p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">No hay ninguna</p>
+          ) : (
+            <div className="grid gap-3">
+              {sinComprobante.map(order => (
+                <div key={order.id} className={`${theme.card} border rounded-2xl p-4 flex items-center justify-between gap-4`}>
+                  <div className="min-w-0">
+                    <p className="font-bebas text-xl uppercase tracking-wide leading-none truncate">{order.clientName || 'Sin nombre'} <span className="font-poppins font-normal text-xs text-gray-400 ml-1">{order.clientPhone}</span></p>
+                    <p className="text-[10px] text-gray-500 font-bold mt-1">{fecha(order)} · #{order.id.slice(-6).toUpperCase()} · ${(order.total || 0).toLocaleString('es-AR')}</p>
+                  </div>
+                  {order.clientPhone && (
+                    <a href={`https://wa.me/${String(order.clientPhone).replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="flex-shrink-0 bg-[#25D366] text-white text-[11px] font-bold px-4 py-2.5 rounded-lg uppercase tracking-widest flex items-center gap-2 hover:bg-[#1ebe5d] transition-all shadow-md"><i className="fab fa-whatsapp text-sm"></i> Pedirlo</a>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>);
+        })()}
         {activeTab === 'historial' && (() => {
           const filteredOrders = orders.filter(o => historialCuentaFilter === 'todos' || getOrderCuenta(o) === historialCuentaFilter);
           const totalEfectivo = orders.filter(o => getOrderCuenta(o) === 'efectivo').reduce((a, o) => a + (o.total || 0), 0);
