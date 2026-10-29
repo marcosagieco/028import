@@ -10,6 +10,7 @@ import { escalonesDeProducto, precioSegunCantidad } from '@/lib/combos';
 import { posterDeVideo, idsDelVideo } from '@/lib/community';
 import { useCarrito } from '@/components/CarritoProvider';
 import ReproductorVideo from '@/components/ReproductorVideo';
+import ContadorCyber from '@/components/ContadorCyber';
 import { esSinGarantia, EtiquetaSinGarantia } from '@/components/SinGarantia';
 const CalculadorEnvio = dynamic(() => import('@/components/CalculadorEnvio'), { ssr: false });
 const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvioSimple'), { ssr: false });
@@ -2869,6 +2870,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           únicamente acá y esas páginas no cargan de más. */}
       {modo === 'inicio' && (
       <div style={{ display: currentView === 'home' ? '' : 'none' }}>
+          <ContadorCyber />
           <div className="w-full bg-[#111111] h-8 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex items-center">
             <div className="animate-marquee whitespace-nowrap flex items-center">
               {[...Array(6)].map((_, i) => (
