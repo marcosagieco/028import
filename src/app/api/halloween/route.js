@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'node:crypto';
-import { getAdminDb, getAdminAuth } from '@/lib/firebaseAdmin';
+import { getAdminDb } from '@/lib/firebaseAdmin';
 
 // "¿Truco o trato?" de Halloween, del lado del servidor.
 //
@@ -24,6 +24,24 @@ const FIN = new Date('2026-11-01T00:00:00-03:00').getTime();
 const CHANCE_TRUCO = 0.2;
 const DESCUENTO = { trato: 5, truco: 10 };
 const LETRAS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // sin 0/O ni 1/I, que se confunden
+
+// Quién es la cuenta se le pregunta a Google con el ID token, en lugar de usar
+// firebase-admin/auth: ese módulo arrastra jwks-rsa → jose (ESM puro) y en el Node
+// de Vercel revienta con ERR_REQUIRE_ESM, tirando abajo todo el servidor.
+// Devuelve null si el token no sirve o es una sesión anónima.
+async function cuentaDelToken(token) {
+  const clave = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  if (!clave) return null;
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${clave}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken: token }),
+  });
+  if (!r.ok) return null;
+  const u = (await r.json())?.users?.[0];
+  if (!u?.localId || !u.providerUserInfo?.length) return null;
+  return { uid: u.localId, email: u.email || null, name: u.displayName || null };
+}
 
 function codigoNuevo(prefijo) {
   const bytes = crypto.randomBytes(6);
@@ -52,20 +70,13 @@ export async function POST(request) {
   try { cuerpo = await request.json(); } catch { cuerpo = {}; }
   const accion = cuerpo?.accion;
 
-  const auth = getAdminAuth();
   const db = getAdminDb();
-  if (!auth || !db) return NextResponse.json({ error: 'No se pudo conectar a la base.' }, { status: 500 });
+  if (!db) return NextResponse.json({ error: 'No se pudo conectar a la base.' }, { status: 500 });
 
-  let usuario;
-  try {
-    usuario = await auth.verifyIdToken(token);
-  } catch {
-    return NextResponse.json({ error: 'login' }, { status: 401 });
-  }
   // Una sesión anónima no cuenta como registro.
-  if (usuario.firebase?.sign_in_provider === 'anonymous') {
-    return NextResponse.json({ error: 'login' }, { status: 401 });
-  }
+  let usuario = null;
+  try { usuario = await cuentaDelToken(token); } catch {}
+  if (!usuario) return NextResponse.json({ error: 'login' }, { status: 401 });
 
   const ref = db.collection('halloween').doc(usuario.uid);
 
