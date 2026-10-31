@@ -33,9 +33,20 @@ export function escalonesDeProducto(promos, producto) {
     p && p.type === 'product' && String(p.productId) === String(producto.id)
   );
   const laMarca = aSlug(producto.category);
-  const lista = delProducto.length
+  const deMarca = promos.filter(p => p && (p.type || 'category') === 'category' && aSlug(p.category));
+  let lista = delProducto.length
     ? delProducto
-    : promos.filter(p => p && (p.type || 'category') === 'category' && laMarca && aSlug(p.category) === laMarca);
+    : deMarca.filter(p => laMarca && aSlug(p.category) === laMarca);
+
+  // Si la marca no tiene promos con su nombre exacto, vale la de la marca "madre":
+  // las promos de "Elfbar Eb create" quedaron así cuando los productos pasaron a
+  // llamarse "Elfbar Eb create 40K", y esa línea entera se quedó sin combos. Se toma
+  // la más parecida (el nombre más largo que coincida con el principio).
+  if (!lista.length && laMarca) {
+    const madres = deMarca.filter(p => laMarca.startsWith(aSlug(p.category) + '-'));
+    const largo = Math.max(0, ...madres.map(p => aSlug(p.category).length));
+    lista = madres.filter(p => aSlug(p.category).length === largo);
+  }
 
   return lista
     .map(p => ({

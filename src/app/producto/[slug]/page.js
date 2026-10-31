@@ -96,6 +96,8 @@ export default async function PaginaProducto({ params }) {
     .filter(p => p && p.inStock !== false && String(p.id) !== String(producto.id))
     .slice(0, 3);
   const escalones = escalonesDeProducto(promos, producto);
+  // Un combo de la marca se cuenta sumando todos sus sabores: se puede avisar.
+  const comboDeMarca = escalones.length > 0 && !promos.some(p => p.type === 'product' && String(p.productId) === String(producto.id));
   const puesto = puestoEnSuMarca(ventas, producto, todos);
 
   // Todos los de la misma marca (con o sin stock), para elegir sabor sin salir de la
@@ -172,6 +174,7 @@ export default async function PaginaProducto({ params }) {
           producto={producto}
           relacionados={relacionados}
           escalones={escalones}
+          comboDeMarca={comboDeMarca}
           puesto={puesto}
           resenas={resenas}
           variantes={variantes}

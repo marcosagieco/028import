@@ -11,6 +11,8 @@ import { posterDeVideo, idsDelVideo } from '@/lib/community';
 import { useCarrito } from '@/components/CarritoProvider';
 import ReproductorVideo from '@/components/ReproductorVideo';
 import ContadorCyber from '@/components/ContadorCyber';
+import TrucoOTrato, { cuponHalloweenGuardado, marcarCuponHalloweenUsado } from '@/components/TrucoOTrato';
+import { PrecioHalloween, fijarDescuentoHalloween } from '@/components/PrecioHalloween';
 import { esSinGarantia, EtiquetaSinGarantia } from '@/components/SinGarantia';
 const CalculadorEnvio = dynamic(() => import('@/components/CalculadorEnvio'), { ssr: false });
 const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvioSimple'), { ssr: false });
@@ -380,6 +382,15 @@ const TarjetaProducto = React.memo(function TarjetaProducto({
             )}
 
             <div className="mt-auto pt-3">
+                <PrecioHalloween
+                    precio={p.offerPrice > 0 && p.offerPrice < p.price ? p.offerPrice : p.price}
+                    simbolo={CONFIG.currencySymbol}
+                    formato={formatPrice}
+                    sufijo={p.isUSD && <span className="text-gray-500 text-[11px] font-poppins font-bold ml-1">USD</span>}
+                    className="mb-4"
+                    claseTachado="text-sm"
+                    claseNuevo={priceClass}
+                >
                 {p.offerPrice > 0 && p.offerPrice < p.price ? (
                     <div className="mb-4">
                         <p className="text-gray-400 font-bebas text-sm line-through leading-none">
@@ -394,6 +405,7 @@ const TarjetaProducto = React.memo(function TarjetaProducto({
                         {CONFIG.currencySymbol}{formatPrice(p.price)}{p.isUSD && <span className="text-gray-500 text-[11px] font-poppins font-bold ml-1">USD</span>}
                     </p>
                 )}
+                </PrecioHalloween>
                 
                 {isOutOfStock ? (
                     <button disabled className="w-full bg-gray-100 text-gray-500 py-3 font-bebas text-[14px] uppercase tracking-wider rounded-xl cursor-not-allowed">
@@ -534,6 +546,30 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
+
+  // Cupón ganado en "¿Truco o trato?": se valida igual que uno tipeado y queda
+  // puesto en el cajón del cupón, así se ve y se puede quitar.
+  const aplicarCuponAutomatico = async (codigo) => {
+    try {
+      const r = await fetch('/api/cupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: codigo }),
+      });
+      const datos = await r.json();
+      if (datos.valido) {
+        setCouponCode(datos.code);
+        setAppliedCoupon({ code: datos.code, discount: datos.discount });
+        setCouponError('');
+      }
+    } catch {}
+  };
+
+  // Lo ganado en otra página o en otra visita sigue aplicado hasta que se use.
+  useEffect(() => {
+    const codigo = cuponHalloweenGuardado();
+    if (codigo) aplicarCuponAutomatico(codigo);
+  }, []);
 
   const openCart = () => {
     setIsCartOpen(true);
@@ -1070,6 +1106,37 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
       });
       return () => unsubscribe();
   }, [user, firebaseRefs.db]);
+
+  // Precios de toda la tienda con el % de Halloween: sólo con sesión iniciada y con
+  // el código de Halloween (TRATO-… / TRUCO-…) puesto y sin usar. Mientras la sesión
+  // todavía está cargando (user null) no se toca, para que los precios no parpadeen.
+  useEffect(() => {
+    if (!user) return;
+    const esHalloween = /^(TRATO|TRUCO)-/.test(appliedCoupon?.code || '');
+    fijarDescuentoHalloween(!user.isAnonymous && esHalloween ? appliedCoupon.discount : 0);
+  }, [user, appliedCoupon]);
+
+  // El código de Halloween está atado a la cuenta: al entrar desde otro navegador o
+  // celular, si todavía no lo usó, se le vuelve a aplicar solo en el carrito.
+  useEffect(() => {
+    if (!user || user.isAnonymous) return;
+    let vivo = true;
+    (async () => {
+      try {
+        const token = await user.getIdToken();
+        const r = await fetch('/api/halloween', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ accion: 'estado' }),
+        });
+        const datos = await r.json();
+        const p = datos?.participacion;
+        if (vivo && p?.codigo && !p.usado) aplicarCuponAutomatico(p.codigo);
+      } catch {}
+    })();
+    return () => { vivo = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleGoogleLogin = async () => {
       if (!firebaseRefs.auth || !firebaseRefs.db) return;
@@ -1620,6 +1687,13 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         items: itemsVerificados.filter(i => !i.isUpsell).map(i => ({ id: String(i.productId), qty: Number(i.qty) || 1 })),
       }));
     } catch {}
+    // El descuento de Halloween es para una compra: después de usarlo no se aplica más solo.
+    if (verificado.couponCode) marcarCuponHalloweenUsado(verificado.couponCode);
+    if (/^(TRATO|TRUCO)-/.test(verificado.couponCode || '')) {
+      setAppliedCoupon(null);
+      setCouponCode('');
+      fijarDescuentoHalloween(0);
+    }
 
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
 
@@ -2863,6 +2937,16 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
             </div>
           </div>
         </div>
+      )}
+
+      {modo === 'inicio' && (
+        <TrucoOTrato
+          usuario={user}
+          authAbierto={showAuthModal}
+          onGoogle={handleGoogleLogin}
+          onEmail={(modoAuth) => { setAuthMode(modoAuth); setAuthError(''); setShowAuthModal(true); }}
+          onCupon={aplicarCuponAutomatico}
+        />
       )}
 
       {/* --- INICIO CONTENIDO --- */}

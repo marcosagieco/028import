@@ -734,6 +734,7 @@ export default function AdminPage() {
   const updateCardSize = async (product, newSize) => { try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, cardSize: newSize }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const updateWinterBadge = async (product, value) => { try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, winterBadge: value }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const toggleProductFlavor = async (product, flavor) => { const current = Array.isArray(product.flavors) ? product.flavors : []; const next = current.includes(flavor) ? current.filter(f => f !== flavor) : [...current, flavor]; try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, flavors: next }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
+  const updateTag = async (product, val) => { const tag = val.trim(); if (tag === (product.tag || '')) return; try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, tag }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const updatePuffs = async (product, val) => { const v = val.trim(); try { await guardarProducto(doc(firebaseRefs.db, 'products', `prod_${product.id}`), { id: product.id, puffs: v === '' ? null : Number(v) }, { merge: true }); } catch (err) { alert("Error: " + err.message); } };
   const updateCategoryPrice = async (categoryName, valor) => {
     const precio = parseInt(String(valor).replace(/\D/g, ''), 10);
@@ -1464,6 +1465,7 @@ export default function AdminPage() {
                        <input list="dept-suggestions-stock" defaultValue={currentDept} onBlur={(e) => { if(e.target.value.toUpperCase() !== currentDept.toUpperCase()) { updateCategoryDepartment(categoryFilter, e.target.value); } }} onKeyDown={(e) => { if(e.key === 'Enter') e.target.blur(); }} className={`bg-transparent text-[10px] font-bold uppercase outline-none w-28 md:w-32 border-b border-transparent hover:border-[#fcdb00] focus:border-[#fcdb00] transition-colors font-poppins ${darkMode ? 'text-white' : 'text-[#111111]'}`} placeholder="Escribí..." title="Cambiá el departamento de toda esta categoría" />
                        <datalist id="dept-suggestions-stock">{availableDepartments.map(d => <option key={d} value={d} />)}</datalist>
                        <datalist id="cat-suggestions-stock">{uniqueCategories.map(c => <option key={c} value={c} />)}</datalist>
+                       <datalist id="tag-suggestions-stock">{[...new Set(products.map(p => (p.tag || '').trim()).filter(Boolean))].map(t => <option key={t} value={t} />)}</datalist>
                    </div>
                    {(() => {
                      const precios = [...new Set(group.map(p => Number(p.price) || 0))];
@@ -1550,6 +1552,9 @@ export default function AdminPage() {
                                 <div className="flex items-center gap-2 mt-2">
                                     <span className="text-gray-400 text-[10px] font-poppins">Puff:</span>
                                     <input type="number" key={`puffs-${p.id}`} defaultValue={p.puffs ?? ''} placeholder="ej: 8500" onBlur={(e) => updatePuffs(p, e.target.value)} className={`w-24 px-2 py-1 rounded-md text-[10px] font-poppins border outline-none ${darkMode ? 'bg-[#1a1a1a] border-[#333] text-white placeholder-gray-600' : 'bg-gray-100 border-gray-200 text-[#111111] placeholder-gray-400'}`} />
+                                    <span className="text-gray-400 text-[10px] font-poppins ml-2 pl-2 border-l border-gray-300 dark:border-[#333333]">Etiqueta:</span>
+                                    <input type="text" list="tag-suggestions-stock" key={`tag-${p.id}-${p.tag || ''}`} defaultValue={p.tag || ''} placeholder="Ej: Destacado" onBlur={(e) => updateTag(p, e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }} className={`w-32 px-2 py-1 rounded-md text-[10px] font-bold font-poppins border outline-none focus:border-[#fcdb00] ${darkMode ? 'bg-[#1a1a1a] border-[#333] text-white placeholder-gray-600' : 'bg-gray-100 border-gray-200 text-[#111111] placeholder-gray-400'}`} title="La etiqueta que se ve sobre la foto del producto en la tienda" />
+                                    {p.tag && (<button type="button" onClick={() => updateTag(p, '')} title="Sacar la etiqueta" className="w-6 h-6 flex items-center justify-center rounded-md text-red-500 hover:bg-red-500 hover:text-white transition-all text-[10px]"><i className="fas fa-times"></i></button>)}
                                 </div>
                             </div>
                         </div>
@@ -2208,11 +2213,26 @@ export default function AdminPage() {
               </div>
               <button type="submit" className="bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all">Crear Cupón</button>
             </form>
+            {/* Los códigos personales de "¿Truco o trato?" (uno por cuenta, de un solo
+                uso) no se listan de a uno: serían cientos. Sólo el resumen. */}
+            {coupons.some(c => c.halloween) && (() => {
+              const deHalloween = coupons.filter(c => c.halloween);
+              const usados = deHalloween.filter(c => c.active === false).length;
+              return (
+                <div className={`${theme.card} p-6 rounded-[1.5rem] shadow-sm border mb-4 flex flex-wrap gap-x-8 gap-y-2 items-center`}>
+                  <h4 className="font-bebas text-2xl uppercase tracking-wide">🎃 Truco o trato</h4>
+                  <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase">Entregados: {deHalloween.length}</p>
+                  <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase">5% (trato): {deHalloween.filter(c => Number(c.discount) === 5).length}</p>
+                  <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase">10% (truco): {deHalloween.filter(c => Number(c.discount) === 10).length}</p>
+                  <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase">Usados en compras: {usados}</p>
+                </div>
+              );
+            })()}
             <div className="grid gap-4">
-              {coupons.length === 0 ? (
+              {coupons.filter(c => !c.halloween).length === 0 ? (
                 <p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest mt-10">No hay cupones activos</p>
               ) : (
-                coupons.map(coupon => (
+                coupons.filter(c => !c.halloween).map(coupon => (
                   <div key={coupon.id} className={`${theme.card} p-6 rounded-[1.5rem] flex justify-between items-center shadow-sm border`}>
                     <div>
                       <h4 className="font-bebas text-2xl uppercase tracking-wide mb-1">{coupon.code}</h4>

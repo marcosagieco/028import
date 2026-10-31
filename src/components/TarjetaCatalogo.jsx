@@ -11,6 +11,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCarrito } from '@/components/CarritoProvider';
 import { rutaProducto } from '@/lib/slug';
+import { PrecioHalloween } from '@/components/PrecioHalloween';
 
 const precioFormateado = (n) => Number(n || 0).toLocaleString('es-AR');
 
@@ -86,6 +87,7 @@ export default function TarjetaCatalogo({ producto, onAgregado }) {
         )}
 
         <div className="mt-auto pt-2">
+          <PrecioHalloween precio={precio} simbolo={moneda} formato={precioFormateado} className="mb-3" claseTachado="text-sm" claseNuevo="text-2xl">
           {conOferta && (
             <p className="text-gray-400 font-bebas text-sm line-through leading-none">
               {moneda}{precioFormateado(producto.price)}
@@ -94,6 +96,7 @@ export default function TarjetaCatalogo({ producto, onAgregado }) {
           <p className="font-bebas text-2xl text-[#111111] tracking-wide mb-3 leading-tight">
             {moneda}{precioFormateado(precio)}
           </p>
+          </PrecioHalloween>
 
           {sinStock ? (
             <button disabled className="w-full bg-gray-100 text-gray-500 h-11 font-bebas text-[14px] uppercase tracking-wider rounded-xl cursor-not-allowed">

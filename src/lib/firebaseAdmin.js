@@ -1,5 +1,6 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 
 let _app = null;
 let _adminDb = null;
@@ -22,6 +23,12 @@ function getApp() {
     console.error('[Firebase Admin] init falló:', err.message);
   }
   return _app;
+}
+
+/** Para comprobar en el servidor quién es el usuario logueado (su ID token). */
+export function getAdminAuth() {
+  const app = getApp();
+  return app ? getAuth(app) : null;
 }
 
 export function getAdminDb() {

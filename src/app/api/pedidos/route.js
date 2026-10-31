@@ -88,6 +88,9 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Faltan los datos del cliente.' }, { status: 400 });
   }
 
+  // Un cupón de un solo uso ya marcado como usado por este pedido: si el pedido
+  // termina fallando, se lo vuelve a activar para que la persona no lo pierda.
+  let cuponReclamado = null;
   try {
     const db = getAdminDb();
     if (!db) return NextResponse.json({ error: 'No se pudo conectar a la base.' }, { status: 500 });
@@ -143,6 +146,18 @@ export async function POST(request) {
     if (snapCupon?.exists) {
       const datos = snapCupon.data();
       if (datos.active !== false) cupon = { code: datos.code || String(couponCode).toUpperCase(), discount: Number(datos.discount) || 0 };
+      // Los de un solo uso (los de Halloween) se reclaman en una transacción: si dos
+      // pedidos llegan a la vez con el mismo código, sólo uno se lleva el descuento.
+      if (cupon && datos.usoUnico) {
+        const quedo = await db.runTransaction(async (t) => {
+          const s = await t.get(snapCupon.ref);
+          if (!s.exists || s.data().active === false) return false;
+          t.update(snapCupon.ref, { active: false, usadoEn: new Date() });
+          return true;
+        });
+        if (quedo) cuponReclamado = snapCupon.ref;
+        else cupon = null;
+      }
     }
     const couponDiscount = cupon ? Math.round(subtotal * cupon.discount / 100) : 0;
 
@@ -181,6 +196,7 @@ export async function POST(request) {
     };
 
     const ref = await db.collection('orders').add(datosPedido);
+    if (cuponReclamado) await cuponReclamado.update({ pedido: ref.id }).catch(() => {});
 
     return NextResponse.json({
       ok: true,
@@ -197,6 +213,7 @@ export async function POST(request) {
       sinStock: sinStock.length ? sinStock : undefined,
     });
   } catch (err) {
+    if (cuponReclamado) await cuponReclamado.update({ active: true, usadoEn: null }).catch(() => {});
     console.error('[api/pedidos] error:', err);
     return NextResponse.json({ error: 'Error en el servidor.', motivo: String(err?.message || err).slice(0, 200) }, { status: 500 });
   }

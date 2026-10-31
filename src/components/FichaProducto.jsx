@@ -17,12 +17,13 @@ import { useCarrito } from '@/components/CarritoProvider';
 import { rutaProducto, aSlug } from '@/lib/slug';
 import { esSinGarantia, AvisoSinGarantia } from '@/components/SinGarantia';
 import { fichasDeCombo, precioSegunCantidad } from '@/lib/combos';
+import { PrecioHalloween, useDescuentoHalloween, conHalloween } from '@/components/PrecioHalloween';
 
 const precioFormateado = (n) => Number(n || 0).toLocaleString('es-AR');
 
 const POCAS_UNIDADES = 5;   // a partir de acá se avisa que queda poco
 
-export default function FichaProducto({ producto, relacionados = [], escalones = [], puesto = null, resenas = { promedio: 0, cantidad: 0, lista: [] }, variantes = [], videosComunidad = [], compradosJuntos = [] }) {
+export default function FichaProducto({ producto, relacionados = [], escalones = [], comboDeMarca = false, puesto = null, resenas = { promedio: 0, cantidad: 0, lista: [] }, variantes = [], videosComunidad = [], compradosJuntos = [] }) {
   // Videos de la comunidad: sólo se descarga el que la persona toca para ver.
   const [videoActivo, setVideoActivo] = useState(null);
   // Los otros sabores (o modelos) de la misma marca, para cambiar sin volver atrás.
@@ -59,10 +60,13 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
   const simbolo = esUSD ? 'USD ' : '$';
   const descuento = conOferta ? Math.round((1 - producto.offerPrice / producto.price) * 100) : 0;
 
-  // Qué escalón está rigiendo ahora, para marcarlo. Con el carrito vacío rige el
-  // de una unidad, que es lo que pagaría si comprara ahora mismo.
+  // El pack elegido. Sin el producto en el carrito, elegir un pack sólo lo marca y
+  // los botones de compra suman esa cantidad; si ya está en el carrito, cambia la
+  // cantidad del carrito directamente.
   // Va acá abajo a propósito: necesita `precio`, declarado unas líneas arriba.
-  const cantidadElegida = Math.max(1, enCarrito?.qty || 0);
+  const [packElegido, setPackElegido] = useState(1);
+  const pctHalloween = useDescuentoHalloween();
+  const cantidadElegida = enCarrito ? enCarrito.qty : packElegido;
   const precioPorCantidad = precioSegunCantidad(escalones, cantidadElegida, precio);
 
   // Sólo hay galería cuando hay más de una foto cargada.
@@ -86,23 +90,30 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
    */
   const ponerCantidad = (cuantas) => {
     const actual = enCarrito?.qty || 0;
-    if (actual === cuantas) return;
+    if (actual === cuantas) return true;
     if (actual === 0) {
-      if (!agregarAlCarrito(producto)) return;   // sin stock
+      if (!agregarAlCarrito(producto)) return false;   // sin stock
       if (cuantas > 1) cambiarCantidad(producto.id, cuantas - 1);
-      return;
+      return true;
     }
     cambiarCantidad(producto.id, cuantas - actual);
+    return true;
   };
 
-  /** Suma al carrito y lleva a completar los datos, sin pasos intermedios. */
+  const elegirPack = (cuantas) => {
+    if (enCarrito) ponerCantidad(cuantas);
+    else setPackElegido(cuantas);
+  };
+
+  /** Suma al carrito (el pack elegido) y lleva a completar los datos, sin pasos intermedios. */
   const comprarAhora = () => {
-    if (!enCarrito) agregarAlCarrito(producto);
+    if (!enCarrito && !ponerCantidad(packElegido)) return;
     router.push('/checkout');
   };
 
+  // Ya en el carrito suma de a una (el "+"); si no, suma el pack elegido.
   const agregar = () => {
-    if (!agregarAlCarrito(producto)) return;
+    if (!(enCarrito ? agregarAlCarrito(producto) : ponerCantidad(packElegido))) return;
     setAvisoVisible(true);
     setTimeout(() => setAvisoVisible(false), 2600);
   };
@@ -285,6 +296,7 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                 </p>
               )}
 
+              <PrecioHalloween precio={precio} simbolo={simbolo} formato={precioFormateado} className="mb-2" claseTachado="text-2xl" claseNuevo="text-4xl md:text-5xl">
               {conOferta && (
                 <p className="text-gray-400 text-base line-through leading-none mb-1">
                   {simbolo}{precioFormateado(producto.price)}
@@ -293,6 +305,7 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
               <p className="font-bebas text-4xl md:text-5xl text-[#111111] tracking-wide leading-none mb-1">
                 {simbolo}{precioFormateado(precio)}
               </p>
+              </PrecioHalloween>
               {esUSD && <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Precio en dólares</p>}
 
               <p className={`flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest mb-5 ${sinStock ? 'text-red-500' : 'text-gray-500'}`}>
@@ -369,54 +382,84 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                 </div>
               )}
 
-              {/* Combos por cantidad. Vacío por defecto: aparece sólo si cargaste
-                  escalones desde el panel. */}
+              {/* Packs por cantidad, armados con las promos del panel (Promos %): una
+                  opción por unidad y una por cada escalón cargado. Cada promo nueva
+                  aparece sola; sin promos, el bloque no se muestra. */}
               {!sinStock && combos.length > 1 && (
-                <div className="mb-5 border border-gray-200 rounded-xl overflow-hidden">
-                  <p className="bg-gray-50 text-gray-500 text-[11px] font-bold uppercase tracking-widest px-4 py-2 border-b border-gray-200">
-                    Cuantas más llevás, menos pagás
-                  </p>
-                  <div className="divide-y divide-gray-100">
+                <div className="mb-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="flex-1 h-px bg-gray-200" aria-hidden="true"></span>
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-[#111111]">Comprá en cantidad y ahorrá</span>
+                    <span className="flex-1 h-px bg-gray-200" aria-hidden="true"></span>
+                  </div>
+                  <div role="radiogroup" aria-label="Elegí cuántas llevar" className="space-y-3">
                     {combos.map((c, i) => {
                       // Rige el escalón más alto que la cantidad elegida ya alcanzó.
                       const siguiente = combos[i + 1];
                       const activo = cantidadElegida >= c.cantidad && (!siguiente || cantidadElegida < siguiente.cantidad);
+                      const total = c.precioUnitario * c.cantidad;
+                      const sinPromo = precio * c.cantidad;
+                      const ultimo = i === combos.length - 1;
+                      const distintivo = c.esBase ? null : ultimo ? 'Mayor ahorro' : i === 1 ? 'Recomendado' : null;
                       return (
                         <button
                           key={c.cantidad}
                           type="button"
-                          onClick={() => ponerCantidad(c.cantidad)}
-                          aria-pressed={activo}
-                          aria-label={`Llevar ${c.cantidad} ${c.cantidad === 1 ? 'unidad' : 'unidades'}`}
-                          className={`w-full text-left flex items-center gap-3 px-4 py-3 border-l-[3px] transition-colors ${activo ? 'bg-[#fcdb00]/15 border-[#fcdb00]' : 'bg-white border-transparent hover:bg-gray-50'}`}
+                          role="radio"
+                          aria-checked={activo}
+                          onClick={() => elegirPack(c.cantidad)}
+                          className={`relative w-full text-left flex items-center gap-3.5 px-4 py-3.5 rounded-xl border-2 transition-all ${activo ? 'border-[#111111] bg-[#fcdb00]/10' : 'border-gray-200 bg-white hover:border-gray-400'}`}
                         >
-                          <span className={`font-bebas text-2xl w-10 shrink-0 leading-none ${activo ? 'text-[#111111]' : 'text-gray-400'}`}>
-                            {c.cantidad}{c.abierto ? '+' : ''}
+                          <span className={`w-5 h-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-colors ${activo ? 'border-[#111111]' : 'border-gray-300'}`} aria-hidden="true">
+                            {activo && <span className="w-2.5 h-2.5 rounded-full bg-[#111111]"></span>}
                           </span>
                           <span className="flex-1 min-w-0">
-                            {c.esBase ? (
-                              <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Por unidad</span>
-                            ) : (
-                              <span className="text-[11px] font-bold uppercase tracking-widest text-gray-500">
-                                Ahorrás {simbolo}{precioFormateado(Math.round(c.ahorro))}
+                            {distintivo && (
+                              <span className={`absolute -top-2.5 right-4 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full leading-none ${ultimo ? 'bg-[#111111] text-[#fcdb00]' : 'bg-[#fcdb00] text-[#111111]'}`}>
+                                {distintivo}
+                              </span>
+                            )}
+                            <span className="block font-bebas text-xl md:text-2xl uppercase tracking-wide leading-none text-[#111111]">
+                              Llevá {c.cantidad}{c.abierto && !c.esBase ? ' o más' : ''}
+                            </span>
+                            <span className="block text-[12px] text-gray-500 mt-1 leading-tight">
+                              {c.esBase
+                                ? 'Precio por unidad'
+                                : <><span className="whitespace-nowrap">{simbolo}{precioFormateado(c.precioUnitario)} c/u</span> · <span className="whitespace-nowrap font-bold text-green-700">Ahorrás {simbolo}{precioFormateado(Math.round(c.ahorro))}</span></>}
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-right">
+                            <span className="block font-bebas text-2xl md:text-[26px] tracking-wide leading-none text-[#111111]">
+                              {simbolo}{precioFormateado(pctHalloween ? conHalloween(total, pctHalloween) : total)}
+                            </span>
+                            {pctHalloween > 0 && (
+                              <span className="block text-[12px] text-gray-400 line-through decoration-[#ff6b1a] mt-1 leading-none">
+                                {simbolo}{precioFormateado(total)}
+                              </span>
+                            )}
+                            {!pctHalloween && !c.esBase && sinPromo > total && (
+                              <span className="block text-[12px] text-gray-400 line-through mt-1 leading-none">
+                                {simbolo}{precioFormateado(sinPromo)}
                               </span>
                             )}
                           </span>
-                          <span className={`font-bebas text-xl tracking-wide shrink-0 ${activo ? 'text-[#111111]' : 'text-gray-500'}`}>
-                            {simbolo}{precioFormateado(c.precioUnitario)}<span className={`text-[11px] font-poppins font-bold ml-1 ${activo ? 'text-[#111111]/60' : 'text-gray-400'}`}>c/u</span>
-                          </span>
-                          {activo && (
-                            <i className="fas fa-check text-[#8a6d00] text-xs shrink-0" aria-hidden="true"></i>
-                          )}
                         </button>
                       );
                     })}
                   </div>
 
-                  {/* Lo que va a pagar en total con lo que eligió. Sin esto hay que
-                      hacer la cuenta de cabeza para saber si conviene. */}
-                  {enCarrito && (
-                    <p className="bg-gray-50 border-t border-gray-200 px-4 py-2.5 flex items-center justify-between">
+                  {/* Un combo de la marca se arma con cualquier sabor de esa marca. */}
+                  {comboDeMarca && variantes.length > 1 && (
+                    <p className="text-[11px] text-gray-500 mt-2.5 flex items-center gap-1.5">
+                      <i className="fas fa-layer-group text-[10px]" aria-hidden="true"></i>
+                      Podés combinar sabores de {producto.category}.
+                    </p>
+                  )}
+
+                  {/* Con una cantidad que no es justo un pack (3, por ejemplo), el
+                      total que va a pagar, para no hacer la cuenta de cabeza. */}
+                  {enCarrito && !combos.some(c => c.cantidad === enCarrito.qty) && (
+                    <p className="mt-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 flex items-center justify-between">
                       <span className="text-[11px] font-bold uppercase tracking-widest text-gray-500">
                         Llevás {enCarrito.qty} {enCarrito.qty === 1 ? 'unidad' : 'unidades'}
                       </span>
