@@ -31,7 +31,8 @@ export async function POST(request) {
     if (!doc.exists) return NextResponse.json({ valido: false });
 
     const datos = doc.data();
-    if (datos.active === false) return NextResponse.json({ valido: false });
+    // Los códigos que se ganaron en Halloween valían sólo hasta el 31/10.
+    if (datos.active === false || datos.halloween) return NextResponse.json({ valido: false });
 
     return NextResponse.json({ valido: true, code: datos.code || code, discount: Number(datos.discount) || 0 });
   } catch (err) {

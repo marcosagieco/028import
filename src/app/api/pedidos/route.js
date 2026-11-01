@@ -145,7 +145,8 @@ export async function POST(request) {
     let cupon = null;
     if (snapCupon?.exists) {
       const datos = snapCupon.data();
-      if (datos.active !== false) cupon = { code: datos.code || String(couponCode).toUpperCase(), discount: Number(datos.discount) || 0 };
+      // Los de Halloween valían sólo hasta el 31/10.
+      if (datos.active !== false && !datos.halloween) cupon = { code: datos.code || String(couponCode).toUpperCase(), discount: Number(datos.discount) || 0 };
       // Los de un solo uso (usoUnico) se reclaman en una transacción: si dos
       // pedidos llegan a la vez con el mismo código, sólo uno se lleva el descuento.
       if (cupon && datos.usoUnico) {
