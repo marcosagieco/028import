@@ -17,7 +17,6 @@ import { useCarrito } from '@/components/CarritoProvider';
 import { rutaProducto, aSlug } from '@/lib/slug';
 import { esSinGarantia, AvisoSinGarantia } from '@/components/SinGarantia';
 import { fichasDeCombo, precioSegunCantidad } from '@/lib/combos';
-import { PrecioHalloween, useDescuentoHalloween, conHalloween } from '@/components/PrecioHalloween';
 
 const precioFormateado = (n) => Number(n || 0).toLocaleString('es-AR');
 
@@ -65,7 +64,6 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
   // cantidad del carrito directamente.
   // Va acá abajo a propósito: necesita `precio`, declarado unas líneas arriba.
   const [packElegido, setPackElegido] = useState(1);
-  const pctHalloween = useDescuentoHalloween();
   const cantidadElegida = enCarrito ? enCarrito.qty : packElegido;
   const precioPorCantidad = precioSegunCantidad(escalones, cantidadElegida, precio);
 
@@ -296,7 +294,6 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                 </p>
               )}
 
-              <PrecioHalloween precio={precio} simbolo={simbolo} formato={precioFormateado} className="mb-2" claseTachado="text-2xl" claseNuevo="text-4xl md:text-5xl">
               {conOferta && (
                 <p className="text-gray-400 text-base line-through leading-none mb-1">
                   {simbolo}{precioFormateado(producto.price)}
@@ -305,7 +302,6 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
               <p className="font-bebas text-4xl md:text-5xl text-[#111111] tracking-wide leading-none mb-1">
                 {simbolo}{precioFormateado(precio)}
               </p>
-              </PrecioHalloween>
               {esUSD && <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Precio en dólares</p>}
 
               <p className={`flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest mb-5 ${sinStock ? 'text-red-500' : 'text-gray-500'}`}>
@@ -430,14 +426,9 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                           </span>
                           <span className="shrink-0 text-right">
                             <span className="block font-bebas text-2xl md:text-[26px] tracking-wide leading-none text-[#111111]">
-                              {simbolo}{precioFormateado(pctHalloween ? conHalloween(total, pctHalloween) : total)}
+                              {simbolo}{precioFormateado(total)}
                             </span>
-                            {pctHalloween > 0 && (
-                              <span className="block text-[12px] text-gray-400 line-through decoration-[#ff6b1a] mt-1 leading-none">
-                                {simbolo}{precioFormateado(total)}
-                              </span>
-                            )}
-                            {!pctHalloween && !c.esBase && sinPromo > total && (
+                            {!c.esBase && sinPromo > total && (
                               <span className="block text-[12px] text-gray-400 line-through mt-1 leading-none">
                                 {simbolo}{precioFormateado(sinPromo)}
                               </span>

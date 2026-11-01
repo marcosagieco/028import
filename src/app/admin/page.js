@@ -2213,21 +2213,7 @@ export default function AdminPage() {
               </div>
               <button type="submit" className="bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all">Crear Cupón</button>
             </form>
-            {/* Los códigos personales de "¿Truco o trato?" (uno por cuenta, de un solo
-                uso) no se listan de a uno: serían cientos. Sólo el resumen. */}
-            {coupons.some(c => c.halloween) && (() => {
-              const deHalloween = coupons.filter(c => c.halloween);
-              const usados = deHalloween.filter(c => c.active === false).length;
-              return (
-                <div className={`${theme.card} p-6 rounded-[1.5rem] shadow-sm border mb-4 flex flex-wrap gap-x-8 gap-y-2 items-center`}>
-                  <h4 className="font-bebas text-2xl uppercase tracking-wide">🎃 Truco o trato</h4>
-                  <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase">Entregados: {deHalloween.length}</p>
-                  <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase">5% (trato): {deHalloween.filter(c => Number(c.discount) === 5).length}</p>
-                  <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase">10% (truco): {deHalloween.filter(c => Number(c.discount) === 10).length}</p>
-                  <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase">Usados en compras: {usados}</p>
-                </div>
-              );
-            })()}
+            {/* Los códigos personales que se repartieron en Halloween no se listan: eran cientos. */}
             <div className="grid gap-4">
               {coupons.filter(c => !c.halloween).length === 0 ? (
                 <p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest mt-10">No hay cupones activos</p>
