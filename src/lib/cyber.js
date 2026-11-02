@@ -35,6 +35,5 @@ export function esDireccionCaba(componentes) {
   );
 }
 
-// Link de invitación a la comunidad de WhatsApp (paso 2 del sorteo). Vacío hasta
-// tenerlo: los botones llevan a la tienda.
-export const LINK_COMUNIDAD = '';
+// Link de invitación a la comunidad de WhatsApp (paso 2 del sorteo).
+export const LINK_COMUNIDAD = 'https://chat.whatsapp.com/JYgkBHg7P4DLwv1V2HCZUZ';

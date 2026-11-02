@@ -34,7 +34,7 @@ const PASOS = [
 ];
 
 const BASES = [
-  ['Quién participa', 'Cualquier persona mayor de 18 años que haga un pedido en 028import.com durante el CYBER 028 y esté en la comunidad de WhatsApp de 028 Import.'],
+  ['Quién participa', 'Cualquier persona que haga un pedido en 028import.com durante el CYBER 028 y esté en la comunidad de WhatsApp de 028 Import.'],
   ['Período', 'Pedidos hechos desde las 00:00 del lunes 02/11/2026 hasta las 23:59 del miércoles 04/11/2026, hora de Argentina.'],
   ['Chances', 'Cada pedido confirmado es una chance. Los pedidos cancelados o que no se pagaron no participan.'],
   ['Cómo se elige', 'Al azar, en vivo por Instagram (@028.import) el jueves 05/11/2026. El video queda en la comunidad.'],
