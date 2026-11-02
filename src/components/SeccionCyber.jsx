@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { CYBER_INICIO, CYBER_FIN, cyberActivo, enLanzamiento, LINK_COMUNIDAD } from '@/lib/cyber';
+import { CYBER_INICIO, CYBER_FIN, cyberActivo, enLanzamiento, enUltimasHoras, LINK_COMUNIDAD } from '@/lib/cyber';
 
 // La campaña CYBER 028 como historia de Instagram, no como sección en la portada: en
 // el celular un bloque de texto entre el banner y los productos hacía que la gente
@@ -74,6 +74,8 @@ export default function SeccionCyber() {
   if (ahora === null || ahora >= CYBER_FIN) return null;
 
   const activo = cyberActivo(ahora);
+  // El miércoles vuelve la cuenta regresiva, ahora al cierre.
+  const ultimas = enUltimasHoras(ahora);
   const lanzamiento = enLanzamiento(ahora);
   const resta = Math.max(0, (activo ? CYBER_FIN : CYBER_INICIO) - ahora);
   const t = {
@@ -99,14 +101,14 @@ export default function SeccionCyber() {
           <div className="relative mt-auto">
             <Eyebrow className="text-white/60">Ofertas únicas · tiempo limitado</Eyebrow>
             <h2 id="cyber-028" className="font-bebas text-[88px] leading-[0.8] mt-3">Cyber <span className="text-[#fcdb00]">028</span></h2>
-            {activo ? (
+            {activo && !ultimas ? (
               <>
                 <Eyebrow className="text-[#fcdb00]/90 mt-7">Ya empezó</Eyebrow>
                 <p className="font-bebas text-[40px] leading-[0.9] mt-2.5">Nuevas ofertas<br /><span className="text-white/50">hasta el miércoles</span></p>
               </>
             ) : (
             <>
-            <Eyebrow className="text-[#fcdb00]/90 mt-7">Arranca en</Eyebrow>
+            <Eyebrow className="text-[#fcdb00]/90 mt-7">{ultimas ? 'Últimas horas · termina en' : 'Arranca en'}</Eyebrow>
             <div className="flex mt-2.5">
               {[['d', 'Días'], ['h', 'Horas'], ['m', 'Min'], ['s', 'Seg']].map(([k, etiqueta], i) => (
                 <div key={k} className={`flex-1 ${i > 0 ? 'pl-4 border-l border-white/15' : ''}`}>
@@ -258,10 +260,10 @@ export default function SeccionCyber() {
             <span className="absolute inset-0 rounded-full bg-[#fcdb00] cyber-pulso"></span>
             <span className="relative w-2 h-2 rounded-full bg-[#fcdb00]"></span>
           </span>
-          <span className="font-bebas text-[19px] leading-none text-white tracking-wide">Cyber 028</span>
+          <span className="font-bebas text-[19px] leading-none text-white tracking-wide">{ultimas ? 'Últimas horas' : 'Cyber 028'}</span>
           <span className="w-px h-4 bg-white/20"></span>
           <span className="font-bebas text-[19px] leading-none text-[#fcdb00] tabular-nums tracking-wide">
-            {activo ? 'Ver ofertas' : `${dosCifras(t.d * 24 + t.h)}:${dosCifras(t.m)}:${dosCifras(t.s)}`}
+            {activo && !ultimas ? 'Ver ofertas' : `${dosCifras(t.d * 24 + t.h)}:${dosCifras(t.m)}:${dosCifras(t.s)}`}
           </span>
         </button>
       )}

@@ -14,6 +14,10 @@ export const MINIMO_ENVIO_GRATIS = 100000;
 export const cyberActivo = (ahora = Date.now()) => ahora >= CYBER_INICIO && ahora < CYBER_FIN;
 export const enLanzamiento = (ahora = Date.now()) => ahora >= CYBER_INICIO && ahora < LANZAMIENTO_FIN;
 
+// El miércoles 4, último día: "Últimas horas", con la cuenta regresiva al cierre.
+export const ULTIMAS_HORAS = new Date('2026-11-04T00:00:00-03:00').getTime();
+export const enUltimasHoras = (ahora = Date.now()) => ahora >= ULTIMAS_HORAS && ahora < CYBER_FIN;
+
 /** Si el pedido llega al envío gratis, sin mirar todavía si es de CABA. */
 export function alcanzaEnvioGratis({ subtotal, transferencia, ahora = Date.now() }) {
   if (!cyberActivo(ahora)) return false;

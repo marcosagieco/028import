@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { CYBER_INICIO as INICIO, CYBER_FIN as FIN, enLanzamiento } from '@/lib/cyber';
+import { CYBER_INICIO as INICIO, CYBER_FIN as FIN, enLanzamiento, enUltimasHoras } from '@/lib/cyber';
 
 // Cuenta regresiva al CYBER 028, entre el menú y el marquee de la portada.
 // Estilo de lanzamiento de marca grande: negro, tipografía enorme, números separados
@@ -16,7 +16,8 @@ import { CYBER_INICIO as INICIO, CYBER_FIN as FIN, enLanzamiento } from '@/lib/c
 // El CYBER 028 va del lunes 2/11 al miércoles 4/11 (hora de Argentina, UTC-3).
 // Hasta el lunes a las 00:00 cuenta para el arranque. Cuando llega a cero, los números
 // se van y queda "Cyber 028" con un botón que abre la historia de las ofertas (ver
-// SeccionCyber). Desde el jueves 5 no se muestra más.
+// SeccionCyber). El miércoles, último día, vuelve la cuenta regresiva, ahora al
+// cierre: "Últimas horas". Desde el jueves 5 no se muestra más.
 // "Cyber Monday" es marca registrada de la CACE: no se usa en ninguna pieza.
 
 const dosCifras = (n) => String(n).padStart(2, '0');
@@ -58,6 +59,9 @@ export default function ContadorCyber() {
 
   const enCurso = ahora !== null && ahora >= INICIO;
   const lanzamiento = ahora !== null && enLanzamiento(ahora);
+  const ultimas = ahora !== null && enUltimasHoras(ahora);
+  // De lunes a martes, el botón a la historia; antes del arranque y el miércoles, la cuenta.
+  const conBoton = enCurso && !ultimas;
   const resta = ahora === null ? 0 : Math.max(0, (enCurso ? FIN : INICIO) - ahora);
   const ver = (n) => (ahora === null ? '--' : dosCifras(n));
   const dias = ver(Math.floor(resta / 86400000));
@@ -72,7 +76,9 @@ export default function ContadorCyber() {
         <div className="min-w-0">
           <p className="flex items-center gap-2 md:gap-3 text-[8px] md:text-[11px] font-semibold uppercase tracking-[0.25em] md:tracking-[0.3em] text-white/55 font-poppins">
             <span className="w-4 md:w-6 h-[2px] bg-[#fcdb00]"></span>
-            {enCurso
+            {ultimas
+              ? <><span className="md:hidden">Últimas horas</span><span className="hidden md:inline">Últimas horas · termina hoy a las 23:59</span></>
+              : enCurso
               ? (lanzamiento
                 ? <><span className="md:hidden">Envío gratis hasta 04:00</span><span className="hidden md:inline">Envío gratis en CABA hasta las 04:00</span></>
                 : <><span className="md:hidden">Ya empezó</span><span className="hidden md:inline">Ya empezó · hasta el miércoles 04.11</span></>)
@@ -82,13 +88,15 @@ export default function ContadorCyber() {
             Cyber<br className="md:hidden" /> 028
           </h2>
           <p className="hidden md:block mt-4 max-w-md text-[15px] text-white/60 font-poppins leading-relaxed">
-            {enCurso
+            {ultimas
+              ? 'Último día del Cyber: precios por cantidad, Mystery Box y envío gratis en CABA desde $100.000.'
+              : enCurso
               ? 'Nuevas ofertas, Mystery Box, envío gratis en CABA y un sorteo de $50.000. Mirá cómo funciona.'
               : 'Ofertas únicas · tiempo limitado. Del lunes al miércoles.'}
           </p>
         </div>
 
-        {enCurso ? (
+        {conBoton ? (
           <button
             type="button"
             onClick={abrirHistoria}
@@ -103,9 +111,9 @@ export default function ContadorCyber() {
             <span className="md:hidden mt-1.5 text-[7px] font-semibold uppercase tracking-[0.2em] text-white/45 font-poppins">Cómo funciona</span>
           </button>
         ) : (
-          <div className="flex md:-mx-7 shrink-0" aria-label="Tiempo que falta para el CYBER 028">
-            <Unidad valor={dias} etiqueta="Días" primera />
-            <Unidad valor={horas} etiqueta="Horas" />
+          <div className="flex md:-mx-7 shrink-0" aria-label={ultimas ? 'Tiempo que falta para que termine el CYBER 028' : 'Tiempo que falta para el CYBER 028'}>
+            {!ultimas && <Unidad valor={dias} etiqueta="Días" primera />}
+            <Unidad valor={horas} etiqueta="Horas" primera={ultimas} />
             <Unidad valor={minutos} etiqueta="Min" />
             <Unidad valor={segundos} etiqueta="Seg" />
           </div>
@@ -122,15 +130,15 @@ export default function ContadorCyber() {
         <p className="flex items-center gap-2 md:gap-3 min-w-0">
           <span className="w-4 md:w-6 h-[2px] bg-[#fcdb00] shrink-0"></span>
           <span className="font-bebas text-[19px] md:text-[22px] leading-none text-white tracking-wide whitespace-nowrap">CYBER 028</span>
-          <span className="hidden md:inline text-[10px] font-semibold uppercase tracking-[0.3em] text-white/45 font-poppins ml-2">{enCurso ? 'Nuevas ofertas hasta el miércoles' : 'Del 02.11 al 04.11 — Ofertas únicas'}</span>
+          <span className="hidden md:inline text-[10px] font-semibold uppercase tracking-[0.3em] text-white/45 font-poppins ml-2">{ultimas ? 'Últimas horas · termina hoy' : enCurso ? 'Nuevas ofertas hasta el miércoles' : 'Del 02.11 al 04.11 — Ofertas únicas'}</span>
         </p>
-        {enCurso ? (
+        {conBoton ? (
           <button type="button" onClick={abrirHistoria} className="flex items-center gap-2 font-bebas text-[17px] md:text-[20px] leading-none text-[#fcdb00] tracking-[0.06em] uppercase whitespace-nowrap hover:text-white transition-colors">
             Descubrilas <i className="fas fa-arrow-right text-[10px]"></i>
           </button>
         ) : (
           <p className="font-bebas text-[19px] md:text-[22px] leading-none text-white tabular-nums tracking-wide whitespace-nowrap">
-            {dias}<span className="text-white/45 text-[13px] md:text-[14px] mr-2">D</span>
+            {!ultimas && <>{dias}<span className="text-white/45 text-[13px] md:text-[14px] mr-2">D</span></>}
             {horas}<span className="text-white/45 text-[13px] md:text-[14px] mr-2">H</span>
             {minutos}<span className="text-white/45 text-[13px] md:text-[14px] mr-2">M</span>
             {segundos}<span className="text-white/45 text-[13px] md:text-[14px]">S</span>

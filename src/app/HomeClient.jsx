@@ -13,6 +13,7 @@ import ReproductorVideo from '@/components/ReproductorVideo';
 import ContadorCyber from '@/components/ContadorCyber';
 import { alcanzaEnvioGratis, faltaParaEnvioGratis, cyberActivo, MINIMO_ENVIO_GRATIS, CYBER_FIN } from '@/lib/cyber';
 import SeccionCyber, { LINK_COMUNIDAD } from '@/components/SeccionCyber';
+import SorteoPostCompra, { marcarParticipacion } from '@/components/SorteoPostCompra';
 import { esSinGarantia, EtiquetaSinGarantia } from '@/components/SinGarantia';
 const CalculadorEnvio = dynamic(() => import('@/components/CalculadorEnvio'), { ssr: false });
 const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvioSimple'), { ssr: false });
@@ -1403,6 +1404,37 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     (shippingType === 'moto' ? esCabaMapa : soyDeCaba);
   const faltaEnvioGratis = faltaParaEnvioGratis(subtotalCarrito);
 
+  // CYBER 028: el producto que, sumando una unidad, hace llegar el carrito al envío
+  // gratis pasándose lo menos posible. Se prueba de verdad cómo queda el subtotal,
+  // porque sumar una unidad puede bajar el precio de las que ya están (escalones).
+  const sugerenciaEnvioGratis = (() => {
+    if (!isCartOpen || !faltaEnvioGratis || !cart.length) return null;
+    const subtotalDe = (c) => c.reduce((acc, item) => {
+      if (item.isUpsell) return acc + item.qty * item.upsellPrice;
+      const escalones = escalonesDeProducto(promos, item);
+      if (!escalones.length) return acc + item.qty * item.price;
+      const esDelProducto = promos.some(p => p.type === 'product' && String(p.productId) === String(item.id));
+      const cantidad = esDelProducto
+        ? c.filter(i => String(i.id) === String(item.id)).reduce((a, x) => a + x.qty, 0)
+        : c.filter(i => i.category === item.category).reduce((a, x) => a + x.qty, 0);
+      return acc + item.qty * precioSegunCantidad(escalones, cantidad, item.price);
+    }, 0);
+    let mejor = null;
+    for (const p of products) {
+      if (p.isDeleted || p.isHidden || p.inStock === false) continue;
+      const precio = p.offerPrice > 0 && p.offerPrice < p.price ? p.offerPrice : p.price;
+      if (!(precio > 0)) continue;
+      const ya = cart.find(i => i.id === p.id);
+      if (ya?.isUpsell) continue;
+      const prueba = ya
+        ? cart.map(i => i.id === p.id ? { ...i, qty: i.qty + 1 } : i)
+        : [...cart, { ...p, price: precio, listPrice: p.price, qty: 1 }];
+      const total = subtotalDe(prueba);
+      if (total >= MINIMO_ENVIO_GRATIS && (!mejor || total < mejor.total)) mejor = { producto: p, precio, total };
+    }
+    return mejor;
+  })();
+
   const calculateTotal = (cartData = cart) => {
       const subtotal = cartData.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
       const envio = (deliveryMethod === 'envio' && shippingType === 'moto' && !envioGratisCyber) ? shippingCost : 0;
@@ -1650,6 +1682,9 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     } catch {}
 
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+
+    // CYBER 028: al volver de WhatsApp, "ya estás participando del sorteo".
+    if (cyberActivo()) marcarParticipacion(codigoPedido);
 
     // El pedido ya quedó guardado por el servidor (con los precios verificados). Acá
     // sólo quedan los avisos que no tienen que ver con el precio: el cartelito
@@ -2907,10 +2942,23 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
             <div className="animate-marquee whitespace-nowrap flex items-center">
               {[...Array(6)].map((_, i) => (
                 <div key={i} style={{color: '#f5d000'}} className="font-bebas flex items-center gap-8 px-4 font-bold italic text-[13px] md:text-[15px] tracking-widest uppercase">
-                  <span> ENVIOS 24HS CABA/AMBA </span><span style={{color: '#787878'}}>•</span>
-                  <span> 028 IMPORT </span><span style={{color: '#787878'}}>•</span>
-                  <span> DESCUENTOS ABONANDO EN EFECTIVO </span><span style={{color: '#787878'}}>•</span>
-                  <span> PEDIME TE LLEGA EN 30'</span><span style={{color: '#787878'}}>•</span>
+                  {Date.now() < CYBER_FIN ? (
+                    // Mientras dura el CYBER 028, la cinta cuenta la campaña.
+                    <>
+                      <span> CYBER 028 </span><span style={{color: '#787878'}}>•</span>
+                      <span> ENVÍO GRATIS EN CABA DESDE $100.000 </span><span style={{color: '#787878'}}>•</span>
+                      <span> MYSTERY BOX </span><span style={{color: '#787878'}}>•</span>
+                      <span> CUANTAS MÁS LLEVÁS, MENOS PAGÁS </span><span style={{color: '#787878'}}>•</span>
+                      <span> SORTEO DE $50.000 </span><span style={{color: '#787878'}}>•</span>
+                    </>
+                  ) : (
+                    <>
+                      <span> ENVIOS 24HS CABA/AMBA </span><span style={{color: '#787878'}}>•</span>
+                      <span> 028 IMPORT </span><span style={{color: '#787878'}}>•</span>
+                      <span> DESCUENTOS ABONANDO EN EFECTIVO </span><span style={{color: '#787878'}}>•</span>
+                      <span> PEDIME TE LLEGA EN 30'</span><span style={{color: '#787878'}}>•</span>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -3417,7 +3465,28 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                         <div className={`h-full rounded-full transition-all duration-500 ${faltaEnvioGratis ? 'bg-[#fcdb00]' : 'bg-emerald-500'}`} style={{ width: `${faltaEnvioGratis ? Math.min(100, (subtotalCarrito / MINIMO_ENVIO_GRATIS) * 100) : 100}%` }} />
                       </div>
-                      {faltaEnvioGratis > 0 && <p className="text-[10px] text-gray-400 font-poppins mt-1.5">Juntate con tus amigos: desde $100.000 el envío es gratis.</p>}
+                      {faltaEnvioGratis > 0 && !sugerenciaEnvioGratis && <p className="text-[10px] text-gray-400 font-poppins mt-1.5">Juntate con tus amigos: desde $100.000 el envío es gratis.</p>}
+                      {sugerenciaEnvioGratis && (() => {
+                        const { producto, precio } = sugerenciaEnvioGratis;
+                        const yaEsta = cart.some(i => i.id === producto.id);
+                        return (
+                          <div className="mt-3 flex items-center gap-3 p-2.5 pr-3 rounded-xl bg-[#111111]">
+                            {producto.image && <img src={producto.image} alt="" className="w-12 h-12 rounded-lg bg-white object-contain shrink-0" />}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#fcdb00] font-poppins">{yaEsta ? 'Sumá 1 más y llegás' : 'Agregá esto y llegás'}</p>
+                              <p className="text-[12px] font-bold text-white font-poppins truncate leading-tight mt-0.5">{producto.name}</p>
+                              <p className="text-[11px] text-white/50 font-poppins">{CONFIG.currencySymbol}{formatPrice(precio)}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => addToCart(producto)}
+                              className="shrink-0 h-9 px-3.5 rounded-lg bg-[#fcdb00] text-[#111111] font-bebas text-[15px] tracking-wider uppercase active:scale-95 transition-transform"
+                            >
+                              Agregar
+                            </button>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                   <div className="flex justify-between items-center mb-3">
@@ -4070,6 +4139,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           </div>
         </div>
       )}
+
+      <SorteoPostCompra />
 
       {/* === BOTÓN FLOTANTE WHATSAPP ===
           En el celular, con el cajón del carrito o el checkout abiertos, esta

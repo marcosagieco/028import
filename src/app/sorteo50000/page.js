@@ -22,6 +22,14 @@ export const metadata = {
     siteName: '028 Import',
     title: 'Sorteo $50.000 · CYBER 028',
     description: DESCRIPCION,
+    // La vista previa al compartir el link por WhatsApp o Instagram.
+    images: [{ url: '/og-sorteo.jpg', width: 1200, height: 630, alt: 'Sorteo de $50.000 · CYBER 028' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Sorteo $50.000 · CYBER 028',
+    description: DESCRIPCION,
+    images: ['/og-sorteo.jpg'],
   },
 };
 
