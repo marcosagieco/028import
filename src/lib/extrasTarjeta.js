@@ -23,7 +23,7 @@ export async function conExtrasDeTarjeta(productos) {
       promoCantidad: escalon?.minQty || 0,
       promoPrecio: escalon?.precioUnitario || 0,
       // CYBER 028: con 5 de este modelo llega al envío gratis.
-      envioGratisCon5: precioSegunCantidad(escalones, 5, base) * 5 >= MINIMO_ENVIO_GRATIS,
+      envioGratisCon5: escalones.length > 0 && precioSegunCantidad(escalones, 5, base) * 5 >= MINIMO_ENVIO_GRATIS,
       resenaPromedio: resena?.promedio || 0,
       resenaCantidad: resena?.cantidad || 0,
     };

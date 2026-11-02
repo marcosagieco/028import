@@ -121,7 +121,51 @@ export default function SeccionCyber() {
         </>
       ),
     },
-    // 2 · Precios progresivos.
+    // 2 · Mystery Box: la novedad del Cyber, va primero.
+    {
+      fondo: 'amarillo',
+      fantasma: '?',
+      contenido: (
+        <>
+          <Eyebrow className="text-black/60 mt-16">Nadie sabe qué trae</Eyebrow>
+          <div className="mt-auto">
+            <p className="font-bebas text-[112px] leading-[0.78] tracking-[-0.01em]">Mystery<br />Box</p>
+            <div className="mt-7 border-t border-black/20">
+              {[['$50.000', 'Descartables'], ['$100.000', 'Elegís el estilo'], ['$200.000', 'La más grande']].map(([p, detalle]) => (
+                <div key={p} className="flex items-baseline justify-between py-2.5 border-b border-black/15">
+                  <span className="font-bebas text-[30px] leading-none">{p}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.2em] font-poppins text-black/55">{detalle}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      ),
+      href: '/mystery-box',
+      boton: 'Ver las Mystery Box',
+    },
+    // 3 · Envío gratis.
+    {
+      fondo: 'negro',
+      fantasma: 'CABA',
+      contenido: (
+        <>
+          <Eyebrow className="text-white/55 mt-16">Solo en CABA</Eyebrow>
+          <div className="mt-auto">
+            <p className="font-bebas text-[34px] leading-none text-white/90">Envío</p>
+            <p className="font-bebas text-[140px] leading-[0.78] tracking-[-0.01em] text-[#fcdb00]">Gratis</p>
+            <p className="font-bebas text-[30px] leading-[0.95] mt-3">Desde $100.000.<br /><span className="text-white/50">Juntate con tus amigos.</span></p>
+            <p className="text-[12px] font-poppins text-white/55 mt-6 leading-relaxed">
+              {lanzamiento || !activo
+                ? <>Lunes de 00:00 a 04:00: <span className="text-white">sin mínimo</span>, pagando por transferencia.</>
+                : 'Moto o Flash. Tandas de 15:30 y 18:30.'}
+            </p>
+          </div>
+        </>
+      ),
+      href: '/catalogo',
+    },
+    // 4 · Precios progresivos.
     {
       fondo: 'amarillo',
       fantasma: 'x5',
@@ -145,49 +189,6 @@ export default function SeccionCyber() {
         </>
       ),
       href: '/vapes',
-    },
-    // 3 · Envío gratis.
-    {
-      fondo: 'negro',
-      fantasma: 'CABA',
-      contenido: (
-        <>
-          <Eyebrow className="text-white/55 mt-16">Solo en CABA</Eyebrow>
-          <div className="mt-auto">
-            <p className="font-bebas text-[34px] leading-none text-white/90">Envío</p>
-            <p className="font-bebas text-[140px] leading-[0.78] tracking-[-0.01em] text-[#fcdb00]">Gratis</p>
-            <p className="font-bebas text-[30px] leading-[0.95] mt-3">Desde $100.000.<br /><span className="text-white/50">Juntate con tus amigos.</span></p>
-            <p className="text-[12px] font-poppins text-white/55 mt-6 leading-relaxed">
-              {lanzamiento || !activo
-                ? <>Lunes de 00:00 a 04:00: <span className="text-white">sin mínimo</span>, pagando por transferencia.</>
-                : 'Moto o Flash. Tandas de 15:30 y 18:30.'}
-            </p>
-          </div>
-        </>
-      ),
-      href: '/catalogo',
-    },
-    // 4 · Mystery Box.
-    {
-      fondo: 'amarillo',
-      fantasma: '?',
-      contenido: (
-        <>
-          <Eyebrow className="text-black/60 mt-16">Nadie sabe qué trae</Eyebrow>
-          <div className="mt-auto">
-            <p className="font-bebas text-[112px] leading-[0.78] tracking-[-0.01em]">Mystery<br />Box</p>
-            <div className="mt-7 border-t border-black/20">
-              {['$50.000', '$100.000', '$200.000'].map((p) => (
-                <div key={p} className="flex items-baseline justify-between py-2.5 border-b border-black/15">
-                  <span className="font-bebas text-[30px] leading-none">{p}</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.2em] font-poppins text-black/55">Valuada en más</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      ),
-      href: '/combos',
     },
     // 5 · Combo Apple.
     {

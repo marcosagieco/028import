@@ -717,7 +717,9 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     return pairs;
   };
 
-  const departments = useMemo(() => [...new Set(products.flatMap(p => getProductDeptList(p)))], [products]);
+  // Mystery Box va primero: es la sección nueva del CYBER 028.
+  const departments = useMemo(() => [...new Set(products.flatMap(p => getProductDeptList(p)))]
+    .sort((a, b) => (aSlug(b) === 'mystery-box') - (aSlug(a) === 'mystery-box')), [products]);
   const brandsByDept = useMemo(() => { const map = {}; departments.forEach(d => { map[d] = [...new Set(products.filter(p => !p.isDeleted && p.inStock !== false).flatMap(p => getProductPairs(p)).filter(pair => pair.department === d).map(pair => pair.category))]; }); return map; }, [products, departments]);
   const uniqueCategories = useMemo(() => {
     if (activeFilter.dept !== 'all') return [...new Set(products.flatMap(p => getProductPairs(p)).filter(pair => pair.department === activeFilter.dept).map(pair => pair.category))];
@@ -1690,7 +1692,7 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     const escalones = escalonesDeProducto(promos, p);
     const primerEscalon = escalones[0];
     const precioBase = p.offerPrice > 0 && p.offerPrice < p.price ? p.offerPrice : p.price;
-    const envioGratisCon5 = Date.now() < CYBER_FIN && precioSegunCantidad(escalones, 5, precioBase) * 5 >= MINIMO_ENVIO_GRATIS;
+    const envioGratisCon5 = Date.now() < CYBER_FIN && escalones.length > 0 && precioSegunCantidad(escalones, 5, precioBase) * 5 >= MINIMO_ENVIO_GRATIS;
     const resena = resumenResenas[String(p.id)];
     return (
       <TarjetaProducto
@@ -2680,17 +2682,17 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
             <img src={CONFIG.logoImage} alt="Logo" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" />
           </Link>
 
-          <div className="hidden md:flex items-center gap-6 ml-8 font-poppins text-xs font-bold uppercase tracking-widest">
+          <div className="hidden xl:flex items-center gap-6 ml-8 font-poppins text-xs font-bold uppercase tracking-widest">
             <Link href="/" className={`transition-colors ${modo === 'inicio' && currentView === 'home' ? 'text-[#fcdb00]' : 'text-gray-300 hover:text-white'}`}>Inicio</Link>
-            <button onClick={() => setShowShippingCalculatorModal(true)} className="bg-white/10 text-white px-4 py-2 rounded-full hover:bg-[#fcdb00] hover:text-[#111111] transition-all flex items-center gap-2"><i className="fas fa-motorcycle text-sm"></i> Calcular Envío</button>
+            <button onClick={() => setShowShippingCalculatorModal(true)} aria-label="Calcular envío" className="bg-white/10 text-white px-4 py-2 rounded-full hover:bg-[#fcdb00] hover:text-[#111111] transition-all flex items-center gap-2"><i className="fas fa-motorcycle text-sm"></i> <span className="hidden min-[1400px]:inline">Calcular Envío</span></button>
           </div>
         </div>
 
         {/* Departamentos centrados — solo desktop */}
-        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-6 font-poppins text-xs font-bold uppercase tracking-widest">
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-4 2xl:gap-6 whitespace-nowrap font-poppins text-xs font-bold uppercase tracking-widest">
           {departments.map(dept => (
             <div key={dept} className="relative" onMouseEnter={() => setHoveredNavDept(dept)} onMouseLeave={() => setHoveredNavDept(null)}>
-              <Link href={`/${aSlug(dept)}`} prefetch={false} className={`relative block pb-1 transition-all duration-200 ${hoveredNavDept === dept ? 'text-white scale-[1.12]' : currentView === 'catalog' && filterDepts.includes(dept) ? 'text-[#fcdb00]' : 'text-gray-400'}`}>
+              <Link href={`/${aSlug(dept)}`} prefetch={false} className={`relative block pb-1 transition-all duration-200 ${hoveredNavDept === dept ? 'text-white scale-[1.12]' : (currentView === 'catalog' && filterDepts.includes(dept)) || aSlug(dept) === 'mystery-box' ? 'text-[#fcdb00]' : 'text-gray-400'}`}>
                 {dept}
                 <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-[#fcdb00] transition-all duration-200 ${hoveredNavDept === dept ? 'opacity-100' : 'opacity-0'}`} />
               </Link>
