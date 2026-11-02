@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { CYBER_INICIO as INICIO, CYBER_FIN as FIN, enLanzamiento } from '@/lib/cyber';
 
-// Cuenta regresiva al Cyber Monday, entre el menú y el marquee de la portada.
+// Cuenta regresiva al CYBER 028, entre el menú y el marquee de la portada.
 // Estilo de lanzamiento de marca grande: negro, tipografía enorme, números separados
 // por líneas finas y el amarillo sólo como detalle. Nada de cajas ni brillos.
 //
@@ -12,11 +13,11 @@ import { useEffect, useRef, useState } from 'react';
 // En el celular va en una sola franja: el título en dos renglones a la izquierda y
 // el contador a la derecha. Apilado ocupaba media pantalla antes del banner.
 //
-// El Cyber Monday va del lunes 2/11 al miércoles 4/11 (hora de Argentina, UTC-3).
-// Hasta el lunes a las 00:00 cuenta; de lunes a miércoles avisa que está en curso;
-// desde el jueves 5 no se muestra más: no hace falta sacarlo a mano.
-const INICIO = new Date('2026-11-02T00:00:00-03:00').getTime();
-const FIN = new Date('2026-11-05T00:00:00-03:00').getTime();
+// El CYBER 028 va del lunes 2/11 al miércoles 4/11 (hora de Argentina, UTC-3).
+// Hasta el lunes a las 00:00 cuenta para el arranque. Cuando llega a cero, los números
+// se van y queda "Cyber 028" con un botón que abre la historia de las ofertas (ver
+// SeccionCyber). Desde el jueves 5 no se muestra más.
+// "Cyber Monday" es marca registrada de la CACE: no se usa en ninguna pieza.
 
 const dosCifras = (n) => String(n).padStart(2, '0');
 
@@ -28,6 +29,9 @@ function Unidad({ valor, etiqueta, primera }) {
     </div>
   );
 }
+
+// La historia de SeccionCyber escucha este aviso para abrirse.
+const abrirHistoria = () => window.dispatchEvent(new Event('cyber028:abrir'));
 
 export default function ContadorCyber() {
   // Sin hora hasta montar: el servidor y el navegador darían números distintos.
@@ -53,7 +57,8 @@ export default function ContadorCyber() {
   if (ahora !== null && ahora >= FIN) return null;
 
   const enCurso = ahora !== null && ahora >= INICIO;
-  const resta = ahora === null ? 0 : Math.max(0, INICIO - ahora);
+  const lanzamiento = ahora !== null && enLanzamiento(ahora);
+  const resta = ahora === null ? 0 : Math.max(0, (enCurso ? FIN : INICIO) - ahora);
   const ver = (n) => (ahora === null ? '--' : dosCifras(n));
   const dias = ver(Math.floor(resta / 86400000));
   const horas = ver(Math.floor(resta / 3600000) % 24);
@@ -68,23 +73,37 @@ export default function ContadorCyber() {
           <p className="flex items-center gap-2 md:gap-3 text-[8px] md:text-[11px] font-semibold uppercase tracking-[0.25em] md:tracking-[0.3em] text-white/55 font-poppins">
             <span className="w-4 md:w-6 h-[2px] bg-[#fcdb00]"></span>
             {enCurso
-              ? 'Hasta el miércoles 04.11'
+              ? (lanzamiento
+                ? <><span className="md:hidden">Envío gratis hasta 04:00</span><span className="hidden md:inline">Envío gratis en CABA hasta las 04:00</span></>
+                : <><span className="md:hidden">Ya empezó</span><span className="hidden md:inline">Ya empezó · hasta el miércoles 04.11</span></>)
               : <><span className="md:hidden">02.11 al 04.11</span><span className="hidden md:inline">Del lunes 02.11 al miércoles 04.11</span></>}
           </p>
           <h2 className="font-bebas text-[34px] md:text-[132px] leading-[0.85] md:leading-[0.82] text-white mt-1.5 md:mt-5">
-            Cyber<br className="md:hidden" /> Monday
+            Cyber<br className="md:hidden" /> 028
           </h2>
           <p className="hidden md:block mt-4 max-w-md text-[15px] text-white/60 font-poppins leading-relaxed">
             {enCurso
-              ? 'Ya están las ofertas en toda la tienda, hasta el miércoles.'
-              : 'Ofertas en toda la tienda durante 3 días.'}
+              ? 'Nuevas ofertas, Mystery Box, envío gratis en CABA y un sorteo de $50.000. Mirá cómo funciona.'
+              : 'Ofertas únicas · tiempo limitado. Del lunes al miércoles.'}
           </p>
         </div>
 
         {enCurso ? (
-          <p className="md:hidden text-right text-[11px] text-white/60 font-poppins leading-snug">Ofertas en toda<br />la tienda</p>
+          <button
+            type="button"
+            onClick={abrirHistoria}
+            className="group shrink-0 flex flex-col items-end md:items-start text-left"
+          >
+            <span className="hidden md:block text-[10px] font-semibold uppercase tracking-[0.3em] text-white/45 font-poppins mb-3">Precios, envíos y sorteo</span>
+            <span className="flex items-center gap-2.5 md:gap-4 h-11 md:h-16 px-4 md:px-8 bg-[#fcdb00] text-[#0a0a0a] rounded-[8px] md:rounded-[10px] font-bebas text-[19px] md:text-[30px] leading-none tracking-[0.06em] uppercase transition-colors group-hover:bg-white">
+              <span className="md:hidden">Descubrilas</span>
+              <span className="hidden md:inline">Descubrí las ofertas</span>
+              <i className="fas fa-arrow-right text-[11px] md:text-[16px] transition-transform group-hover:translate-x-1"></i>
+            </span>
+            <span className="md:hidden mt-1.5 text-[7px] font-semibold uppercase tracking-[0.2em] text-white/45 font-poppins">Cómo funciona</span>
+          </button>
         ) : (
-          <div className="flex md:-mx-7 shrink-0" aria-label="Tiempo que falta para el Cyber Monday">
+          <div className="flex md:-mx-7 shrink-0" aria-label="Tiempo que falta para el CYBER 028">
             <Unidad valor={dias} etiqueta="Días" primera />
             <Unidad valor={horas} etiqueta="Horas" />
             <Unidad valor={minutos} etiqueta="Min" />
@@ -102,11 +121,13 @@ export default function ContadorCyber() {
       <div className="max-w-[1400px] mx-auto px-4 md:px-12 h-10 md:h-11 flex items-center justify-between gap-4">
         <p className="flex items-center gap-2 md:gap-3 min-w-0">
           <span className="w-4 md:w-6 h-[2px] bg-[#fcdb00] shrink-0"></span>
-          <span className="font-bebas text-[19px] md:text-[22px] leading-none text-white tracking-wide whitespace-nowrap">Cyber Monday</span>
-          <span className="hidden md:inline text-[10px] font-semibold uppercase tracking-[0.3em] text-white/45 font-poppins ml-2">Del 02.11 al 04.11 — Ofertas en toda la tienda</span>
+          <span className="font-bebas text-[19px] md:text-[22px] leading-none text-white tracking-wide whitespace-nowrap">CYBER 028</span>
+          <span className="hidden md:inline text-[10px] font-semibold uppercase tracking-[0.3em] text-white/45 font-poppins ml-2">{enCurso ? 'Nuevas ofertas hasta el miércoles' : 'Del 02.11 al 04.11 — Ofertas únicas'}</span>
         </p>
         {enCurso ? (
-          <span className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.25em] text-[#fcdb00] font-poppins whitespace-nowrap">Hasta el miércoles</span>
+          <button type="button" onClick={abrirHistoria} className="flex items-center gap-2 font-bebas text-[17px] md:text-[20px] leading-none text-[#fcdb00] tracking-[0.06em] uppercase whitespace-nowrap hover:text-white transition-colors">
+            Descubrilas <i className="fas fa-arrow-right text-[10px]"></i>
+          </button>
         ) : (
           <p className="font-bebas text-[19px] md:text-[22px] leading-none text-white tabular-nums tracking-wide whitespace-nowrap">
             {dias}<span className="text-white/45 text-[13px] md:text-[14px] mr-2">D</span>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getAdminDb } from '@/lib/firebaseAdmin';
 import { escalonesDeProducto, precioSegunCantidad } from '@/lib/combos';
+import { alcanzaEnvioGratis } from '@/lib/cyber';
 
 // Recalcula y guarda cada pedido con los precios REALES del servidor, no con los que
 // mandó el navegador del cliente.
@@ -47,8 +48,13 @@ function precioRealDe(item, productosPorId, promos, cartCompleto) {
     return { producto, precio: Number(item.upsellPrice) > 0 ? Number(item.upsellPrice) : Number(producto.price) };
   }
 
+  // El precio de una unidad suelta: el de oferta si tiene uno válido (así lo muestra
+  // y lo cobra el carrito), si no el de lista.
+  const oferta = Number(producto.offerPrice) || 0;
+  const base = oferta > 0 && oferta < Number(producto.price) ? oferta : Number(producto.price);
+
   const escalones = escalonesDeProducto(promos, producto);
-  if (!escalones.length) return { producto, precio: Number(producto.price) };
+  if (!escalones.length) return { producto, precio: base };
 
   const esDelProducto = promos.some(p => p.type === 'product' && String(p.productId) === String(producto.id));
   const cantidad = esDelProducto
@@ -58,7 +64,7 @@ function precioRealDe(item, productosPorId, promos, cartCompleto) {
         .filter(p => p && p.category === producto.category)
         .reduce((a, p, idx) => a + Number(cartCompleto[idx]?.qty || 0), 0);
 
-  return { producto, precio: precioSegunCantidad(escalones, cantidad, Number(producto.price)) };
+  return { producto, precio: precioSegunCantidad(escalones, cantidad, base) };
 }
 
 export async function POST(request) {
@@ -78,7 +84,7 @@ export async function POST(request) {
     items, clientName, clientPhone, userId,
     deliveryMethod, address, zone, aptDetails,
     shippingOption, paymentMethod, deliveryDate, deliveryTime, shippingCost,
-    couponCode, pagoSeguroActivo, precioPagoSeguro,
+    couponCode, pagoSeguroActivo, precioPagoSeguro, envioGratis: pideEnvioGratis,
   } = cuerpo || {};
 
   if (!Array.isArray(items) || !items.length) {
@@ -136,7 +142,13 @@ export async function POST(request) {
     }
 
     const subtotal = itemsCorregidos.reduce((a, i) => a + i.qty * i.price, 0);
-    const envio = (deliveryMethod === 'envio' && shippingOption === 'moto') ? (Number(shippingCost) || 0) : 0;
+    // CYBER 028: el navegador pide el envío gratis (sabe si la dirección es de CABA);
+    // acá se vuelve a comprobar que la fecha y el monto lo permitan.
+    const envioGratis = deliveryMethod === 'envio' && !!pideEnvioGratis && alcanzaEnvioGratis({
+      subtotal,
+      transferencia: shippingOption === 'flash' || paymentMethod === 'transferencia',
+    });
+    const envio = (deliveryMethod === 'envio' && shippingOption === 'moto' && !envioGratis) ? (Number(shippingCost) || 0) : 0;
     const cashDiscount = (deliveryMethod === 'envio' && shippingOption === 'moto' && paymentMethod === 'efectivo')
       ? (subtotal >= 50000 ? 2500 : 1500) : 0;
 
@@ -180,6 +192,7 @@ export async function POST(request) {
       deliveryDate: deliveryMethod === 'envio' && shippingOption === 'moto' ? deliveryDate : null,
       deliveryTime: deliveryMethod === 'envio' && shippingOption === 'moto' ? deliveryTime : null,
       shippingCost: envio,
+      envioGratis,
       pagoSeguro: !!pagoSeguroActivo,
       pagoSeguroMonto,
       couponUsed: cupon ? cupon.code : null,
@@ -206,6 +219,7 @@ export async function POST(request) {
       items: itemsCorregidos,
       subtotal,
       envio,
+      envioGratis,
       cashDiscount,
       couponDiscount,
       couponCode: cupon?.code || null,

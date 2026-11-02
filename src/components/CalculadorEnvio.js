@@ -1,5 +1,6 @@
 'use client';
 import { useState, useCallback } from 'react';
+import { esDireccionCaba } from '@/lib/cyber';
 import { useJsApiLoader, Autocomplete, GoogleMap, Marker } from '@react-google-maps/api';
 
 const libraries = ['places'];
@@ -12,7 +13,7 @@ const mapContainerStyle = {
 
 const centerLocal = { lat: -34.5538521, lng: -58.4498973 };
 
-export default function CalculadorEnvio({ address, setAddress, zone, setZone, aptDetails, setAptDetails, shippingType, setShippingCost }) {
+export default function CalculadorEnvio({ address, setAddress, zone, setZone, aptDetails, setAptDetails, shippingType, setShippingCost, setEsCaba, envioGratis }) {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
     libraries: libraries,
@@ -45,6 +46,8 @@ export default function CalculadorEnvio({ address, setAddress, zone, setZone, ap
         else if (locality) barrio = locality.long_name;
       }
       if (setZone) setZone(barrio);
+      // Para el envío gratis del CYBER 028, que es sólo en CABA.
+      if (setEsCaba) setEsCaba(esDireccionCaba(components));
 
       if (shippingType === 'moto') {
         const service = new window.google.maps.DistanceMatrixService();
@@ -103,6 +106,7 @@ export default function CalculadorEnvio({ address, setAddress, zone, setZone, ap
             onChange={(e) => {
               if (setAddress) setAddress(e.target.value);
               if (e.target.value === '' && setShippingCost) setShippingCost(0);
+              if (e.target.value === '' && setEsCaba) setEsCaba(false);
             }}
             className="w-full pl-11 pr-4 py-4 bg-[#f2f2f2] border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#fcdb00] transition-all placeholder:text-gray-400"
           />
@@ -154,9 +158,15 @@ export default function CalculadorEnvio({ address, setAddress, zone, setZone, ap
               <p className="text-[9px] font-black uppercase text-gray-500 tracking-widest mb-1">
                 <i className="fas fa-route mr-1"></i> Recorrido: {datosEnvio.km} km
               </p>
-              <p className="font-bebas text-2xl text-[#111111] leading-none">
-                Costo de Envío: ${datosEnvio.precio.toLocaleString("es-AR")}
-              </p>
+              {envioGratis ? (
+                <p className="font-bebas text-2xl text-[#111111] leading-none">
+                  Envío: <span className="line-through text-gray-400 text-xl">${datosEnvio.precio.toLocaleString("es-AR")}</span> <span className="text-emerald-600">Gratis · CYBER 028</span>
+                </p>
+              ) : (
+                <p className="font-bebas text-2xl text-[#111111] leading-none">
+                  Costo de Envío: ${datosEnvio.precio.toLocaleString("es-AR")}
+                </p>
+              )}
             </div>
             <div className="w-8 h-8 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] text-xs">
               <i className="fas fa-check"></i>
