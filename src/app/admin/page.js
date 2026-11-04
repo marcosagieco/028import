@@ -6,6 +6,7 @@ import { getAuth, onAuthStateChanged, signInWithCustomToken, signOut } from "fir
 import {
   getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, deleteDoc, doc, setDoc, getDoc, serverTimestamp
 } from "firebase/firestore";
+import { CYBER_INICIO, CYBER_FIN } from '@/lib/cyber';
 
 const CONFIG = {
   brandName: "028", 
@@ -237,6 +238,7 @@ export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [opiniones, setOpiniones] = useState([]);
   const [historialCuentaFilter, setHistorialCuentaFilter] = useState('todos'); // 'todos' | 'efectivo' | 'transferencia'
+  const [clientesFiltro, setClientesFiltro] = useState('todos'); // 'todos' | 'cyber'
   const [linksComprobantes, setLinksComprobantes] = useState({}); // { orderId: { url, pdf } }
   const [cargandoComprobantes, setCargandoComprobantes] = useState(false);
   const [comprobantesVisibles, setComprobantesVisibles] = useState(30);
@@ -386,16 +388,39 @@ export default function AdminPage() {
     return Array.from(mergedMap.values()).sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
   }, [homeLayout, homeSections]);
 
+  // Fecha de un pedido en milisegundos. Recién creado, el servidor todavía no puso la hora.
+  const msPedido = (o) => o.createdAt?.toMillis ? o.createdAt.toMillis() : (o.createdAt?.seconds ? o.createdAt.seconds * 1000 : Date.now());
+
+  // Los pedidos que entran en la pestaña Clientes: todos, o sólo los del CYBER 028.
+  const pedidosClientes = useMemo(() => clientesFiltro === 'cyber'
+    ? orders.filter(o => { const t = msPedido(o); return t >= CYBER_INICIO && t < CYBER_FIN; })
+    : orders, [orders, clientesFiltro]);
+
   const clientsList = useMemo(() => {
     const clientsMap = new Map();
-    orders.forEach(o => {
+    pedidosClientes.forEach(o => {
       if (o.clientPhone && o.clientName) {
-        if (!clientsMap.has(o.clientPhone)) { clientsMap.set(o.clientPhone, { name: o.clientName, phone: o.clientPhone, orderCount: 1, lastOrder: o.createdAt }); } 
-        else { const ex = clientsMap.get(o.clientPhone); ex.orderCount += 1; if (o.createdAt > ex.lastOrder) ex.lastOrder = o.createdAt; }
+        const t = msPedido(o);
+        const total = Number(o.total) || 0;
+        if (!clientsMap.has(o.clientPhone)) { clientsMap.set(o.clientPhone, { name: o.clientName, phone: o.clientPhone, orderCount: 1, total, firstOrder: t, lastOrder: t }); }
+        else { const ex = clientsMap.get(o.clientPhone); ex.orderCount += 1; ex.total += total; if (t > ex.lastOrder) ex.lastOrder = t; if (t < ex.firstOrder) ex.firstOrder = t; }
       }
     });
     return Array.from(clientsMap.values()).sort((a, b) => b.lastOrder - a.lastOrder);
-  }, [orders]);
+  }, [pedidosClientes]);
+
+  // Cuántos pedidos entraron cada día (hora de Argentina), del más nuevo al más viejo.
+  const pedidosPorDia = useMemo(() => {
+    const dias = new Map();
+    pedidosClientes.forEach(o => {
+      const t = msPedido(o);
+      const clave = new Date(t).toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+      const d = dias.get(clave) || { clave, t, pedidos: 0, total: 0 };
+      d.pedidos += 1; d.total += Number(o.total) || 0;
+      dias.set(clave, d);
+    });
+    return Array.from(dias.values()).sort((a, b) => b.clave.localeCompare(a.clave));
+  }, [pedidosClientes]);
 
   useEffect(() => {
     document.title = `${CONFIG.brandName} - Admin`;
@@ -2477,7 +2502,67 @@ export default function AdminPage() {
 
         {activeTab === 'crear' && (<div className="animate-in fade-in duration-500 max-w-lg mx-auto"><h2 className="text-4xl font-bebas uppercase tracking-wide mb-6 text-center">Nuevo Producto</h2><form onSubmit={handleAddProduct} className={`${theme.card} p-8 rounded-[2rem] shadow-sm border flex flex-col gap-5`}><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Nombre del Producto</label><input type="text" required placeholder="Ej: BLUE RAZZ ICE" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex gap-4"><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Precio</label><input type="number" required placeholder="26000" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /></div><div className="flex-1"><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Categoría / Marca</label><input list="category-suggestions" placeholder="Ej: Ignite v400 o Crear Nueva..." value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} /><datalist id="category-suggestions">{uniqueCategories.map(cat => <option key={cat} value={cat} />)}</datalist></div></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Departamento Principal</label><input list="dept-suggestions" placeholder="Elegí o escribí uno nuevo..." value={newProduct.department} onChange={e => setNewProduct({...newProduct, department: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[12px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all uppercase ${theme.input}`} /><datalist id="dept-suggestions">{availableDepartments.map(d => <option key={d} value={d} />)}</datalist></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Foto del producto</label><label className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed cursor-pointer text-[11px] font-bold uppercase tracking-widest transition-all mb-2 ${subiendoImagenId === "nuevo" ? "opacity-60 pointer-events-none" : ""} ${darkMode ? "border-[#333333] text-gray-400 hover:border-[#fcdb00]" : "border-gray-300 text-gray-500 hover:border-[#fcdb00]"}`}><i className={`fas ${subiendoImagenId === "nuevo" ? "fa-circle-notch fa-spin" : "fa-images"}`}></i>{subiendoImagenId === "nuevo" ? "Subiendo..." : "Subir foto desde la compu"}<input type="file" accept="image/*" className="hidden" onChange={async (e) => { const archivo = e.target.files?.[0]; e.target.value = ""; if (!archivo) return; const url = await subirImagenAlServidor(archivo, "nuevo"); if (url) setNewProduct(prev => ({ ...prev, image: url })); }} /></label><input type="url" required placeholder="O pegá un link (https://...)" value={newProduct.image} onChange={e => setNewProduct({...newProduct, image: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-[11px] border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} />{newProduct.image && (<div className="mt-4 relative h-32 rounded-xl overflow-hidden border border-dashed border-gray-300 bg-[#f2f2f2]"><img src={newProduct.image} alt="Vista previa" className="w-full h-full object-contain mix-blend-multiply" /></div>)}</div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Etiqueta y Tamaño</label><div className="flex gap-4"><input type="text" placeholder="Ej: Destacado" value={newProduct.tag} onChange={e => setNewProduct({...newProduct, tag: e.target.value})} className={`flex-1 p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all ${theme.input}`} /><select value={newProduct.cardSize} onChange={e => setNewProduct({...newProduct, cardSize: e.target.value})} className={`flex-1 p-4 rounded-xl outline-none font-bold text-xs uppercase cursor-pointer border-transparent focus:ring-2 focus:ring-[#fcdb00] ${theme.input}`}><option value="normal">📏 Tamaño Normal</option><option value="medium">🔲 Tamaño Mediano</option><option value="large">⬜ Tamaño Grande</option></select></div></div><div><label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Descripción (Biografía)</label><textarea rows="2" placeholder="Escribe aquí..." value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className={`w-full p-4 rounded-xl outline-none font-bold text-sm border-transparent focus:ring-2 focus:ring-[#fcdb00] transition-all resize-none ${theme.input}`}></textarea></div><button type="submit" disabled={isAdding} className="bg-[#fcdb00] text-[#111111] font-bebas text-xl uppercase py-4 rounded-xl mt-2 hover:bg-[#111111] hover:text-[#fcdb00] shadow-md transition-all disabled:opacity-50">{isAdding ? 'Guardando...' : 'Guardar Producto'}</button></form></div>)}
 
-        {activeTab === 'clientes' && (<div className="animate-in fade-in duration-500"><div className="flex justify-between items-end mb-8"><div><h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Tu Base</h2><p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">Directorio CRM</p></div><div className="flex items-center gap-3"><button onClick={() => exportToExcel(clientsList, [{ label: 'Nombre', value: (c) => c.name || '' }, { label: 'Teléfono', value: (c) => c.phone || '' }], 'clientes')} disabled={clientsList.length === 0} className="bg-[#111111] text-[#fcdb00] text-[11px] font-bold px-4 py-2.5 rounded-lg shadow-sm uppercase tracking-widest flex items-center gap-2 hover:bg-[#fcdb00] hover:text-[#111111] transition-all disabled:opacity-40 disabled:cursor-not-allowed"><i className="fas fa-file-excel"></i> Descargar Excel</button><span className="bg-[#fcdb00] text-[#111111] text-[11px] font-bold px-4 py-2 rounded-lg shadow-sm">{clientsList.length} Registros</span></div></div>{clientsList.length === 0 ? (<div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}><i className="fas fa-users text-gray-300 text-5xl mb-6"></i><p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">Aún no hay clientes registrados</p></div>) : (<div className="grid grid-cols-1 md:grid-cols-2 gap-4">{clientsList.map((client, index) => (<div key={index} className={`${theme.card} p-6 rounded-[1.5rem] shadow-sm border flex flex-col gap-4 hover:border-[#fcdb00]/50 transition-all`}><div className="flex items-center gap-4"><div className="w-14 h-14 rounded-full bg-[#111111] text-[#fcdb00] flex items-center justify-center text-2xl font-bebas shadow-md uppercase pt-1">{client.name.charAt(0)}</div><div><h4 className="font-bebas tracking-wide text-2xl uppercase leading-none mb-1">{client.name}</h4><p className="text-gray-500 font-bold text-xs"><i className="fas fa-phone text-[10px] mr-1.5 text-[#fcdb00]"></i> {client.phone}</p></div></div><div className="flex justify-between items-center mt-2 border-t pt-4 dark:border-[#333333]"><span className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">{client.orderCount} Pedido{client.orderCount > 1 ? 's' : ''}</span><a href={`https://wa.me/${client.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="bg-[#25D366] text-white text-[11px] font-bold px-5 py-2.5 rounded-lg uppercase tracking-widest flex items-center gap-2 hover:bg-[#1ebe5d] transition-all shadow-md"><i className="fab fa-whatsapp text-sm"></i> Escribir</a></div></div>))}</div>)}</div>)}
+        {activeTab === 'clientes' && (() => {
+          const fechaAR = (t) => new Date(t).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+          const diaAR = (t) => new Date(t).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', weekday: 'long', day: '2-digit', month: '2-digit' });
+          const cyber = clientesFiltro === 'cyber';
+          const totalVendido = pedidosClientes.reduce((a, o) => a + (Number(o.total) || 0), 0);
+          const descargar = () => exportToExcel(clientsList, [
+            { label: 'Nombre', value: (c) => c.name || '' },
+            { label: 'Teléfono', value: (c) => c.phone || '' },
+            { label: 'Pedidos', value: (c) => c.orderCount },
+            { label: 'Total gastado', value: (c) => c.total },
+            { label: 'Primer pedido', value: (c) => fechaAR(c.firstOrder) },
+            { label: 'Último pedido', value: (c) => fechaAR(c.lastOrder) },
+          ], cyber ? 'clientes-cyber-028' : 'clientes');
+          return (<div className="animate-in fade-in duration-500">
+          <div className="flex flex-wrap justify-between items-end gap-4 mb-8">
+            <div>
+              <h2 className={`text-4xl font-bebas uppercase tracking-wide leading-none ${theme.text}`}>Tu Base</h2>
+              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-2">{cyber ? 'Compraron en el Cyber 028 · 02 al 04/11' : 'Directorio CRM'}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={descargar} disabled={clientsList.length === 0} className="bg-[#111111] text-[#fcdb00] text-[11px] font-bold px-4 py-2.5 rounded-lg shadow-sm uppercase tracking-widest flex items-center gap-2 hover:bg-[#fcdb00] hover:text-[#111111] transition-all disabled:opacity-40 disabled:cursor-not-allowed"><i className="fas fa-file-excel"></i> Descargar Excel{cyber ? ' (Cyber)' : ''}</button>
+              <span className="bg-[#fcdb00] text-[#111111] text-[11px] font-bold px-4 py-2 rounded-lg shadow-sm">{clientsList.length} Clientes</span>
+            </div>
+          </div>
+
+          {/* Filtro: todos los clientes o sólo los que compraron en el Cyber. */}
+          <div className="flex gap-2 mb-6">
+            {[
+              { key: 'todos', label: 'Todos', icon: 'fa-users' },
+              { key: 'cyber', label: 'Cyber 028 (02 al 04/11)', icon: 'fa-bolt' },
+            ].map(f => (
+              <button key={f.key} onClick={() => setClientesFiltro(f.key)} className={`flex-1 px-4 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${clientesFiltro === f.key ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : `${theme.card} border ${theme.text}`}`}>
+                <i className={`fas ${f.icon}`}></i> {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Cuántos pedidos entraron por día. */}
+          <div className={`${theme.card} border rounded-2xl p-5 mb-6`}>
+            <div className="flex flex-wrap justify-between items-baseline gap-2 mb-4">
+              <p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Pedidos por día</p>
+              <p className={`text-[11px] font-bold uppercase tracking-widest ${theme.text}`}>{pedidosClientes.length} pedidos · ${totalVendido.toLocaleString('es-AR')}</p>
+            </div>
+            {pedidosPorDia.length === 0 ? (
+              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">Todavía no hay pedidos{cyber ? ' en el Cyber' : ''}</p>
+            ) : (
+              <div className={`grid gap-2 ${cyber ? 'sm:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-4'}`}>
+                {(cyber ? pedidosPorDia : pedidosPorDia.slice(0, 8)).map(d => (
+                  <div key={d.clave} className={`rounded-xl px-4 py-3 ${darkMode ? 'bg-[#222]' : 'bg-[#f2f2f2]'}`}>
+                    <p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">{diaAR(d.t)}</p>
+                    <p className={`font-bebas text-3xl leading-none mt-1 ${theme.text}`}>{d.pedidos} <span className="text-base text-gray-400">pedido{d.pedidos !== 1 ? 's' : ''}</span></p>
+                    <p className="text-[11px] text-gray-500 font-bold mt-1">${d.total.toLocaleString('es-AR')}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {clientsList.length === 0 ? (<div className={`${theme.card} p-24 rounded-[3rem] border-2 border-dashed text-center flex flex-col items-center`}><i className="fas fa-users text-gray-300 text-5xl mb-6"></i><p className="text-gray-400 font-bold uppercase text-[11px] tracking-widest">{cyber ? 'Nadie compró todavía en el Cyber' : 'Aún no hay clientes registrados'}</p></div>) : (<div className="grid grid-cols-1 md:grid-cols-2 gap-4">{clientsList.map((client, index) => (<div key={index} className={`${theme.card} p-6 rounded-[1.5rem] shadow-sm border flex flex-col gap-4 hover:border-[#fcdb00]/50 transition-all`}><div className="flex items-center gap-4"><div className="w-14 h-14 rounded-full bg-[#111111] text-[#fcdb00] flex items-center justify-center text-2xl font-bebas shadow-md uppercase pt-1">{client.name.charAt(0)}</div><div className="min-w-0"><h4 className="font-bebas tracking-wide text-2xl uppercase leading-none mb-1">{client.name}</h4><p className="text-gray-500 font-bold text-xs"><i className="fas fa-phone text-[10px] mr-1.5 text-[#fcdb00]"></i> {client.phone}</p><p className="text-gray-500 font-bold text-xs mt-1"><i className="fas fa-calendar text-[10px] mr-1.5 text-[#fcdb00]"></i> {client.orderCount > 1 ? `${fechaAR(client.firstOrder)} → ${fechaAR(client.lastOrder)}` : fechaAR(client.lastOrder)}</p></div></div><div className="flex justify-between items-center mt-2 border-t pt-4 dark:border-[#333333]"><span className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">{client.orderCount} Pedido{client.orderCount > 1 ? 's' : ''} · ${client.total.toLocaleString('es-AR')}</span><a href={`https://wa.me/${client.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="bg-[#25D366] text-white text-[11px] font-bold px-5 py-2.5 rounded-lg uppercase tracking-widest flex items-center gap-2 hover:bg-[#1ebe5d] transition-all shadow-md"><i className="fab fa-whatsapp text-sm"></i> Escribir</a></div></div>))}</div>)}
+        </div>);
+        })()}
 
         {/* --- PESTAÑA ESTADÍSTICAS --- */}
         {activeTab === 'estadisticas' && (
