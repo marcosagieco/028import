@@ -10,10 +10,7 @@ import { escalonesDeProducto, precioSegunCantidad } from '@/lib/combos';
 import { posterDeVideo, idsDelVideo } from '@/lib/community';
 import { useCarrito } from '@/components/CarritoProvider';
 import ReproductorVideo from '@/components/ReproductorVideo';
-import ContadorCyber from '@/components/ContadorCyber';
 import { alcanzaEnvioGratis, faltaParaEnvioGratis, cyberActivo, MINIMO_ENVIO_GRATIS, CYBER_FIN } from '@/lib/cyber';
-import SeccionCyber, { LINK_COMUNIDAD } from '@/components/SeccionCyber';
-import SorteoPostCompra, { marcarParticipacion } from '@/components/SorteoPostCompra';
 import { esSinGarantia, EtiquetaSinGarantia } from '@/components/SinGarantia';
 const CalculadorEnvio = dynamic(() => import('@/components/CalculadorEnvio'), { ssr: false });
 const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvioSimple'), { ssr: false });
@@ -1435,13 +1432,18 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     return mejor;
   })();
 
+  // El Pago Seguro es sólo para el envío Flash (va por Uber). La motomensajería es
+  // nuestra y el envío ya está asegurado: ahí no se ofrece ni se cobra.
+  const pagoSeguroDisponible = deliveryMethod === 'envio' && shippingType === 'flash';
+  const pagoSeguroAplica = pagoSeguroActivo && pagoSeguroDisponible;
+
   const calculateTotal = (cartData = cart) => {
       const subtotal = cartData.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
       const envio = (deliveryMethod === 'envio' && shippingType === 'moto' && !envioGratisCyber) ? shippingCost : 0;
       const cashDiscount = (deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'efectivo')
         ? (subtotal >= 50000 ? 2500 : 1500) : 0;
       const couponDiscount = appliedCoupon ? Math.round(subtotal * appliedCoupon.discount / 100) : 0;
-      const pagoSeguro = pagoSeguroActivo ? PRECIO_PAGO_SEGURO : 0;
+      const pagoSeguro = pagoSeguroAplica ? PRECIO_PAGO_SEGURO : 0;
       return subtotal + envio + pagoSeguro - cashDiscount - couponDiscount;
   };
 
@@ -1547,7 +1549,7 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
           shippingCost: (deliveryMethod === 'envio' && shippingType === 'moto') ? shippingCost : 0,
           envioGratis: envioGratisCyber,
           couponCode: appliedCoupon ? appliedCoupon.code : null,
-          pagoSeguroActivo,
+          pagoSeguroActivo: pagoSeguroAplica,
           precioPagoSeguro: PRECIO_PAGO_SEGURO,
         }),
       });
@@ -1682,9 +1684,6 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     } catch {}
 
     const whatsappUrl = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
-
-    // CYBER 028: al volver de WhatsApp, "ya estás participando del sorteo".
-    if (cyberActivo()) marcarParticipacion(codigoPedido);
 
     // El pedido ya quedó guardado por el servidor (con los precios verificados). Acá
     // sólo quedan los avisos que no tienen que ver con el precio: el cartelito
@@ -2937,28 +2936,14 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           únicamente acá y esas páginas no cargan de más. */}
       {modo === 'inicio' && (
       <div style={{ display: currentView === 'home' ? '' : 'none' }}>
-          <ContadorCyber />
           <div className="w-full bg-[#111111] h-8 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex items-center">
             <div className="animate-marquee whitespace-nowrap flex items-center">
               {[...Array(6)].map((_, i) => (
                 <div key={i} style={{color: '#f5d000'}} className="font-bebas flex items-center gap-8 px-4 font-bold italic text-[13px] md:text-[15px] tracking-widest uppercase">
-                  {Date.now() < CYBER_FIN ? (
-                    // Mientras dura el CYBER 028, la cinta cuenta la campaña.
-                    <>
-                      <span> CYBER 028 </span><span style={{color: '#787878'}}>•</span>
-                      <span> ENVÍO GRATIS EN CABA DESDE $100.000 </span><span style={{color: '#787878'}}>•</span>
-                      <span> MYSTERY BOX </span><span style={{color: '#787878'}}>•</span>
-                      <span> CUANTAS MÁS LLEVÁS, MENOS PAGÁS </span><span style={{color: '#787878'}}>•</span>
-                      <span> SORTEO DE $50.000 </span><span style={{color: '#787878'}}>•</span>
-                    </>
-                  ) : (
-                    <>
-                      <span> ENVIOS 24HS CABA/AMBA </span><span style={{color: '#787878'}}>•</span>
-                      <span> 028 IMPORT </span><span style={{color: '#787878'}}>•</span>
-                      <span> DESCUENTOS ABONANDO EN EFECTIVO </span><span style={{color: '#787878'}}>•</span>
-                      <span> PEDIME TE LLEGA EN 30'</span><span style={{color: '#787878'}}>•</span>
-                    </>
-                  )}
+                  <span> ENVIOS 24HS CABA/AMBA </span><span style={{color: '#787878'}}>•</span>
+                  <span> 028 IMPORT </span><span style={{color: '#787878'}}>•</span>
+                  <span> DESCUENTOS ABONANDO EN EFECTIVO </span><span style={{color: '#787878'}}>•</span>
+                  <span> PEDIME TE LLEGA EN 30'</span><span style={{color: '#787878'}}>•</span>
                 </div>
               ))}
             </div>
@@ -2967,25 +2952,16 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           {/* Si la pantalla es más ancha que la imagen y hay que recortar, se recorta
               casi todo de abajo (12% arriba, 88% abajo): se ve la parte de arriba del
               banner sin que quede pegada al borde. */}
-          {/* Banner del Cyber: el texto está en la foto, a la izquierda, y Humito a la
-              derecha, así que va con su proporción para que no se corte ningún costado.
-              Tocarlo abre la historia de las ofertas (SeccionCyber). */}
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new Event('cyber028:abrir'))}
-            aria-label="Ver las ofertas del CYBER 028"
-            className="relative block w-full aspect-[2038/771] overflow-hidden"
-          >
+          <div className="relative w-full h-[230px] md:h-[560px] overflow-hidden">
             <Image
-              src="/banner-cyber.webp"
-              alt="CYBER 028 — 028 Import"
+              src="/banner-original.webp"
+              alt="Banner 028 Import"
               fill
               priority
               sizes="100vw"
-              className="object-cover object-center"
+              className="object-cover object-[center_12%]"
             />
-          </button>
-          <SeccionCyber />
+          </div>
           {vape3dPosition === 'banner' && <LazyVapeSpecs3D />}
           <main className="flex-grow px-4 md:px-10 lg:px-20 xl:px-32 pt-10 w-full min-h-[50vh] pb-8 md:pb-16 animate-view-enter">
             {(() => {
@@ -3697,7 +3673,9 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
 
                     {/* Pago Seguro: cubre el pedido si se pierde en el envío. Un
                         interruptor grande, no un check chiquito, porque cambia lo que
-                        se va a pagar y la persona tiene que verlo antes de confirmar. */}
+                        se va a pagar y la persona tiene que verlo antes de confirmar.
+                        Sólo con envío Flash. */}
+                    {pagoSeguroDisponible && (
                     <div className="flex items-start gap-3 mt-4 pt-4 border-t border-gray-100">
                       <button
                         type="button"
@@ -3724,6 +3702,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       </div>
                       <span className="font-bebas text-lg text-[#111111] flex-shrink-0">+${formatPrice(PRECIO_PAGO_SEGURO)}</span>
                     </div>
+                    )}
                   </div>
                   {/* Total + botón */}
                   <div className="checkout-total bg-[#111111] p-5 flex flex-col gap-4">
@@ -3733,7 +3712,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       // El Pago Seguro suma al total, pero no es un descuento negativo:
                       // se resta acá para que "ahorro" siga reflejando sólo las promos y
                       // el pago en efectivo, no se vea afectado por un servicio aparte.
-                      const pagoSeguroMonto = pagoSeguroActivo ? PRECIO_PAGO_SEGURO : 0;
+                      const pagoSeguroMonto = pagoSeguroAplica ? PRECIO_PAGO_SEGURO : 0;
                       const ahorro = precioOriginal - (totalFinal - pagoSeguroMonto);
                       const promoSavings = cart.reduce((acc, item) => {
                         if (item.isUpsell) return acc;
@@ -3763,7 +3742,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                             <div className="flex flex-col items-end">
                               {ahorro > 0 && <span className="font-bebas text-lg text-gray-500 line-through leading-none">{CONFIG.currencySymbol}{formatPrice(precioOriginal)}</span>}
                               <span className="font-bebas text-5xl text-white tracking-wide leading-none"><span className="text-[#fcdb00] text-3xl mr-1">{CONFIG.currencySymbol}</span>{formatPrice(totalFinal)}</span>
-                              {pagoSeguroActivo && (
+                              {pagoSeguroAplica && (
                                 <span className="text-[10px] text-gray-400 font-poppins flex items-center gap-1 mt-0.5">
                                   <i className="fas fa-shield-alt text-[#fcdb00]"></i> Incluye Pago Seguro {CONFIG.currencySymbol}{formatPrice(PRECIO_PAGO_SEGURO)}
                                 </span>
@@ -3809,22 +3788,13 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       );
                     })()}
                     <button
-                      onClick={() => { if (!pagoSeguroActivo) { setShowConfirmarSinPagoSeguro(true); return; } handleCheckout(); }}
+                      onClick={() => { if (pagoSeguroDisponible && !pagoSeguroActivo) { setShowConfirmarSinPagoSeguro(true); return; } handleCheckout(); }}
                       disabled={!isFormValid}
                       className={`w-full font-bebas py-4 rounded-xl uppercase tracking-wider text-xl flex justify-center items-center gap-3 transition-all ${isFormValid ? 'bg-[#fcdb00] text-[#111111] active:scale-95 hover:brightness-95' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}`}
                     >
                       <i className="fas fa-check-circle text-2xl"></i> Confirmar Pedido
                     </button>
-                    {/* CYBER 028: comprar es el paso 1 del sorteo; el 2 es la comunidad. */}
-                    {cyberActivo() && (
-                      <p className="text-[10px] text-gray-400 font-poppins text-center leading-snug">
-                        <i className="fas fa-gift text-[#fcdb00] mr-1"></i> Con esta compra participás del sorteo de $50.000.{' '}
-                        {LINK_COMUNIDAD
-                          ? <a href={LINK_COMUNIDAD} target="_blank" rel="noopener noreferrer" className="text-[#fcdb00] font-bold underline underline-offset-2">Sumate a la comunidad</a>
-                          : 'Sumate a la comunidad de WhatsApp'} para entrar.{' '}
-                        <a href="/sorteo50000" target="_blank" className="underline underline-offset-2">Bases</a>
-                      </p>
-                    )}
+
 
                   </div>
                 </div>
@@ -4139,8 +4109,6 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           </div>
         </div>
       )}
-
-      <SorteoPostCompra />
 
       {/* === BOTÓN FLOTANTE WHATSAPP ===
           En el celular, con el cajón del carrito o el checkout abiertos, esta

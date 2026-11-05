@@ -174,7 +174,8 @@ export async function POST(request) {
     }
     const couponDiscount = cupon ? Math.round(subtotal * cupon.discount / 100) : 0;
 
-    const pagoSeguroMonto = pagoSeguroActivo ? (Number(precioPagoSeguro) || 1900) : 0;
+    // El Pago Seguro es sólo para el envío Flash: con motomensajería no se cobra.
+    const pagoSeguroMonto = pagoSeguroActivo && deliveryMethod === 'envio' && shippingOption === 'flash' ? (Number(precioPagoSeguro) || 1900) : 0;
     const total = subtotal + envio + pagoSeguroMonto - cashDiscount - couponDiscount;
 
     const datosPedido = {
