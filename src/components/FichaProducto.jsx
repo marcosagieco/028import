@@ -17,6 +17,7 @@ import { useCarrito } from '@/components/CarritoProvider';
 import { rutaProducto, aSlug } from '@/lib/slug';
 import { esSinGarantia, AvisoSinGarantia } from '@/components/SinGarantia';
 import { fichasDeCombo, precioSegunCantidad } from '@/lib/combos';
+import { promoEnvioActual, MINIMO_ENVIO_GRATIS } from '@/lib/cyber';
 
 const precioFormateado = (n) => Number(n || 0).toLocaleString('es-AR');
 
@@ -40,6 +41,10 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
   }, [saboresAbiertos]);
   const { agregarAlCarrito, cambiarCantidad, cart } = useCarrito();
   const router = useRouter();
+  // La promo de envío gratis (lib/cyber), recién al montar: la ficha queda guardada
+  // en el servidor un día entero y no tiene que mostrar una promo que ya terminó.
+  const [promoEnvio, setPromoEnvio] = useState(null);
+  useEffect(() => { setPromoEnvio(promoEnvioActual()); }, []);
   const [avisoVisible, setAvisoVisible] = useState(false);
 
   const enCarrito = cart.find(i => String(i.id) === String(producto.id));
@@ -151,7 +156,7 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
     },
     {
       p: '¿Qué pasa si mi pedido se pierde en el envío?',
-      r: 'Al finalizar la compra podés sumar Pago Seguro por $1.900: si el pedido se pierde en el camino, te lo reenviamos o te devolvemos la plata.',
+      r: 'Con motomensajería lo lleva nuestra moto y el envío ya va asegurado. Con Envío Flash podés sumar Pago Seguro por $1.900 al finalizar la compra: si el pedido se pierde en el camino, te lo reenviamos o te devolvemos la plata.',
     },
     {
       p: '¿Tiene garantía?',
@@ -308,6 +313,15 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                 <span className={`w-1.5 h-1.5 rounded-full ${sinStock ? 'bg-red-500' : 'bg-green-500'}`} aria-hidden="true"></span>
                 {sinStock ? 'Sin stock por ahora' : 'Disponible'}
               </p>
+
+              {promoEnvio && !sinStock && (
+                <div className="mb-5 -mt-1 border-y border-[#111111]/10 py-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#b8952a]">Solo este finde · hasta el domingo</p>
+                  <p className="font-bebas text-[22px] leading-none text-[#111111] tracking-wide mt-1.5">
+                    Envío gratis <span className="text-[#111111]/45">en CABA desde ${MINIMO_ENVIO_GRATIS.toLocaleString('es-AR')}</span>
+                  </p>
+                </div>
+              )}
 
               {/* ---------- Sabores de la misma marca ---------- */}
               {variantes.length > 1 && (
@@ -509,7 +523,7 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                 {[
                   { icono: 'fas fa-motorcycle', titulo: 'Envío en 30’', detalle: 'CABA y AMBA' },
                   { icono: 'fas fa-award', titulo: '100% original', detalle: 'Empaque de fábrica' },
-                  { icono: 'fas fa-shield-alt', titulo: 'Envío asegurado', detalle: 'Opcional, con Pago Seguro' },
+                  { icono: 'fas fa-shield-alt', titulo: 'Envío asegurado', detalle: 'Moto propia o Pago Seguro' },
                   { icono: 'fas fa-money-bill-wave', titulo: 'Efectivo o transferencia', detalle: 'Con efectivo, descuento' },
                 ].map(s => (
                   <div key={s.titulo} className="flex items-start gap-2.5 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">

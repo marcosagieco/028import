@@ -129,6 +129,8 @@ const ContextoCarrito = createContext(null);
 export function CarritoProvider({ children }) {
   const [cart, setCart] = useState([]);
   const restaurado = useRef(false);
+  // Para que el checkout no muestre "carrito vacío" antes de leer lo guardado.
+  const [carritoCargado, setCarritoCargado] = useState(false);
 
   // Se restaura después del primer dibujado, no en el estado inicial: el servidor
   // no tiene localStorage y arrancar con contenidos distintos rompe la hidratación.
@@ -136,6 +138,7 @@ export function CarritoProvider({ children }) {
     const guardado = leerCarritoGuardado();
     if (guardado.length) setCart(guardado);
     restaurado.current = true;
+    setCarritoCargado(true);
   }, []);
 
   // Se guarda en cada cambio, pero recién después de haber restaurado: si no, el
@@ -222,7 +225,7 @@ export function CarritoProvider({ children }) {
   const unidadesEnCarrito = cart.reduce((total, i) => total + (Number(i.qty) || 0), 0);
 
   return (
-    <ContextoCarrito.Provider value={{ cart, setCart, agregarAlCarrito, cambiarCantidad, sincronizarConCatalogo, unidadesEnCarrito }}>
+    <ContextoCarrito.Provider value={{ cart, setCart, carritoCargado, agregarAlCarrito, cambiarCantidad, sincronizarConCatalogo, unidadesEnCarrito }}>
       {children}
     </ContextoCarrito.Provider>
   );

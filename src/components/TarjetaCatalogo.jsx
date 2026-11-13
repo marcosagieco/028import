@@ -11,7 +11,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCarrito } from '@/components/CarritoProvider';
 import { rutaProducto } from '@/lib/slug';
-import { CYBER_FIN } from '@/lib/cyber';
+import { envioGratisActivo } from '@/lib/cyber';
 
 const precioFormateado = (n) => Number(n || 0).toLocaleString('es-AR');
 
@@ -86,7 +86,7 @@ export default function TarjetaCatalogo({ producto, onAgregado }) {
           </p>
         )}
 
-        {producto.envioGratisCon5 && !sinStock && Date.now() < CYBER_FIN && (
+        {producto.envioGratisCon5 && !sinStock && envioGratisActivo() && (
           <p className="inline-flex items-center gap-1 w-fit bg-[#111111] text-[#fcdb00] text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full mb-2">
             <i className="fas fa-truck text-[8px]" aria-hidden="true"></i> Llevando 5, envío gratis
           </p>

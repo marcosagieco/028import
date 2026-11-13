@@ -10,7 +10,8 @@ import { escalonesDeProducto, precioSegunCantidad } from '@/lib/combos';
 import { posterDeVideo, idsDelVideo } from '@/lib/community';
 import { useCarrito } from '@/components/CarritoProvider';
 import ReproductorVideo from '@/components/ReproductorVideo';
-import { alcanzaEnvioGratis, faltaParaEnvioGratis, cyberActivo, MINIMO_ENVIO_GRATIS, CYBER_FIN } from '@/lib/cyber';
+import { alcanzaEnvioGratis, faltaParaEnvioGratis, envioGratisActivo, promoEnvioActual, MINIMO_ENVIO_GRATIS } from '@/lib/cyber';
+import AvisoEnvioGratis from '@/components/AvisoEnvioGratis';
 import { esSinGarantia, EtiquetaSinGarantia } from '@/components/SinGarantia';
 const CalculadorEnvio = dynamic(() => import('@/components/CalculadorEnvio'), { ssr: false });
 const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvioSimple'), { ssr: false });
@@ -447,7 +448,7 @@ const TarjetaProducto = React.memo(function TarjetaProducto({
 export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssrHomeLayout = [], modo = 'inicio', children = null, institucional = false }) {
   // El carrito ya no vive acá: lo maneja <CarritoProvider> desde el layout, así
   // sobrevive cuando el visitante pasa a la página de un producto.
-  const { cart, setCart, sincronizarConCatalogo } = useCarrito();
+  const { cart, setCart, carritoCargado, sincronizarConCatalogo } = useCarrito();
 
   const [products, setProducts] = useState(ssrProducts.filter(p => !p.isHidden));
 
@@ -656,6 +657,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   const [authLoading, setAuthLoading] = useState(false);
   const [fomoData, setFomoData] = useState(null);
   const [isSending, setIsSending] = useState(false);
+  const enviandoPedido = useRef(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
   const router = useRouter();
@@ -1390,8 +1392,8 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
   })();
 
   const subtotalCarrito = cart.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
-  // El pedido llega al envío gratis del CYBER 028 (monto, o lanzamiento pagando por
-  // transferencia; el Flash siempre es por transferencia)...
+  // El pedido llega al envío gratis de la promo que corre (CYBER 028, finde...):
+  // por monto, o en el lanzamiento del Cyber pagando por transferencia...
   const llegaEnvioGratis = alcanzaEnvioGratis({
     subtotal: subtotalCarrito,
     transferencia: shippingType === 'flash' || paymentMethod === 'transferencia',
@@ -1400,6 +1402,8 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
   const envioGratisCyber = deliveryMethod === 'envio' && llegaEnvioGratis &&
     (shippingType === 'moto' ? esCabaMapa : soyDeCaba);
   const faltaEnvioGratis = faltaParaEnvioGratis(subtotalCarrito);
+  // El nombre que se ve en el checkout y en el mensaje: "Promo finde", "CYBER 028"...
+  const nombrePromoEnvio = promoEnvioActual()?.nombre || 'Promo';
 
   // CYBER 028: el producto que, sumando una unidad, hace llegar el carrito al envío
   // gratis pasándose lo menos posible. Se prueba de verdad cómo queda el subtotal,
@@ -1489,7 +1493,9 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
         return; 
     }
     if (deliveryMethod === 'envio') {
-        if (!address.trim() || !zone.trim()) { 
+        // Con Flash alcanza la dirección: el botón ya se habilitaba sin el barrio, y
+        // pedirlo recién acá cortaba el pedido con un aviso que parecía un error.
+        if (!address.trim() || (shippingType === 'moto' && !zone.trim())) {
             showToast("⚠️ Completá dirección y localidad."); 
             return; 
         }
@@ -1505,6 +1511,13 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
   // transferencia. Los demás caminos (efectivo, flash, "lo mando por WhatsApp")
   // llegan sin eso, o con el evento del click, y siguen como siempre.
   const executeOrder = async (opciones) => {
+    // Dos toques seguidos guardaban el mismo pedido dos veces.
+    if (enviandoPedido.current) return;
+    enviandoPedido.current = true;
+    try { await enviarPedido(opciones); } finally { enviandoPedido.current = false; }
+  };
+
+  const enviarPedido = async (opciones) => {
     const subirComprobante = opciones?.conComprobante === true && !!comprobante;
     if (!subirComprobante) setShowPaymentModal(false);
     setIsSending(true);
@@ -1624,7 +1637,7 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     msg += `Subtotal: ${CONFIG.currencySymbol}${formatPrice(verificado.subtotal)}\n`;
 
     if (verificado.envioGratis) {
-        msg += `Envío (${shippingType === 'flash' ? 'Flash' : 'Moto'}): *GRATIS — CYBER 028 (CABA)*\n`;
+        msg += `Envío (${shippingType === 'flash' ? 'Flash' : 'Moto'}): *GRATIS — ${nombrePromoEnvio.toUpperCase()} (CABA)*\n`;
     } else if (verificado.envio > 0) {
         msg += `Envío (Moto): ${CONFIG.currencySymbol}${formatPrice(verificado.envio)}\n`;
     } else if (deliveryMethod === 'envio' && shippingType === 'moto') {
@@ -1638,7 +1651,7 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
 
     // --- ENTREGA ---
     msg += `\n${DIVIDER}\n${emo('📦 ')}*ENTREGA*\n`;
-    msg += `${emo('📍 ')}${address}, ${zone}\n`;
+    msg += `${emo('📍 ')}${address}${zone.trim() ? `, ${zone}` : ''}\n`;
     if (aptDetails.trim()) msg += `${emo('🏢 ')}Depto/Piso: ${aptDetails.trim()}\n`;
 
     if (shippingType === 'flash') {
@@ -1726,7 +1739,7 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     const escalones = escalonesDeProducto(promos, p);
     const primerEscalon = escalones[0];
     const precioBase = p.offerPrice > 0 && p.offerPrice < p.price ? p.offerPrice : p.price;
-    const envioGratisCon5 = Date.now() < CYBER_FIN && escalones.length > 0 && precioSegunCantidad(escalones, 5, precioBase) * 5 >= MINIMO_ENVIO_GRATIS;
+    const envioGratisCon5 = envioGratisActivo() && escalones.length > 0 && precioSegunCantidad(escalones, 5, precioBase) * 5 >= MINIMO_ENVIO_GRATIS;
     const resena = resumenResenas[String(p.id)];
     return (
       <TarjetaProducto
@@ -2114,18 +2127,15 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
   // subir y bajar. Con JSX plano, React actualiza el mismo <img> en vez de recrearlo,
   // así que la animación corre sin interrupciones.
   const logosBarNode = (
-    <div style={{width:'100vw', marginLeft:'calc(-50vw + 50%)'}} className="relative bg-[#d0d0d0] h-64 flex items-center justify-evenly px-6 mb-10 -mt-6">
+    // Los logos viven en /public/marcas (400px, ~15KB c/u). Antes se cargaban de un
+    // servidor externo a 2000px (2,6MB en total) y en el celular la barra quedaba gris
+    // y vacía un buen rato. En el celular van en dos filas de tres: seis en una fila
+    // no entraban y se salían de la pantalla.
+    <div style={{width:'100vw', marginLeft:'calc(-50vw + 50%)'}} className="relative bg-[#d0d0d0] py-10 md:py-0 md:h-64 grid grid-cols-3 gap-y-2 md:flex items-center justify-items-center md:justify-evenly px-6 mb-10 -mt-6">
       <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-[#f5f5f5] to-transparent pointer-events-none z-10" />
       <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#f5f5f5] to-transparent pointer-events-none z-10" />
-      {[
-        "https://i.ibb.co/svyNs2PL/1.png",
-        "https://i.ibb.co/XrFnc1Lg/2.png",
-        "https://i.ibb.co/Psj9FpN3/3.png",
-        "https://i.ibb.co/j9jJNgfN/4.png",
-        "https://i.ibb.co/rKkcpVqz/5.png",
-        "https://i.ibb.co/20nZ2zVW/6.png",
-      ].map((src, i) => (
-        <img key={i} src={src} alt={`brand-${i+1}`} loading="lazy" className="logo-float h-28 md:h-40 w-auto object-contain" style={{ animationDelay: `${i * 0.4}s` }} />
+      {['Phenom', 'Dozo', 'Ignite', 'Elfbar', 'Half Bak\'d', 'Elf THC'].map((marca, i) => (
+        <img key={marca} src={`/marcas/marca-${i + 1}.webp`} alt={marca} width={400} height={400} loading="lazy" className="logo-float h-24 md:h-40 w-auto object-contain" style={{ animationDelay: `${i * 0.4}s` }} />
       ))}
     </div>
   );
@@ -2936,10 +2946,13 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
           únicamente acá y esas páginas no cargan de más. */}
       {modo === 'inicio' && (
       <div style={{ display: currentView === 'home' ? '' : 'none' }}>
+          <AvisoEnvioGratis />
           <div className="w-full bg-[#111111] h-8 overflow-hidden m-0 p-0 border-b border-white/10 relative z-30 flex items-center">
             <div className="animate-marquee whitespace-nowrap flex items-center">
               {[...Array(6)].map((_, i) => (
                 <div key={i} style={{color: '#f5d000'}} className="font-bebas flex items-center gap-8 px-4 font-bold italic text-[13px] md:text-[15px] tracking-widest uppercase">
+                  {/* Mientras corre la promo, la cinta también la cuenta. */}
+                  {envioGratisActivo() && <><span> ENVÍO GRATIS EN CABA DESDE $100.000 </span><span style={{color: '#787878'}}>•</span><span> SOLO ESTE FINDE </span><span style={{color: '#787878'}}>•</span></>}
                   <span> ENVIOS 24HS CABA/AMBA </span><span style={{color: '#787878'}}>•</span>
                   <span> 028 IMPORT </span><span style={{color: '#787878'}}>•</span>
                   <span> DESCUENTOS ABONANDO EN EFECTIVO </span><span style={{color: '#787878'}}>•</span>
@@ -3034,6 +3047,9 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
 
       {modo !== 'contenido' && modo !== 'checkout' && currentView === 'catalog' && (
         <>
+          {/* El título de la página para Google y lectores de pantalla; a la vista ya
+              está "Catálogo completo" en la miga de pan. */}
+          <h1 className="sr-only">Catálogo completo de 028 Import</h1>
           {/* Barra de filtros */}
           <div className="bg-white/90 backdrop-blur-2xl z-40 border-b border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.08)] sticky top-[72px]">
             <div className="px-4 md:px-10 lg:px-20 xl:px-32">
@@ -3429,8 +3445,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                 </div>
                 {/* Subtotal + botón */}
                 <div className="px-4 py-4">
-                  {/* CYBER 028: cuánto falta para el envío gratis en CABA. */}
-                  {cyberActivo() && (
+                  {/* Promo de envío gratis: cuánto falta para llegar en CABA. */}
+                  {envioGratisActivo() && (
                     <div className="mb-4">
                       <p className="text-[11px] font-bold font-poppins text-[#111111] flex items-center gap-2 mb-2">
                         <i className={`fas fa-truck text-[12px] ${faltaEnvioGratis ? 'text-[#111111]/50' : 'text-emerald-600'}`}></i>
@@ -3441,7 +3457,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                         <div className={`h-full rounded-full transition-all duration-500 ${faltaEnvioGratis ? 'bg-[#fcdb00]' : 'bg-emerald-500'}`} style={{ width: `${faltaEnvioGratis ? Math.min(100, (subtotalCarrito / MINIMO_ENVIO_GRATIS) * 100) : 100}%` }} />
                       </div>
-                      {faltaEnvioGratis > 0 && !sugerenciaEnvioGratis && <p className="text-[10px] text-gray-400 font-poppins mt-1.5">Juntate con tus amigos: desde $100.000 el envío es gratis.</p>}
+                      <p className="text-[10px] text-gray-400 font-poppins mt-1.5">{nombrePromoEnvio === 'Promo finde' ? 'Solo este finde: hasta el domingo a las 23:59.' : `Solo durante el ${nombrePromoEnvio}.`}{faltaEnvioGratis > 0 && !sugerenciaEnvioGratis ? ' Juntate con tus amigos y llegan.' : ''}</p>
                       {sugerenciaEnvioGratis && (() => {
                         const { producto, precio } = sugerenciaEnvioGratis;
                         const yaEsta = cart.some(i => i.id === producto.id);
@@ -3487,6 +3503,19 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         const isFormValid = clientName.trim() && clientPhone.trim() && (
           (shippingType === 'flash' && address.trim()) ||
           (shippingType === 'moto' && address.trim() && zone.trim())
+        );
+        // Con el carrito vacío (un link guardado, o el carrito quedó en otro navegador)
+        // el formulario dejaba completar todo con total $0 y al confirmar sólo decía
+        // "No se pudo confirmar el pedido".
+        if (carritoCargado && !cart.length) return (
+          <div className="fixed inset-0 z-[125] bg-[#f5f5f5] flex flex-col items-center justify-center text-center px-8">
+            <i className="fas fa-shopping-bag text-5xl text-gray-300 mb-6"></i>
+            <h2 className="font-bebas text-4xl uppercase tracking-wide text-[#111111] leading-none">Tu carrito está vacío</h2>
+            <p className="text-sm text-gray-500 font-poppins mt-3 max-w-xs">Agregá lo que quieras llevar y volvé acá para terminar el pedido.</p>
+            <a href="/catalogo" className="mt-8 inline-flex items-center gap-3 h-14 px-8 bg-[#111111] text-[#fcdb00] font-bebas text-xl uppercase tracking-widest rounded-xl">
+              Ver productos <i className="fas fa-arrow-right text-sm"></i>
+            </a>
+          </div>
         );
         return (
         <div className="fixed inset-0 z-[125] bg-[#f5f5f5] flex flex-col overflow-hidden">
@@ -3596,7 +3625,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                               </span>
                               <span className="flex-1">
                                 <span className="block font-bebas text-lg leading-none text-[#111111] tracking-wide">Soy de CABA</span>
-                                <span className={`block text-[10px] font-bold mt-1 ${soyDeCaba ? 'text-emerald-700' : 'text-gray-500'}`}>{soyDeCaba ? 'Tu envío Flash es gratis · CYBER 028' : 'Envío Flash gratis en CABA · CYBER 028'}</span>
+                                <span className={`block text-[10px] font-bold mt-1 ${soyDeCaba ? 'text-emerald-700' : 'text-gray-500'}`}>{soyDeCaba ? `Tu envío Flash es gratis · ${nombrePromoEnvio}` : `Envío Flash gratis en CABA · ${nombrePromoEnvio}`}</span>
                               </span>
                               <i className="fas fa-truck text-[#111111]/60"></i>
                             </button>
@@ -3607,8 +3636,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       {shippingType === 'moto' && (
                         <div className="flex flex-col gap-3 mt-1">
                           <CalculadorEnvio address={address} setAddress={setAddress} zone={zone} setZone={setZone} shippingType={shippingType} setShippingCost={setShippingCost} aptDetails={aptDetails} setAptDetails={setAptDetails} setEsCaba={setEsCabaMapa} envioGratis={envioGratisCyber} />
-                          {cyberActivo() && esCabaMapa && !envioGratisCyber && subtotalCarrito < MINIMO_ENVIO_GRATIS && (
-                            <p className="text-[10px] font-bold text-gray-600 font-poppins flex items-center gap-1.5"><i className="fas fa-truck text-[#111111]/60"></i> Sumá ${formatPrice(MINIMO_ENVIO_GRATIS - subtotalCarrito)} más y el envío es gratis · CYBER 028</p>
+                          {envioGratisActivo() && esCabaMapa && !envioGratisCyber && subtotalCarrito < MINIMO_ENVIO_GRATIS && (
+                            <p className="text-[10px] font-bold text-gray-600 font-poppins flex items-center gap-1.5"><i className="fas fa-truck text-[#111111]/60"></i> Sumá ${formatPrice(MINIMO_ENVIO_GRATIS - subtotalCarrito)} más y el envío es gratis · {nombrePromoEnvio}</p>
                           )}
                           <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest mt-1">¿Cuándo querés recibirlo?</label>
                           <div className="relative"><i className="fas fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i><select value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-none text-[11px] font-bold uppercase tracking-wider outline-none focus:border-[#fcdb00] transition-all appearance-none cursor-pointer text-[#111111]">{next7Days.map(d => (<option key={d.value} value={d.value}>{d.label}</option>))}</select><i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[10px]"></i></div>
@@ -3662,7 +3691,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                     {envioGratisCyber ? (
                       <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
                         <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest font-poppins">Envío</span>
-                        <span className="font-bebas text-lg text-emerald-600">Gratis · CYBER 028</span>
+                        <span className="font-bebas text-lg text-emerald-600">Gratis · {nombrePromoEnvio}</span>
                       </div>
                     ) : shippingCost > 0 && (
                       <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
@@ -3772,7 +3801,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                               )}
                               {envioGratisCyber && shippingCost > 0 && (
                                 <div className="flex justify-between items-center">
-                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-poppins flex items-center gap-1.5"><i className="fas fa-truck text-[9px] text-[#fcdb00]"></i> Envío gratis CYBER 028</span>
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-poppins flex items-center gap-1.5"><i className="fas fa-truck text-[9px] text-[#fcdb00]"></i> Envío gratis · {nombrePromoEnvio}</span>
                                   <span className="font-bebas text-base text-emerald-400">-{CONFIG.currencySymbol}{formatPrice(shippingCost)}</span>
                                 </div>
                               )}
@@ -3789,8 +3818,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                     })()}
                     <button
                       onClick={() => { if (pagoSeguroDisponible && !pagoSeguroActivo) { setShowConfirmarSinPagoSeguro(true); return; } handleCheckout(); }}
-                      disabled={!isFormValid}
-                      className={`w-full font-bebas py-4 rounded-xl uppercase tracking-wider text-xl flex justify-center items-center gap-3 transition-all ${isFormValid ? 'bg-[#fcdb00] text-[#111111] active:scale-95 hover:brightness-95' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}`}
+                      disabled={!isFormValid || isSending}
+                      className={`w-full font-bebas py-4 rounded-xl uppercase tracking-wider text-xl flex justify-center items-center gap-3 transition-all ${isFormValid && !isSending ?'bg-[#fcdb00] text-[#111111] active:scale-95 hover:brightness-95' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}`}
                     >
                       <i className="fas fa-check-circle text-2xl"></i> Confirmar Pedido
                     </button>
