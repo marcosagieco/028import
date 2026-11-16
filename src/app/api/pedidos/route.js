@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { getAdminDb } from '@/lib/firebaseAdmin';
 import { escalonesDeProducto, precioSegunCantidad } from '@/lib/combos';
 import { alcanzaEnvioGratis } from '@/lib/cyber';
+import { esPrecioUSD } from '@/lib/moneda';
 
 // Recalcula y guarda cada pedido con los precios REALES del servidor, no con los que
 // mandó el navegador del cliente.
@@ -134,6 +135,8 @@ export async function POST(request) {
         price: Math.round(precio),
         listPrice: Number(producto.price) || 0,
         isUpsell: !!item.isUpsell,
+        // Producto con precio en dólares: se cobra en USD, aparte de lo que es en pesos.
+        usd: esPrecioUSD(producto),
       });
     }
 
@@ -141,7 +144,11 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Ningún producto del pedido está disponible.', sinStock }, { status: 409 });
     }
 
-    const subtotal = itemsCorregidos.reduce((a, i) => a + i.qty * i.price, 0);
+    // Lo que está en pesos y lo que está en dólares se cobra por separado ("$45.000 +
+    // USD 130"). El envío, el Pago Seguro, el descuento por efectivo, el cupón y el
+    // mínimo del envío gratis van sobre la parte en pesos.
+    const subtotal = itemsCorregidos.filter(i => !i.usd).reduce((a, i) => a + i.qty * i.price, 0);
+    const totalUSD = itemsCorregidos.filter(i => i.usd).reduce((a, i) => a + i.qty * i.price, 0);
     // CYBER 028: el navegador pide el envío gratis (sabe si la dirección es de CABA);
     // acá se vuelve a comprobar que la fecha y el monto lo permitan.
     const envioGratis = deliveryMethod === 'envio' && !!pideEnvioGratis && alcanzaEnvioGratis({
@@ -149,7 +156,7 @@ export async function POST(request) {
       transferencia: shippingOption === 'flash' || paymentMethod === 'transferencia',
     });
     const envio = (deliveryMethod === 'envio' && shippingOption === 'moto' && !envioGratis) ? (Number(shippingCost) || 0) : 0;
-    const cashDiscount = (deliveryMethod === 'envio' && shippingOption === 'moto' && paymentMethod === 'efectivo')
+    const cashDiscount = (deliveryMethod === 'envio' && shippingOption === 'moto' && paymentMethod === 'efectivo' && subtotal > 0)
       ? (subtotal >= 50000 ? 2500 : 1500) : 0;
 
     // El cupón se revalida acá: tiene que existir de verdad y estar activo. No se
@@ -184,6 +191,7 @@ export async function POST(request) {
       clientPhone: clientPhone.trim(),
       items: itemsCorregidos,
       total,
+      totalUSD,
       delivery: deliveryMethod,
       address: deliveryMethod === 'envio' ? (address || '').trim() : '',
       zone: deliveryMethod === 'envio' ? (zone || '').trim() : '',
@@ -226,6 +234,7 @@ export async function POST(request) {
       couponCode: cupon?.code || null,
       pagoSeguroMonto,
       total,
+      totalUSD,
       sinStock: sinStock.length ? sinStock : undefined,
     });
   } catch (err) {

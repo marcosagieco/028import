@@ -12,6 +12,7 @@ import { useCarrito } from '@/components/CarritoProvider';
 import ReproductorVideo from '@/components/ReproductorVideo';
 import { alcanzaEnvioGratis, faltaParaEnvioGratis, envioGratisActivo, promoEnvioActual, MINIMO_ENVIO_GRATIS } from '@/lib/cyber';
 import AvisoEnvioGratis from '@/components/AvisoEnvioGratis';
+import { esPrecioUSD, simboloPrecio } from '@/lib/moneda';
 import { esSinGarantia, EtiquetaSinGarantia } from '@/components/SinGarantia';
 const CalculadorEnvio = dynamic(() => import('@/components/CalculadorEnvio'), { ssr: false });
 const CalculadorEnvioSimple = dynamic(() => import('@/components/CalculadorEnvioSimple'), { ssr: false });
@@ -390,15 +391,15 @@ const TarjetaProducto = React.memo(function TarjetaProducto({
                 {p.offerPrice > 0 && p.offerPrice < p.price ? (
                     <div className="mb-4">
                         <p className="text-gray-400 font-bebas text-sm line-through leading-none">
-                            {CONFIG.currencySymbol}{formatPrice(p.price)}
+                            {simboloPrecio(p)}{formatPrice(p.price)}
                         </p>
                         <p className={`text-[#111111] font-bebas ${priceClass} tracking-wide leading-tight`}>
-                            {CONFIG.currencySymbol}{formatPrice(p.offerPrice)}{p.isUSD && <span className="text-gray-500 text-[11px] font-poppins font-bold ml-1">USD</span>}
+                            {simboloPrecio(p)}{formatPrice(p.offerPrice)}
                         </p>
                     </div>
                 ) : (
                     <p className={`text-[#111111] font-bebas ${priceClass} mb-4 tracking-wide`}>
-                        {CONFIG.currencySymbol}{formatPrice(p.price)}{p.isUSD && <span className="text-gray-500 text-[11px] font-poppins font-bold ml-1">USD</span>}
+                        {simboloPrecio(p)}{formatPrice(p.price)}
                     </p>
                 )}
                 
@@ -759,7 +760,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
     if (filterPuffs.length > 0) filtered = filtered.filter(p => filterPuffs.some(pv => String(p.puffs ?? categoryPuffs[p.category]) === String(pv)));
     if (priceRange !== null) filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
     if (searchTerm) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase()));
-    const arsPrice = (p) => p.tag === 'USD' ? p.price * usdToArs : p.price;
+    const arsPrice = (p) => esPrecioUSD(p) ? p.price * usdToArs : p.price;
     const sorted = [...filtered];
     if (sortBy === 'mayor_precio') sorted.sort((a, b) => arsPrice(b) - arsPrice(a));
     else if (sortBy === 'menor_precio') sorted.sort((a, b) => arsPrice(a) - arsPrice(b));
@@ -791,7 +792,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
           offers: {
             '@type': 'Offer',
             price: Number(p.offerPrice > 0 && p.offerPrice < p.price ? p.offerPrice : p.price) || 0,
-            priceCurrency: p.tag === 'USD' ? 'USD' : 'ARS',
+            priceCurrency: esPrecioUSD(p) ? 'USD' : 'ARS',
             availability: p.inStock === false ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
           },
         },
@@ -1391,7 +1392,16 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     return [...candidatos].sort((a, b) => puesto(a) - puesto(b)).slice(0, 4);
   })();
 
-  const subtotalCarrito = cart.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
+  // Lo que está en dólares se cobra aparte ("$45.000 + USD 130"): el subtotal en pesos
+  // (con el que se calculan envío, descuentos y el envío gratis) no lo incluye.
+  const precioLinea = (item) => item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item));
+  const subtotalCarrito = cart.filter(i => !esPrecioUSD(i)).reduce((acc, item) => acc + precioLinea(item), 0);
+  const subtotalUSD = cart.filter(esPrecioUSD).reduce((acc, item) => acc + precioLinea(item), 0);
+  /** "$45.000 + USD 130", "USD 130" o "$45.000". */
+  const textoMonto = (pesos, usd = subtotalUSD) => [
+    pesos > 0 || !usd ? `${CONFIG.currencySymbol}${formatPrice(pesos)}` : null,
+    usd > 0 ? `USD ${formatPrice(usd)}` : null,
+  ].filter(Boolean).join(' + ');
   // El pedido llega al envío gratis de la promo que corre (CYBER 028, finde...):
   // por monto, o en el lanzamiento del Cyber pagando por transferencia...
   const llegaEnvioGratis = alcanzaEnvioGratis({
@@ -1410,7 +1420,7 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
   // porque sumar una unidad puede bajar el precio de las que ya están (escalones).
   const sugerenciaEnvioGratis = (() => {
     if (!isCartOpen || !faltaEnvioGratis || !cart.length) return null;
-    const subtotalDe = (c) => c.reduce((acc, item) => {
+    const subtotalDe = (c) => c.filter(i => !esPrecioUSD(i)).reduce((acc, item) => {
       if (item.isUpsell) return acc + item.qty * item.upsellPrice;
       const escalones = escalonesDeProducto(promos, item);
       if (!escalones.length) return acc + item.qty * item.price;
@@ -1422,7 +1432,7 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     }, 0);
     let mejor = null;
     for (const p of products) {
-      if (p.isDeleted || p.isHidden || p.inStock === false) continue;
+      if (p.isDeleted || p.isHidden || p.inStock === false || esPrecioUSD(p)) continue;
       const precio = p.offerPrice > 0 && p.offerPrice < p.price ? p.offerPrice : p.price;
       if (!(precio > 0)) continue;
       const ya = cart.find(i => i.id === p.id);
@@ -1441,10 +1451,11 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
   const pagoSeguroDisponible = deliveryMethod === 'envio' && shippingType === 'flash';
   const pagoSeguroAplica = pagoSeguroActivo && pagoSeguroDisponible;
 
+  /** El total en pesos. Lo que está en dólares va aparte: subtotalUSD. */
   const calculateTotal = (cartData = cart) => {
-      const subtotal = cartData.reduce((acc, item) => acc + (item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item))), 0);
+      const subtotal = cartData.filter(i => !esPrecioUSD(i)).reduce((acc, item) => acc + precioLinea(item), 0);
       const envio = (deliveryMethod === 'envio' && shippingType === 'moto' && !envioGratisCyber) ? shippingCost : 0;
-      const cashDiscount = (deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'efectivo')
+      const cashDiscount = (deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'efectivo' && subtotal > 0)
         ? (subtotal >= 50000 ? 2500 : 1500) : 0;
       const couponDiscount = appliedCoupon ? Math.round(subtotal * appliedCoupon.discount / 100) : 0;
       const pagoSeguro = pagoSeguroAplica ? PRECIO_PAGO_SEGURO : 0;
@@ -1620,7 +1631,9 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     msg += `\n${DIVIDER}\n${emo('🛒 ')}*PRODUCTOS*\n`;
 
     itemsVerificados.forEach(i => {
-        if (i.isUpsell) {
+        if (i.usd) {
+            msg += `• ${i.qty}x ${i.category} - ${i.name} (USD ${formatPrice(i.price)} c/u)\n`;
+        } else if (i.isUpsell) {
             msg += `• ${i.qty}x ${i.category} - ${i.name} (OFERTA $${formatPrice(i.price)})\n`;
         } else if (i.price < i.listPrice) {
             // El precio bajó por una promo de cantidad, no por un cupón. Se avisa acá
@@ -1634,7 +1647,9 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
 
     // --- TOTALES ---
     msg += `\n${DIVIDER}\n${emo('💰 ')}*TOTALES*\n`;
-    msg += `Subtotal: ${CONFIG.currencySymbol}${formatPrice(verificado.subtotal)}\n`;
+    const totalUSD = Number(verificado.totalUSD) || 0;
+    if (verificado.subtotal > 0 || !totalUSD) msg += `Subtotal: ${CONFIG.currencySymbol}${formatPrice(verificado.subtotal)}\n`;
+    if (totalUSD > 0) msg += `Subtotal en dólares: USD ${formatPrice(totalUSD)}\n`;
 
     if (verificado.envioGratis) {
         msg += `Envío (${shippingType === 'flash' ? 'Flash' : 'Moto'}): *GRATIS — ${nombrePromoEnvio.toUpperCase()} (CABA)*\n`;
@@ -1645,7 +1660,7 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
     }
 
     if (verificado.pagoSeguroMonto > 0) msg += `${emo('🛡️ ')}Pago Seguro: ${CONFIG.currencySymbol}${formatPrice(verificado.pagoSeguroMonto)}\n`;
-    msg += `*TOTAL A PAGAR: ${CONFIG.currencySymbol}${formatPrice(finalTotal)}*\n`;
+    msg += `*TOTAL A PAGAR: ${textoMonto(finalTotal, totalUSD)}*\n`;
     if (verificado.cashDiscount > 0) msg += `_(incluye -${CONFIG.currencySymbol}${formatPrice(verificado.cashDiscount)} por pago en efectivo)_\n`;
     if (verificado.couponDiscount > 0) msg += `_(incluye -${CONFIG.currencySymbol}${formatPrice(verificado.couponDiscount)} por cupón ${verificado.couponCode})_\n`;
 
@@ -3323,7 +3338,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       <button onClick={() => changeQty(item.id, -item.qty)} className="w-7 h-7 flex items-center justify-center hover:text-red-400 text-gray-500 transition-colors">
                         <i className="far fa-trash-alt text-[14px]"></i>
                       </button>
-                      <p className="font-bebas text-lg text-[#111111] leading-none">${formatPrice(item.qty * unitPrice)}</p>
+                      <p className="font-bebas text-lg text-[#111111] leading-none">{simboloPrecio(item)}{formatPrice(item.qty * unitPrice)}</p>
                     </div>
                   </div>
                 );
@@ -3435,8 +3450,9 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   );
                 })()}
 
-                {/* Calcular envío */}
-                <div className="px-4 pt-4 pb-4 border-b border-gray-100">
+                {/* Calcular envío: sólo en la compu. En el celular ocupaba lugar en un
+                    carrito ya chico, y la dirección igual se pide en el checkout. */}
+                <div className="hidden md:block px-4 pt-4 pb-4 border-b border-gray-100">
                   <CalculadorEnvioSimple
                     address={address} setAddress={setAddress}
                     setZone={setZone}
@@ -3483,7 +3499,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   )}
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 font-poppins">Subtotal</span>
-                    <span className="font-bebas text-3xl text-[#111111] tracking-wide">{CONFIG.currencySymbol}{formatPrice(cart.reduce((a, i) => a + i.qty * (i.isUpsell ? i.upsellPrice : getUnitPromoPrice(i)), 0))}</span>
+                    <span className="font-bebas text-3xl text-[#111111] tracking-wide text-right">{textoMonto(subtotalCarrito)}</span>
                   </div>
                   <button
                     onClick={() => closeCart(() => router.push('/checkout'))}
@@ -3684,7 +3700,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                               <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Promo x{item.qty}</p>
                             )}
                           </div>
-                          <span className="font-bebas text-2xl text-[#111111] flex-shrink-0">${formatPrice(item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item)))}</span>
+                          <span className="font-bebas text-2xl text-[#111111] flex-shrink-0">{simboloPrecio(item)}{formatPrice(precioLinea(item))}</span>
                         </div>
                       ))}
                     </div>
@@ -3736,7 +3752,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                   {/* Total + botón */}
                   <div className="checkout-total bg-[#111111] p-5 flex flex-col gap-4">
                     {(() => {
-                      const precioOriginal = cart.reduce((acc, item) => acc + item.qty * item.price, 0) + shippingCost;
+                      const precioOriginal = cart.filter(i => !esPrecioUSD(i)).reduce((acc, item) => acc + item.qty * item.price, 0) + shippingCost;
                       const totalFinal = calculateTotal();
                       // El Pago Seguro suma al total, pero no es un descuento negativo:
                       // se resta acá para que "ahorro" siga reflejando sólo las promos y
@@ -3752,8 +3768,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                         if (!item.isUpsell) return acc;
                         return acc + (item.price - item.upsellPrice) * item.qty;
                       }, 0);
-                      const subtotalParaCalc = cart.reduce((acc, item) => acc + item.qty * (item.isUpsell ? item.upsellPrice : getUnitPromoPrice(item)), 0);
-                      const cashDisc = deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'efectivo'
+                      const subtotalParaCalc = subtotalCarrito;
+                      const cashDisc = deliveryMethod === 'envio' && shippingType === 'moto' && paymentMethod === 'efectivo' && subtotalParaCalc > 0
                         ? (subtotalParaCalc >= 50000 ? 2500 : 1500) : 0;
                       const couponDisc = appliedCoupon ? Math.round(subtotalParaCalc * appliedCoupon.discount / 100) : 0;
                       return (
@@ -3770,7 +3786,8 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                             </div>
                             <div className="flex flex-col items-end">
                               {ahorro > 0 && <span className="font-bebas text-lg text-gray-500 line-through leading-none">{CONFIG.currencySymbol}{formatPrice(precioOriginal)}</span>}
-                              <span className="font-bebas text-5xl text-white tracking-wide leading-none"><span className="text-[#fcdb00] text-3xl mr-1">{CONFIG.currencySymbol}</span>{formatPrice(totalFinal)}</span>
+                              {(totalFinal > 0 || !subtotalUSD) && <span className="font-bebas text-5xl text-white tracking-wide leading-none"><span className="text-[#fcdb00] text-3xl mr-1">{CONFIG.currencySymbol}</span>{formatPrice(totalFinal)}</span>}
+                              {subtotalUSD > 0 && <span className="font-bebas text-5xl text-white tracking-wide leading-none">{totalFinal > 0 && <span className="text-gray-400 text-3xl mr-2">+</span>}<span className="text-[#fcdb00] text-3xl mr-1">USD</span>{formatPrice(subtotalUSD)}</span>}
                               {pagoSeguroAplica && (
                                 <span className="text-[10px] text-gray-400 font-poppins flex items-center gap-1 mt-0.5">
                                   <i className="fas fa-shield-alt text-[#fcdb00]"></i> Incluye Pago Seguro {CONFIG.currencySymbol}{formatPrice(PRECIO_PAGO_SEGURO)}
@@ -3936,6 +3953,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
               <div className="text-center">
                   <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-1 font-poppins">Total a transferir</p>
                   <p className="text-5xl font-bebas text-[#111111] leading-none tracking-wide"><span className="text-[#fcdb00] text-3xl mr-1">$</span>{formatPrice(calculateTotal())}</p>
+                  {subtotalUSD > 0 && <p className="text-3xl font-bebas text-[#111111] leading-none tracking-wide mt-2"><span className="text-gray-400 mr-1.5">+</span><span className="text-[#fcdb00] text-2xl mr-1">USD</span>{formatPrice(subtotalUSD)}</p>}
               </div>
 
               <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 relative overflow-hidden">

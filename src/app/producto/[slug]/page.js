@@ -5,6 +5,7 @@ import { getVentasPorProducto, puestoEnSuMarca } from '@/lib/ventas';
 import { getResenasDeProducto } from '@/lib/resenas';
 import { getComprasJuntos, tambienLlevaron } from '@/lib/juntos';
 import { escalonesDeProducto } from '@/lib/combos';
+import { esPrecioUSD } from '@/lib/moneda';
 import { slugProducto, buscarPorSlug, aSlug } from '@/lib/slug';
 import FichaProducto from '@/components/FichaProducto';
 import HomeClient from '@/app/HomeClient';
@@ -50,7 +51,7 @@ export async function generateMetadata({ params }) {
 
   const precio = producto.offerPrice > 0 && producto.offerPrice < producto.price
     ? producto.offerPrice : producto.price;
-  const moneda = producto.tag === 'USD' ? 'USD' : '$';
+  const moneda = esPrecioUSD(producto) ? 'USD ' : '$';
   const descripcion = (producto.description || '').trim()
     || `${producto.name} de ${producto.category}. ${moneda}${Number(precio).toLocaleString('es-AR')}. Envío en 30 minutos por CABA y AMBA.`;
 
@@ -148,7 +149,7 @@ export default async function PaginaProducto({ params }) {
       '@type': 'Offer',
       url: `${SITIO}/producto/${slug}`,
       price: Number(precio) || 0,
-      priceCurrency: producto.tag === 'USD' ? 'USD' : 'ARS',
+      priceCurrency: esPrecioUSD(producto) ? 'USD' : 'ARS',
       availability: producto.inStock === false
         ? 'https://schema.org/OutOfStock'
         : 'https://schema.org/InStock',

@@ -12,6 +12,7 @@ import Image from 'next/image';
 import { useCarrito } from '@/components/CarritoProvider';
 import { rutaProducto } from '@/lib/slug';
 import { envioGratisActivo } from '@/lib/cyber';
+import { simboloPrecio } from '@/lib/moneda';
 
 const precioFormateado = (n) => Number(n || 0).toLocaleString('es-AR');
 
@@ -22,7 +23,7 @@ export default function TarjetaCatalogo({ producto, onAgregado }) {
   const sinStock = producto.inStock === false;
   const conOferta = producto.offerPrice > 0 && producto.offerPrice < producto.price;
   const precio = conOferta ? producto.offerPrice : producto.price;
-  const moneda = producto.tag === 'USD' ? 'USD ' : '$';
+  const moneda = simboloPrecio(producto);
 
   const agregar = () => {
     if (agregarAlCarrito(producto)) onAgregado?.(producto);

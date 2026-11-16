@@ -18,6 +18,7 @@ import { rutaProducto, aSlug } from '@/lib/slug';
 import { esSinGarantia, AvisoSinGarantia } from '@/components/SinGarantia';
 import { fichasDeCombo, precioSegunCantidad } from '@/lib/combos';
 import { promoEnvioActual, MINIMO_ENVIO_GRATIS } from '@/lib/cyber';
+import { esPrecioUSD, simboloPrecio } from '@/lib/moneda';
 
 const precioFormateado = (n) => Number(n || 0).toLocaleString('es-AR');
 
@@ -60,8 +61,8 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
   const esEbCreate = esSinGarantia(producto);
   const conOferta = producto.offerPrice > 0 && producto.offerPrice < producto.price;
   const precio = conOferta ? producto.offerPrice : producto.price;
-  const esUSD = producto.tag === 'USD';
-  const simbolo = esUSD ? 'USD ' : '$';
+  const esUSD = esPrecioUSD(producto);
+  const simbolo = simboloPrecio(producto);
   const descuento = conOferta ? Math.round((1 - producto.offerPrice / producto.price) * 100) : 0;
 
   // El pack elegido. Sin el producto en el carrito, elegir un pack sólo lo marca y
@@ -553,7 +554,7 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                           </Link>
                           <Link href={rutaProducto(p)} className="flex-1 min-w-0">
                             <span className="block font-bebas text-base uppercase tracking-wide leading-tight text-[#111111] truncate">{p.name}</span>
-                            <span className="block font-bebas text-base text-gray-500 tracking-wide leading-tight">{p.tag === 'USD' ? 'USD ' : '$'}{precioFormateado(pPrecio)}</span>
+                            <span className="block font-bebas text-base text-gray-500 tracking-wide leading-tight">{simboloPrecio(p)}{precioFormateado(pPrecio)}</span>
                           </Link>
                           {yaEsta ? (
                             <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-green-600 flex items-center gap-1">
@@ -738,7 +739,7 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
                     <div className="p-3">
                       <h3 className="font-bebas text-base uppercase tracking-wide leading-tight text-[#111111] line-clamp-2 mb-1">{p.name}</h3>
                       <p className="font-bebas text-lg text-[#111111] tracking-wide">
-                        {p.tag === 'USD' ? 'USD ' : '$'}{precioFormateado(pOferta ? p.offerPrice : p.price)}
+                        {simboloPrecio(p)}{precioFormateado(pOferta ? p.offerPrice : p.price)}
                       </p>
                     </div>
                   </Link>
