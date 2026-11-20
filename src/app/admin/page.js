@@ -290,6 +290,7 @@ export default function AdminPage() {
   const [vape3dPosition, setVape3dPosition] = useState('banner');
   const [logosBarPosition, setLogosBarPosition] = useState('banner');
   const [virtualDepts, setVirtualDepts] = useState([]);
+  const [deptosOcultosMenu, setDeptosOcultosMenu] = useState([]);
   const [newVirtualDept, setNewVirtualDept] = useState({ name: '', icon: '' });
   const [categoryPuffs, setCategoryPuffs] = useState({});
   
@@ -341,7 +342,7 @@ export default function AdminPage() {
     [orderedCategoriesByDept]
   );
   const PREDEFINED_DEPARTMENTS = ["VAPES", "THC", "TECNOLOGÍA", "APPLE"];
-  const availableDepartments = useMemo(() => Array.from(new Set([...PREDEFINED_DEPARTMENTS, ...products.filter(p => !p.isDeleted).map(p => p.department).filter(Boolean)])), [products]);
+  const availableDepartments = useMemo(() => Array.from(new Set([...PREDEFINED_DEPARTMENTS, ...products.filter(p => !p.isDeleted).flatMap(p => [p.department, ...(Array.isArray(p.extraListings) ? p.extraListings.map(e => e?.department) : [])]).filter(Boolean)])), [products]);
   const availableCommunityProducts = useMemo(() => {
     return products
       .filter(p => !p.isDeleted)
@@ -557,7 +558,7 @@ export default function AdminPage() {
       });
 
       onSnapshot(doc(firebaseRefs.db, 'settings', 'departments'), (snap) => {
-        if (snap.exists()) { setDeptIcons(snap.data().icons || {}); setVirtualDepts(snap.data().virtualDepts || []); }
+        if (snap.exists()) { setDeptIcons(snap.data().icons || {}); setVirtualDepts(snap.data().virtualDepts || []); setDeptosOcultosMenu(snap.data().ocultosEnMenu || []); }
       });
       onSnapshot(doc(firebaseRefs.db, 'settings', 'category_puffs'), (snap) => {
         if (snap.exists()) setCategoryPuffs(snap.data() || {});
@@ -1263,6 +1264,14 @@ export default function AdminPage() {
     } catch(err) { alert("Error al guardar ícono: " + err.message); }
   };
 
+  // Mostrar u ocultar un departamento en la barra de arriba y en el menú del celular.
+  const alternarDeptoEnMenu = async (dept) => {
+    const ocultos = deptosOcultosMenu.includes(dept) ? deptosOcultosMenu.filter(d => d !== dept) : [...deptosOcultosMenu, dept];
+    try {
+      await setDoc(doc(firebaseRefs.db, 'settings', 'departments'), { ocultosEnMenu: ocultos }, { merge: true });
+    } catch (err) { alert('Error al guardar: ' + err.message); }
+  };
+
   const saveVirtualDept = async () => {
     const name = newVirtualDept.name.trim().toUpperCase();
     const icon = newVirtualDept.icon.trim();
@@ -1785,6 +1794,29 @@ export default function AdminPage() {
 
           {renderHomeOrderControls()}
           
+          <div className={`${theme.card} p-6 rounded-[2rem] mb-8 shadow-sm border`}>
+            <div className="mb-4">
+                <h3 className={`text-2xl font-bebas uppercase tracking-wide ${theme.text}`}>Departamentos en el menú</h3>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Los apagados no se ven en la barra de arriba (compu) ni en el menú del costado (celular). Sus productos siguen en el catálogo.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {availableDepartments.map(dept => {
+                const visible = !deptosOcultosMenu.includes(dept);
+                return (
+                  <button key={dept} type="button" onClick={() => alternarDeptoEnMenu(dept)} className={`flex items-center justify-between p-4 border rounded-2xl text-left transition-colors ${darkMode ? 'bg-[#222] border-[#333]' : 'bg-gray-50 border-gray-200'}`}>
+                    <span className={`font-bold text-[11px] uppercase tracking-widest ${visible ? theme.text : 'text-gray-400 line-through'}`}>{dept}</span>
+                    <span className="flex items-center gap-2">
+                      <span className={`text-[9px] font-bold uppercase tracking-widest ${visible ? 'text-emerald-500' : 'text-gray-400'}`}>{visible ? 'Se ve' : 'Oculto'}</span>
+                      <span className={`relative w-11 h-6 rounded-full transition-colors ${visible ? 'bg-[#fcdb00]' : 'bg-gray-300'}`}>
+                        <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${visible ? 'translate-x-[20px]' : 'translate-x-0'}`} />
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className={`${theme.card} p-6 rounded-[2rem] mb-8 shadow-sm border`}>
             <div className="mb-4">
                 <h3 className={`text-2xl font-bebas uppercase tracking-wide ${theme.text}`}>Íconos de Departamentos</h3>

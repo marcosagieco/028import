@@ -642,6 +642,9 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
 
   const [deptIcons, setDeptIcons] = useState({});
   const [virtualDepts, setVirtualDepts] = useState([]);
+  // Departamentos que el panel (Vidriera) saca de la barra de arriba y del menú del
+  // celular. Sus productos siguen en el catálogo y su página sigue andando.
+  const [deptosOcultosMenu, setDeptosOcultosMenu] = useState([]);
   const [categoryPuffs, setCategoryPuffs] = useState({});
   // Cotización del dólar para ordenar por precio los productos marcados como USD.
   // Se edita desde el panel (pestaña Descuentos); el 1450 es solo el valor de arranque.
@@ -734,6 +737,7 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
   // Mystery Box va primero: es la sección nueva del CYBER 028.
   const departments = useMemo(() => [...new Set(products.flatMap(p => getProductDeptList(p)))]
     .sort((a, b) => (aSlug(b) === 'mystery-box') - (aSlug(a) === 'mystery-box')), [products]);
+  const departamentosMenu = useMemo(() => departments.filter(d => !deptosOcultosMenu.includes(d)), [departments, deptosOcultosMenu]);
   const brandsByDept = useMemo(() => { const map = {}; departments.forEach(d => { map[d] = [...new Set(products.filter(p => !p.isDeleted && p.inStock !== false).flatMap(p => getProductPairs(p)).filter(pair => pair.department === d).map(pair => pair.category))]; }); return map; }, [products, departments]);
   const uniqueCategories = useMemo(() => {
     if (activeFilter.dept !== 'all') return [...new Set(products.flatMap(p => getProductPairs(p)).filter(pair => pair.department === activeFilter.dept).map(pair => pair.category))];
@@ -1022,6 +1026,7 @@ stockUnsub = onSnapshot(collection(firebaseRefs.db, 'products'), (snapshot) => {
       if (ajustes.departments) {
         setDeptIcons(ajustes.departments.icons || {});
         setVirtualDepts(ajustes.departments.virtualDepts || []);
+        setDeptosOcultosMenu(Array.isArray(ajustes.departments.ocultosEnMenu) ? ajustes.departments.ocultosEnMenu : []);
       }
 
       const usd = Number(ajustes.cotizacion?.usdToArs);
@@ -2762,7 +2767,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
 
         {/* Departamentos centrados — solo desktop */}
         <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-4 2xl:gap-6 whitespace-nowrap font-poppins text-xs font-bold uppercase tracking-widest">
-          {departments.map(dept => (
+          {departamentosMenu.map(dept => (
             <div key={dept} className="relative" onMouseEnter={() => setHoveredNavDept(dept)} onMouseLeave={() => setHoveredNavDept(null)}>
               <Link href={`/${aSlug(dept)}`} prefetch={false} className={`relative block pb-1 transition-all duration-200 ${hoveredNavDept === dept ? 'text-white scale-[1.12]' : (currentView === 'catalog' && filterDepts.includes(dept)) || aSlug(dept) === 'mystery-box' ? 'text-[#fcdb00]' : 'text-gray-400'}`}>
                 {dept}
@@ -2885,7 +2890,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                     Catálogo Completo <i className="fas fa-arrow-right text-gray-300 text-sm"></i>
                   </Link>
 
-                  {departments.map(dept => {
+                  {departamentosMenu.map(dept => {
                     const isExpanded = expandedDept === dept;
                     const deptCats = brandsByDept[dept] || [];
                     return (
