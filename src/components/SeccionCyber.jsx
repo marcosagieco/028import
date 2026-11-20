@@ -160,7 +160,7 @@ export default function SeccionCyber() {
             <p className="text-[12px] font-poppins text-white/55 mt-6 leading-relaxed">
               {lanzamiento || !activo
                 ? <>Lunes de 00:00 a 04:00: <span className="text-white">sin mínimo</span>, pagando por transferencia.</>
-                : 'Moto o Flash. Tandas de 15:30 y 18:30.'}
+                : 'Moto o Flash. Tandas de 15:30 y 17:30.'}
             </p>
           </div>
         </>

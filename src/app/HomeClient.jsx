@@ -691,9 +691,14 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
       date.setDate(today.getDate() + i);
       const dateString = date.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short' });
       const formatted = dateString.charAt(0).toUpperCase() + dateString.slice(1);
+      // La fecha del día local. Antes salía de toISOString, que está en hora de
+      // Londres: desde las 21 hs el valor ya era del día siguiente al que se veía.
+      const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       days.push({
-         value: date.toISOString().split('T')[0],
-         label: i === 0 ? `Hoy (${formatted})` : i === 1 ? `Mañana (${formatted})` : formatted
+         value,
+         label: i === 0 ? `Hoy (${formatted})` : i === 1 ? `Mañana (${formatted})` : formatted,
+         // Viernes y sábado suman el turno de las 20:00.
+         conTurnoNoche: date.getDay() === 5 || date.getDay() === 6,
       });
     }
     return days;
@@ -704,6 +709,14 @@ export default function HomeClient({ ssrProducts = [], ssrHomeSections = [], ssr
         setDeliveryDate(next7Days[0].value);
     }
   }, [next7Days, deliveryDate]);
+
+  // Los turnos de motomensajería del día elegido. El de las 20:00 es sólo viernes y
+  // sábado: si la persona lo había elegido y cambia a otro día, vuelve a las 15:30.
+  const turnosMoto = next7Days.find(d => d.value === deliveryDate)?.conTurnoNoche
+    ? ['15:30', '17:30', '20:00'] : ['15:30', '17:30'];
+  useEffect(() => {
+    if (!turnosMoto.includes(deliveryTime)) setDeliveryTime('15:30');
+  }, [deliveryDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Un producto puede tener, además de su Depto/Marca principal, otros "listados extra"
   // (product.extraListings = [{ department, category }]) para aparecer también en otros lados
@@ -3618,7 +3631,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                       </div>
                       <div onClick={() => { setShippingType('moto'); if (firebaseRefs.db) setDoc(doc(firebaseRefs.db, 'stats', 'shipping'), { moto: increment(1) }, { merge: true }).catch(console.error); }} className={`p-4 rounded-none border-2 cursor-pointer transition-all flex gap-3 items-center ${shippingType === 'moto' ? 'border-[#fcdb00] bg-[#fcdb00]/10' : 'border-gray-300 bg-gray-50 hover:border-[#fcdb00]/40 rounded-none'}`}>
                         <div className="w-9 h-9 bg-[#111111] rounded-full flex items-center justify-center text-[#fcdb00] flex-shrink-0"><i className="fas fa-motorcycle"></i></div>
-                        <div className="flex-1"><span className={`font-bebas text-lg leading-none block mb-1 ${shippingType === 'moto' ? 'text-[#fcdb00]' : 'text-[#111111]/70'}`}>Motomensajería</span><span className="text-[9px] font-bold text-gray-500">⏲️ Horarios: 15:30 · 18:30hs</span></div>
+                        <div className="flex-1"><span className={`font-bebas text-lg leading-none block mb-1 ${shippingType === 'moto' ? 'text-[#fcdb00]' : 'text-[#111111]/70'}`}>Motomensajería</span><span className="text-[9px] font-bold text-gray-500">⏲️ Horarios: 15:30 · 17:30 · vie y sáb 20hs</span></div>
                         {shippingType === 'moto' && <i className="fas fa-check-circle text-[#fcdb00] text-lg"></i>}
                       </div>
 
@@ -3658,8 +3671,9 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                           <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest mt-1">¿Cuándo querés recibirlo?</label>
                           <div className="relative"><i className="fas fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i><select value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-none text-[11px] font-bold uppercase tracking-wider outline-none focus:border-[#fcdb00] transition-all appearance-none cursor-pointer text-[#111111]">{next7Days.map(d => (<option key={d.value} value={d.value}>{d.label}</option>))}</select><i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[10px]"></i></div>
                           <div className="flex gap-2 bg-gray-100 p-1.5 rounded-none border border-gray-300">
-                            <button onClick={() => setDeliveryTime('15:30')} className={`flex-1 py-2.5 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryTime === '15:30' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}>15:30</button>
-                            <button onClick={() => setDeliveryTime('18:30')} className={`flex-1 py-2.5 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryTime === '18:30' ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}>18:30</button>
+                            {turnosMoto.map(turno => (
+                              <button key={turno} onClick={() => setDeliveryTime(turno)} className={`flex-1 py-2.5 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryTime === turno ? 'bg-[#fcdb00] text-[#111111] shadow-sm' : 'text-gray-500'}`}>{turno}</button>
+                            ))}
                           </div>
                           <label className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">¿Cómo querés abonar?</label>
                           <div className="flex gap-2 bg-gray-100 p-1.5 rounded-none border border-gray-300">

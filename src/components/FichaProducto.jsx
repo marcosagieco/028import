@@ -145,7 +145,7 @@ export default function FichaProducto({ producto, relacionados = [], escalones =
   const preguntas = [
     {
       p: '¿Cuánto tarda en llegar?',
-      r: 'En CABA y AMBA, con Envío Flash te llega en menos de 30 minutos (se paga por transferencia). Con motomensajería elegís el día y el turno: 15:30 o 18:30. Al resto del país lo enviamos a domicilio y lo coordinamos por WhatsApp.',
+      r: 'En CABA y AMBA, con Envío Flash te llega en menos de 30 minutos (se paga por transferencia). Con motomensajería elegís el día y el turno: 15:30 o 17:30, y los viernes y sábados también a las 20:00. Al resto del país lo enviamos a domicilio y lo coordinamos por WhatsApp.',
     },
     {
       p: '¿Los productos son originales?',
