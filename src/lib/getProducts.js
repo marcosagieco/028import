@@ -149,6 +149,24 @@ async function _getSSRHomeLayout() {
   }
 }
 
+export function getSSRDeptosOcultosMenu() {
+  return conMemoria('getSSRDeptosOcultosMenu', _getSSRDeptosOcultosMenu);
+}
+
+/** Los departamentos que el panel (Vidriera) sacó de los menús. Nunca lanza. */
+async function _getSSRDeptosOcultosMenu() {
+  try {
+    const db = getAdminDb();
+    if (!db) return [];
+    const docSnap = await db.collection('settings').doc('departments').get();
+    const ocultos = docSnap.exists ? docSnap.data()?.ocultosEnMenu : null;
+    return Array.isArray(ocultos) ? ocultos.filter(d => typeof d === 'string') : [];
+  } catch (err) {
+    console.error('[SSR] getSSRDeptosOcultosMenu falló:', err.message);
+    return [];
+  }
+}
+
 export function getSSRCommunityVideos() {
   return conMemoria('getSSRCommunityVideos', _getSSRCommunityVideos);
 }

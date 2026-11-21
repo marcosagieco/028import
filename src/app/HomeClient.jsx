@@ -2768,7 +2768,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
         {/* Departamentos centrados — solo desktop */}
         <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-4 2xl:gap-6 whitespace-nowrap font-poppins text-xs font-bold uppercase tracking-widest">
           {departamentosMenu.map(dept => (
-            <div key={dept} className="relative" onMouseEnter={() => setHoveredNavDept(dept)} onMouseLeave={() => setHoveredNavDept(null)}>
+            <div key={dept} data-menu-depto={aSlug(dept)} className="relative" onMouseEnter={() => setHoveredNavDept(dept)} onMouseLeave={() => setHoveredNavDept(null)}>
               <Link href={`/${aSlug(dept)}`} prefetch={false} className={`relative block pb-1 transition-all duration-200 ${hoveredNavDept === dept ? 'text-white scale-[1.12]' : (currentView === 'catalog' && filterDepts.includes(dept)) || aSlug(dept) === 'mystery-box' ? 'text-[#fcdb00]' : 'text-gray-400'}`}>
                 {dept}
                 <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-[#fcdb00] transition-all duration-200 ${hoveredNavDept === dept ? 'opacity-100' : 'opacity-0'}`} />
@@ -2894,7 +2894,7 @@ const renderSingleHomeSection = (sec, sectionIndex = 0) => {
                     const isExpanded = expandedDept === dept;
                     const deptCats = brandsByDept[dept] || [];
                     return (
-                      <div key={dept} className="border-b border-gray-100">
+                      <div key={dept} data-menu-depto={aSlug(dept)} className="border-b border-gray-100">
                         <button
                           onClick={() => setExpandedDept(isExpanded ? null : dept)}
                           className="w-full text-left py-3.5 text-base text-[#111111] flex items-center justify-between active:opacity-60 transition-opacity" style={{fontWeight:510}}

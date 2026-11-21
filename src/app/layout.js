@@ -2,6 +2,8 @@ import './globals.css';
 import Script from 'next/script';
 import { Bebas_Neue, Poppins } from 'next/font/google';
 import { CarritoProvider } from '@/components/CarritoProvider';
+import { getSSRDeptosOcultosMenu } from '@/lib/getProducts';
+import { aSlug } from '@/lib/slug';
 
 // next/font descarga las fuentes en el build y las sirve desde tu propio dominio.
 // Antes se pedían con un @import adentro de una etiqueta <style>, que es la forma
@@ -87,11 +89,19 @@ const datosDelNegocio = {
   ],
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  // Los departamentos ocultos en el panel ya llegan escondidos desde el servidor. Si
+  // los sacara sólo el navegador, se verían un segundo al entrar y después se irían.
+  const deptosOcultos = await getSSRDeptosOcultosMenu();
+  const cssDeptosOcultos = deptosOcultos
+    .map(d => `[data-menu-depto="${aSlug(d)}"]`)
+    .join(',');
+
   return (
     <html lang="es" className={`${bebas.variable} ${poppins.variable}`}>
       <head>
         <link rel="icon" href={CONFIG.logoImage} />
+        {cssDeptosOcultos && <style dangerouslySetInnerHTML={{ __html: `${cssDeptosOcultos}{display:none!important}` }} />}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(datosDelNegocio) }}

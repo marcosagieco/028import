@@ -1269,6 +1269,8 @@ export default function AdminPage() {
     const ocultos = deptosOcultosMenu.includes(dept) ? deptosOcultosMenu.filter(d => d !== dept) : [...deptosOcultosMenu, dept];
     try {
       await setDoc(doc(firebaseRefs.db, 'settings', 'departments'), { ocultosEnMenu: ocultos }, { merge: true });
+      // Las páginas guardadas traen el menú ya filtrado desde el servidor: que se rehagan.
+      avisarTodo();
     } catch (err) { alert('Error al guardar: ' + err.message); }
   };
 
